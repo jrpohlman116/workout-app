@@ -69,8 +69,8 @@ export function calculateWilksScore(
     b = -27.23842536447;
     c = 0.82112226871;
     d = -0.00930733913;
-    e = 0.00004731582;
-    f = -0.00000009054;
+    e = 4.731582e-5;
+    f = -9.054e-8;
   } else {
     a = -216.0475144;
     b = 16.2606339;
@@ -84,9 +84,9 @@ export function calculateWilksScore(
     d * Math.pow(bodyweight, 3) + e * Math.pow(bodyweight, 4) +
     f * Math.pow(bodyweight, 5);
 
-  const coeff = 500 / denominator;
+  const wilksCoefficient = 500 / denominator;
 
-  return Math.round((total * coeff) * 100) / 100;
+  return Math.round((total * wilksCoefficient) * 100) / 100;
 }
 
 export function getGreeting(): string {
