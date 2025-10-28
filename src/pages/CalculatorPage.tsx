@@ -50,7 +50,7 @@ export default function CalculatorPage() {
       <div className="bg-white">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
           <h1 className="text-4xl font-bold text-gray-900 mb-1">Calculator</h1>
-          <p className="text-gray-600">Determine your 1 rep-max</p>
+          <p className="text-gray-600">Calculate your one-rep max from any weight and rep combination</p>
         </div>
       </div>
 
@@ -87,7 +87,7 @@ export default function CalculatorPage() {
               type="number"
               value={reps}
               onChange={(e) => setReps(e.target.value)}
-              placeholder="Placeholder"
+              placeholder="e.g., 5, 8, 10"
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -103,8 +103,8 @@ export default function CalculatorPage() {
         {calculatedMax !== null && (
           <>
             <div className="bg-white rounded-2xl shadow-sm p-6">
-              <p className="text-gray-600 text-sm mb-2">Calculated 1 Rep Max</p>
-              <div className="text-5xl font-bold text-gray-900">{calculatedMax} lbs</div>
+              <p className="text-gray-600 text-sm mb-2">Your Estimated 1RM</p>
+              <div className="text-5xl font-bold text-gray-900">{calculatedMax} {unit}</div>
             </div>
 
             <div className="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4 flex gap-3">
@@ -123,7 +123,7 @@ export default function CalculatorPage() {
 
         <div className="mt-8 pt-6 border-t border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Wilks Score Calculator</h2>
-          <p className="text-gray-600 mb-6">Compare powerlifting strength across bodyweights</p>
+          <p className="text-gray-600 mb-6">Compare powerlifting strength across bodyweights - used in competitions</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm p-6">
@@ -225,10 +225,10 @@ export default function CalculatorPage() {
               <p className="text-gray-600 text-sm mb-2">Your Wilks Score</p>
               <div className="text-5xl font-bold text-gray-900 mb-3">{calculatedWilks}</div>
               <p className="text-sm text-gray-600">
-                {calculatedWilks < 250 && 'Beginner - Keep building your foundation'}
-                {calculatedWilks >= 250 && calculatedWilks < 350 && 'Intermediate - Solid strength development'}
-                {calculatedWilks >= 350 && calculatedWilks < 450 && 'Advanced - Impressive strength levels'}
-                {calculatedWilks >= 450 && 'Elite - Exceptional powerlifting performance'}
+                {calculatedWilks < 250 && 'Beginner (<250) - Building strength fundamentals'}
+                {calculatedWilks >= 250 && calculatedWilks < 350 && 'Intermediate (250-349) - Solid strength development'}
+                {calculatedWilks >= 350 && calculatedWilks < 450 && 'Advanced (350-449) - Impressive strength levels'}
+                {calculatedWilks >= 450 && 'Elite (450+) - Competition-level strength'}
               </p>
             </div>
 

@@ -20,6 +20,9 @@ export default function ProfilePage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [bodyLoading, setBodyLoading] = useState(false);
+  const [progressError, setProgressError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   const handleUpdateBodyweight = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,9 +89,10 @@ export default function ProfilePage() {
     const week = parseInt(currentWeek);
 
     if (cycle < 1 || week < 1 || week > 4) {
-      alert('Please enter valid values (Cycle: 1+, Week: 1-4)');
+      setProgressError('Cycle must be 1 or higher, week must be 1-4');
       return;
     }
+    setProgressError('');
 
     setLoading(true);
     try {
@@ -113,8 +117,11 @@ export default function ProfilePage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess(false);
+
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      setPasswordError('Passwords don\'t match. Please try again.');
       return;
     }
 
@@ -124,10 +131,12 @@ export default function ProfilePage() {
         password: password,
       });
 
-      if (!error) {
+      if (error) {
+        setPasswordError('Failed to update password. Please try again.');
+      } else {
         setPassword('');
         setConfirmPassword('');
-        alert('Password updated successfully');
+        setPasswordSuccess(true);
       }
     } catch (error) {
       console.error('Error changing password:', error);
@@ -201,13 +210,16 @@ export default function ProfilePage() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              Update Progress
+              Update Cycle & Week
             </button>
+            {progressError && (
+              <p className="text-sm text-red-600 mt-2">{progressError}</p>
+            )}
           </form>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Bodyweight & Gender</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Body Stats</h2>
           <form onSubmit={handleUpdateBodyweight} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -251,13 +263,13 @@ export default function ProfilePage() {
               disabled={bodyLoading}
               className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              Update
+              Save Body Stats
             </button>
           </form>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Update your lifts</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Training Maxes</h2>
           <form onSubmit={handleUpdateLifts} className="space-y-4">
 
             <div>
@@ -337,8 +349,11 @@ export default function ProfilePage() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              Update
+              Save Training Maxes
             </button>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              This will reset your progress to Cycle 1, Week 1
+            </p>
           </form>
         </div>
 
@@ -392,8 +407,16 @@ export default function ProfilePage() {
               disabled={loading || !password || !confirmPassword}
               className="w-full border-2 border-blue-600 text-blue-600 py-4 rounded-xl font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
             >
-              Change
+              Update Password
             </button>
+            {passwordError && (
+              <p className="text-sm text-red-600 mt-2">{passwordError}</p>
+            )}
+            {passwordSuccess && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm mt-2">
+                Password updated! You can now use it to log in.
+              </div>
+            )}
           </form>
         </div>
 

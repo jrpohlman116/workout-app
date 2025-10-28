@@ -104,7 +104,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <p className="text-gray-600 text-sm mb-4">Wilks Score</p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-gray-600 text-sm">Wilks Score</p>
+            <p className="text-xs text-gray-500">Strength normalized by bodyweight</p>
+          </div>
           <div className="flex items-center justify-center mb-4">
             <svg className="w-48 h-48 transform -rotate-90">
               <circle
@@ -174,7 +177,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
             >
               <SkipForward className="w-4 h-4" />
-              Skip Week
+              Move to Next Week
             </button>
           </div>
           <div className="space-y-3">
@@ -202,7 +205,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                       {workout.name}
                     </div>
                     <div className={`text-sm ${isCompleted ? 'text-green-600' : 'text-gray-600'}`}>
-                      {isCompleted ? 'Completed' : `${weights.set3} lb`}
+                      {isCompleted ? 'Done ✓' : `Top set: ${weights.set3} lb`}
                     </div>
                   </div>
                   {isCompleted ? (
@@ -220,7 +223,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               disabled={skipping}
               className="w-full mt-4 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              {skipping ? 'Moving to next week...' : 'Complete Week & Continue'}
+              {skipping ? 'Advancing your program...' : `Start Week ${profile.current_week === 4 ? 1 : profile.current_week + 1}`}
             </button>
           )}
         </div>

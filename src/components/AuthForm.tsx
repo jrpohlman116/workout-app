@@ -30,7 +30,19 @@ export default function AuthForm() {
         if (error) throw error;
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      const errorMessage = err.message || '';
+
+      if (errorMessage.includes('Invalid login credentials')) {
+        setError("We couldn't find an account with those credentials. Please try again.");
+      } else if (errorMessage.includes('User already registered')) {
+        setError('An account with this email already exists. Try logging in instead.');
+      } else if (errorMessage.includes('Password') && errorMessage.includes('6')) {
+        setError('Your password needs at least 6 characters for security');
+      } else if (errorMessage.includes('Email')) {
+        setError('Please enter a valid email address');
+      } else {
+        setError('Something went wrong. Please check your connection and try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -79,7 +91,7 @@ export default function AuthForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="your@email.com"
+                placeholder="you@example.com"
               />
             </div>
 
@@ -87,6 +99,9 @@ export default function AuthForm() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Password
               </label>
+              {!isLogin && (
+                <p className="text-xs text-gray-500 mb-2">Minimum 6 characters</p>
+              )}
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -117,7 +132,7 @@ export default function AuthForm() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Please wait...' : isLogin ? 'Login' : 'Sign Up'}
+              {loading ? (isLogin ? 'Signing you in...' : 'Creating your account...') : isLogin ? 'Login' : 'Sign Up'}
             </button>
           </form>
         </div>

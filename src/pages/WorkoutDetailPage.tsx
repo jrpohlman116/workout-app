@@ -117,19 +117,24 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
               <span className="font-bold text-gray-900">{weights.set2} lb × {mainReps}</span>
             </div>
             <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl border-2 border-blue-600">
-              <span className="font-medium text-gray-700">Set 3 (AMRAP)</span>
+              <div>
+                <span className="font-medium text-gray-700">Set 3 - AMRAP</span>
+                <p className="text-xs text-gray-600 mt-0.5">As Many Reps As Possible</p>
+              </div>
               <span className="font-bold text-gray-900">{weights.set3} lb × {mainReps}+</span>
             </div>
+            <p className="text-sm text-gray-600 mt-2">Push yourself on this final set!</p>
           </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Log Your Performance</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Record Your Final Set</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Weight Lifted (Set 3)
+                Weight on Your AMRAP Set
               </label>
+              <p className="text-xs text-gray-500 mb-2">This should match Set 3 weight above ({weights.set3} lb)</p>
               <input
                 type="number"
                 value={weight}
@@ -140,15 +145,16 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Reps Performed
+                How many reps did you complete?
               </label>
               <input
                 type="number"
                 value={reps}
                 onChange={(e) => setReps(e.target.value)}
-                placeholder="How many reps?"
+                placeholder="e.g., 8, 10, 12..."
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <p className="text-xs text-gray-500 mt-2">Couldn't complete the set? That's okay - log what you did!</p>
             </div>
           </div>
         </div>
@@ -170,7 +176,7 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
           disabled={!weight || !reps || saving}
           className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? 'Saving...' : 'Complete Workout'}
+          {saving ? 'Recording your lift...' : 'Save & Mark Complete'}
         </button>
       </div>
     </div>

@@ -47,7 +47,8 @@ export default function Onboarding() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Welcome to 5-3-1</h1>
-          <p className="text-gray-600">Let's set up your training maxes</p>
+          <p className="text-gray-600">Let's set up your training maxes (1RM)</p>
+          <p className="text-sm text-gray-500 mt-1">Don't know your maxes? Use our calculator after setup!</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
@@ -89,12 +90,27 @@ export default function Onboarding() {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Squat 1RM (lb)
+              Squat - One Rep Max
             </label>
+            <p className="text-xs text-gray-500 mb-2">Your absolute maximum weight for one repetition</p>
             <input
               type="number"
               value={squatMax}
               onChange={(e) => setSquatMax(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., 315"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Bench Press - One Rep Max
+            </label>
+            <p className="text-xs text-gray-500 mb-2">Your absolute maximum weight for one repetition</p>
+            <input
+              type="number"
+              value={benchMax}
+              onChange={(e) => setBenchMax(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="e.g., 225"
             />
@@ -102,40 +118,29 @@ export default function Onboarding() {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Bench Press 1RM (lb)
+              Deadlift - One Rep Max
             </label>
-            <input
-              type="number"
-              value={benchMax}
-              onChange={(e) => setBenchMax(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g., 135"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Deadlift 1RM (lb)
-            </label>
+            <p className="text-xs text-gray-500 mb-2">Your absolute maximum weight for one repetition</p>
             <input
               type="number"
               value={deadliftMax}
               onChange={(e) => setDeadliftMax(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g., 275"
+              placeholder="e.g., 405"
             />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Overhead Press 1RM (lb)
+              Overhead Press - One Rep Max
             </label>
+            <p className="text-xs text-gray-500 mb-2">Your absolute maximum weight for one repetition</p>
             <input
               type="number"
               value={ohpMax}
               onChange={(e) => setOhpMax(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g., 95"
+              placeholder="e.g., 135"
             />
           </div>
 
@@ -144,11 +149,11 @@ export default function Onboarding() {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Setting up...' : 'Get Started'}
+            {loading ? 'Preparing your program...' : 'Get Started'}
           </button>
 
           <p className="text-xs text-gray-500 text-center">
-            Don't worry, you can update these values anytime in your profile
+            You can adjust these anytime - don't worry about being exact
           </p>
         </form>
       </div>

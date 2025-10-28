@@ -129,11 +129,17 @@ export default function ProgressPage() {
       <div className="bg-white">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
           <h1 className="text-4xl font-bold text-gray-900 mb-1">Progress</h1>
-          <p className="text-gray-600">Take a look at the progress you have made</p>
+          <p className="text-gray-600">Track your strength gains over time</p>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
+        {sessions.length === 0 && (
+          <div className="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4">
+            <p className="text-gray-700 font-semibold mb-1">Start tracking your progress!</p>
+            <p className="text-sm text-gray-600">Complete your first workout to see your progress here.</p>
+          </div>
+        )}
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <p className="text-gray-600 text-sm mb-2">Current Cycle</p>
           <div className="flex items-center gap-3">
@@ -146,20 +152,39 @@ export default function ProgressPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">Lift Progress</h2>
-          {renderChart()}
+          <h2 className="text-lg font-semibold text-gray-700 mb-2">Estimated 1RM Over Time</h2>
+          <p className="text-xs text-gray-500 mb-4">Based on your AMRAP set performance each week</p>
+          {sessions.length < 2 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 mb-2">Complete more workouts to see your progress chart</p>
+              <p className="text-sm text-gray-500">Your strength trend will appear here after a few sessions</p>
+            </div>
+          ) : (
+            renderChart()
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           {lifts.map((lift) => {
             const currentMax = getLatestMaxForLift(lift.type) || lift.initial;
-            const changePercent = getMaxChangePercent(lift.type, lift.initial);
+            const changePercent = parseFloat(getMaxChangePercent(lift.type, lift.initial));
+            const hasData = sessions.some(s => s.lift_type === lift.type);
 
             return (
               <div key={lift.type} className="bg-white rounded-2xl shadow-sm p-6">
                 <p className="text-gray-600 text-sm mb-2">{lift.name}</p>
                 <div className="text-3xl font-bold text-blue-600 mb-1">{currentMax} lb</div>
-                <div className="text-sm text-gray-600">({changePercent}%)</div>
+                {hasData ? (
+                  <div className={`text-sm font-semibold ${
+                    changePercent > 0 ? 'text-green-600' :
+                    changePercent < 0 ? 'text-red-600' :
+                    'text-gray-500'
+                  }`}>
+                    {changePercent > 0 && '+'}({changePercent}%)
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">No change</div>
+                )}
               </div>
             );
           })}
