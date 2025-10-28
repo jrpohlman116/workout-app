@@ -1,0 +1,225 @@
+import { useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, getCycleProgression } from '../lib/calculations';
+import { Calendar, RefreshCw, ChevronRight, Check, SkipForward } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+
+interface HomePageProps {
+  onNavigate: (page: string, liftType?: string) => void;
+}
+
+export default function HomePage({ onNavigate }: HomePageProps) {
+  const { profile, user, refreshProfile } = useAuth();
+  const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
+  const [skipping, setSkipping] = useState(false);
+
+  useEffect(() => {
+    if (user && profile) {
+      loadCompletedWorkouts();
+    }
+  }, [user, profile?.current_cycle, profile?.current_week]);
+
+  const loadCompletedWorkouts = async () => {
+    if (!user || !profile) return;
+
+    const { data } = await supabase
+      .from('workout_sessions')
+      .select('lift_type')
+      .eq('user_id', user.id)
+      .eq('cycle', profile.current_cycle)
+      .eq('week', profile.current_week);
+
+    if (data) {
+      setCompletedWorkouts(new Set(data.map(w => w.lift_type)));
+    }
+  };
+
+  const handleSkipWeek = async () => {
+    if (!user || !profile) return;
+
+    setSkipping(true);
+    try {
+      let nextWeek = profile.current_week + 1;
+      let nextCycle = profile.current_cycle;
+
+      if (nextWeek > 4) {
+        nextWeek = 1;
+        nextCycle += 1;
+      }
+
+      await supabase
+        .from('user_profiles')
+        .update({
+          current_week: nextWeek,
+          current_cycle: nextCycle,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      await refreshProfile();
+    } catch (error) {
+      console.error('Error skipping week:', error);
+    } finally {
+      setSkipping(false);
+    }
+  };
+
+  if (!profile) return null;
+
+  const workouts = [
+    { name: 'Squat', max: profile.squat_max, type: 'squat' },
+    { name: 'Bench', max: profile.bench_max, type: 'bench' },
+    { name: 'Deadlift', max: profile.deadlift_max, type: 'deadlift' },
+    { name: 'Overhead Press', max: profile.ohp_max, type: 'ohp' },
+  ];
+
+  const wilksScore = calculateWilksScore(
+    profile.squat_max,
+    profile.bench_max,
+    profile.deadlift_max
+  );
+
+  const getWilksLevel = (score: number): string => {
+    if (score < 250) return 'Beginner';
+    if (score < 350) return 'Intermediate';
+    if (score < 450) return 'Advanced';
+    return 'Elite';
+  };
+
+  const progression = getCycleProgression(profile.current_cycle);
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="bg-white">
+        <div className="max-w-md mx-auto px-4 pt-8 pb-6">
+          <h1 className="text-4xl font-bold text-gray-900 mb-1">{getGreeting()}</h1>
+          <p className="text-gray-600">Are you ready to lift heavy?</p>
+        </div>
+      </div>
+
+      <div className="max-w-md mx-auto px-4 py-6 space-y-4">
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <p className="text-gray-600 text-sm mb-4">Wilks Score</p>
+          <div className="flex items-center justify-center mb-4">
+            <svg className="w-48 h-48 transform -rotate-90">
+              <circle
+                cx="96"
+                cy="96"
+                r="80"
+                fill="none"
+                stroke="#f3f4f6"
+                strokeWidth="16"
+              />
+              <circle
+                cx="96"
+                cy="96"
+                r="80"
+                fill="none"
+                stroke="url(#gradient)"
+                strokeWidth="16"
+                strokeDasharray={`${(wilksScore / 600) * 502.4} 502.4`}
+                strokeLinecap="round"
+              />
+              <defs>
+                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#3b82f6" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="absolute">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-gray-900">{wilksScore}</div>
+                <div className="text-sm text-gray-600 mt-1">{getWilksLevel(wilksScore)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <p className="text-gray-600 text-sm mb-2">Week</p>
+            <div className="flex items-center gap-3">
+              <Calendar className="w-10 h-10 text-blue-600" />
+              <div>
+                <div className="text-3xl font-bold text-gray-900">{profile.current_week}</div>
+                <div className="text-sm text-gray-600">{getWeekSubtext(profile.current_week)}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <p className="text-gray-600 text-sm mb-2">Current Cycle</p>
+            <div className="flex items-center gap-3">
+              <RefreshCw className="w-10 h-10 text-blue-600" />
+              <div>
+                <div className="text-3xl font-bold text-gray-900">{profile.current_cycle}</div>
+                <div className="text-sm text-gray-600">+{progression} lbs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Workouts</h2>
+            <button
+              onClick={handleSkipWeek}
+              disabled={skipping}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <SkipForward className="w-4 h-4" />
+              Skip Week
+            </button>
+          </div>
+          <div className="space-y-3">
+            {workouts.map((workout) => {
+              const weights = calculateWorkoutWeights(
+                workout.max,
+                profile.current_cycle,
+                profile.current_week
+              );
+              const isCompleted = completedWorkouts.has(workout.type);
+
+              return (
+                <button
+                  key={workout.type}
+                  onClick={() => !isCompleted && onNavigate('workout', workout.type)}
+                  disabled={isCompleted}
+                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${
+                    isCompleted
+                      ? 'bg-green-50 cursor-not-allowed'
+                      : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="text-left">
+                    <div className={`font-semibold ${isCompleted ? 'text-green-700' : 'text-gray-900'}`}>
+                      {workout.name}
+                    </div>
+                    <div className={`text-sm ${isCompleted ? 'text-green-600' : 'text-gray-600'}`}>
+                      {isCompleted ? 'Completed' : `${weights.set3} lb`}
+                    </div>
+                  </div>
+                  {isCompleted ? (
+                    <Check className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {completedWorkouts.size === 4 && (
+            <button
+              onClick={handleSkipWeek}
+              disabled={skipping}
+              className="w-full mt-4 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {skipping ? 'Moving to next week...' : 'Complete Week & Continue'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
