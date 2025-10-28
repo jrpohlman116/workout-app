@@ -199,39 +199,37 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Bodyweight & Gender</h2>
           <form onSubmit={handleUpdateBodyweight} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Bodyweight
-                </label>
-                <div className="flex gap-3">
-                  <input
-                    type="number"
-                    value={bodyweight}
-                    onChange={(e) => setBodyweight(e.target.value)}
-                    placeholder="e.g. 180"
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <select className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option>lb</option>
-                    <option>kg</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Gender
-                </label>
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Bodyweight
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  value={bodyweight}
+                  onChange={(e) => setBodyweight(e.target.value)}
+                  placeholder="e.g. 180"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <select className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option>lb</option>
+                  <option>kg</option>
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Gender
+              </label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
             </div>
 
             <button
@@ -384,6 +382,14 @@ export default function ProfilePage() {
             </button>
           </form>
         </div>
+
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center justify-center gap-2 bg-white border-2 border-red-600 text-red-600 py-4 rounded-2xl font-semibold hover:bg-red-50 transition-colors shadow-sm"
+        >
+          <LogOut className="w-5 h-5" />
+          Sign Out
+        </button>
 
         <p className="text-center text-sm text-gray-500">
           Last updated: {lastUpdated}
