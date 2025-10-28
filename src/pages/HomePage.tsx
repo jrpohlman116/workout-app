@@ -73,11 +73,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     { name: 'Overhead Press', max: profile.ohp_max, type: 'ohp' },
   ];
 
+  const isLbs = profile.unit_preference === 'lb';
+  const lbToKg = (weight: number) => isLbs ? weight * 0.453592 : weight;
+
   const wilksScore = calculateWilksScore(
-    profile.squat_max,
-    profile.bench_max,
-    profile.deadlift_max,
-    profile.bodyweight || 0,
+    lbToKg(profile.squat_max),
+    lbToKg(profile.bench_max),
+    lbToKg(profile.deadlift_max),
+    lbToKg(profile.bodyweight || 0),
     profile.gender || 'male'
   );
 

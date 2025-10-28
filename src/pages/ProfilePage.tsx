@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [ohpMax, setOhpMax] = useState(profile?.ohp_max?.toString() || '');
   const [bodyweight, setBodyweight] = useState(profile?.bodyweight?.toString() || '');
   const [gender, setGender] = useState(profile?.gender || 'male');
+  const [unitPreference, setUnitPreference] = useState(profile?.unit_preference || 'lb');
   const [currentCycle, setCurrentCycle] = useState(profile?.current_cycle?.toString() || '1');
   const [currentWeek, setCurrentWeek] = useState(profile?.current_week?.toString() || '1');
   const [password, setPassword] = useState('');
@@ -31,6 +32,7 @@ export default function ProfilePage() {
         .update({
           bodyweight: parseFloat(bodyweight) || 0,
           gender: gender,
+          unit_preference: unitPreference,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
@@ -219,9 +221,13 @@ export default function ProfilePage() {
                   placeholder="e.g. 180"
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <select className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>lb</option>
-                  <option>kg</option>
+                <select
+                  value={unitPreference}
+                  onChange={(e) => setUnitPreference(e.target.value as 'lb' | 'kg')}
+                  className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="lb">lb</option>
+                  <option value="kg">kg</option>
                 </select>
               </div>
             </div>
@@ -266,9 +272,9 @@ export default function ProfilePage() {
                   placeholder="e.g. 125, 80, 45"
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <select className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>lb</option>
-                </select>
+                <div className="px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600">
+                  {unitPreference}
+                </div>
               </div>
             </div>
 
@@ -284,9 +290,9 @@ export default function ProfilePage() {
                   placeholder="e.g. 125, 80, 45"
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <select className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>lb</option>
-                </select>
+                <div className="px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600">
+                  {unitPreference}
+                </div>
               </div>
             </div>
 
@@ -302,9 +308,9 @@ export default function ProfilePage() {
                   placeholder="e.g. 125, 80, 45"
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <select className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>lb</option>
-                </select>
+                <div className="px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600">
+                  {unitPreference}
+                </div>
               </div>
             </div>
 
@@ -320,9 +326,9 @@ export default function ProfilePage() {
                   placeholder="e.g. 125, 80, 45"
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <select className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>lb</option>
-                </select>
+                <div className="px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600">
+                  {unitPreference}
+                </div>
               </div>
             </div>
 
