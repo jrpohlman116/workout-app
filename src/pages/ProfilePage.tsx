@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, LogOut } from 'lucide-react';
 
 export default function ProfilePage() {
   const { profile, user, refreshProfile } = useAuth();
