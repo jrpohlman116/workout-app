@@ -134,6 +134,14 @@ export default function ProfilePage() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   if (!profile) return null;
 
   const lastUpdated = new Date(profile.updated_at).toLocaleDateString('en-US', {
