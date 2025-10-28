@@ -1,0 +1,25 @@
+interface SkipLinkProps {
+  targetId: string;
+  children: React.ReactNode;
+}
+
+export default function SkipLink({ targetId, children }: SkipLinkProps) {
+  const handleSkip = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.focus();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  return (
+    <a
+      href={`#${targetId}`}
+      onClick={handleSkip}
+      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus:font-semibold focus:shadow-lg"
+    >
+      {children}
+    </a>
+  );
+}

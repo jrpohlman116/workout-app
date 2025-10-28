@@ -7,14 +7,18 @@ interface NavigationProps {
 
 export default function Navigation({ currentPage, onNavigate }: NavigationProps) {
   const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'calculator', label: 'Calculator', icon: Calculator },
-    { id: 'progress', label: 'Progress', icon: TrendingUp },
-    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'home', label: 'Home', icon: Home, description: 'View your workouts and progress overview' },
+    { id: 'calculator', label: 'Calculator', icon: Calculator, description: 'Calculate your one rep max and Wilks score' },
+    { id: 'progress', label: 'Progress', icon: TrendingUp, description: 'Track your strength gains over time' },
+    { id: 'profile', label: 'Profile', icon: User, description: 'Manage your account and training settings' },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-bottom">
+    <nav
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-bottom"
+      aria-label="Main navigation"
+      role="navigation"
+    >
       <div className="flex justify-around items-center h-16 max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -24,14 +28,19 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+              aria-label={`${item.label} - ${item.description}`}
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 ${
                 isActive ? 'text-blue-600' : 'text-gray-600'
               }`}
             >
               <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-100' : ''}`}>
-                <Icon className="w-6 h-6" />
+                <Icon className="w-6 h-6" aria-hidden="true" />
+                {isActive && (
+                  <span className="sr-only">(current page)</span>
+                )}
               </div>
-              <span className="text-xs mt-1 font-medium">{item.label}</span>
+              <span className="text-xs mt-1 font-medium" aria-hidden="true">{item.label}</span>
             </button>
           );
         })}

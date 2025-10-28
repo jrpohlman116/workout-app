@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthForm from './components/AuthForm';
 import Onboarding from './components/Onboarding';
 import Navigation from './components/Navigation';
+import SkipLink from './components/SkipLink';
 import HomePage from './pages/HomePage';
 import CalculatorPage from './pages/CalculatorPage';
 import ProgressPage from './pages/ProgressPage';
@@ -22,6 +23,11 @@ function AppContent() {
       setCurrentPage(page);
       setSelectedLift(null);
     }
+
+    setTimeout(() => {
+      const mainContent = document.getElementById('main-content');
+      mainContent?.focus();
+    }, 100);
   };
 
   const handleBack = () => {
@@ -31,10 +37,10 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" role="status" aria-live="polite">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" aria-hidden="true"></div>
+          <p className="text-gray-600">Loading your workout data...</p>
         </div>
       </div>
     );
@@ -49,18 +55,28 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
-      {currentPage === 'calculator' && <CalculatorPage />}
-      {currentPage === 'progress' && <ProgressPage />}
-      {currentPage === 'profile' && <ProfilePage />}
-      {currentPage === 'workout' && selectedLift && (
-        <WorkoutDetailPage liftType={selectedLift} onBack={handleBack} />
-      )}
-      {currentPage !== 'workout' && (
-        <Navigation currentPage={currentPage} onNavigate={handleNavigate} />
-      )}
-    </div>
+    <>
+      <SkipLink targetId="main-content">Skip to main content</SkipLink>
+      <SkipLink targetId="navigation">Skip to navigation</SkipLink>
+
+      <div className="min-h-screen bg-gray-50">
+        <main id="main-content" tabIndex={-1} className="focus:outline-none">
+          {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
+          {currentPage === 'calculator' && <CalculatorPage />}
+          {currentPage === 'progress' && <ProgressPage />}
+          {currentPage === 'profile' && <ProfilePage />}
+          {currentPage === 'workout' && selectedLift && (
+            <WorkoutDetailPage liftType={selectedLift} onBack={handleBack} />
+          )}
+        </main>
+
+        {currentPage !== 'workout' && (
+          <div id="navigation">
+            <Navigation currentPage={currentPage} onNavigate={handleNavigate} />
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
