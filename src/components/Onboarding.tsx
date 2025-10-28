@@ -54,16 +54,22 @@ export default function Onboarding() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Bodyweight (lb)
+                Bodyweight
               </label>
-              <input
-                type="number"
-                value={bodyweight}
-                onChange={(e) => setBodyweight(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g., 180"
-                required
-              />
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  value={bodyweight}
+                  onChange={(e) => setBodyweight(e.target.value)}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., 180"
+                  required
+                />
+                <select className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option>lb</option>
+                  <option>kg</option>
+                </select>
+              </div>
             </div>
 
             <div>

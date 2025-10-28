@@ -18,6 +18,32 @@ export default function ProfilePage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [bodyLoading, setBodyLoading] = useState(false);
+
+  const handleUpdateBodyweight = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setBodyLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          bodyweight: parseFloat(bodyweight) || 0,
+          gender: gender,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (!error) {
+        await refreshProfile();
+      }
+    } catch (error) {
+      console.error('Error updating bodyweight:', error);
+    } finally {
+      setBodyLoading(false);
+    }
+  };
 
   const handleUpdateLifts = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +58,6 @@ export default function ProfilePage() {
           bench_max: parseFloat(benchMax) || 0,
           deadlift_max: parseFloat(deadliftMax) || 0,
           ohp_max: parseFloat(ohpMax) || 0,
-          bodyweight: parseFloat(bodyweight) || 0,
-          gender: gender,
           current_cycle: 1,
           current_week: 1,
           updated_at: new Date().toISOString(),
@@ -173,8 +197,8 @@ export default function ProfilePage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Update your lifts</h2>
-          <form onSubmit={handleUpdateLifts} className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Bodyweight & Gender</h2>
+          <form onSubmit={handleUpdateBodyweight} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -190,6 +214,7 @@ export default function ProfilePage() {
                   />
                   <select className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option>lb</option>
+                    <option>kg</option>
                   </select>
                 </div>
               </div>
@@ -208,6 +233,20 @@ export default function ProfilePage() {
                 </select>
               </div>
             </div>
+
+            <button
+              type="submit"
+              disabled={bodyLoading}
+              className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              Update
+            </button>
+          </form>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Update your lifts</h2>
+          <form onSubmit={handleUpdateLifts} className="space-y-4">
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
