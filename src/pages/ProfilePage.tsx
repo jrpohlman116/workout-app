@@ -9,6 +9,8 @@ export default function ProfilePage() {
   const [benchMax, setBenchMax] = useState(profile?.bench_max?.toString() || '');
   const [deadliftMax, setDeadliftMax] = useState(profile?.deadlift_max?.toString() || '');
   const [ohpMax, setOhpMax] = useState(profile?.ohp_max?.toString() || '');
+  const [bodyweight, setBodyweight] = useState(profile?.bodyweight?.toString() || '');
+  const [gender, setGender] = useState(profile?.gender || 'male');
   const [currentCycle, setCurrentCycle] = useState(profile?.current_cycle?.toString() || '1');
   const [currentWeek, setCurrentWeek] = useState(profile?.current_week?.toString() || '1');
   const [password, setPassword] = useState('');
@@ -30,6 +32,8 @@ export default function ProfilePage() {
           bench_max: parseFloat(benchMax) || 0,
           deadlift_max: parseFloat(deadliftMax) || 0,
           ohp_max: parseFloat(ohpMax) || 0,
+          bodyweight: parseFloat(bodyweight) || 0,
+          gender: gender,
           current_cycle: 1,
           current_week: 1,
           updated_at: new Date().toISOString(),
@@ -171,6 +175,40 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Update your lifts</h2>
           <form onSubmit={handleUpdateLifts} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Bodyweight
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="number"
+                    value={bodyweight}
+                    onChange={(e) => setBodyweight(e.target.value)}
+                    placeholder="e.g. 180"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <select className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>lb</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Gender
+                </label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Squat

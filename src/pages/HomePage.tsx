@@ -76,7 +76,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const wilksScore = calculateWilksScore(
     profile.squat_max,
     profile.bench_max,
-    profile.deadlift_max
+    profile.deadlift_max,
+    profile.bodyweight || 0,
+    profile.gender || 'male'
   );
 
   const getWilksLevel = (score: number): string => {

@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function Onboarding() {
   const { user, refreshProfile } = useAuth();
+  const [bodyweight, setBodyweight] = useState('');
+  const [gender, setGender] = useState('male');
   const [squatMax, setSquatMax] = useState('');
   const [benchMax, setBenchMax] = useState('');
   const [deadliftMax, setDeadliftMax] = useState('');
@@ -19,6 +21,8 @@ export default function Onboarding() {
       const { error } = await supabase
         .from('user_profiles')
         .update({
+          bodyweight: parseFloat(bodyweight) || 0,
+          gender: gender,
           squat_max: parseFloat(squatMax) || 0,
           bench_max: parseFloat(benchMax) || 0,
           deadlift_max: parseFloat(deadliftMax) || 0,
@@ -47,6 +51,36 @@ export default function Onboarding() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Bodyweight (lb)
+              </label>
+              <input
+                type="number"
+                value={bodyweight}
+                onChange={(e) => setBodyweight(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., 180"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Gender
+              </label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Squat 1RM (lb)

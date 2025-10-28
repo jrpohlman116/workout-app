@@ -55,19 +55,36 @@ export function calculateWilksScore(
   squatMax: number,
   benchMax: number,
   deadliftMax: number,
-  bodyweight: number = 180
+  bodyweight: number,
+  gender: string
 ): number {
-  const total = squatMax + benchMax + deadliftMax;
-  const a = -216.0475144;
-  const b = 16.2606339;
-  const c = -0.002388645;
-  const d = -0.00113732;
-  const e = 7.01863e-6;
-  const f = -1.291e-8;
+  if (bodyweight <= 0) return 0;
 
-  const coeff = 500 / (a + b * bodyweight + c * Math.pow(bodyweight, 2) +
+  const total = squatMax + benchMax + deadliftMax;
+
+  let a, b, c, d, e, f;
+
+  if (gender === 'female') {
+    a = 594.31747775582;
+    b = -27.23842536447;
+    c = 0.82112226871;
+    d = -0.00930733913;
+    e = 0.00004731582;
+    f = -0.00000009054;
+  } else {
+    a = -216.0475144;
+    b = 16.2606339;
+    c = -0.002388645;
+    d = -0.00113732;
+    e = 7.01863e-6;
+    f = -1.291e-8;
+  }
+
+  const denominator = a + b * bodyweight + c * Math.pow(bodyweight, 2) +
     d * Math.pow(bodyweight, 3) + e * Math.pow(bodyweight, 4) +
-    f * Math.pow(bodyweight, 5));
+    f * Math.pow(bodyweight, 5);
+
+  const coeff = 500 / denominator;
 
   return Math.round((total * coeff) * 100) / 100;
 }
