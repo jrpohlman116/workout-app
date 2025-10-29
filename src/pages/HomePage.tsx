@@ -192,6 +192,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <div className="space-y-3">
             {workouts.map((workout) => {
               const weights = calculateWorkoutWeights(
+                workout.type,
                 workout.max,
                 profile.current_cycle,
                 profile.current_week
