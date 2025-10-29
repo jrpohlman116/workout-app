@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { calculateWorkoutWeights, calculateOneRepMax } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
+import { useConfetti } from '../hooks/useAnimations';
 
 interface WorkoutDetailPageProps {
   liftType: string;
@@ -14,6 +15,7 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
   const [saving, setSaving] = useState(false);
+  const celebrate = useConfetti();
 
   if (!profile) return null;
 
@@ -84,8 +86,11 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
         calculated_1rm: calculated1RM,
       });
 
-      await refreshProfile();
-      onBack();
+      celebrate(40);
+      setTimeout(async () => {
+        await refreshProfile();
+        onBack();
+      }, 800);
     } catch (error) {
       console.error('Error saving workout:', error);
     } finally {

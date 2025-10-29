@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, getCycleProgression } from '../lib/calculations';
 import { Calendar, RefreshCw, ChevronRight, Check, SkipForward } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useCountUp, useRipple } from '../hooks/useAnimations';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -13,6 +14,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
   const [workoutData, setWorkoutData] = useState<Map<string, { calculated_1rm: number }>>(new Map());
   const [skipping, setSkipping] = useState(false);
+  const createRipple = useRipple();
 
   useEffect(() => {
     if (user && profile) {
@@ -98,13 +100,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   };
 
   const progression = getCycleProgression(profile.current_cycle);
+  const animatedWilks = useCountUp(wilksScore, 1500, 0);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <div className="bg-white">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <h1 className="text-4xl font-bold text-gray-900 mb-1">{getGreeting()}</h1>
-          <p className="text-gray-600">Are you ready to lift heavy?</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-1 animate-slide-in-left">{getGreeting()}</h1>
+          <p className="text-gray-600 animate-slide-in-left stagger-1">Are you ready to lift heavy?</p>
         </div>
       </div>
 
@@ -143,7 +146,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             </svg>
             <div className="absolute">
               <div className="text-center">
-                <div className="text-4xl font-bold text-gray-900">{wilksScore}</div>
+                <div className="text-4xl font-bold text-gray-900 animate-count-up">{animatedWilks}</div>
                 <div className="text-sm text-gray-600 mt-1">{getWilksLevel(wilksScore)}</div>
               </div>
             </div>
@@ -200,9 +203,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               return (
                 <button
                   key={workout.type}
-                  onClick={() => !isCompleted && onNavigate('workout', workout.type)}
+                  onClick={(e) => {
+                    if (!isCompleted) {
+                      createRipple(e);
+                      onNavigate('workout', workout.type);
+                    }
+                  }}
                   disabled={isCompleted}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${
+                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${
                     isCompleted
                       ? 'bg-green-50 cursor-not-allowed'
                       : 'bg-gray-50 hover:bg-gray-100'
