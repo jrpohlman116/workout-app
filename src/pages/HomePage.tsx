@@ -11,6 +11,7 @@ interface HomePageProps {
 export default function HomePage({ onNavigate }: HomePageProps) {
   const { profile, user, refreshProfile } = useAuth();
   const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
+  const [workoutData, setWorkoutData] = useState<Map<string, { calculated_1rm: number }>>(new Map());
   const [skipping, setSkipping] = useState(false);
 
   useEffect(() => {
@@ -24,13 +25,18 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
     const { data } = await supabase
       .from('workout_sessions')
-      .select('lift_type')
+      .select('lift_type, calculated_1rm')
       .eq('user_id', user.id)
       .eq('cycle', profile.current_cycle)
       .eq('week', profile.current_week);
 
     if (data) {
       setCompletedWorkouts(new Set(data.map(w => w.lift_type)));
+      const dataMap = new Map();
+      data.forEach(w => {
+        dataMap.set(w.lift_type, { calculated_1rm: w.calculated_1rm });
+      });
+      setWorkoutData(dataMap);
     }
   };
 
@@ -183,12 +189,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <div className="space-y-3">
             {workouts.map((workout) => {
               const weights = calculateWorkoutWeights(
-                workout.type,
                 workout.max,
                 profile.current_cycle,
                 profile.current_week
               );
               const isCompleted = completedWorkouts.has(workout.type);
+              const sessionData = workoutData.get(workout.type);
+              const projected1RM = sessionData?.calculated_1rm;
 
               return (
                 <button
@@ -206,7 +213,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                       {workout.name}
                     </div>
                     <div className={`text-sm ${isCompleted ? 'text-green-600' : 'text-gray-600'}`}>
-                      {isCompleted ? 'Done ✓' : `Top set: ${weights.set3} lb`}
+                      {isCompleted && projected1RM
+                        ? `Projected 1RM: ${Math.round(projected1RM)} ${profile.unit_preference || 'lb'}`
+                        : isCompleted
+                        ? 'Done ✓'
+                        : `Top set: ${weights.set3} ${profile.unit_preference || 'lb'}`}
                     </div>
                   </div>
                   {isCompleted ? (
