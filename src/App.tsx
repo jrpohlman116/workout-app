@@ -24,6 +24,8 @@ function AppContent() {
       setSelectedLift(null);
     }
 
+    window.scrollTo(0, 0);
+
     setTimeout(() => {
       const mainContent = document.getElementById('main-content');
       mainContent?.focus();
@@ -33,6 +35,7 @@ function AppContent() {
   const handleBack = () => {
     setCurrentPage('home');
     setSelectedLift(null);
+    window.scrollTo(0, 0);
   };
 
   if (loading) {
