@@ -13,12 +13,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const { profile, user, refreshProfile } = useAuth();
   const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
   const [workoutData, setWorkoutData] = useState<Map<string, { calculated_1rm: number }>>(new Map());
+  const [projectedMaxes, setProjectedMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
   const [skipping, setSkipping] = useState(false);
   const createRipple = useRipple();
 
   useEffect(() => {
     if (user && profile) {
       loadCompletedWorkouts();
+      loadProjectedMaxes();
     }
   }, [user, profile?.current_cycle, profile?.current_week]);
 
@@ -39,6 +41,31 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         dataMap.set(w.lift_type, { calculated_1rm: w.calculated_1rm });
       });
       setWorkoutData(dataMap);
+    }
+  };
+
+  const loadProjectedMaxes = async () => {
+    if (!user || !profile) return;
+
+    const { data } = await supabase
+      .from('workout_sessions')
+      .select('lift_type, calculated_1rm')
+      .eq('user_id', user.id)
+      .order('completed_at', { ascending: true });
+
+    if (data) {
+      const getLatestMax = (liftType: string) => {
+        const liftSessions = data.filter(s => s.lift_type === liftType);
+        if (liftSessions.length === 0) return 0;
+        return liftSessions[liftSessions.length - 1].calculated_1rm;
+      };
+
+      setProjectedMaxes({
+        squat: getLatestMax('squat') || profile.squat_max,
+        bench: getLatestMax('bench') || profile.bench_max,
+        deadlift: getLatestMax('deadlift') || profile.deadlift_max,
+        ohp: getLatestMax('ohp') || profile.ohp_max,
+      });
     }
   };
 
@@ -84,13 +111,28 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const isLbs = profile.unit_preference === 'lb';
   const lbToKg = (weight: number) => isLbs ? weight * 0.453592 : weight;
 
-  const wilksScore = calculateWilksScore(
+  const currentWilksScore = calculateWilksScore(
     lbToKg(profile.squat_max),
     lbToKg(profile.bench_max),
     lbToKg(profile.deadlift_max),
     lbToKg(profile.bodyweight || 0),
     profile.gender || 'male'
   );
+
+  const projectedWilksScore = calculateWilksScore(
+    lbToKg(projectedMaxes.squat),
+    lbToKg(projectedMaxes.bench),
+    lbToKg(projectedMaxes.deadlift),
+    lbToKg(profile.bodyweight || 0),
+    profile.gender || 'male'
+  );
+
+  const wilksChangePercent = currentWilksScore > 0
+    ? (((projectedWilksScore - currentWilksScore) / currentWilksScore) * 100).toFixed(1)
+    : '0.0';
+
+  const hasProjectedData = projectedMaxes.squat > 0 || projectedMaxes.bench > 0 || projectedMaxes.deadlift > 0;
+  const displayWilks = hasProjectedData ? projectedWilksScore : currentWilksScore;
 
   const getWilksLevel = (score: number): string => {
     if (score < 250) return 'Beginner';
@@ -99,8 +141,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     return 'Elite';
   };
 
-  const progression = getCycleProgression(profile.current_cycle);
-  const animatedWilks = useCountUp(wilksScore, 1500, 0);
+  const progression = getCycleProgression(profile.current_cycle, 'squat');
+  const animatedWilks = useCountUp(displayWilks, 1500, 0);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -114,8 +156,19 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-gray-600 text-sm">Wilks Score</p>
-            <p className="text-xs text-gray-500">Strength normalized by bodyweight</p>
+            <div>
+              <p className="text-gray-600 text-sm">Wilks Score</p>
+              <p className="text-xs text-gray-500">Strength normalized by bodyweight</p>
+            </div>
+            {hasProjectedData && parseFloat(wilksChangePercent) !== 0 && (
+              <div className={`text-sm font-semibold ${
+                parseFloat(wilksChangePercent) > 0 ? 'text-green-600' :
+                parseFloat(wilksChangePercent) < 0 ? 'text-red-600' :
+                'text-gray-500'
+              }`}>
+                {parseFloat(wilksChangePercent) > 0 && '+'}({wilksChangePercent}%)
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-center mb-4">
             <svg className="w-48 h-48 transform -rotate-90">
@@ -134,7 +187,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 fill="none"
                 stroke="url(#gradient)"
                 strokeWidth="16"
-                strokeDasharray={`${(wilksScore / 600) * 502.4} 502.4`}
+                strokeDasharray={`${(displayWilks / 600) * 502.4} 502.4`}
                 strokeLinecap="round"
               />
               <defs>
@@ -147,7 +200,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             <div className="absolute">
               <div className="text-center">
                 <div className="text-4xl font-bold text-gray-900 animate-count-up">{animatedWilks}</div>
-                <div className="text-sm text-gray-600 mt-1">{getWilksLevel(wilksScore)}</div>
+                <div className="text-sm text-gray-600 mt-1">{getWilksLevel(displayWilks)}</div>
+                {hasProjectedData && (
+                  <div className="text-xs text-gray-500 mt-1">Projected</div>
+                )}
               </div>
             </div>
           </div>
