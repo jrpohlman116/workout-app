@@ -135,9 +135,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const displayWilks = hasProjectedData ? projectedWilksScore : currentWilksScore;
 
   const getWilksLevel = (score: number): string => {
-    if (score < 250) return 'Beginner';
-    if (score < 350) return 'Intermediate';
-    if (score < 450) return 'Advanced';
+    if (score < 200) return 'Beginner';
+    if (score < 238) return 'Novice';
+    if (score < 326) return 'Intermediate';
+    if (score < 414) return 'Advanced';
     return 'Elite';
   };
 
