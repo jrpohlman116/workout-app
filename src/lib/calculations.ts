@@ -23,27 +23,27 @@ export function calculateWorkoutWeights(
 
   if (week === 1) {
     return {
-      set1: Math.round(trainingMax * 0.65),
-      set2: Math.round(trainingMax * 0.75),
-      set3: Math.round(trainingMax * 0.85),
+      set1: Math.round(trainingMax * 0.65 / 5) * 5,
+      set2: Math.round(trainingMax * 0.75 / 5) * 5,
+      set3: Math.round(trainingMax * 0.85 / 5) * 5,
     };
   } else if (week === 2) {
     return {
-      set1: Math.round(trainingMax * 0.70),
-      set2: Math.round(trainingMax * 0.80),
-      set3: Math.round(trainingMax * 0.90),
+      set1: Math.round(trainingMax * 0.70 / 5) * 5,
+      set2: Math.round(trainingMax * 0.80 / 5) * 5,
+      set3: Math.round(trainingMax * 0.90 / 5) * 5,
     };
   } else if (week === 3) {
     return {
-      set1: Math.round(trainingMax * 0.75),
-      set2: Math.round(trainingMax * 0.85),
-      set3: Math.round(trainingMax * 0.95),
+      set1: Math.round(trainingMax * 0.75 / 5) * 5,
+      set2: Math.round(trainingMax * 0.85 / 5) * 5,
+      set3: Math.round(trainingMax * 0.95 / 5) * 5,
     };
   } else {
     return {
-      set1: Math.round(trainingMax * 0.40),
-      set2: Math.round(trainingMax * 0.50),
-      set3: Math.round(trainingMax * 0.60),
+      set1: Math.round(trainingMax * 0.40 / 5) * 5,
+      set2: Math.round(trainingMax * 0.50 / 5) * 5,
+      set3: Math.round(trainingMax * 0.60 / 5) * 5,
     };
   }
 }
