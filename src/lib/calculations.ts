@@ -6,16 +6,20 @@ export function calculateTrainingMax(oneRepMax: number): number {
   return Math.round(oneRepMax * 0.9);
 }
 
-export function getCycleProgression(cycle: number): number {
+export function getCycleProgression(cycle: number, type: string): number {
+  if (type === 'bench' || type === 'ohp') {
+    return (cycle - 1) * 5;
+  }
   return (cycle - 1) * 10;
 }
 
 export function calculateWorkoutWeights(
+  type: string,
   oneRepMax: number,
   cycle: number,
   week: number
 ): { set1: number; set2: number; set3: number } {
-  const trainingMax = calculateTrainingMax(oneRepMax) + getCycleProgression(cycle);
+  const trainingMax = calculateTrainingMax(oneRepMax) + getCycleProgression(cycle, type);
 
   if (week === 1) {
     return {

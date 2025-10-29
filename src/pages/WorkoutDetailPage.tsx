@@ -32,6 +32,7 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
   };
 
   const weights = calculateWorkoutWeights(
+    liftType,
     maxes[liftType],
     profile.current_cycle,
     profile.current_week
