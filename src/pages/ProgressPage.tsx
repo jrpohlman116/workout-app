@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../lib/supabase';
 import { RefreshCw } from 'lucide-react';
 import { getCycleProgression } from '../lib/calculations';
+import ProgressChart from '../components/ProgressChart';
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
@@ -49,80 +50,24 @@ export default function ProgressPage() {
     { name: 'Max OHP', type: 'ohp', initial: profile.ohp_max },
   ];
 
-  const progression = getCycleProgression(profile.current_cycle);
+  const progression = getCycleProgression(profile.current_cycle, 'squat');
 
-  const renderChart = () => {
-    const liftTypes = ['squat', 'bench', 'deadlift', 'ohp'];
-    const colors = ['#3b82f6', '#10b981', '#6366f1', '#f59e0b'];
+  const liftTypes = ['squat', 'bench', 'deadlift', 'ohp'];
+  const liftNames = ['Squat', 'Bench', 'Deadlift', 'OHP'];
+  const colors = ['#3b82f6', '#10b981', '#6366f1', '#f59e0b'];
 
-    const chartData = liftTypes.map((type, idx) => {
-      const liftSessions = sessions.filter(s => s.lift_type === type);
-      return {
-        type,
-        color: colors[idx],
-        data: liftSessions.map(s => s.calculated_1rm),
-      };
-    });
-
-    const allValues = chartData.flatMap(d => d.data);
-    const maxValue = Math.max(...allValues, 100);
-    const minValue = Math.min(...allValues, 0);
-    const range = maxValue - minValue;
-
-    return (
-      <svg viewBox="0 0 600 300" className="w-full h-64">
-        <defs>
-          {chartData.map((lift, idx) => (
-            <linearGradient key={idx} id={`grad-${idx}`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={lift.color} />
-              <stop offset="100%" stopColor={lift.color} stopOpacity="0.6" />
-            </linearGradient>
-          ))}
-        </defs>
-
-        {chartData.map((lift, liftIdx) => {
-          if (lift.data.length < 2) return null;
-
-          const points = lift.data.map((value, i) => {
-            const x = 50 + (i / (lift.data.length - 1)) * 500;
-            const y = 250 - ((value - minValue) / range) * 200;
-            return `${x},${y}`;
-          }).join(' ');
-
-          return (
-            <polyline
-              key={liftIdx}
-              points={points}
-              fill="none"
-              stroke={`url(#grad-${liftIdx})`}
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          );
-        })}
-
-        {Array.from({ length: 12 }, (_, i) => (
-          <line
-            key={i}
-            x1={50 + i * 45}
-            y1="50"
-            x2={50 + i * 45}
-            y2="250"
-            stroke="#e5e7eb"
-            strokeWidth="1"
-          />
-        ))}
-
-        <text x="60" y="280" fontSize="12" fill="#9ca3af">Sep</text>
-        <text x="150" y="280" fontSize="12" fill="#9ca3af">Oct</text>
-        <text x="240" y="280" fontSize="12" fill="#9ca3af">Nov</text>
-        <text x="330" y="280" fontSize="12" fill="#9ca3af">Dec</text>
-        <text x="420" y="280" fontSize="12" fill="#9ca3af">Jan</text>
-        <text x="510" y="280" fontSize="12" fill="#9ca3af">Feb</text>
-      </svg>
-    );
-  };
+  const chartData = liftTypes.map((type, idx) => {
+    const liftSessions = sessions.filter(s => s.lift_type === type);
+    return {
+      type,
+      name: liftNames[idx],
+      color: colors[idx],
+      data: liftSessions.map(s => ({
+        value: s.calculated_1rm,
+        date: s.completed_at,
+      })),
+    };
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -154,13 +99,13 @@ export default function ProgressPage() {
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-700 mb-2">Estimated 1RM Over Time</h2>
           <p className="text-xs text-gray-500 mb-4">Based on your AMRAP set performance each week</p>
-          {sessions.length < 2 ? (
+          {sessions.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600 mb-2">Complete more workouts to see your progress chart</p>
-              <p className="text-sm text-gray-500">Your strength trend will appear here after a few sessions</p>
+              <p className="text-gray-600 mb-2">Complete your first workout to see progress</p>
+              <p className="text-sm text-gray-500">Your strength trend will appear here after completing workouts</p>
             </div>
           ) : (
-            renderChart()
+            <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
           )}
         </div>
 
