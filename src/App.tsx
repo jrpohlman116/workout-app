@@ -15,13 +15,79 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState('home');
   const [selectedLift, setSelectedLift] = useState<string | null>(null);
 
+  useEffect(() => {
+    const path = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
+
+    if (path === '/' || path === '/home') {
+      setCurrentPage('home');
+      setSelectedLift(null);
+    } else if (path === '/calculator') {
+      setCurrentPage('calculator');
+      setSelectedLift(null);
+    } else if (path === '/progress') {
+      setCurrentPage('progress');
+      setSelectedLift(null);
+    } else if (path === '/profile') {
+      setCurrentPage('profile');
+      setSelectedLift(null);
+    } else if (path === '/workout') {
+      const lift = params.get('lift');
+      if (lift) {
+        setCurrentPage('workout');
+        setSelectedLift(lift);
+      } else {
+        setCurrentPage('home');
+        setSelectedLift(null);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+
+      if (path === '/' || path === '/home') {
+        setCurrentPage('home');
+        setSelectedLift(null);
+      } else if (path === '/calculator') {
+        setCurrentPage('calculator');
+        setSelectedLift(null);
+      } else if (path === '/progress') {
+        setCurrentPage('progress');
+        setSelectedLift(null);
+      } else if (path === '/profile') {
+        setCurrentPage('profile');
+        setSelectedLift(null);
+      } else if (path === '/workout') {
+        const lift = params.get('lift');
+        if (lift) {
+          setCurrentPage('workout');
+          setSelectedLift(lift);
+        } else {
+          setCurrentPage('home');
+          setSelectedLift(null);
+        }
+      }
+
+      window.scrollTo(0, 0);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const handleNavigate = (page: string, liftType?: string) => {
     if (page === 'workout' && liftType) {
       setSelectedLift(liftType);
       setCurrentPage('workout');
+      window.history.pushState({}, '', `/workout?lift=${liftType}`);
     } else {
       setCurrentPage(page);
       setSelectedLift(null);
+      const path = page === 'home' ? '/' : `/${page}`;
+      window.history.pushState({}, '', path);
     }
 
     window.scrollTo(0, 0);
@@ -33,9 +99,7 @@ function AppContent() {
   };
 
   const handleBack = () => {
-    setCurrentPage('home');
-    setSelectedLift(null);
-    window.scrollTo(0, 0);
+    window.history.back();
   };
 
   if (loading) {
