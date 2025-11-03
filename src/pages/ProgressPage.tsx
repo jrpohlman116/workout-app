@@ -4,10 +4,12 @@ import { supabase, WorkoutSession } from '../lib/supabase';
 import { RefreshCw } from 'lucide-react';
 import { getCycleProgression } from '../lib/calculations';
 import ProgressChart from '../components/ProgressChart';
+import { useCountUp, useStaggeredAnimation } from '../hooks/useAnimations';
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  const visibleLifts = useStaggeredAnimation(4, 100);
 
   useEffect(() => {
     if (user) {
@@ -86,22 +88,22 @@ export default function ProgressPage() {
             <p className="text-sm text-gray-600">Complete your first workout to see your progress here.</p>
           </div>
         )}
-        <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up">
           <p className="text-gray-600 text-sm mb-2">Current Cycle</p>
           <div className="flex items-center gap-3">
-            <RefreshCw className="w-12 h-12 text-blue-600" />
+            <RefreshCw className="w-12 h-12 text-blue-600 animate-spin" style={{ animationDuration: '3s' }} />
             <div>
-              <span className="text-4xl font-bold text-gray-900">{profile.current_cycle}</span>
+              <span className="text-4xl font-bold text-gray-900 animate-count-up">{profile.current_cycle}</span>
               <span className="text-gray-600 text-lg ml-2">+{progression} lbs</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <h2 className="text-lg font-semibold text-gray-700 mb-2">Estimated 1RM Over Time</h2>
           <p className="text-xs text-gray-500 mb-4">Based on your AMRAP set performance each week</p>
           {sessions.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 animate-fade-in">
               <p className="text-gray-600 mb-2">Complete your first workout to see progress</p>
               <p className="text-sm text-gray-500">Your strength trend will appear here after completing workouts</p>
             </div>
@@ -111,17 +113,27 @@ export default function ProgressPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          {lifts.map((lift) => {
+          {lifts.map((lift, index) => {
             const currentMax = getLatestMaxForLift(lift.type) || lift.initial;
             const changePercent = parseFloat(getMaxChangePercent(lift.type, lift.initial));
             const hasData = sessions.some(s => s.lift_type === lift.type);
+            const animatedMax = useCountUp(currentMax, 1000, Math.floor(currentMax * 0.7));
+            const isVisible = index < visibleLifts;
 
             return (
-              <div key={lift.type} className="bg-white rounded-2xl shadow-sm p-6">
+              <div
+                key={lift.type}
+                className={`bg-white rounded-2xl shadow-sm p-6 hover-lift transition-all ${
+                  isVisible ? 'opacity-100 animate-scale-in' : 'opacity-0'
+                }`}
+                style={{ animationDelay: `${index * 0.1 + 0.2}s` }}
+              >
                 <p className="text-gray-600 text-sm mb-2">{lift.name}</p>
-                <div className="text-3xl font-bold text-blue-600 mb-1">{currentMax} lb</div>
+                <div className="text-3xl font-bold text-blue-600 mb-1">
+                  {isVisible ? animatedMax : currentMax} {profile.unit_preference || 'lb'}
+                </div>
                 {hasData ? (
-                  <div className={`text-sm font-semibold ${
+                  <div className={`text-sm font-semibold animate-fade-in ${
                     changePercent > 0 ? 'text-green-600' :
                     changePercent < 0 ? 'text-red-600' :
                     'text-gray-500'
