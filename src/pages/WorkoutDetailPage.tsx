@@ -67,6 +67,7 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
     ],
   };
 
+  const isDeloadWeek = profile.current_week === 4;
   const mainReps = profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5;
 
   const handleComplete = async () => {
@@ -111,6 +112,12 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
+        {isDeloadWeek && (
+          <div className="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4">
+            <p className="text-gray-700 font-semibold mb-1">Deload Week - Rest & Recovery</p>
+            <p className="text-sm text-gray-600">This is a lighter week to help your body recover. No need to log your AMRAP set this week!</p>
+          </div>
+        )}
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Main Sets</h2>
           <div className="space-y-3">
@@ -122,19 +129,20 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
               <span className="font-medium text-gray-700">Set 2</span>
               <span className="font-bold text-gray-900">{weights.set2} lb × {mainReps}</span>
             </div>
-            <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl border-2 border-blue-600">
+            <div className={`flex justify-between items-center p-4 rounded-xl ${isDeloadWeek ? 'bg-gray-50' : 'bg-blue-50 border-2 border-blue-600'}`}>
               <div>
-                <span className="font-medium text-gray-700">Set 3 - AMRAP</span>
-                <p className="text-xs text-gray-600 mt-0.5">As Many Reps As Possible</p>
+                <span className="font-medium text-gray-700">Set 3{isDeloadWeek ? '' : ' - AMRAP'}</span>
+                {!isDeloadWeek && <p className="text-xs text-gray-600 mt-0.5">As Many Reps As Possible</p>}
               </div>
-              <span className="font-bold text-gray-900">{weights.set3} lb × {mainReps}+</span>
+              <span className="font-bold text-gray-900">{weights.set3} lb × {mainReps}{isDeloadWeek ? '' : '+'}</span>
             </div>
-            <p className="text-sm text-gray-600 mt-2">Push yourself on this final set!</p>
+            {!isDeloadWeek && <p className="text-sm text-gray-600 mt-2">Push yourself on this final set!</p>}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Record Your Final Set</h2>
+        {!isDeloadWeek && (
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Record Your Final Set</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -163,7 +171,8 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
               <p className="text-xs text-gray-500 mt-2">Couldn't complete the set? That's okay - log what you did!</p>
             </div>
           </div>
-        </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Accessory Exercises</h2>
@@ -177,13 +186,22 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
           </div>
         </div>
 
-        <button
-          onClick={handleComplete}
-          disabled={!weight || !reps || saving}
-          className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? 'Recording your lift...' : 'Save & Mark Complete'}
-        </button>
+        {!isDeloadWeek ? (
+          <button
+            onClick={handleComplete}
+            disabled={!weight || !reps || saving}
+            className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? 'Recording your lift...' : 'Save & Mark Complete'}
+          </button>
+        ) : (
+          <button
+            onClick={onBack}
+            className="w-full bg-gray-600 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 transition-colors"
+          >
+            Back to Workouts
+          </button>
+        )}
       </div>
     </div>
   );
