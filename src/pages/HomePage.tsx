@@ -270,33 +270,24 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 <button
                   key={workout.type}
                   onClick={(e) => {
-                    createRipple(e);
-                    onNavigate('workout', workout.type);
+                    if (!isCompleted) {
+                      createRipple(e);
+                      onNavigate('workout', workout.type);
+                    }
                   }}
+                  disabled={isCompleted}
                   className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${
                     isCompleted
-                      ? 'bg-green-50'
-                      : isDeloadWeek
-                      ? 'bg-blue-50 hover:bg-blue-100'
+                      ? 'bg-green-50 cursor-not-allowed'
                       : 'bg-gray-50 hover:bg-gray-100'
                   }`}
                 >
                   <div className="text-left">
-                    <div className={`font-semibold ${
-                      isCompleted ? 'text-green-700' :
-                      isDeloadWeek ? 'text-blue-700' :
-                      'text-gray-900'
-                    }`}>
+                    <div className={`font-semibold ${isCompleted ? 'text-green-700' : 'text-gray-900'}`}>
                       {workout.name}
                     </div>
-                    <div className={`text-sm ${
-                      isCompleted ? 'text-green-600' :
-                      isDeloadWeek ? 'text-blue-600' :
-                      'text-gray-600'
-                    }`}>
-                      {isDeloadWeek
-                        ? `Deload: ${weights.set3} ${profile.unit_preference || 'lb'}`
-                        : isCompleted && projected1RM
+                    <div className={`text-sm ${isCompleted ? 'text-green-600' : 'text-gray-600'}`}>
+                      {isCompleted && projected1RM
                         ? `Projected 1RM: ${Math.round(projected1RM)} ${profile.unit_preference || 'lb'}`
                         : isCompleted
                         ? 'Done ✓'
@@ -306,7 +297,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   {isCompleted ? (
                     <Check className="w-5 h-5 text-green-600" />
                   ) : (
-                    <ChevronRight className={`w-5 h-5 ${isDeloadWeek ? 'text-blue-400' : 'text-gray-400'}`} />
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
                   )}
                 </button>
               );
