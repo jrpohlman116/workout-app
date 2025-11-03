@@ -1,0 +1,18 @@
+{
+  "name": "531 Workout Tracker",
+  "short_name": "531 Tracker",
+  "description": "Track your 5-3-1 workout progress and strength gains",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -454,3 +454,19 @@
 .animate-attention {
   animation: attentionSeeker 1s ease-in-out;
 }
+
+/* Slide In From Bottom */
+@keyframes slideInBottom {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-bottom {
+  animation: slideInBottom 0.4s ease-out;
+}
