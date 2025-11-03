@@ -4,6 +4,7 @@ import AuthForm from './components/AuthForm';
 import Onboarding from './components/Onboarding';
 import Navigation from './components/Navigation';
 import SkipLink from './components/SkipLink';
+import InstallPrompt from './components/InstallPrompt';
 import HomePage from './pages/HomePage';
 import CalculatorPage from './pages/CalculatorPage';
 import ProgressPage from './pages/ProgressPage';
@@ -125,6 +126,7 @@ function AppContent() {
     <>
       <SkipLink targetId="main-content">Skip to main content</SkipLink>
       <SkipLink targetId="navigation">Skip to navigation</SkipLink>
+      <InstallPrompt />
 
       <div className="min-h-screen bg-gray-50">
         <main id="main-content" tabIndex={-1} className="focus:outline-none">
