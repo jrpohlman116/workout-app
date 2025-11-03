@@ -25,7 +25,8 @@ export default function ProgressPage() {
       .order('completed_at', { ascending: true });
 
     if (data) {
-      setSessions(data);
+      const nonDeloadSessions = data.filter(s => s.week !== 4);
+      setSessions(nonDeloadSessions);
     }
   };
 
@@ -57,7 +58,7 @@ export default function ProgressPage() {
   const colors = ['#3b82f6', '#10b981', '#6366f1', '#f59e0b'];
 
   const chartData = liftTypes.map((type, idx) => {
-    const liftSessions = sessions.filter(s => s.lift_type === type);
+    const liftSessions = sessions.filter(s => s.lift_type === type && s.week !== 4);
     return {
       type,
       name: liftNames[idx],

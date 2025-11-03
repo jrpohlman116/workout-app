@@ -49,13 +49,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
     const { data } = await supabase
       .from('workout_sessions')
-      .select('lift_type, calculated_1rm')
+      .select('lift_type, calculated_1rm, week')
       .eq('user_id', user.id)
       .order('completed_at', { ascending: true });
 
     if (data) {
       const getLatestMax = (liftType: string) => {
-        const liftSessions = data.filter(s => s.lift_type === liftType);
+        const liftSessions = data.filter(s => s.lift_type === liftType && s.week !== 4);
         if (liftSessions.length === 0) return 0;
         return liftSessions[liftSessions.length - 1].calculated_1rm;
       };
@@ -246,6 +246,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               Move to Next Week
             </button>
           </div>
+          {profile.current_week === 4 && (
+            <div className="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4 mb-4">
+              <p className="text-gray-700 font-semibold mb-1">Deload Week - Active Recovery</p>
+              <p className="text-sm text-gray-600">Complete your workouts at lighter weights. No need to log your reps this week!</p>
+            </div>
+          )}
           <div className="space-y-3">
             {workouts.map((workout) => {
               const weights = calculateWorkoutWeights(
@@ -258,28 +264,39 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               const sessionData = workoutData.get(workout.type);
               const projected1RM = sessionData?.calculated_1rm;
 
+              const isDeloadWeek = profile.current_week === 4;
+
               return (
                 <button
                   key={workout.type}
                   onClick={(e) => {
-                    if (!isCompleted) {
-                      createRipple(e);
-                      onNavigate('workout', workout.type);
-                    }
+                    createRipple(e);
+                    onNavigate('workout', workout.type);
                   }}
-                  disabled={isCompleted}
                   className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${
                     isCompleted
-                      ? 'bg-green-50 cursor-not-allowed'
+                      ? 'bg-green-50'
+                      : isDeloadWeek
+                      ? 'bg-blue-50 hover:bg-blue-100'
                       : 'bg-gray-50 hover:bg-gray-100'
                   }`}
                 >
                   <div className="text-left">
-                    <div className={`font-semibold ${isCompleted ? 'text-green-700' : 'text-gray-900'}`}>
+                    <div className={`font-semibold ${
+                      isCompleted ? 'text-green-700' :
+                      isDeloadWeek ? 'text-blue-700' :
+                      'text-gray-900'
+                    }`}>
                       {workout.name}
                     </div>
-                    <div className={`text-sm ${isCompleted ? 'text-green-600' : 'text-gray-600'}`}>
-                      {isCompleted && projected1RM
+                    <div className={`text-sm ${
+                      isCompleted ? 'text-green-600' :
+                      isDeloadWeek ? 'text-blue-600' :
+                      'text-gray-600'
+                    }`}>
+                      {isDeloadWeek
+                        ? `Deload: ${weights.set3} ${profile.unit_preference || 'lb'}`
+                        : isCompleted && projected1RM
                         ? `Projected 1RM: ${Math.round(projected1RM)} ${profile.unit_preference || 'lb'}`
                         : isCompleted
                         ? 'Done ✓'
@@ -289,7 +306,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   {isCompleted ? (
                     <Check className="w-5 h-5 text-green-600" />
                   ) : (
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                    <ChevronRight className={`w-5 h-5 ${isDeloadWeek ? 'text-blue-400' : 'text-gray-400'}`} />
                   )}
                 </button>
               );
