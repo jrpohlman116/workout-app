@@ -22,25 +22,46 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
 
   if (maxDataPoints === 0) return null;
 
-  const allDates = new Set<string>();
+  const getWeekKey = (dateString: string) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const firstDayOfYear = new Date(year, 0, 1);
+    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+    const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    return `${year}-W${weekNumber}`;
+  };
+
+  const getWeekStartDate = (weekKey: string) => {
+    const [year, week] = weekKey.split('-W').map(Number);
+    const firstDayOfYear = new Date(year, 0, 1);
+    const daysOffset = (week - 1) * 7 - firstDayOfYear.getDay();
+    const weekStart = new Date(year, 0, 1 + daysOffset);
+    return weekStart;
+  };
+
+  const allWeeks = new Set<string>();
   chartData.forEach(lift => {
     lift.data.forEach(point => {
-      const dateOnly = point.date.split('T')[0];
-      allDates.add(dateOnly);
+      const weekKey = getWeekKey(point.date);
+      allWeeks.add(weekKey);
     });
   });
-  const sortedDates = Array.from(allDates).sort();
+  const sortedWeeks = Array.from(allWeeks).sort();
 
-  const formattedData = sortedDates.map(date => {
+  const formattedData = sortedWeeks.map(weekKey => {
+    const weekStart = getWeekStartDate(weekKey);
     const dataPoint: any = {
-      date,
-      displayDate: new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      week: weekKey,
+      displayDate: weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     };
 
     chartData.forEach((lift) => {
-      const point = lift.data.find(p => p.date.split('T')[0] === date);
-      if (point) {
-        dataPoint[lift.type] = point.value;
+      const pointsInWeek = lift.data.filter(p => getWeekKey(p.date) === weekKey);
+      if (pointsInWeek.length > 0) {
+        const latestPoint = pointsInWeek.sort((a, b) =>
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        )[0];
+        dataPoint[lift.type] = latestPoint.value;
       }
     });
 
@@ -49,14 +70,10 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const fullDate = new Date(payload[0].payload.date + 'T00:00:00').toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-      });
+      const weekKey = payload[0].payload.week;
       return (
         <div className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg text-sm">
-          <p className="font-semibold mb-1">{fullDate}</p>
+          <p className="font-semibold mb-1">Week of {payload[0].payload.displayDate}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2">
               <div
