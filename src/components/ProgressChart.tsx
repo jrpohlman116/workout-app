@@ -106,6 +106,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
               activeDot={{ r: 7 }}
               animationDuration={800}
               animationEasing="ease-in-out"
+              connectNulls={true}
             />
           ))}
         </LineChart>
