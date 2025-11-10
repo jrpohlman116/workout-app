@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { calculateWorkoutWeights, calculateOneRepMax } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
 import { useConfetti } from '../hooks/useAnimations';
+import WorkoutSuccessModal from '../components/WorkoutSuccessModal';
 
 interface WorkoutDetailPageProps {
   liftType: string;
@@ -33,6 +34,8 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: { reps: string; weight: string }[] }>({});
   const [lastMainLift, setLastMainLift] = useState<{ weight: number; reps: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [workoutStats, setWorkoutStats] = useState<{ estimated1RM: number; totalTonnage: number }>({ estimated1RM: 0, totalTonnage: 0 });
 
   useEffect(() => {
     if (user) {
@@ -201,6 +204,26 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
     setAccessoryData({ ...accessoryData, [exerciseIndex]: newSets });
   };
 
+  const calculateTotalTonnage = () => {
+    let tonnage = 0;
+
+    mainSets.forEach(set => {
+      const weight = parseFloat(set.weight) || 0;
+      const reps = parseInt(set.reps) || 0;
+      tonnage += weight * reps;
+    });
+
+    Object.values(accessoryData).forEach(sets => {
+      sets.forEach(set => {
+        const weight = parseFloat(set.weight) || 0;
+        const reps = parseInt(set.reps) || 0;
+        tonnage += weight * reps;
+      });
+    });
+
+    return tonnage;
+  };
+
   const handleComplete = async () => {
     if (!user) return;
 
@@ -211,6 +234,7 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
 
       if (amrapWeight && amrapReps) {
         const calculated1RM = calculateOneRepMax(amrapWeight, amrapReps);
+        const totalTonnage = calculateTotalTonnage();
 
         await supabase.from('workout_sessions').insert({
           user_id: user.id,
@@ -221,18 +245,22 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
           reps_performed: amrapReps,
           calculated_1rm: calculated1RM,
         });
-      }
 
-      celebrate(40);
-      setTimeout(async () => {
-        await refreshProfile();
-        onBack();
-      }, 800);
+        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage });
+        celebrate(40);
+        setShowSuccessModal(true);
+      }
     } catch (error) {
       console.error('Error saving workout:', error);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSuccessClose = async () => {
+    setShowSuccessModal(false);
+    await refreshProfile();
+    onBack();
   };
 
   if (currentStep === 'summary') {
@@ -481,6 +509,15 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
           </button>
         </div>
       </div>
+
+      {showSuccessModal && (
+        <WorkoutSuccessModal
+          liftName={liftNames[liftType]}
+          estimated1RM={workoutStats.estimated1RM}
+          totalTonnage={workoutStats.totalTonnage}
+          onClose={handleSuccessClose}
+        />
+      )}
     </div>
   );
 }
