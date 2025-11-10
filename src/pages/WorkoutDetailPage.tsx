@@ -99,28 +99,28 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
 
   const exercises = {
     squat: [
-      { name: 'Romanian Deadlift', reps: '8-12', sets: 3 },
-      { name: 'Bulgarian Split Squats', reps: '8-10', sets: 3 },
-      { name: 'Leg Curls', reps: '12-15', sets: 3 },
-      { name: 'Plank', reps: '30-60 sec', sets: 3 },
+      { name: 'Romanian Deadlift', reps: '8-12', sets: 3, isBodyweight: false },
+      { name: 'Bulgarian Split Squats', reps: '8-10', sets: 3, isBodyweight: false },
+      { name: 'Leg Curls', reps: '12-15', sets: 3, isBodyweight: false },
+      { name: 'Plank', reps: '30-60 sec', sets: 3, isBodyweight: true },
     ],
     bench: [
-      { name: 'Incline DB Press', reps: '8-12', sets: 3 },
-      { name: 'Barbell Curls', reps: '8-12', sets: 3 },
-      { name: 'Tricep Pressdowns', reps: '8-12', sets: 3 },
-      { name: 'Face Pulls', reps: '15-20', sets: 3 },
+      { name: 'Incline DB Press', reps: '8-12', sets: 3, isBodyweight: false },
+      { name: 'Barbell Curls', reps: '8-12', sets: 3, isBodyweight: false },
+      { name: 'Tricep Pressdowns', reps: '8-12', sets: 3, isBodyweight: false },
+      { name: 'Face Pulls', reps: '15-20', sets: 3, isBodyweight: false },
     ],
     deadlift: [
-      { name: 'Leg Press', reps: '5-8', sets: 3 },
-      { name: 'B Stance RDLs', reps: '8-12', sets: 3 },
-      { name: 'Barbell Rows', reps: '8-12', sets: 3 },
-      { name: 'Abs', reps: '10-15 min', sets: 3 },
+      { name: 'Leg Press', reps: '5-8', sets: 3, isBodyweight: false },
+      { name: 'B Stance RDLs', reps: '8-12', sets: 3, isBodyweight: false },
+      { name: 'Barbell Rows', reps: '8-12', sets: 3, isBodyweight: false },
+      { name: 'Abs', reps: '10-15 min', sets: 3, isBodyweight: true },
     ],
     ohp: [
-      { name: 'Close-Grip Bench', reps: '8-12', sets: 3 },
-      { name: 'Lat Pull-Overs', reps: '8-12', sets: 3 },
-      { name: 'Lateral Raise Complex', reps: '12-15', sets: 3 },
-      { name: 'Rear Delt Flyes', reps: '10-15', sets: 3 },
+      { name: 'Close-Grip Bench', reps: '8-12', sets: 3, isBodyweight: false },
+      { name: 'Lat Pull-Overs', reps: '8-12', sets: 3, isBodyweight: false },
+      { name: 'Lateral Raise Complex', reps: '12-15', sets: 3, isBodyweight: false },
+      { name: 'Rear Delt Flyes', reps: '10-15', sets: 3, isBodyweight: false },
     ],
   };
 
@@ -412,33 +412,53 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
           <h2 className="text-2xl font-bold text-gray-900 mb-1">{currentExercise.name}</h2>
           <p className="text-sm text-gray-600 mb-6">Last Set: {getLastSetData(currentExercise.name)}</p>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Reps</label>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Weight</label>
-            </div>
-          </div>
-
-          {exerciseSets.map((set, index) => (
-            <div key={index} className="grid grid-cols-2 gap-4 mb-4">
-              <input
-                type="text"
-                value={set.reps}
-                onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
-                placeholder={currentExercise.reps}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <input
-                type="text"
-                value={set.weight}
-                onChange={(e) => updateAccessorySet(exerciseIndex, index, 'weight', e.target.value)}
-                placeholder={currentExercise.name.toLowerCase().includes('plank') || currentExercise.name.toLowerCase().includes('abs') ? '-' : '0lb'}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          ))}
+          {currentExercise.isBodyweight ? (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Duration</label>
+              </div>
+              {exerciseSets.map((set, index) => (
+                <div key={index} className="mb-4">
+                  <input
+                    type="text"
+                    value={set.reps}
+                    onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
+                    placeholder={currentExercise.reps}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Reps</label>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Weight</label>
+                </div>
+              </div>
+              {exerciseSets.map((set, index) => (
+                <div key={index} className="grid grid-cols-2 gap-4 mb-4">
+                  <input
+                    type="text"
+                    value={set.reps}
+                    onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
+                    placeholder={currentExercise.reps}
+                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={set.weight}
+                    onChange={(e) => updateAccessorySet(exerciseIndex, index, 'weight', e.target.value)}
+                    placeholder="0lb"
+                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              ))}
+            </>
+          )}
         </div>
 
         <div className="flex gap-3">
@@ -451,7 +471,11 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
           <button
             onClick={handleNext}
             disabled={saving}
-            className="flex-1 bg-white text-blue-600 border-2 border-blue-600 py-4 rounded-xl font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
+            className={`flex-1 py-4 rounded-xl font-semibold transition-colors disabled:opacity-50 ${
+              nextExercise
+                ? 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
             {nextExercise ? `Next: ${nextExercise}` : saving ? 'Saving...' : 'Complete Workout'}
           </button>
