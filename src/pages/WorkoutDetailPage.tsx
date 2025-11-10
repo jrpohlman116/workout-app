@@ -31,6 +31,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     { reps: '', weight: '' },
     { reps: '', weight: '' },
   ]);
+  const [initialMainSetsSet, setInitialMainSetsSet] = useState(false);
 
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: { reps: string; weight: string }[] }>({});
   const [lastMainLift, setLastMainLift] = useState<{ weight: number; reps: number } | null>(null);
@@ -44,6 +45,43 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       loadLastWorkoutData();
     }
   }, [user, liftType]);
+
+  useEffect(() => {
+    if (!loading && lastMainLift && !initialMainSetsSet) {
+      setMainSets([
+        { reps: String(mainReps), weight: String(weights.set1) },
+        { reps: String(mainReps), weight: String(weights.set2) },
+        { reps: String(mainReps), weight: String(weights.set3) },
+      ]);
+      setInitialMainSetsSet(true);
+    }
+  }, [loading, lastMainLift, initialMainSetsSet, mainReps, weights]);
+
+  useEffect(() => {
+    if (!loading && Object.keys(lastAccessoryData).length > 0) {
+      const initialAccessoryData: { [key: number]: { reps: string; weight: string }[] } = {};
+      currentExercises.forEach((exercise, index) => {
+        const lastData = lastAccessoryData[exercise.name];
+        if (lastData && lastData.length > 0) {
+          initialAccessoryData[index] = lastData.map(set => ({
+            reps: set.reps || '',
+            weight: set.weight || ''
+          }));
+        }
+      });
+      if (Object.keys(initialAccessoryData).length > 0) {
+        setAccessoryData(prev => {
+          const merged = { ...initialAccessoryData };
+          Object.keys(prev).forEach(key => {
+            if (prev[parseInt(key)].some(set => set.reps || set.weight)) {
+              merged[parseInt(key)] = prev[parseInt(key)];
+            }
+          });
+          return merged;
+        });
+      }
+    }
+  }, [loading, lastAccessoryData, currentExercises]);
 
   const loadLastWorkoutData = async () => {
     if (!user) return;
@@ -420,14 +458,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
                   type="text"
                   value={set.reps}
                   onChange={(e) => updateMainSet(index, 'reps', e.target.value)}
-                  placeholder={index === 2 ? `${mainReps}+` : String(mainReps)}
                   className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <input
                   type="text"
                   value={set.weight}
                   onChange={(e) => updateMainSet(index, 'weight', e.target.value)}
-                  placeholder={`${index === 0 ? weights.set1 : index === 1 ? weights.set2 : weights.set3}lb`}
                   className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -496,7 +532,6 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
                     type="text"
                     value={set.reps}
                     onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
-                    placeholder={currentExercise.reps}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -518,14 +553,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
                     type="text"
                     value={set.reps}
                     onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
-                    placeholder={currentExercise.reps}
                     className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <input
                     type="text"
                     value={set.weight}
                     onChange={(e) => updateAccessorySet(exerciseIndex, index, 'weight', e.target.value)}
-                    placeholder="0lb"
                     className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
