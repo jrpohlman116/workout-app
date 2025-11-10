@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../lib/supabase';
 import ProgressChart from '../components/ProgressChart';
-import { useCountUp, useStaggeredAnimation, useRipple } from '../hooks/useAnimations';
+import { useStaggeredAnimation, useRipple } from '../hooks/useAnimations';
 
 type Tab = 'overview' | 'weight' | 'log';
 
@@ -190,7 +190,6 @@ export default function ProgressPage() {
                 const currentMax = getLatestMaxForLift(lift.type) || lift.initial;
                 const changePercent = parseFloat(getMaxChangePercent(lift.type, lift.initial));
                 const hasData = nonDeloadSessions.some(s => s.lift_type === lift.type);
-                const animatedMax = useCountUp(currentMax, 1000, Math.floor(currentMax * 0.7));
                 const isVisible = index < visibleLifts;
 
                 return (
@@ -203,7 +202,7 @@ export default function ProgressPage() {
                   >
                     <p className="text-gray-600 text-sm mb-2">{lift.name}</p>
                     <div className="text-3xl font-bold text-blue-600 mb-1">
-                      {isVisible ? animatedMax : currentMax} {profile.unit_preference || 'lb'}
+                      {currentMax} {profile.unit_preference || 'lb'}
                     </div>
                     {hasData ? (
                       <div className={`text-sm font-semibold animate-fade-in ${
