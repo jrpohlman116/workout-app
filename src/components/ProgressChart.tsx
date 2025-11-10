@@ -22,14 +22,22 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
 
   if (maxDataPoints === 0) return null;
 
-  const formattedData = Array.from({ length: maxDataPoints }, (_, sessionIndex) => {
+  const allDates = new Set<string>();
+  chartData.forEach(lift => {
+    lift.data.forEach(point => allDates.add(point.date));
+  });
+  const sortedDates = Array.from(allDates).sort();
+
+  const formattedData = sortedDates.map(date => {
     const dataPoint: any = {
-      session: sessionIndex + 1,
+      date,
+      displayDate: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     };
 
     chartData.forEach((lift) => {
-      if (lift.data[sessionIndex]) {
-        dataPoint[lift.type] = lift.data[sessionIndex].value;
+      const point = lift.data.find(p => p.date === date);
+      if (point) {
+        dataPoint[lift.type] = point.value;
       }
     });
 
@@ -38,9 +46,14 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const fullDate = new Date(payload[0].payload.date).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
       return (
         <div className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg text-sm">
-          <p className="font-semibold mb-1">Session {label}</p>
+          <p className="font-semibold mb-1">{fullDate}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2">
               <div
@@ -65,9 +78,12 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis
-            dataKey="session"
-            label={{ value: 'Workout Session', position: 'insideBottom', offset: -5, style: { fontSize: 12, fill: '#6b7280', fontWeight: 500 } }}
+            dataKey="displayDate"
+            label={{ value: 'Date', position: 'insideBottom', offset: -5, style: { fontSize: 12, fill: '#6b7280', fontWeight: 500 } }}
             tick={{ fontSize: 11, fill: '#9ca3af' }}
+            angle={-45}
+            textAnchor="end"
+            height={60}
           />
           <YAxis
             label={{ value: `1RM (${unitPreference})`, angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6b7280', fontWeight: 500 } }}
