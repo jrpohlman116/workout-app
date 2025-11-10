@@ -24,18 +24,21 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
 
   const allDates = new Set<string>();
   chartData.forEach(lift => {
-    lift.data.forEach(point => allDates.add(point.date));
+    lift.data.forEach(point => {
+      const dateOnly = point.date.split('T')[0];
+      allDates.add(dateOnly);
+    });
   });
   const sortedDates = Array.from(allDates).sort();
 
   const formattedData = sortedDates.map(date => {
     const dataPoint: any = {
       date,
-      displayDate: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      displayDate: new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     };
 
     chartData.forEach((lift) => {
-      const point = lift.data.find(p => p.date === date);
+      const point = lift.data.find(p => p.date.split('T')[0] === date);
       if (point) {
         dataPoint[lift.type] = point.value;
       }
@@ -46,7 +49,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const fullDate = new Date(payload[0].payload.date).toLocaleDateString('en-US', {
+      const fullDate = new Date(payload[0].payload.date + 'T00:00:00').toLocaleDateString('en-US', {
         month: 'long',
         day: 'numeric',
         year: 'numeric'
