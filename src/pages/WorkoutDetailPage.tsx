@@ -47,7 +47,23 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   }, [user, liftType]);
 
   useEffect(() => {
-    if (!loading && lastMainLift && !initialMainSetsSet) {
+    if (!loading && profile && !initialMainSetsSet) {
+      const maxes: Record<string, number> = {
+        squat: profile.squat_max,
+        bench: profile.bench_max,
+        deadlift: profile.deadlift_max,
+        ohp: profile.ohp_max,
+      };
+
+      const weights = calculateWorkoutWeights(
+        liftType,
+        maxes[liftType],
+        profile.current_cycle,
+        profile.current_week
+      );
+
+      const mainReps = profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5;
+
       setMainSets([
         { reps: String(mainReps), weight: String(weights.set1) },
         { reps: String(mainReps), weight: String(weights.set2) },
@@ -55,10 +71,38 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       ]);
       setInitialMainSetsSet(true);
     }
-  }, [loading, lastMainLift, initialMainSetsSet, mainReps, weights]);
+  }, [loading, profile, initialMainSetsSet, liftType]);
 
   useEffect(() => {
     if (!loading && Object.keys(lastAccessoryData).length > 0) {
+      const exercises = {
+        squat: [
+          { name: 'Romanian Deadlift', reps: '8-12', sets: 3, isBodyweight: false },
+          { name: 'Bulgarian Split Squats', reps: '8-10', sets: 3, isBodyweight: false },
+          { name: 'Leg Curls', reps: '12-15', sets: 3, isBodyweight: false },
+          { name: 'Plank', reps: '30-60 sec', sets: 3, isBodyweight: true },
+        ],
+        bench: [
+          { name: 'Incline DB Press', reps: '8-12', sets: 3, isBodyweight: false },
+          { name: 'Barbell Curls', reps: '8-12', sets: 3, isBodyweight: false },
+          { name: 'Tricep Pressdowns', reps: '8-12', sets: 3, isBodyweight: false },
+          { name: 'Face Pulls', reps: '15-20', sets: 3, isBodyweight: false },
+        ],
+        deadlift: [
+          { name: 'Leg Press', reps: '5-8', sets: 3, isBodyweight: false },
+          { name: 'B Stance RDLs', reps: '8-12', sets: 3, isBodyweight: false },
+          { name: 'Barbell Rows', reps: '8-12', sets: 3, isBodyweight: false },
+          { name: 'Abs', reps: '10-15 min', sets: 3, isBodyweight: true },
+        ],
+        ohp: [
+          { name: 'Close-Grip Bench', reps: '8-12', sets: 3, isBodyweight: false },
+          { name: 'Lat Pull-Overs', reps: '8-12', sets: 3, isBodyweight: false },
+          { name: 'Lateral Raise Complex', reps: '12-15', sets: 3, isBodyweight: false },
+          { name: 'Rear Delt Flyes', reps: '10-15', sets: 3, isBodyweight: false },
+        ],
+      };
+
+      const currentExercises = exercises[liftType as keyof typeof exercises];
       const initialAccessoryData: { [key: number]: { reps: string; weight: string }[] } = {};
       currentExercises.forEach((exercise, index) => {
         const lastData = lastAccessoryData[exercise.name];
@@ -81,7 +125,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         });
       }
     }
-  }, [loading, lastAccessoryData, currentExercises]);
+  }, [loading, lastAccessoryData, liftType]);
 
   const loadLastWorkoutData = async () => {
     if (!user) return;
