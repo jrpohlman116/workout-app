@@ -3,12 +3,22 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../lib/supabase';
 import ProgressChart from '../components/ProgressChart';
 import { useStaggeredAnimation, useRipple } from '../hooks/useAnimations';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+
+interface AccessoryExercise {
+  id: string;
+  exercise_name: string;
+  exercise_order: number;
+  sets_data: { reps: string; weight: string }[];
+}
 
 type Tab = 'overview' | 'weight' | 'log';
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  const [accessoryData, setAccessoryData] = useState<{ [sessionId: string]: AccessoryExercise[] }>({});
+  const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const visibleLifts = useStaggeredAnimation(4, 100);
   const createRipple = useRipple();
@@ -30,6 +40,24 @@ export default function ProgressPage() {
 
     if (data) {
       setSessions(data);
+
+      const sessionIds = data.map(s => s.id);
+      const { data: accessories } = await supabase
+        .from('accessory_exercises')
+        .select('*')
+        .in('workout_session_id', sessionIds)
+        .order('exercise_order', { ascending: true });
+
+      if (accessories) {
+        const grouped: { [sessionId: string]: AccessoryExercise[] } = {};
+        accessories.forEach(acc => {
+          if (!grouped[acc.workout_session_id]) {
+            grouped[acc.workout_session_id] = [];
+          }
+          grouped[acc.workout_session_id].push(acc);
+        });
+        setAccessoryData(grouped);
+      }
     }
   };
 
@@ -273,15 +301,64 @@ export default function ProgressPage() {
                     Week {group.sessions[0].week}, Cycle {group.sessions[0].cycle}
                   </p>
                 </div>
-                <div className="space-y-3">
-                  {group.sessions.map((session) => (
-                    <div key={session.id} className="flex items-center justify-between">
-                      <p className="text-gray-700">{getLiftDisplayName(session.lift_type)}</p>
-                      <p className="text-gray-900 font-semibold">
-                        {session.reps_performed} x {session.weight_lifted}{profile.unit_preference || 'lb'}
-                      </p>
-                    </div>
-                  ))}
+                <div className="space-y-4">
+                  {group.sessions.map((session) => {
+                    const hasAccessories = accessoryData[session.id]?.length > 0;
+                    const isExpanded = expandedSessions.has(session.id);
+
+                    return (
+                      <div key={session.id} className="border-b border-gray-100 last:border-0 pb-3 last:pb-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-gray-700 font-medium">{getLiftDisplayName(session.lift_type)}</p>
+                          <p className="text-gray-900 font-semibold">
+                            {session.reps_performed} x {session.weight_lifted}{profile.unit_preference || 'lb'}
+                          </p>
+                        </div>
+                        {hasAccessories && (
+                          <>
+                            <button
+                              onClick={() => {
+                                const newExpanded = new Set(expandedSessions);
+                                if (isExpanded) {
+                                  newExpanded.delete(session.id);
+                                } else {
+                                  newExpanded.add(session.id);
+                                }
+                                setExpandedSessions(newExpanded);
+                              }}
+                              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  Hide Accessories <ChevronUp className="w-4 h-4" />
+                                </>
+                              ) : (
+                                <>
+                                  Show Accessories <ChevronDown className="w-4 h-4" />
+                                </>
+                              )}
+                            </button>
+                            {isExpanded && (
+                              <div className="mt-3 space-y-2 pl-4 border-l-2 border-blue-200 animate-slide-in-bottom">
+                                {accessoryData[session.id].map((exercise) => (
+                                  <div key={exercise.id} className="text-sm">
+                                    <p className="font-medium text-gray-700 mb-1">{exercise.exercise_name}</p>
+                                    <div className="space-y-1">
+                                      {exercise.sets_data.map((set, idx) => (
+                                        <p key={idx} className="text-gray-600">
+                                          Set {idx + 1}: {set.reps} reps × {set.weight || '0'}{profile.unit_preference || 'lb'}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}

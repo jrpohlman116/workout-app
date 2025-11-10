@@ -34,6 +34,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: { reps: string; weight: string }[] }>({});
   const [lastMainLift, setLastMainLift] = useState<{ weight: number; reps: number } | null>(null);
+  const [lastAccessoryData, setLastAccessoryData] = useState<{ [key: string]: { reps: string; weight: string }[] }>({});
   const [loading, setLoading] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [workoutStats, setWorkoutStats] = useState<{ estimated1RM: number; totalTonnage: number }>({ estimated1RM: 0, totalTonnage: 0 });
@@ -49,7 +50,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
     setLoading(true);
     try {
-      const { data } = await supabase
+      const { data: sessionData } = await supabase
         .from('workout_sessions')
         .select('*')
         .eq('user_id', user.id)
@@ -58,11 +59,25 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         .limit(1)
         .maybeSingle();
 
-      if (data) {
+      if (sessionData) {
         setLastMainLift({
-          weight: data.weight_lifted,
-          reps: data.reps_performed,
+          weight: sessionData.weight_lifted,
+          reps: sessionData.reps_performed,
         });
+
+        const { data: accessoryData } = await supabase
+          .from('accessory_exercises')
+          .select('*')
+          .eq('workout_session_id', sessionData.id)
+          .order('exercise_order', { ascending: true });
+
+        if (accessoryData) {
+          const formattedData: { [key: string]: { reps: string; weight: string }[] } = {};
+          accessoryData.forEach(exercise => {
+            formattedData[exercise.exercise_name] = exercise.sets_data as { reps: string; weight: string }[];
+          });
+          setLastAccessoryData(formattedData);
+        }
       }
     } catch (error) {
       console.error('Error loading last workout:', error);
@@ -140,7 +155,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       if (!lastMainLift) return 'No previous data';
       return `${lastMainLift.weight}lb for ${lastMainLift.reps} reps`;
     }
-    return 'No previous data';
+
+    if (loading) return 'Loading...';
+    const lastData = lastAccessoryData[exerciseName];
+    if (!lastData || lastData.length === 0) return 'No previous data';
+
+    const firstSet = lastData[0];
+    return `${firstSet.weight || '0'}lb × ${firstSet.reps || '0'} reps (${lastData.length} sets)`;
   };
 
   const getProgressPercentage = () => {
@@ -237,15 +258,38 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         const calculated1RM = calculateOneRepMax(amrapWeight, amrapReps);
         const totalTonnage = calculateTotalTonnage();
 
-        await supabase.from('workout_sessions').insert({
-          user_id: user.id,
-          lift_type: liftType,
-          cycle: profile.current_cycle,
-          week: profile.current_week,
-          weight_lifted: amrapWeight,
-          reps_performed: amrapReps,
-          calculated_1rm: calculated1RM,
-        });
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('workout_sessions')
+          .insert({
+            user_id: user.id,
+            lift_type: liftType,
+            cycle: profile.current_cycle,
+            week: profile.current_week,
+            weight_lifted: amrapWeight,
+            reps_performed: amrapReps,
+            calculated_1rm: calculated1RM,
+          })
+          .select()
+          .single();
+
+        if (sessionError) throw sessionError;
+
+        const accessoryInserts = Object.entries(accessoryData)
+          .filter(([_, sets]) => sets.some(set => set.reps || set.weight))
+          .map(([exerciseIndex, sets]) => ({
+            workout_session_id: sessionData.id,
+            exercise_name: currentExercises[parseInt(exerciseIndex)].name,
+            exercise_order: parseInt(exerciseIndex),
+            sets_data: sets,
+          }));
+
+        if (accessoryInserts.length > 0) {
+          const { error: accessoryError } = await supabase
+            .from('accessory_exercises')
+            .insert(accessoryInserts);
+
+          if (accessoryError) throw accessoryError;
+        }
 
         setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage });
         celebrate(40);
