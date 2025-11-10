@@ -135,7 +135,11 @@ function AppContent() {
           {currentPage === 'progress' && <ProgressPage />}
           {currentPage === 'profile' && <ProfilePage />}
           {currentPage === 'workout' && selectedLift && (
-            <WorkoutDetailPage liftType={selectedLift} onBack={handleBack} />
+            <WorkoutDetailPage
+              liftType={selectedLift}
+              onBack={handleBack}
+              onNavigateToProgress={() => handleNavigate('progress')}
+            />
           )}
         </main>
 

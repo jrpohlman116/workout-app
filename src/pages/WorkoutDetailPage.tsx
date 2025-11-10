@@ -9,6 +9,7 @@ import WorkoutSuccessModal from '../components/WorkoutSuccessModal';
 interface WorkoutDetailPageProps {
   liftType: string;
   onBack: () => void;
+  onNavigateToProgress: () => void;
 }
 
 interface ExerciseData {
@@ -19,7 +20,7 @@ interface ExerciseData {
 
 type WorkoutStep = 'summary' | 'main' | number;
 
-export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPageProps) {
+export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgress }: WorkoutDetailPageProps) {
   const { profile, user, refreshProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState<WorkoutStep>('summary');
   const [saving, setSaving] = useState(false);
@@ -260,7 +261,7 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
   const handleSuccessClose = async () => {
     setShowSuccessModal(false);
     await refreshProfile();
-    onBack();
+    onNavigateToProgress();
   };
 
   if (currentStep === 'summary') {
