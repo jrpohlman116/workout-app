@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { calculateWorkoutWeights, calculateOneRepMax } from '../lib/calculations';
@@ -31,6 +31,41 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
   ]);
 
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: { reps: string; weight: string }[] }>({});
+  const [lastMainLift, setLastMainLift] = useState<{ weight: number; reps: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadLastWorkoutData();
+    }
+  }, [user, liftType]);
+
+  const loadLastWorkoutData = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { data } = await supabase
+        .from('workout_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('lift_type', liftType)
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setLastMainLift({
+          weight: data.weight_lifted,
+          reps: data.reps_performed,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading last workout:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!profile) return null;
 
@@ -96,6 +131,11 @@ export default function WorkoutDetailPage({ liftType, onBack }: WorkoutDetailPag
   const mainReps = profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5;
 
   const getLastSetData = (exerciseName: string) => {
+    if (exerciseName === 'main') {
+      if (loading) return 'Loading...';
+      if (!lastMainLift) return 'No previous data';
+      return `${lastMainLift.weight}lb for ${lastMainLift.reps} reps`;
+    }
     return 'No previous data';
   };
 
