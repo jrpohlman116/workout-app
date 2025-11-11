@@ -34,3 +34,14 @@ export interface WorkoutSession {
   completed_at: string;
   created_at: string;
 }
+
+export interface ExerciseSubstitution {
+  id: string;
+  original_exercise: string;
+  substitute_exercise: string;
+  description: string;
+  equipment_needed: string;
+  difficulty: 'easier' | 'similar' | 'harder';
+  muscle_groups: string[];
+  created_at: string;
+}

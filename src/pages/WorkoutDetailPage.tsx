@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { calculateWorkoutWeights, calculateOneRepMax } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
 import { useConfetti } from '../hooks/useAnimations';
 import WorkoutSuccessModal from '../components/WorkoutSuccessModal';
+import ExerciseSubstitutionModal from '../components/ExerciseSubstitutionModal';
 
 interface WorkoutDetailPageProps {
   liftType: string;
@@ -39,6 +40,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [loading, setLoading] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [workoutStats, setWorkoutStats] = useState<{ estimated1RM: number; totalTonnage: number }>({ estimated1RM: 0, totalTonnage: 0 });
+  const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
+  const [substitutionTarget, setSubstitutionTarget] = useState<{ exerciseIndex: number; exerciseName: string } | null>(null);
+  const [exerciseSubstitutions, setExerciseSubstitutions] = useState<{ [key: number]: string }>({});
 
   useEffect(() => {
     if (user) {
@@ -75,34 +79,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   useEffect(() => {
     if (!loading && Object.keys(lastAccessoryData).length > 0) {
-      const exercises = {
-        squat: [
-          { name: 'Romanian Deadlift', reps: '8-12', sets: 3, isBodyweight: false },
-          { name: 'Bulgarian Split Squats', reps: '8-10', sets: 3, isBodyweight: false },
-          { name: 'Leg Curls', reps: '12-15', sets: 3, isBodyweight: false },
-          { name: 'Plank', reps: '30-60 sec', sets: 3, isBodyweight: true },
-        ],
-        bench: [
-          { name: 'Incline DB Press', reps: '8-12', sets: 3, isBodyweight: false },
-          { name: 'Barbell Curls', reps: '8-12', sets: 3, isBodyweight: false },
-          { name: 'Tricep Pressdowns', reps: '8-12', sets: 3, isBodyweight: false },
-          { name: 'Face Pulls', reps: '15-20', sets: 3, isBodyweight: false },
-        ],
-        deadlift: [
-          { name: 'Leg Press', reps: '5-8', sets: 3, isBodyweight: false },
-          { name: 'B Stance RDLs', reps: '8-12', sets: 3, isBodyweight: false },
-          { name: 'Barbell Rows', reps: '8-12', sets: 3, isBodyweight: false },
-          { name: 'Abs', reps: '10-15 min', sets: 3, isBodyweight: true },
-        ],
-        ohp: [
-          { name: 'Close-Grip Bench', reps: '8-12', sets: 3, isBodyweight: false },
-          { name: 'Lat Pull-Overs', reps: '8-12', sets: 3, isBodyweight: false },
-          { name: 'Lateral Raise Complex', reps: '12-15', sets: 3, isBodyweight: false },
-          { name: 'Rear Delt Flyes', reps: '10-15', sets: 3, isBodyweight: false },
-        ],
-      };
-
-      const currentExercises = exercises[liftType as keyof typeof exercises];
+      const currentExercises = baseExercises[liftType as keyof typeof baseExercises];
       const initialAccessoryData: { [key: number]: { reps: string; weight: string }[] } = {};
       currentExercises.forEach((exercise, index) => {
         const lastData = lastAccessoryData[exercise.name];
@@ -198,7 +175,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     profile.current_week
   );
 
-  const exercises = {
+  const baseExercises = {
     squat: [
       { name: 'Romanian Deadlift', reps: '8-12', sets: 3, isBodyweight: false },
       { name: 'Bulgarian Split Squats', reps: '8-10', sets: 3, isBodyweight: false },
@@ -223,6 +200,25 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       { name: 'Lateral Raise Complex', reps: '12-15', sets: 3, isBodyweight: false },
       { name: 'Rear Delt Flyes', reps: '10-15', sets: 3, isBodyweight: false },
     ],
+  };
+
+  const exercises = {
+    squat: baseExercises.squat.map((ex, idx) => ({
+      ...ex,
+      name: exerciseSubstitutions[idx] || ex.name,
+    })),
+    bench: baseExercises.bench.map((ex, idx) => ({
+      ...ex,
+      name: exerciseSubstitutions[idx] || ex.name,
+    })),
+    deadlift: baseExercises.deadlift.map((ex, idx) => ({
+      ...ex,
+      name: exerciseSubstitutions[idx] || ex.name,
+    })),
+    ohp: baseExercises.ohp.map((ex, idx) => ({
+      ...ex,
+      name: exerciseSubstitutions[idx] || ex.name,
+    })),
   };
 
   const currentExercises = exercises[liftType as keyof typeof exercises];
@@ -388,6 +384,21 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setShowSuccessModal(false);
     await refreshProfile();
     onNavigateToProgress();
+  };
+
+  const handleOpenSubstitution = (exerciseIndex: number, exerciseName: string) => {
+    const baseExercise = baseExercises[liftType as keyof typeof baseExercises][exerciseIndex];
+    setSubstitutionTarget({ exerciseIndex, exerciseName: baseExercise.name });
+    setShowSubstitutionModal(true);
+  };
+
+  const handleSubstitute = (newExercise: string) => {
+    if (substitutionTarget) {
+      setExerciseSubstitutions({
+        ...exerciseSubstitutions,
+        [substitutionTarget.exerciseIndex]: newExercise,
+      });
+    }
   };
 
   if (currentStep === 'summary') {
@@ -564,7 +575,24 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">{currentExercise.name}</h2>
+          <div className="flex items-start justify-between gap-3 mb-1">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-900">{currentExercise.name}</h2>
+              {exerciseSubstitutions[exerciseIndex] && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Substituted from: {baseExercises[liftType as keyof typeof baseExercises][exerciseIndex].name}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => handleOpenSubstitution(exerciseIndex, currentExercise.name)}
+              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
+              aria-label="Substitute exercise"
+              title="Substitute exercise"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
+          </div>
           <p className="text-sm text-gray-600 mb-2">Last Set: {getLastSetData(currentExercise.name)}</p>
           <p className="text-sm font-medium text-blue-600 mb-6">{currentExercise.sets} sets of {currentExercise.reps} reps</p>
 
@@ -644,6 +672,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           estimated1RM={workoutStats.estimated1RM}
           totalTonnage={workoutStats.totalTonnage}
           onClose={handleSuccessClose}
+        />
+      )}
+      {showSubstitutionModal && substitutionTarget && (
+        <ExerciseSubstitutionModal
+          isOpen={showSubstitutionModal}
+          onClose={() => setShowSubstitutionModal(false)}
+          currentExercise={substitutionTarget.exerciseName}
+          onSubstitute={handleSubstitute}
         />
       )}
     </div>
