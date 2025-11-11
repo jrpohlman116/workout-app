@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Check, Info } from 'lucide-react';
+import { RefreshCw, Check, Info, Plus } from 'lucide-react';
 import AccessibleModal from './AccessibleModal';
 import { supabase } from '../lib/supabase';
 import { ExerciseSubstitution } from '../lib/supabase';
@@ -20,10 +20,14 @@ export default function ExerciseSubstitutionModal({
   const [substitutions, setSubstitutions] = useState<ExerciseSubstitution[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubstitution, setSelectedSubstitution] = useState<string>('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customExerciseName, setCustomExerciseName] = useState('');
 
   useEffect(() => {
     if (isOpen && currentExercise) {
       loadSubstitutions();
+      setShowCustomInput(false);
+      setCustomExerciseName('');
     }
   }, [isOpen, currentExercise]);
 
@@ -47,16 +51,32 @@ export default function ExerciseSubstitutionModal({
   };
 
   const handleConfirm = () => {
-    if (selectedSubstitution) {
-      onSubstitute(selectedSubstitution);
+    const exerciseToUse = showCustomInput ? customExerciseName.trim() : selectedSubstitution;
+    if (exerciseToUse) {
+      onSubstitute(exerciseToUse);
       setSelectedSubstitution('');
+      setCustomExerciseName('');
+      setShowCustomInput(false);
       onClose();
     }
   };
 
   const handleCancel = () => {
     setSelectedSubstitution('');
+    setCustomExerciseName('');
+    setShowCustomInput(false);
     onClose();
+  };
+
+  const handleSelectPredefined = (exercise: string) => {
+    setSelectedSubstitution(exercise);
+    setShowCustomInput(false);
+    setCustomExerciseName('');
+  };
+
+  const handleShowCustomInput = () => {
+    setShowCustomInput(true);
+    setSelectedSubstitution('');
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -119,7 +139,7 @@ export default function ExerciseSubstitutionModal({
                 {substitutions.map((sub) => (
                   <button
                     key={sub.id}
-                    onClick={() => setSelectedSubstitution(sub.substitute_exercise)}
+                    onClick={() => handleSelectPredefined(sub.substitute_exercise)}
                     className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                       selectedSubstitution === sub.substitute_exercise
                         ? 'border-blue-600 bg-blue-50'
@@ -160,20 +180,51 @@ export default function ExerciseSubstitutionModal({
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <div className="pt-4 border-t border-gray-200">
               <button
-                onClick={handleCancel}
-                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                onClick={handleShowCustomInput}
+                className={`w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all mb-4 ${
+                  showCustomInput
+                    ? 'border-blue-600 bg-blue-50'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                }`}
               >
-                Cancel
+                <Plus className="w-5 h-5 text-blue-600" />
+                <span className="font-semibold text-gray-900">Add Custom Exercise</span>
               </button>
-              <button
-                onClick={handleConfirm}
-                disabled={!selectedSubstitution}
-                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Confirm Substitution
-              </button>
+
+              {showCustomInput && (
+                <div className="mb-4">
+                  <label htmlFor="custom-exercise" className="block text-sm font-semibold text-gray-700 mb-2">
+                    Custom Exercise Name
+                  </label>
+                  <input
+                    id="custom-exercise"
+                    type="text"
+                    value={customExerciseName}
+                    onChange={(e) => setCustomExerciseName(e.target.value)}
+                    placeholder="Enter exercise name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    autoFocus
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancel}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  disabled={!selectedSubstitution && (!showCustomInput || !customExerciseName.trim())}
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Confirm Substitution
+                </button>
+              </div>
             </div>
           </>
         )}
