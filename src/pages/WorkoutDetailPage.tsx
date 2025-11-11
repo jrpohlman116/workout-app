@@ -586,11 +586,11 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             </div>
             <button
               onClick={() => handleOpenSubstitution(exerciseIndex, currentExercise.name)}
-              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
+              className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
               aria-label="Substitute exercise"
-              title="Substitute exercise"
             >
-              <RefreshCw className="w-5 h-5" />
+              <RefreshCw className="w-4 h-4" />
+              <span className="text-sm font-medium">Substitute</span>
             </button>
           </div>
           <p className="text-sm text-gray-600 mb-2">Last Set: {getLastSetData(currentExercise.name)}</p>
