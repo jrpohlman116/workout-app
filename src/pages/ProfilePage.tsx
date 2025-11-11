@@ -5,6 +5,7 @@ import { Eye, EyeOff, LogOut } from 'lucide-react';
 
 export default function ProfilePage() {
   const { profile, user, refreshProfile } = useAuth();
+  const [activeTab, setActiveTab] = useState<'progress' | 'body' | 'maxes' | 'security'>('progress');
   const [squatMax, setSquatMax] = useState(profile?.squat_max?.toString() || '');
   const [benchMax, setBenchMax] = useState(profile?.bench_max?.toString() || '');
   const [deadliftMax, setDeadliftMax] = useState(profile?.deadlift_max?.toString() || '');
@@ -168,9 +169,55 @@ export default function ProfilePage() {
           <h1 className="text-4xl font-bold text-gray-900 mb-1">Profile</h1>
           <p className="text-gray-600">Update your profile and lifts</p>
         </div>
+
+        <div className="max-w-md mx-auto px-4">
+          <div className="flex gap-2 overflow-x-auto pb-4">
+            <button
+              onClick={() => setActiveTab('progress')}
+              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
+                activeTab === 'progress'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Progress
+            </button>
+            <button
+              onClick={() => setActiveTab('body')}
+              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
+                activeTab === 'body'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Body Stats
+            </button>
+            <button
+              onClick={() => setActiveTab('maxes')}
+              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
+                activeTab === 'maxes'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Training Maxes
+            </button>
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
+                activeTab === 'security'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Security
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
+        {activeTab === 'progress' && (
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Training Progress</h2>
           <form onSubmit={handleUpdateProgress} className="space-y-4">
@@ -217,7 +264,9 @@ export default function ProfilePage() {
             )}
           </form>
         </div>
+        )}
 
+        {activeTab === 'body' && (
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Body Stats</h2>
           <form onSubmit={handleUpdateBodyweight} className="space-y-4">
@@ -267,7 +316,9 @@ export default function ProfilePage() {
             </button>
           </form>
         </div>
+        )}
 
+        {activeTab === 'maxes' && (
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Training Maxes</h2>
           <form onSubmit={handleUpdateLifts} className="space-y-4">
@@ -356,7 +407,10 @@ export default function ProfilePage() {
             </p>
           </form>
         </div>
+        )}
 
+        {activeTab === 'security' && (
+        <>
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Change Password</h2>
           <form onSubmit={handleChangePassword} className="space-y-4">
@@ -427,10 +481,14 @@ export default function ProfilePage() {
           <LogOut className="w-5 h-5" />
           Sign Out
         </button>
+        </>
+        )}
 
+        {activeTab === 'security' && (
         <p className="text-center text-sm text-gray-500">
           Last updated: {lastUpdated}
         </p>
+        )}
       </div>
     </div>
   );
