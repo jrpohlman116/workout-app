@@ -171,46 +171,58 @@ export default function ProfilePage() {
         </div>
 
         <div className="max-w-md mx-auto px-4">
-          <div className="flex gap-2 overflow-x-auto pb-4">
+          <div className="flex gap-6 overflow-x-auto border-b border-gray-200">
             <button
               onClick={() => setActiveTab('progress')}
-              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
+              className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'progress'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Progress
+              {activeTab === 'progress' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+              )}
             </button>
             <button
               onClick={() => setActiveTab('body')}
-              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
+              className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'body'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Body Stats
+              {activeTab === 'body' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+              )}
             </button>
             <button
               onClick={() => setActiveTab('maxes')}
-              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
+              className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'maxes'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Training Maxes
+              {activeTab === 'maxes' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+              )}
             </button>
             <button
               onClick={() => setActiveTab('security')}
-              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors ${
+              className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'security'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Security
+              {activeTab === 'security' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+              )}
             </button>
           </div>
         </div>
