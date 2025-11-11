@@ -565,7 +565,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-1">{currentExercise.name}</h2>
-          <p className="text-sm text-gray-600 mb-6">Last Set: {getLastSetData(currentExercise.name)}</p>
+          <p className="text-sm text-gray-600 mb-2">Last Set: {getLastSetData(currentExercise.name)}</p>
+          <p className="text-sm font-medium text-blue-600 mb-6">{currentExercise.sets} sets of {currentExercise.reps} reps</p>
 
           {currentExercise.isBodyweight ? (
             <>
