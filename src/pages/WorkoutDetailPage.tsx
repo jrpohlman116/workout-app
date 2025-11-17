@@ -510,14 +510,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             {mainSets.map((set, index) => (
               <div key={index} className="grid grid-cols-2 gap-4 mb-4">
                 <input
-                  type="text"
+                  type="number"
                   value={set.reps}
                   onChange={(e) => updateMainSet(index, 'reps', e.target.value)}
                   placeholder={index === 2 ? `${mainReps}+` : String(mainReps)}
                   className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <input
-                  type="text"
+                  type="number"
                   value={set.weight}
                   onChange={(e) => updateMainSet(index, 'weight', e.target.value)}
                   placeholder={`${index === 0 ? weights.set1 : index === 1 ? weights.set2 : weights.set3}lb`}
@@ -604,7 +604,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
               {exerciseSets.map((set, index) => (
                 <div key={index} className="mb-4">
                   <input
-                    type="text"
+                    type="number"
                     value={set.reps}
                     onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
                     placeholder={currentExercise.reps}
