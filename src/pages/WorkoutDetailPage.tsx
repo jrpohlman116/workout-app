@@ -656,7 +656,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
                 <div key={index} className="flex gap-2 mb-4">
                   <div className="grid grid-cols-2 gap-4 flex-1">
                     <input
-                      type="text"
+                      type="input"
                       value={set.reps}
                       onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
                       placeholder={currentExercise.reps}
