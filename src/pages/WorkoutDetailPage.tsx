@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { calculateWorkoutWeights, calculateOneRepMax } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
@@ -304,6 +304,19 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setAccessoryData({ ...accessoryData, [exerciseIndex]: newSets });
   };
 
+  const addAccessorySet = (exerciseIndex: number) => {
+    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill({ reps: '', weight: '' }).map(() => ({ reps: '', weight: '' }));
+    const newSets = [...exerciseSets, { reps: '', weight: '' }];
+    setAccessoryData({ ...accessoryData, [exerciseIndex]: newSets });
+  };
+
+  const removeAccessorySet = (exerciseIndex: number, setIndex: number) => {
+    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill({ reps: '', weight: '' }).map(() => ({ reps: '', weight: '' }));
+    if (exerciseSets.length <= 1) return;
+    const newSets = exerciseSets.filter((_, idx) => idx !== setIndex);
+    setAccessoryData({ ...accessoryData, [exerciseIndex]: newSets });
+  };
+
   const calculateTotalTonnage = () => {
     let tonnage = 0;
 
@@ -602,16 +615,32 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Duration</label>
               </div>
               {exerciseSets.map((set, index) => (
-                <div key={index} className="mb-4">
+                <div key={index} className="flex gap-2 mb-4">
                   <input
                     type="number"
                     value={set.reps}
                     onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
                     placeholder={currentExercise.reps}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                  {exerciseSets.length > 1 && (
+                    <button
+                      onClick={() => removeAccessorySet(exerciseIndex, index)}
+                      className="p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                      aria-label="Remove set"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               ))}
+              <button
+                onClick={() => addAccessorySet(exerciseIndex)}
+                className="w-full flex items-center justify-center gap-2 py-3 text-blue-600 border-2 border-dashed border-blue-300 rounded-xl hover:bg-blue-50 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="font-medium">Add Set</span>
+              </button>
             </>
           ) : (
             <>
@@ -624,23 +653,41 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
                 </div>
               </div>
               {exerciseSets.map((set, index) => (
-                <div key={index} className="grid grid-cols-2 gap-4 mb-4">
-                  <input
-                    type="text"
-                    value={set.reps}
-                    onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
-                    placeholder={currentExercise.reps}
-                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={set.weight}
-                    onChange={(e) => updateAccessorySet(exerciseIndex, index, 'weight', e.target.value)}
-                    placeholder="0lb"
-                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                <div key={index} className="flex gap-2 mb-4">
+                  <div className="grid grid-cols-2 gap-4 flex-1">
+                    <input
+                      type="text"
+                      value={set.reps}
+                      onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
+                      placeholder={currentExercise.reps}
+                      className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={set.weight}
+                      onChange={(e) => updateAccessorySet(exerciseIndex, index, 'weight', e.target.value)}
+                      placeholder="0lb"
+                      className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  {exerciseSets.length > 1 && (
+                    <button
+                      onClick={() => removeAccessorySet(exerciseIndex, index)}
+                      className="p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                      aria-label="Remove set"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               ))}
+              <button
+                onClick={() => addAccessorySet(exerciseIndex)}
+                className="w-full flex items-center justify-center gap-2 py-3 text-blue-600 border-2 border-dashed border-blue-300 rounded-xl hover:bg-blue-50 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="font-medium">Add Set</span>
+              </button>
             </>
           )}
         </div>
