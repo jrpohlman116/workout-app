@@ -656,14 +656,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
                 <div key={index} className="flex gap-2 mb-4">
                   <div className="grid grid-cols-2 gap-4 flex-1">
                     <input
-                      type="input"
+                      type="number"
                       value={set.reps}
                       onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
                       placeholder={currentExercise.reps}
                       className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <input
-                      type="text"
+                      type="number"
                       value={set.weight}
                       onChange={(e) => updateAccessorySet(exerciseIndex, index, 'weight', e.target.value)}
                       placeholder="0"
