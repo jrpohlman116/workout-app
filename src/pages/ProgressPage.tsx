@@ -124,6 +124,22 @@ export default function ProgressPage() {
     });
   };
 
+  const calculateTonnage = (session: WorkoutSession) => {
+    let mainLiftTonnage = session.weight_lifted * session.reps_performed;
+
+    const accessories = accessoryData[session.id] || [];
+    const accessoryTonnage = accessories.reduce((total, exercise) => {
+      const exerciseTotal = exercise.sets_data.reduce((setTotal, set) => {
+        const weight = parseFloat(set.weight) || 0;
+        const reps = parseInt(set.reps) || 0;
+        return setTotal + (weight * reps);
+      }, 0);
+      return total + exerciseTotal;
+    }, 0);
+
+    return mainLiftTonnage + accessoryTonnage;
+  };
+
   const groupSessionsByDate = () => {
     const grouped: { [key: string]: WorkoutSession[] } = {};
 
@@ -140,7 +156,8 @@ export default function ProgressPage() {
       sessions: sessions.sort((a, b) => {
         const order = ['squat', 'bench', 'deadlift', 'ohp'];
         return order.indexOf(a.lift_type) - order.indexOf(b.lift_type);
-      })
+      }),
+      totalTonnage: sessions.reduce((total, s) => total + calculateTonnage(s), 0)
     }));
   };
 
@@ -293,13 +310,21 @@ export default function ProgressPage() {
                 className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className="flex items-start justify-between mb-4 pb-3 border-b border-gray-100">
-                  <p className="text-gray-700 font-medium">
-                    {formatDate(group.sessions[0].completed_at)}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Week {group.sessions[0].week}, Cycle {group.sessions[0].cycle}
-                  </p>
+                <div className="mb-4 pb-3 border-b border-gray-100">
+                  <div className="flex items-start justify-between mb-2">
+                    <p className="text-gray-700 font-medium">
+                      {formatDate(group.sessions[0].completed_at)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Week {group.sessions[0].week}, Cycle {group.sessions[0].cycle}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Total Tonnage:</span>
+                    <span className="text-lg font-bold text-blue-600">
+                      {group.totalTonnage.toLocaleString()} {profile.unit_preference || 'lb'}
+                    </span>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   {group.sessions.map((session) => {
