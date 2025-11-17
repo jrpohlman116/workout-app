@@ -666,7 +666,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
                       type="text"
                       value={set.weight}
                       onChange={(e) => updateAccessorySet(exerciseIndex, index, 'weight', e.target.value)}
-                      placeholder="0lb"
+                      placeholder="0"
                       className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
