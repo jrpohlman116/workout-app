@@ -12,7 +12,7 @@ interface AccessoryExercise {
   sets_data: { reps: string; weight: string }[];
 }
 
-type Tab = 'overview' | 'weight' | 'log';
+type Tab = 'overview' | 'weight' | 'volume' | 'log';
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
@@ -89,6 +89,24 @@ export default function ProgressPage() {
     });
 
     return bestSession;
+  };
+
+  const getBestVolumeForLift = (liftType: string) => {
+    const liftSessions = sessions.filter(s => s.lift_type === liftType);
+    if (liftSessions.length === 0) return null;
+
+    let bestSession = liftSessions[0];
+    let bestTonnage = calculateTonnage(bestSession);
+
+    liftSessions.forEach(session => {
+      const tonnage = calculateTonnage(session);
+      if (tonnage > bestTonnage) {
+        bestSession = session;
+        bestTonnage = tonnage;
+      }
+    });
+
+    return { session: bestSession, tonnage: bestTonnage };
   };
 
   const lifts = [
@@ -174,6 +192,7 @@ export default function ProgressPage() {
   const tabs = [
     { id: 'overview' as Tab, label: 'Overview' },
     { id: 'weight' as Tab, label: 'Best Weight' },
+    { id: 'volume' as Tab, label: 'Best Volume' },
     { id: 'log' as Tab, label: 'Workout Log' },
   ];
 
@@ -292,6 +311,48 @@ export default function ProgressPage() {
                         {bestSession.weight_lifted} {profile.unit_preference || 'lb'}
                       </div>
                       <p className="text-sm text-gray-600">{bestSession.reps_performed} reps</p>
+                    </>
+                  ) : (
+                    <div className="text-gray-500 py-2">No workouts recorded</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {activeTab === 'volume' && (
+          <div className="space-y-4">
+            {lifts.map((lift, index) => {
+              const bestVolume = getBestVolumeForLift(lift.type);
+
+              return (
+                <div
+                  key={lift.type}
+                  className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up hover-lift"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <p className="text-gray-700 font-medium">{lift.displayName}</p>
+                    {bestVolume && (
+                      <p className="text-sm text-gray-500">
+                        {formatDate(bestVolume.session.completed_at).split(',')[0]}, {new Date(bestVolume.session.completed_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    )}
+                  </div>
+                  {bestVolume ? (
+                    <>
+                      <div className="text-4xl font-bold text-blue-600 mb-1">
+                        {bestVolume.tonnage.toLocaleString()} {profile.unit_preference || 'lb'}
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Main: {bestVolume.session.reps_performed} × {bestVolume.session.weight_lifted}{profile.unit_preference || 'lb'}
+                      </p>
+                      {accessoryData[bestVolume.session.id]?.length > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          + {accessoryData[bestVolume.session.id].length} accessory {accessoryData[bestVolume.session.id].length === 1 ? 'exercise' : 'exercises'}
+                        </p>
+                      )}
                     </>
                   ) : (
                     <div className="text-gray-500 py-2">No workouts recorded</div>
