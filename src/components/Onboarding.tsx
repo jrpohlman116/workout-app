@@ -18,7 +18,7 @@ export default function Onboarding() {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .update({
           bodyweight: parseFloat(bodyweight) || 0,
@@ -30,11 +30,39 @@ export default function Onboarding() {
           onboarding_completed: true,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select()
+        .single();
 
-      if (!error) {
-        await refreshProfile();
+      if (profileError) throw profileError;
+
+      const initialMaxes = [
+        { lift_type: 'squat', max: parseFloat(squatMax) || 0 },
+        { lift_type: 'bench', max: parseFloat(benchMax) || 0 },
+        { lift_type: 'deadlift', max: parseFloat(deadliftMax) || 0 },
+        { lift_type: 'ohp', max: parseFloat(ohpMax) || 0 },
+      ].filter(lift => lift.max > 0);
+
+      if (initialMaxes.length > 0 && profile) {
+        const sessionInserts = initialMaxes.map(lift => ({
+          user_id: user.id,
+          lift_type: lift.lift_type,
+          cycle: 0,
+          week: 0,
+          weight_lifted: lift.max,
+          reps_performed: 1,
+          calculated_1rm: lift.max,
+          completed_at: profile.created_at,
+        }));
+
+        const { error: sessionError } = await supabase
+          .from('workout_sessions')
+          .insert(sessionInserts);
+
+        if (sessionError) throw sessionError;
       }
+
+      await refreshProfile();
     } catch (error) {
       console.error('Error updating profile:', error);
     } finally {
