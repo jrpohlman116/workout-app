@@ -127,10 +127,10 @@ export default function ProgressPage() {
   };
 
   const lifts = [
-    { name: '1RM Squat', displayName: 'Max Squat', type: 'squat', initial: profile.squat_max },
-    { name: '1RM Bench', displayName: 'Max Bench', type: 'bench', initial: profile.bench_max },
-    { name: '1RM Deadlift', displayName: 'Max Deadlift', type: 'deadlift', initial: profile.deadlift_max },
-    { name: '1RM OHP', displayName: 'Max Overhead Press', type: 'ohp', initial: profile.ohp_max },
+    { name: 'Average Projected 1RM Squat', displayName: 'Max Squat', type: 'squat', initial: profile.squat_max },
+    { name: 'Average Projected 1RM Bench', displayName: 'Max Bench', type: 'bench', initial: profile.bench_max },
+    { name: 'Average Projected 1RM Deadlift', displayName: 'Max Deadlift', type: 'deadlift', initial: profile.deadlift_max },
+    { name: 'Average Projected 1RM OHP', displayName: 'Max Overhead Press', type: 'ohp', initial: profile.ohp_max },
   ];
 
   const liftTypes = ['squat', 'bench', 'deadlift', 'ohp'];
