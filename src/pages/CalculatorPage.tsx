@@ -71,7 +71,7 @@ export default function CalculatorPage() {
     const perSide = weightToLoad / 2;
 
     const availablePlates = plateUnit === 'lb'
-      ? [45, 35, 25, 10, 5, 2.5]
+      ? [45, 25, 10, 5, 2.5]
       : [25, 20, 15, 10, 5, 2.5, 1.25];
 
     const plates: { weight: number; count: number }[] = [];
