@@ -31,12 +31,10 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
   const generateWarmupSets = (estimatedMax: number) => {
     const unit = profile.unit_preference || 'lb';
     const warmup = [
-      { weight: Math.round(estimatedMax * 0.4), reps: 5, label: 'Warm-up Set 1' },
-      { weight: Math.round(estimatedMax * 0.5), reps: 5, label: 'Warm-up Set 2' },
-      { weight: Math.round(estimatedMax * 0.6), reps: 3, label: 'Warm-up Set 3' },
-      { weight: Math.round(estimatedMax * 0.7), reps: 2, label: 'Warm-up Set 4' },
-      { weight: Math.round(estimatedMax * 0.8), reps: 1, label: 'Warm-up Set 5' },
-      { weight: Math.round(estimatedMax * 0.9), reps: 1, label: 'Final Warm-up' },
+      { weight: Math.round(estimatedMax * 0.5), reps: 5, label: 'Warm-up Set 1' },
+      { weight: Math.round(estimatedMax * 0.7), reps: 3, label: 'Warm-up Set 2' },
+      { weight: Math.round(estimatedMax * 0.85), reps: 1, label: 'Warm-up Set 3' },
+      { weight: Math.round(estimatedMax * 0.95), reps: 1, label: 'Final Warm-up' },
     ];
 
     return warmup.map(set => ({
