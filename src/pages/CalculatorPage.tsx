@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { calculateOneRepMax, calculateWilksScore } from '../lib/calculations';
 import { Info } from 'lucide-react';
 import { useRipple } from '../hooks/useAnimations';
+import { useAuth } from '../contexts/AuthContext';
 
-type Tab = '1rm' | 'wilks';
+type Tab = '1rm' | 'wilks' | 'plates';
 
 export default function CalculatorPage() {
   const [activeTab, setActiveTab] = useState<Tab>('1rm');
   const createRipple = useRipple();
+  const { profile } = useAuth();
 
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
@@ -21,6 +23,11 @@ export default function CalculatorPage() {
   const [wilksGender, setWilksGender] = useState('male');
   const [wilksUnit, setWilksUnit] = useState('lb');
   const [calculatedWilks, setCalculatedWilks] = useState<number | null>(null);
+
+  const [targetWeight, setTargetWeight] = useState('');
+  const [barWeight, setBarWeight] = useState('45');
+  const [plateUnit, setPlateUnit] = useState('lb');
+  const [calculatedPlates, setCalculatedPlates] = useState<{ weight: number; count: number }[] | null>(null);
 
   const handleCalculate = () => {
     const w = parseFloat(weight);
@@ -51,9 +58,40 @@ export default function CalculatorPage() {
     }
   };
 
+  const handlePlateCalculate = () => {
+    const target = parseFloat(targetWeight);
+    const bar = parseFloat(barWeight);
+
+    if (!target || !bar || target <= bar) {
+      setCalculatedPlates(null);
+      return;
+    }
+
+    const weightToLoad = target - bar;
+    const perSide = weightToLoad / 2;
+
+    const availablePlates = plateUnit === 'lb'
+      ? [45, 35, 25, 10, 5, 2.5]
+      : [25, 20, 15, 10, 5, 2.5, 1.25];
+
+    const plates: { weight: number; count: number }[] = [];
+    let remaining = perSide;
+
+    for (const plate of availablePlates) {
+      const count = Math.floor(remaining / plate);
+      if (count > 0) {
+        plates.push({ weight: plate, count });
+        remaining -= count * plate;
+      }
+    }
+
+    setCalculatedPlates(plates);
+  };
+
   const tabs = [
     { id: '1rm' as Tab, label: '1 RM' },
     { id: 'wilks' as Tab, label: 'Wilks Score' },
+    { id: 'plates' as Tab, label: 'Plate Calculator' },
   ];
 
   return (
@@ -259,6 +297,102 @@ export default function CalculatorPage() {
                   {calculatedWilks >= 350 && calculatedWilks < 450 && 'Advanced (350-449) - Impressive strength levels'}
                   {calculatedWilks >= 450 && 'Elite (450+) - Competition-level strength'}
                 </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'plates' && (
+          <div className="space-y-4 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-sm p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Plate Calculator</h2>
+              <p className="text-gray-600 text-sm mb-6">
+                Calculate which plates to load on each side of the bar to reach your target weight.
+              </p>
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Target Weight
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="number"
+                    value={targetWeight}
+                    onChange={(e) => setTargetWeight(e.target.value)}
+                    placeholder="e.g. 225, 315, 405"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <select
+                    value={plateUnit}
+                    onChange={(e) => setPlateUnit(e.target.value)}
+                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  >
+                    <option value="lb">lb</option>
+                    <option value="kg">kg</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Bar Weight
+                </label>
+                <input
+                  type="number"
+                  value={barWeight}
+                  onChange={(e) => setBarWeight(e.target.value)}
+                  placeholder="e.g. 45, 35, 20"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">Standard bar is 45 lb / 20 kg</p>
+              </div>
+
+              <button
+                onClick={handlePlateCalculate}
+                className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Calculate
+              </button>
+            </div>
+
+            {calculatedPlates !== null && (
+              <div className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up">
+                <p className="text-gray-600 text-sm mb-4">Load per side:</p>
+                {calculatedPlates.length === 0 ? (
+                  <p className="text-gray-600">Just the bar (no plates needed)</p>
+                ) : (
+                  <div className="space-y-3">
+                    {calculatedPlates.map((plate, index) => (
+                      <div key={index} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl">
+                        <span className="text-lg font-semibold text-gray-900">
+                          {plate.weight} {plateUnit}
+                        </span>
+                        <span className="text-2xl font-bold text-blue-600">
+                          × {plate.count}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <p className="text-sm text-gray-600 mb-2">Total weight breakdown:</p>
+                      <div className="space-y-1 text-sm text-gray-700">
+                        <div className="flex justify-between">
+                          <span>Bar:</span>
+                          <span className="font-semibold">{barWeight} {plateUnit}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Plates (both sides):</span>
+                          <span className="font-semibold">
+                            {calculatedPlates.reduce((sum, p) => sum + (p.weight * p.count * 2), 0)} {plateUnit}
+                          </span>
+                        </div>
+                        <div className="flex justify-between pt-2 border-t border-gray-200 font-bold">
+                          <span>Total:</span>
+                          <span className="text-blue-600">{targetWeight} {plateUnit}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
