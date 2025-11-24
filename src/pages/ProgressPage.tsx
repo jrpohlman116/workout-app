@@ -34,7 +34,7 @@ export default function ProgressPage() {
 
     const { data } = await supabase
       .from('workout_sessions')
-      .select('*')
+      .select('id, user_id, lift_type, cycle, week, weight_lifted, reps_performed, calculated_1rm, completed_at, created_at, is_1rm_test, notes')
       .eq('user_id', user.id)
       .order('completed_at', { ascending: true });
 
@@ -414,7 +414,14 @@ export default function ProgressPage() {
                     return (
                       <div key={session.id} className="border-b border-gray-100 last:border-0 pb-3 last:pb-0">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-gray-700 font-medium">{getLiftDisplayName(session.lift_type)}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-gray-700 font-medium">{getLiftDisplayName(session.lift_type)}</p>
+                            {session.is_1rm_test && (
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                1RM TEST
+                              </span>
+                            )}
+                          </div>
                           <p className="text-gray-900 font-semibold">
                             {session.reps_performed} x {session.weight_lifted}{profile.unit_preference || 'lb'}
                           </p>

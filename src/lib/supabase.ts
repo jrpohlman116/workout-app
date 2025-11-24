@@ -33,6 +33,8 @@ export interface WorkoutSession {
   calculated_1rm: number;
   completed_at: string;
   created_at: string;
+  is_1rm_test?: boolean;
+  notes?: string;
 }
 
 export interface ExerciseSubstitution {

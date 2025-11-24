@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, getCycleProgression } from '../lib/calculations';
-import { Calendar, RefreshCw, ChevronRight, Check, SkipForward } from 'lucide-react';
+import { Calendar, RefreshCw, ChevronRight, Check, SkipForward, Activity } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useCountUp, useRipple } from '../hooks/useAnimations';
+import OneRepMaxTest from '../components/OneRepMaxTest';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -15,6 +16,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [workoutData, setWorkoutData] = useState<Map<string, { calculated_1rm: number }>>(new Map());
   const [projectedMaxes, setProjectedMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
   const [skipping, setSkipping] = useState(false);
+  const [showOneRMTest, setShowOneRMTest] = useState(false);
   const createRipple = useRipple();
 
   useEffect(() => {
@@ -234,6 +236,22 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </div>
         </div>
 
+        <button
+          onClick={() => setShowOneRMTest(true)}
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-all hover-lift"
+        >
+          <div className="flex items-center gap-4">
+            <div className="bg-white bg-opacity-20 rounded-full p-3">
+              <Activity className="w-6 h-6" />
+            </div>
+            <div className="text-left flex-1">
+              <p className="font-bold text-lg mb-1">Test Your 1 Rep Max</p>
+              <p className="text-sm text-blue-100">Update your training maxes with guided testing protocol</p>
+            </div>
+            <ChevronRight className="w-6 h-6" />
+          </div>
+        </button>
+
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900">Workouts</h2>
@@ -314,6 +332,17 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           )}
         </div>
       </div>
+
+      {showOneRMTest && (
+        <OneRepMaxTest
+          onClose={() => setShowOneRMTest(false)}
+          onComplete={() => {
+            setShowOneRMTest(false);
+            loadCompletedWorkouts();
+            loadProjectedMaxes();
+          }}
+        />
+      )}
     </div>
   );
 }
