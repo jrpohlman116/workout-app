@@ -65,16 +65,33 @@ export default function ProgressPage() {
 
   const nonDeloadSessions = sessions.filter(s => s.week !== 4);
 
+  const getFirstRecordedMax = (liftType: string) => {
+    const liftSessions = nonDeloadSessions.filter(s => s.lift_type === liftType);
+    if (liftSessions.length === 0) return 0;
+    return liftSessions[0].calculated_1rm;
+  };
+
+  const getAverageOfLastThreeSessions = (liftType: string) => {
+    const liftSessions = nonDeloadSessions.filter(s => s.lift_type === liftType);
+    if (liftSessions.length === 0) return 0;
+
+    const lastThree = liftSessions.slice(-3);
+    const sum = lastThree.reduce((total, session) => total + session.calculated_1rm, 0);
+    return Math.round(sum / lastThree.length);
+  };
+
   const getLatestMaxForLift = (liftType: string) => {
     const liftSessions = nonDeloadSessions.filter(s => s.lift_type === liftType);
     if (liftSessions.length === 0) return 0;
     return liftSessions[liftSessions.length - 1].calculated_1rm;
   };
 
-  const getMaxChangePercent = (liftType: string, initialMax: number) => {
-    const currentMax = getLatestMaxForLift(liftType);
-    if (initialMax === 0) return 0;
-    return (((currentMax - initialMax) / initialMax) * 100).toFixed(1);
+  const getMaxChangePercent = (liftType: string) => {
+    const firstRecorded = getFirstRecordedMax(liftType);
+    const currentAverage = getAverageOfLastThreeSessions(liftType);
+
+    if (firstRecorded === 0) return 0;
+    return (((currentAverage - firstRecorded) / firstRecorded) * 100).toFixed(1);
   };
 
   const getBestWeightForLift = (liftType: string) => {
@@ -251,8 +268,9 @@ export default function ProgressPage() {
 
             <div className="grid grid-cols-2 gap-4">
               {lifts.map((lift, index) => {
-                const currentMax = getLatestMaxForLift(lift.type) || lift.initial;
-                const changePercent = parseFloat(getMaxChangePercent(lift.type, lift.initial));
+                const averageMax = getAverageOfLastThreeSessions(lift.type);
+                const displayMax = averageMax > 0 ? averageMax : lift.initial;
+                const changePercent = parseFloat(getMaxChangePercent(lift.type));
                 const hasData = nonDeloadSessions.some(s => s.lift_type === lift.type);
                 const isVisible = index < visibleLifts;
 
@@ -266,7 +284,7 @@ export default function ProgressPage() {
                   >
                     <p className="text-gray-600 text-sm mb-2">{lift.name}</p>
                     <div className="text-3xl font-bold text-blue-600 mb-1">
-                      {currentMax} {profile.unit_preference || 'lb'}
+                      {displayMax} {profile.unit_preference || 'lb'}
                     </div>
                     {hasData ? (
                       <div className={`text-sm font-semibold animate-fade-in ${
