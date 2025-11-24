@@ -127,10 +127,10 @@ export default function ProgressPage() {
   };
 
   const lifts = [
-    { name: 'Average Projected 1RM Squat', displayName: 'Max Squat', type: 'squat', initial: profile.squat_max },
-    { name: 'Average Projected 1RM Bench', displayName: 'Max Bench', type: 'bench', initial: profile.bench_max },
-    { name: 'Average Projected 1RM Deadlift', displayName: 'Max Deadlift', type: 'deadlift', initial: profile.deadlift_max },
-    { name: 'Average Projected 1RM OHP', displayName: 'Max Overhead Press', type: 'ohp', initial: profile.ohp_max },
+    { name: '1RM Squat', displayName: 'Max Squat', type: 'squat', initial: profile.squat_max },
+    { name: '1RM Bench', displayName: 'Max Bench', type: 'bench', initial: profile.bench_max },
+    { name: '1RM Deadlift', displayName: 'Max Deadlift', type: 'deadlift', initial: profile.deadlift_max },
+    { name: '1RM OHP', displayName: 'Max Overhead Press', type: 'ohp', initial: profile.ohp_max },
   ];
 
   const liftTypes = ['squat', 'bench', 'deadlift', 'ohp'];
@@ -265,7 +265,8 @@ export default function ProgressPage() {
                 <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
               )}
             </div>
-
+            
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">Average Projected 1RM</h2>
             <div className="grid grid-cols-2 gap-4">
               {lifts.map((lift, index) => {
                 const averageMax = getAverageOfLastThreeSessions(lift.type);
