@@ -333,20 +333,22 @@ export default function ProfilePage() {
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-              <button
-                onClick={handleSaveMaxes}
-                disabled={loading}
-                className="w-full bg-gray-600 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50"
-              >
-                Save Maxes
-              </button>
-              <button
-                onClick={handleSaveMaxesAndRestart}
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                Save and Restart Plan
-              </button>
+              <div className="grid grid-rows-1 gap-3">
+                <button
+                  onClick={handleSaveMaxes}
+                  disabled={loading}
+                  className="w-full bg-gray-600 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50"
+                >
+                  Save Maxes
+                </button>
+                <button
+                  onClick={handleSaveMaxesAndRestart}
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  Save and Restart Plan
+                </button>
+              </div>
               <p className="text-xs text-gray-500 text-center">
                 "Save and Restart Plan" will reset your progress to Cycle 1, Week 1
               </p>
