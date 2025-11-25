@@ -18,6 +18,9 @@ export interface UserProfile {
   current_cycle: number;
   current_week: number;
   onboarding_completed: boolean;
+  bodyweight?: number;
+  gender?: string;
+  unit_preference?: string;
   created_at: string;
   updated_at: string;
 }

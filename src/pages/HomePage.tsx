@@ -29,12 +29,17 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const loadCompletedWorkouts = async () => {
     if (!user || !profile) return;
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString();
+
     const { data } = await supabase
       .from('workout_sessions')
       .select('lift_type, calculated_1rm')
       .eq('user_id', user.id)
       .eq('cycle', profile.current_cycle)
-      .eq('week', profile.current_week);
+      .eq('week', profile.current_week)
+      .gte('completed_at', todayISO);
 
     if (data) {
       setCompletedWorkouts(new Set(data.map(w => w.lift_type)));
