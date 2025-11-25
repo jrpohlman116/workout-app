@@ -5,7 +5,7 @@ import { Eye, EyeOff, LogOut } from 'lucide-react';
 
 export default function ProfilePage() {
   const { profile, user, refreshProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'progress' | 'body' | 'maxes' | 'security'>('progress');
+  const [activeTab, setActiveTab] = useState<'body' | 'maxes' | 'security'>('body');
   const [squatMax, setSquatMax] = useState(profile?.squat_max?.toString() || '');
   const [benchMax, setBenchMax] = useState(profile?.bench_max?.toString() || '');
   const [deadliftMax, setDeadliftMax] = useState(profile?.deadlift_max?.toString() || '');
@@ -13,15 +13,12 @@ export default function ProfilePage() {
   const [bodyweight, setBodyweight] = useState(profile?.bodyweight?.toString() || '');
   const [gender, setGender] = useState(profile?.gender || 'male');
   const [unitPreference, setUnitPreference] = useState(profile?.unit_preference || 'lb');
-  const [currentCycle, setCurrentCycle] = useState(profile?.current_cycle?.toString() || '1');
-  const [currentWeek, setCurrentWeek] = useState(profile?.current_week?.toString() || '1');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [bodyLoading, setBodyLoading] = useState(false);
-  const [progressError, setProgressError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
@@ -72,8 +69,6 @@ export default function ProfilePage() {
 
       if (!error) {
         await refreshProfile();
-        setCurrentCycle('1');
-        setCurrentWeek('1');
       }
     } catch (error) {
       console.error('Error updating lifts:', error);
@@ -82,39 +77,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleUpdateProgress = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    const cycle = parseInt(currentCycle);
-    const week = parseInt(currentWeek);
-
-    if (cycle < 1 || week < 1 || week > 4) {
-      setProgressError('Cycle must be 1 or higher, week must be 1-4');
-      return;
-    }
-    setProgressError('');
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          current_cycle: cycle,
-          current_week: week,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-
-      if (!error) {
-        await refreshProfile();
-      }
-    } catch (error) {
-      console.error('Error updating progress:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,19 +135,6 @@ export default function ProfilePage() {
         <div className="max-w-md mx-auto px-4">
           <div className="flex gap-6 overflow-x-auto border-b border-gray-200">
             <button
-              onClick={() => setActiveTab('progress')}
-              className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
-                activeTab === 'progress'
-                  ? 'text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Progress
-              {activeTab === 'progress' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-              )}
-            </button>
-            <button
               onClick={() => setActiveTab('body')}
               className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'body'
@@ -229,55 +178,6 @@ export default function ProfilePage() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        {activeTab === 'progress' && (
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Training Progress</h2>
-          <form onSubmit={handleUpdateProgress} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Current Cycle
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={currentCycle}
-                  onChange={(e) => setCurrentCycle(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Current Week
-                </label>
-                <select
-                  value={currentWeek}
-                  onChange={(e) => setCurrentWeek(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                </select>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              Update Cycle & Week
-            </button>
-            {progressError && (
-              <p className="text-sm text-red-600 mt-2">{progressError}</p>
-            )}
-          </form>
-        </div>
-        )}
-
         {activeTab === 'body' && (
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Body Stats</h2>
