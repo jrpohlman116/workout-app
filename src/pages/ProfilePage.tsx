@@ -184,7 +184,7 @@ export default function ProfilePage() {
               className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'maxes'
                   ? 'text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Tested Maxes
@@ -358,7 +358,7 @@ export default function ProfilePage() {
                   Save and Restart Plan
                 </button>
               </div>
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
                 "Save and Restart Plan" will reset your progress to Cycle 1, Week 1
               </p>
             </div>
@@ -473,7 +473,7 @@ export default function ProfilePage() {
         )}
 
         {activeTab === 'security' && (
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
           Last updated: {lastUpdated}
         </p>
         )}

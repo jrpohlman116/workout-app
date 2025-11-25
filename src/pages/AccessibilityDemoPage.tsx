@@ -63,7 +63,7 @@ export default function AccessibilityDemoPage() {
               description="Select your current training experience level"
               required
             />
-            <p className="text-sm text-gray-500 mt-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
               Selected: <strong>{options.find(o => o.value === selectedOption)?.label}</strong>
             </p>
           </div>

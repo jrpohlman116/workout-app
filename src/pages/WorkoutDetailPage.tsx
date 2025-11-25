@@ -560,7 +560,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-gray-900">{currentExercise.name}</h2>
               {exerciseSubstitutions[exerciseIndex] && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Substituted from: {baseExercises[liftType as keyof typeof baseExercises][exerciseIndex].name}
                 </p>
               )}

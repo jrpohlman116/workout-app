@@ -261,11 +261,11 @@ export default function ProgressPage() {
 
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
               <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Estimated 1RM Over Time</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mb-4">Based on your AMRAP set performance each week</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Based on your AMRAP set performance each week</p>
               {nonDeloadSessions.length === 0 ? (
                 <div className="text-center py-12 animate-fade-in">
                   <p className="text-gray-600 dark:text-gray-400 mb-2">Complete your first workout to see progress</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-500">Your strength trend will appear here after completing workouts</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Your strength trend will appear here after completing workouts</p>
                 </div>
               ) : (
                 <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
@@ -332,7 +332,7 @@ export default function ProgressPage() {
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-gray-700 dark:text-gray-300 font-medium">{lift.displayName}</p>
                     {bestSession && (
-                      <p className="text-sm text-gray-500 dark:text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {formatDate(bestSession.completed_at).split(',')[0]}, {new Date(bestSession.completed_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                       </p>
                     )}
@@ -345,7 +345,7 @@ export default function ProgressPage() {
                       <p className="text-sm text-gray-600 dark:text-gray-400">{bestSession.reps_performed} reps</p>
                     </>
                   ) : (
-                    <div className="text-gray-500 dark:text-gray-500 py-2">No workouts recorded</div>
+                    <div className="text-gray-500 dark:text-gray-400 py-2">No workouts recorded</div>
                   )}
                 </div>
               );
@@ -367,7 +367,7 @@ export default function ProgressPage() {
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-gray-700 dark:text-gray-300 font-medium">{lift.displayName}</p>
                     {bestVolume && (
-                      <p className="text-sm text-gray-500 dark:text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {formatDate(bestVolume.session.completed_at).split(',')[0]}, {new Date(bestVolume.session.completed_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                       </p>
                     )}
@@ -387,7 +387,7 @@ export default function ProgressPage() {
                       )}
                     </>
                   ) : (
-                    <div className="text-gray-500 dark:text-gray-500 py-2">No workouts recorded</div>
+                    <div className="text-gray-500 dark:text-gray-400 py-2">No workouts recorded</div>
                   )}
                 </div>
               );
@@ -408,7 +408,7 @@ export default function ProgressPage() {
                     <p className="text-gray-700 dark:text-gray-300 font-medium">
                       {formatDate(group.sessions[0].completed_at)}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       Week {group.sessions[0].week}, Cycle {group.sessions[0].cycle}
                     </p>
                   </div>

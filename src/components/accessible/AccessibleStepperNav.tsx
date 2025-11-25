@@ -76,7 +76,7 @@ export default function AccessibleStepperNav({
             <h2 className="text-sm font-medium text-gray-700">
               Step {currentIndex + 1} of {steps.length}
             </h2>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Use Ctrl+Arrow keys to navigate
             </p>
           </div>

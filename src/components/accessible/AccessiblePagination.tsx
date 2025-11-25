@@ -97,7 +97,7 @@ export default function AccessiblePagination({
                   1
                 </button>
                 {!visiblePages.includes(2) && (
-                  <span className="px-2 text-gray-500" aria-hidden="true">
+                  <span className="px-2 text-gray-500 dark:text-gray-400" aria-hidden="true">
                     ...
                   </span>
                 )}
@@ -130,7 +130,7 @@ export default function AccessiblePagination({
             {showLastPage && (
               <>
                 {!visiblePages.includes(totalPages - 1) && (
-                  <span className="px-2 text-gray-500" aria-hidden="true">
+                  <span className="px-2 text-gray-500 dark:text-gray-400" aria-hidden="true">
                     ...
                   </span>
                 )}
@@ -196,7 +196,7 @@ export function LoadMoreButton({
           All {itemName} loaded
         </p>
         {loadedCount && (
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Showing all {loadedCount} {itemName}
           </p>
         )}

@@ -117,7 +117,7 @@ export default function AccessibleSelect({
       </label>
 
       {description && (
-        <p id={`${id}-description`} className="text-xs text-gray-500 mb-2">
+        <p id={`${id}-description`} className="text-xs text-gray-500 dark:text-gray-400 mb-2">
           {description}
         </p>
       )}
@@ -135,7 +135,7 @@ export default function AccessibleSelect({
         aria-describedby={description ? `${id}-description` : undefined}
         className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-left focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
       >
-        <span className={selectedOption ? 'text-gray-900' : 'text-gray-500'}>
+        <span className={selectedOption ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}>
           {selectedOption?.label || 'Select an option'}
         </span>
         <ChevronDown
@@ -177,7 +177,7 @@ export default function AccessibleSelect({
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">{option.label}</div>
                     {option.description && (
-                      <div className="text-sm text-gray-500 mt-0.5">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         {option.description}
                       </div>
                     )}

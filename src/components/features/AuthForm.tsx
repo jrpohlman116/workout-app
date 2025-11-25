@@ -100,7 +100,7 @@ export default function AuthForm() {
                 Password
               </label>
               {!isLogin && (
-                <p className="text-xs text-gray-500 mb-2">Minimum 6 characters</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Minimum 6 characters</p>
               )}
               <div className="relative">
                 <input

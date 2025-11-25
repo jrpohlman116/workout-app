@@ -26,12 +26,12 @@ export default function WorkoutSuccessModal({
 
           <div className="space-y-6 mb-8">
             <div className="text-left">
-              <p className="text-sm text-gray-500 mb-1">Estimated 1 Rep Max</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Estimated 1 Rep Max</p>
               <p className="text-3xl font-bold text-gray-900">{Math.round(estimated1RM)} lbs</p>
             </div>
 
             <div className="text-left">
-              <p className="text-sm text-gray-500 mb-1">Today's Tonnage</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Today's Tonnage</p>
               <p className="text-3xl font-bold text-gray-900">{totalTonnage.toLocaleString()} lbs</p>
             </div>
           </div>

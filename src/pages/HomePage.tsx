@@ -214,7 +214,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-gray-600 dark:text-gray-400 text-sm">Wilks Score</p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">Strength normalized by bodyweight</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Strength normalized by bodyweight</p>
             </div>
             {hasProjectedData && parseFloat(wilksChangePercent) !== 0 && (
               <div className={`text-sm font-semibold ${
@@ -260,9 +260,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-0.5">Week</div>
                   <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{profile.current_week}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{getWeekSubtext(profile.current_week)}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{getWeekSubtext(profile.current_week)}</div>
                 </div>
-                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" aria-hidden="true" />
+                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-400 flex-shrink-0" aria-hidden="true" />
               </div>
             </div>
           </div>
@@ -289,9 +289,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-0.5">Cycle</div>
                   <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{profile.current_cycle}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">+{progression} lbs</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">+{progression} lbs</div>
                 </div>
-                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" aria-hidden="true" />
+                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-400 flex-shrink-0" aria-hidden="true" />
               </div>
             </div>
           </div>
