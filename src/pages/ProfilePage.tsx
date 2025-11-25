@@ -333,7 +333,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-              <div className="grid grid-rows-1 gap-3">
+              <div className="flex flex-row gap-3">
                 <button
                   onClick={handleSaveMaxes}
                   disabled={loading}
