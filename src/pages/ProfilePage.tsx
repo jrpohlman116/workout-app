@@ -242,7 +242,7 @@ export default function ProfilePage() {
             <div>
               <AccessibleNativeSelect
                 id="gender-select-profile"
-                label="Sex"
+                label="Gender"
                 value={gender}
                 options={[
                   { value: 'male', label: 'Male' },
