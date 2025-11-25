@@ -93,16 +93,6 @@
   top: 0;
 }
 
-/* Ensure touch targets are at least 44x44px */
-button,
-a,
-input[type="checkbox"],
-input[type="radio"],
-input[type="button"],
-input[type="submit"] {
-  min-height: 44px;
-  min-width: 44px;
-}
 
 /* Text inputs can be smaller vertically but need width */
 input[type="text"],
