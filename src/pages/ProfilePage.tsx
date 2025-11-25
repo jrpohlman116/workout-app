@@ -337,14 +337,14 @@ export default function ProfilePage() {
                 <button
                   onClick={handleSaveMaxes}
                   disabled={loading}
-                  className="w-50 bg-gray-600 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50"
+                  className="w-1/4 bg-gray-600 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50"
                 >
                   Save Maxes
                 </button>
                 <button
                   onClick={handleSaveMaxesAndRestart}
                   disabled={loading}
-                  className="w-50 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="w-3/4 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   Save and Restart Plan
                 </button>
