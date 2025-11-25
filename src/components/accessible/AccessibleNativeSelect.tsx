@@ -50,7 +50,7 @@ export default function AccessibleNativeSelect({
     <div className={`space-y-2 ${className}`}>
       <label
         htmlFor={id}
-        className="block text-sm font-semibold text-gray-700"
+        className="block text-sm font-semibold text-gray-700 dark:text-gray-300"
       >
         {label}
         {required && (
@@ -61,7 +61,7 @@ export default function AccessibleNativeSelect({
       </label>
 
       {description && (
-        <p id={`${id}-description`} className="text-sm text-gray-600">
+        <p id={`${id}-description`} className="text-sm text-gray-600 dark:text-gray-400">
           {description}
         </p>
       )}
@@ -83,11 +83,12 @@ export default function AccessibleNativeSelect({
           }
           aria-invalid={error ? 'true' : 'false'}
           className={`
-            w-full px-4 py-3 pr-10 border rounded-xl bg-white appearance-none
+            w-full px-4 py-3 pr-10 border rounded-xl bg-white dark:bg-gray-700 appearance-none
+            text-gray-900 dark:text-gray-100
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-            disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60
+            disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60
             transition-all
-            ${error ? 'border-red-500' : 'border-gray-300'}
+            ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
             ${isFocused ? 'shadow-md' : 'shadow-sm'}
           `}
         >
@@ -107,7 +108,7 @@ export default function AccessibleNativeSelect({
           className={`
             absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none
             transition-colors
-            ${disabled ? 'text-gray-400' : 'text-gray-600'}
+            ${disabled ? 'text-gray-400' : 'text-gray-600 dark:text-gray-400'}
           `}
           aria-hidden="true"
         />

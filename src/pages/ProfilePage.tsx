@@ -196,11 +196,11 @@ export default function ProfilePage() {
               onClick={() => setActiveTab('security')}
               className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'security'
-                  ? 'text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
-              Security
+              Settings
               {activeTab === 'security' && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
               )}
@@ -251,31 +251,6 @@ export default function ProfilePage() {
                 onChange={setGender}
                 description="Used to calculate accurate Wilks scores"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                Appearance
-              </label>
-              <button
-                type="button"
-                onClick={toggleDarkMode}
-                className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  {isDarkMode ? (
-                    <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                  ) : (
-                    <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                  )}
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">
-                    {isDarkMode ? 'Dark Mode' : 'Light Mode'}
-                  </span>
-                </div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {isDarkMode ? 'On' : 'Off'}
-                </span>
-              </button>
             </div>
 
             <button
@@ -393,6 +368,31 @@ export default function ProfilePage() {
 
         {activeTab === 'security' && (
         <>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Appearance</h2>
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                {isDarkMode ? (
+                  <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                ) : (
+                  <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                )}
+                <span className="text-gray-900 dark:text-gray-100 font-medium">
+                  {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                </span>
+              </div>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {isDarkMode ? 'On' : 'Off'}
+              </span>
+            </button>
+          </div>
+        </div>
+
         <AnimationControls
           onToggle={(enabled) => {
             localStorage.setItem('animations-enabled', String(enabled));
