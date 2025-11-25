@@ -9,6 +9,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     css: true,
+    maxConcurrency: 1,
+    testTimeout: 30000,
+    fileParallelism: false,
   },
   resolve: {
     alias: {

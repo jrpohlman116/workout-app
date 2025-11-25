@@ -10,6 +10,9 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest",
+    "test:unit": "vitest --run src/lib src/components",
+    "test:integration": "vitest --run src/test/integration",
+    "test:smoke": "vitest --run src/test/integration/database.smoke.test.ts",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"
   },
