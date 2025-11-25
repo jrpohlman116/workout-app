@@ -319,7 +319,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             <button
               onClick={() => setShowSkipWeekModal(true)}
               disabled={skipping}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
             >
               <SkipForward className="w-4 h-4" />
               Move to Next Week

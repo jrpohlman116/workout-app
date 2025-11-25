@@ -238,8 +238,8 @@ export default function ProgressPage() {
                 }}
                 className={`flex-1 py-3 font-semibold text-sm transition-all ripple-container relative overflow-hidden whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'text-blue-600 border-b-2 border-blue-600 -mb-[2px]'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 -mb-[2px]'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
                 {tab.label}
@@ -259,13 +259,13 @@ export default function ProgressPage() {
               </div>
             )}
 
-            <div className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              <h2 className="text-lg font-semibold text-gray-700 mb-2">Estimated 1RM Over Time</h2>
-              <p className="text-xs text-gray-500 mb-4">Based on your AMRAP set performance each week</p>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+              <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Estimated 1RM Over Time</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mb-4">Based on your AMRAP set performance each week</p>
               {nonDeloadSessions.length === 0 ? (
                 <div className="text-center py-12 animate-fade-in">
-                  <p className="text-gray-600 mb-2">Complete your first workout to see progress</p>
-                  <p className="text-sm text-gray-500">Your strength trend will appear here after completing workouts</p>
+                  <p className="text-gray-600 dark:text-gray-400 mb-2">Complete your first workout to see progress</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">Your strength trend will appear here after completing workouts</p>
                 </div>
               ) : (
                 <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
@@ -279,7 +279,7 @@ export default function ProgressPage() {
               />
             )}
             
-            <h2 className="text-lg font-semibold text-gray-700 mb-2">Average Projected 1RM</h2>
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Average Projected 1RM</h2>
             <div className="grid grid-cols-2 gap-4">
               {lifts.map((lift, index) => {
                 const averageMax = getAverageOfLastThreeSessions(lift.type);
@@ -291,13 +291,13 @@ export default function ProgressPage() {
                 return (
                   <div
                     key={lift.type}
-                    className={`bg-white rounded-2xl shadow-sm p-6 hover-lift transition-all ${
+                    className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 hover-lift transition-all ${
                       isVisible ? 'opacity-100 animate-scale-in' : 'opacity-0'
                     }`}
                     style={{ animationDelay: `${index * 0.1 + 0.2}s` }}
                   >
-                    <p className="text-gray-600 text-sm mb-2">{lift.name}</p>
-                    <div className="text-3xl font-bold text-blue-600 mb-1">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{lift.name}</p>
+                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                       {displayMax} {profile.unit_preference || 'lb'}
                     </div>
                     {hasData ? (
@@ -326,26 +326,26 @@ export default function ProgressPage() {
               return (
                 <div
                   key={lift.type}
-                  className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up hover-lift"
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up hover-lift"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <p className="text-gray-700 font-medium">{lift.displayName}</p>
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">{lift.displayName}</p>
                     {bestSession && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-500">
                         {formatDate(bestSession.completed_at).split(',')[0]}, {new Date(bestSession.completed_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                       </p>
                     )}
                   </div>
                   {bestSession ? (
                     <>
-                      <div className="text-4xl font-bold text-blue-600 mb-1">
+                      <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                         {bestSession.weight_lifted} {profile.unit_preference || 'lb'}
                       </div>
-                      <p className="text-sm text-gray-600">{bestSession.reps_performed} reps</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{bestSession.reps_performed} reps</p>
                     </>
                   ) : (
-                    <div className="text-gray-500 py-2">No workouts recorded</div>
+                    <div className="text-gray-500 dark:text-gray-500 py-2">No workouts recorded</div>
                   )}
                 </div>
               );
@@ -361,23 +361,23 @@ export default function ProgressPage() {
               return (
                 <div
                   key={lift.type}
-                  className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up hover-lift"
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up hover-lift"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <p className="text-gray-700 font-medium">{lift.displayName}</p>
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">{lift.displayName}</p>
                     {bestVolume && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-500">
                         {formatDate(bestVolume.session.completed_at).split(',')[0]}, {new Date(bestVolume.session.completed_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                       </p>
                     )}
                   </div>
                   {bestVolume ? (
                     <>
-                      <div className="text-4xl font-bold text-blue-600 mb-1">
+                      <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                         {bestVolume.tonnage.toLocaleString()} {profile.unit_preference || 'lb'}
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Main: {bestVolume.session.reps_performed} × {bestVolume.session.weight_lifted}{profile.unit_preference || 'lb'}
                       </p>
                       {accessoryData[bestVolume.session.id]?.length > 0 && (
@@ -387,7 +387,7 @@ export default function ProgressPage() {
                       )}
                     </>
                   ) : (
-                    <div className="text-gray-500 py-2">No workouts recorded</div>
+                    <div className="text-gray-500 dark:text-gray-500 py-2">No workouts recorded</div>
                   )}
                 </div>
               );
@@ -400,21 +400,21 @@ export default function ProgressPage() {
             {groupSessionsByDate().map((group, index) => (
               <div
                 key={group.date}
-                className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up"
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className="mb-4 pb-3 border-b border-gray-100">
+                <div className="mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
                   <div className="flex items-start justify-between mb-2">
-                    <p className="text-gray-700 font-medium">
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">
                       {formatDate(group.sessions[0].completed_at)}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-500">
                       Week {group.sessions[0].week}, Cycle {group.sessions[0].cycle}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">Total Tonnage:</span>
-                    <span className="text-lg font-bold text-blue-600">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Total Tonnage:</span>
+                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       {group.totalTonnage.toLocaleString()} {profile.unit_preference || 'lb'}
                     </span>
                   </div>
@@ -425,17 +425,17 @@ export default function ProgressPage() {
                     const isExpanded = expandedSessions.has(session.id);
 
                     return (
-                      <div key={session.id} className="border-b border-gray-100 last:border-0 pb-3 last:pb-0">
+                      <div key={session.id} className="border-b border-gray-100 dark:border-gray-700 last:border-0 pb-3 last:pb-0">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <p className="text-gray-700 font-medium">{getLiftDisplayName(session.lift_type)}</p>
+                            <p className="text-gray-700 dark:text-gray-300 font-medium">{getLiftDisplayName(session.lift_type)}</p>
                             {session.is_1rm_test && (
-                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                              <span className="bg-blue-600 dark:bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
                                 1RM TEST
                               </span>
                             )}
                           </div>
-                          <p className="text-gray-900 font-semibold">
+                          <p className="text-gray-900 dark:text-gray-100 font-semibold">
                             {session.reps_performed} x {session.weight_lifted}{profile.unit_preference || 'lb'}
                           </p>
                         </div>
@@ -451,7 +451,7 @@ export default function ProgressPage() {
                                 }
                                 setExpandedSessions(newExpanded);
                               }}
-                              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                              className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                             >
                               {isExpanded ? (
                                 <>
