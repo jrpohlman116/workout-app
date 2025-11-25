@@ -146,6 +146,8 @@ export default function ProgressPage() {
       data: liftSessions.map(s => ({
         value: s.calculated_1rm,
         date: s.completed_at,
+        cycle: s.cycle,
+        week: s.week,
       })),
     };
   });

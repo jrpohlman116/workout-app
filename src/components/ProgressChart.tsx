@@ -3,6 +3,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 interface ChartDataPoint {
   value: number;
   date: string;
+  cycle: number;
+  week: number;
 }
 
 interface ChartData {
@@ -22,47 +24,62 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
 
   if (maxDataPoints === 0) return null;
 
-  const getWeekKey = (dateString: string) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const firstDayOfYear = new Date(year, 0, 1);
-    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
-    const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-    return `${year}-W${weekNumber}`;
+  const getCycleWeekKey = (cycle: number, week: number) => {
+    return `${cycle}-${week}`;
   };
 
-  const getWeekStartDate = (weekKey: string) => {
-    const [year, week] = weekKey.split('-W').map(Number);
-    const firstDayOfYear = new Date(year, 0, 1);
-    const daysOffset = (week - 1) * 7 - firstDayOfYear.getDay();
-    const weekStart = new Date(year, 0, 1 + daysOffset);
-    return weekStart;
-  };
-
-  const allWeeks = new Set<string>();
+  const allCycleWeeks = new Set<string>();
   chartData.forEach(lift => {
     lift.data.forEach(point => {
-      const weekKey = getWeekKey(point.date);
-      allWeeks.add(weekKey);
+      const cycleWeekKey = getCycleWeekKey(point.cycle, point.week);
+      allCycleWeeks.add(cycleWeekKey);
     });
   });
-  const sortedWeeks = Array.from(allWeeks).sort();
 
-  const formattedData = sortedWeeks.map(weekKey => {
-    const weekStart = getWeekStartDate(weekKey);
-    const dataPoint: any = {
-      week: weekKey,
-      displayDate: weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    };
+  const sortedCycleWeeks = Array.from(allCycleWeeks).sort((a, b) => {
+    const [cycleA, weekA] = a.split('-').map(Number);
+    const [cycleB, weekB] = b.split('-').map(Number);
+    if (cycleA !== cycleB) return cycleA - cycleB;
+    return weekA - weekB;
+  });
+
+  const formattedData = sortedCycleWeeks.map(cycleWeekKey => {
+    const [cycle, week] = cycleWeekKey.split('-').map(Number);
+
+    let earliestDate: Date | null = null;
+    const liftValues: { [key: string]: { value: number; date: string } } = {};
 
     chartData.forEach((lift) => {
-      const pointsInWeek = lift.data.filter(p => getWeekKey(p.date) === weekKey);
-      if (pointsInWeek.length > 0) {
-        const latestPoint = pointsInWeek.sort((a, b) =>
+      const pointsInCycleWeek = lift.data.filter(p =>
+        getCycleWeekKey(p.cycle, p.week) === cycleWeekKey
+      );
+
+      if (pointsInCycleWeek.length > 0) {
+        const latestPoint = pointsInCycleWeek.sort((a, b) =>
           new Date(b.date).getTime() - new Date(a.date).getTime()
         )[0];
-        dataPoint[lift.type] = latestPoint.value;
+
+        liftValues[lift.type] = { value: latestPoint.value, date: latestPoint.date };
+
+        pointsInCycleWeek.forEach(point => {
+          const pointDate = new Date(point.date);
+          if (!earliestDate || pointDate < earliestDate) {
+            earliestDate = pointDate;
+          }
+        });
       }
+    });
+
+    const dataPoint: any = {
+      cycleWeekKey,
+      cycle,
+      week,
+      displayDate: earliestDate ? earliestDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+    };
+
+    Object.entries(liftValues).forEach(([liftType, data]) => {
+      dataPoint[liftType] = data.value;
+      dataPoint[`${liftType}_date`] = data.date;
     });
 
     return dataPoint;
@@ -70,19 +87,26 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const weekKey = payload[0].payload.week;
+      const cycle = payload[0].payload.cycle;
+      const week = payload[0].payload.week;
       return (
         <div className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg text-sm">
           <p className="font-semibold mb-1">Week of {payload[0].payload.displayDate}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center gap-2">
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span>{entry.name}: {Math.round(entry.value)} {unitPreference}</span>
-            </div>
-          ))}
+          <p className="text-xs text-gray-400 mb-2">Cycle {cycle}, Week {week}</p>
+          {payload.map((entry: any, index: number) => {
+            const liftDate = entry.payload[`${entry.dataKey}_date`];
+            const formattedDate = liftDate ? new Date(liftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+            return (
+              <div key={index} className="flex items-center gap-2">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span>{entry.name}: {Math.round(entry.value)} {unitPreference}</span>
+                {formattedDate && <span className="text-xs text-gray-400">({formattedDate})</span>}
+              </div>
+            );
+          })}
         </div>
       );
     }
