@@ -337,7 +337,7 @@ export default function ProfilePage() {
                 <button
                   onClick={handleSaveMaxes}
                   disabled={loading}
-                  className="w-lg bg-gray-600 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50"
+                  className="w-fit bg-gray-600 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50"
                 >
                   Save Maxes
                 </button>
