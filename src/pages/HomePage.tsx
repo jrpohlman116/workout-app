@@ -17,6 +17,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [projectedMaxes, setProjectedMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
+  const [showWeekSelector, setShowWeekSelector] = useState(false);
+  const [showCycleSelector, setShowCycleSelector] = useState(false);
   const createRipple = useRipple();
 
   useEffect(() => {
@@ -25,6 +27,21 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       loadProjectedMaxes();
     }
   }, [user, profile?.current_cycle, profile?.current_week]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.week-selector') && !target.closest('.cycle-selector')) {
+        setShowWeekSelector(false);
+        setShowCycleSelector(false);
+      }
+    };
+
+    if (showWeekSelector || showCycleSelector) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showWeekSelector, showCycleSelector]);
 
   const loadCompletedWorkouts = async () => {
     if (!user || !profile) return;
@@ -74,6 +91,36 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         ohp: getLatestMax('ohp') || profile.ohp_max,
       });
     }
+  };
+
+  const handleWeekChange = async (newWeek: number) => {
+    if (!user || !profile) return;
+
+    await supabase
+      .from('user_profiles')
+      .update({
+        current_week: newWeek,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+
+    await refreshProfile();
+    setShowWeekSelector(false);
+  };
+
+  const handleCycleChange = async (newCycle: number) => {
+    if (!user || !profile) return;
+
+    await supabase
+      .from('user_profiles')
+      .update({
+        current_cycle: newCycle,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+
+    await refreshProfile();
+    setShowCycleSelector(false);
   };
 
   const handleSkipWeek = async () => {
@@ -218,26 +265,66 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <p className="text-gray-600 text-sm mb-2">Week</p>
-            <div className="flex items-center gap-3">
-              <Calendar className="w-10 h-10 text-blue-600" />
-              <div>
-                <div className="text-3xl font-bold text-gray-900">{profile.current_week}</div>
-                <div className="text-sm text-gray-600">{getWeekSubtext(profile.current_week)}</div>
+          <div className="relative week-selector">
+            <button
+              onClick={() => setShowWeekSelector(!showWeekSelector)}
+              className="w-full bg-white rounded-2xl shadow-sm p-6 text-left hover:shadow-md transition-all hover-lift"
+            >
+              <p className="text-gray-600 text-sm mb-2">Week</p>
+              <div className="flex items-center gap-3">
+                <Calendar className="w-10 h-10 text-blue-600" />
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">{profile.current_week}</div>
+                  <div className="text-sm text-gray-600">{getWeekSubtext(profile.current_week)}</div>
+                </div>
               </div>
-            </div>
+            </button>
+            {showWeekSelector && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-10">
+                {[1, 2, 3, 4].map((week) => (
+                  <button
+                    key={week}
+                    onClick={() => handleWeekChange(week)}
+                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                      week === profile.current_week ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700'
+                    }`}
+                  >
+                    Week {week} - {getWeekSubtext(week)}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <p className="text-gray-600 text-sm mb-2">Current Cycle</p>
-            <div className="flex items-center gap-3">
-              <RefreshCw className="w-10 h-10 text-blue-600" />
-              <div>
-                <div className="text-3xl font-bold text-gray-900">{profile.current_cycle}</div>
-                <div className="text-sm text-gray-600">+{progression} lbs</div>
+          <div className="relative cycle-selector">
+            <button
+              onClick={() => setShowCycleSelector(!showCycleSelector)}
+              className="w-full bg-white rounded-2xl shadow-sm p-6 text-left hover:shadow-md transition-all hover-lift"
+            >
+              <p className="text-gray-600 text-sm mb-2">Current Cycle</p>
+              <div className="flex items-center gap-3">
+                <RefreshCw className="w-10 h-10 text-blue-600" />
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">{profile.current_cycle}</div>
+                  <div className="text-sm text-gray-600">+{progression} lbs</div>
+                </div>
               </div>
-            </div>
+            </button>
+            {showCycleSelector && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-10 max-h-64 overflow-y-auto">
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((cycle) => (
+                  <button
+                    key={cycle}
+                    onClick={() => handleCycleChange(cycle)}
+                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                      cycle === profile.current_cycle ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700'
+                    }`}
+                  >
+                    Cycle {cycle} - +{getCycleProgression(cycle)} lbs
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
