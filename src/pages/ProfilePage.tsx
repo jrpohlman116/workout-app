@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { supabase } from '../lib/supabase';
-import { Eye, EyeOff, LogOut } from 'lucide-react';
+import { Eye, EyeOff, LogOut, Moon, Sun } from 'lucide-react';
 import { AnimationControls } from '../components/accessible/ReducedMotionWrapper';
 import AccessibleNativeSelect from '../components/accessible/AccessibleNativeSelect';
 import AccessibleModal from '../components/accessible/AccessibleModal';
 
 export default function ProfilePage() {
   const { profile, user, refreshProfile } = useAuth();
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState<'body' | 'maxes' | 'security'>('body');
   const [squatMax, setSquatMax] = useState(profile?.squat_max?.toString() || '');
   const [benchMax, setBenchMax] = useState(profile?.bench_max?.toString() || '');
@@ -155,21 +157,21 @@ export default function ProfilePage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <div className="bg-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
+      <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <h1 className="text-4xl font-bold text-gray-900 mb-1">Profile</h1>
-          <p className="text-gray-600">Update your profile and lifts</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">Profile</h1>
+          <p className="text-gray-600 dark:text-gray-400">Update your profile and lifts</p>
         </div>
 
         <div className="max-w-md mx-auto px-4">
-          <div className="flex gap-6 overflow-x-auto border-b border-gray-200">
+          <div className="flex gap-6 overflow-x-auto border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setActiveTab('body')}
               className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'body'
-                  ? 'text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Body Stats
@@ -209,11 +211,11 @@ export default function ProfilePage() {
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
         {activeTab === 'body' && (
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Body Stats</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Body Stats</h2>
           <form onSubmit={handleUpdateBodyweight} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Bodyweight
               </label>
               <div className="flex gap-3 items-end">
@@ -223,13 +225,13 @@ export default function ProfilePage() {
                     value={bodyweight}
                     onChange={(e) => setBodyweight(e.target.value)}
                     placeholder="e.g. 180"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <select
                   value={unitPreference}
                   onChange={(e) => setUnitPreference(e.target.value as 'lb' | 'kg')}
-                  className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="lb">lb</option>
                   <option value="kg">kg</option>
@@ -251,10 +253,35 @@ export default function ProfilePage() {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                Appearance
+              </label>
+              <button
+                type="button"
+                onClick={toggleDarkMode}
+                className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  {isDarkMode ? (
+                    <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                  ) : (
+                    <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                  )}
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">
+                    {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                  </span>
+                </div>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isDarkMode ? 'On' : 'Off'}
+                </span>
+              </button>
+            </div>
+
             <button
               type="submit"
               disabled={bodyLoading}
-              className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50"
             >
               Save Body Stats
             </button>
@@ -263,12 +290,12 @@ export default function ProfilePage() {
         )}
 
         {activeTab === 'maxes' && (
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Tested Maxes</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tested Maxes</h2>
           <div className="space-y-4">
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Squat
               </label>
               <div className="flex gap-3">
@@ -286,7 +313,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Bench Press
               </label>
               <div className="flex gap-3">
@@ -304,7 +331,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Deadlift
               </label>
               <div className="flex gap-3">
@@ -322,7 +349,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Overhead Press
               </label>
               <div className="flex gap-3">
@@ -372,11 +399,11 @@ export default function ProfilePage() {
           }}
         />
 
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Change Password</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Change Password</h2>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -397,7 +424,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Confirm Password
               </label>
               <div className="relative">

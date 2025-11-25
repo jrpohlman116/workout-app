@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import AuthForm from './components/features/AuthForm';
 import Onboarding from './components/features/Onboarding';
 import Navigation from './components/layout/Navigation';
@@ -128,7 +129,7 @@ function AppContent() {
       <SkipLink targetId="navigation">Skip to navigation</SkipLink>
       <InstallPrompt />
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
         <main id="main-content" tabIndex={-1} className="focus:outline-none">
           {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
           {currentPage === 'calculator' && <CalculatorPage />}
@@ -156,7 +157,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </AuthProvider>
   );
 }
