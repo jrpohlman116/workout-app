@@ -224,7 +224,7 @@ export default function ProgressPage() {
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">Progress</h1>
-          <p className="text-gray-600 dark:text-gray-400">Track your strength gains over time</p>
+          <p className="text-gray-600 dark:text-gray-300">Track your strength gains over time</p>
         </div>
 
         <div className="max-w-md mx-auto px-4">
@@ -239,7 +239,7 @@ export default function ProgressPage() {
                 className={`flex-1 py-3 font-semibold text-sm transition-all ripple-container relative overflow-hidden whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 -mb-[2px]'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
                 {tab.label}
@@ -261,11 +261,11 @@ export default function ProgressPage() {
 
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
               <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Estimated 1RM Over Time</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Based on your AMRAP set performance each week</p>
+              <p className="text-xs text-gray-500 dark:text-gray-300 mb-4">Based on your AMRAP set performance each week</p>
               {nonDeloadSessions.length === 0 ? (
                 <div className="text-center py-12 animate-fade-in">
-                  <p className="text-gray-600 dark:text-gray-400 mb-2">Complete your first workout to see progress</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Your strength trend will appear here after completing workouts</p>
+                  <p className="text-gray-600 dark:text-gray-300 mb-2">Complete your first workout to see progress</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-300">Your strength trend will appear here after completing workouts</p>
                 </div>
               ) : (
                 <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
@@ -296,7 +296,7 @@ export default function ProgressPage() {
                     }`}
                     style={{ animationDelay: `${index * 0.1 + 0.2}s` }}
                   >
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{lift.name}</p>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">{lift.name}</p>
                     <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                       {displayMax} {profile.unit_preference || 'lb'}
                     </div>
@@ -332,7 +332,7 @@ export default function ProgressPage() {
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-gray-700 dark:text-gray-300 font-medium">{lift.displayName}</p>
                     {bestSession && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-gray-500 dark:text-gray-300">
                         {formatDate(bestSession.completed_at).split(',')[0]}, {new Date(bestSession.completed_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                       </p>
                     )}
@@ -342,10 +342,10 @@ export default function ProgressPage() {
                       <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                         {bestSession.weight_lifted} {profile.unit_preference || 'lb'}
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{bestSession.reps_performed} reps</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{bestSession.reps_performed} reps</p>
                     </>
                   ) : (
-                    <div className="text-gray-500 dark:text-gray-400 py-2">No workouts recorded</div>
+                    <div className="text-gray-500 dark:text-gray-300 py-2">No workouts recorded</div>
                   )}
                 </div>
               );
@@ -367,7 +367,7 @@ export default function ProgressPage() {
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-gray-700 dark:text-gray-300 font-medium">{lift.displayName}</p>
                     {bestVolume && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-gray-500 dark:text-gray-300">
                         {formatDate(bestVolume.session.completed_at).split(',')[0]}, {new Date(bestVolume.session.completed_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                       </p>
                     )}
@@ -377,7 +377,7 @@ export default function ProgressPage() {
                       <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                         {bestVolume.tonnage.toLocaleString()} {profile.unit_preference || 'lb'}
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
                         Main: {bestVolume.session.reps_performed} × {bestVolume.session.weight_lifted}{profile.unit_preference || 'lb'}
                       </p>
                       {accessoryData[bestVolume.session.id]?.length > 0 && (
@@ -387,7 +387,7 @@ export default function ProgressPage() {
                       )}
                     </>
                   ) : (
-                    <div className="text-gray-500 dark:text-gray-400 py-2">No workouts recorded</div>
+                    <div className="text-gray-500 dark:text-gray-300 py-2">No workouts recorded</div>
                   )}
                 </div>
               );
@@ -408,12 +408,12 @@ export default function ProgressPage() {
                     <p className="text-gray-700 dark:text-gray-300 font-medium">
                       {formatDate(group.sessions[0].completed_at)}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-300">
                       Week {group.sessions[0].week}, Cycle {group.sessions[0].cycle}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Total Tonnage:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Total Tonnage:</span>
                     <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       {group.totalTonnage.toLocaleString()} {profile.unit_preference || 'lb'}
                     </span>

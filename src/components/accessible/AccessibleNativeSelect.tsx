@@ -61,7 +61,7 @@ export default function AccessibleNativeSelect({
       </label>
 
       {description && (
-        <p id={`${id}-description`} className="text-sm text-gray-600 dark:text-gray-400">
+        <p id={`${id}-description`} className="text-sm text-gray-600 dark:text-gray-300">
           {description}
         </p>
       )}
@@ -108,7 +108,7 @@ export default function AccessibleNativeSelect({
           className={`
             absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none
             transition-colors
-            ${disabled ? 'text-gray-400' : 'text-gray-600 dark:text-gray-400'}
+            ${disabled ? 'text-gray-400' : 'text-gray-600 dark:text-gray-300'}
           `}
           aria-hidden="true"
         />

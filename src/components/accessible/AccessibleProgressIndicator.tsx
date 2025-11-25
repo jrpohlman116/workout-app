@@ -58,7 +58,7 @@ export default function AccessibleProgressIndicator({
                       transition-colors duration-200
                       ${isComplete ? 'bg-green-600 border-green-600 text-white' : ''}
                       ${isCurrent ? 'bg-blue-600 border-blue-600 text-white' : ''}
-                      ${!isComplete && !isCurrent ? 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400' : ''}
+                      ${!isComplete && !isCurrent ? 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300' : ''}
                     `}
                     role="img"
                     aria-label={

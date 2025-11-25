@@ -100,7 +100,7 @@ export function AnimationControls({ onToggle }: AnimationControlsProps) {
           <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
             Animations
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             {animationsEnabled
               ? 'Animations and motion effects are enabled'
               : 'Animations are disabled for better accessibility'}

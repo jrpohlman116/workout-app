@@ -205,7 +205,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1 animate-slide-in-left">{getGreeting()}</h1>
-          <p className="text-gray-600 dark:text-gray-400 animate-slide-in-left stagger-1">Are you ready to lift heavy?</p>
+          <p className="text-gray-600 dark:text-gray-300 animate-slide-in-left stagger-1">Are you ready to lift heavy?</p>
         </div>
       </div>
 
@@ -213,8 +213,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Wilks Score</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Strength normalized by bodyweight</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">Wilks Score</p>
+              <p className="text-xs text-gray-500 dark:text-gray-300">Strength normalized by bodyweight</p>
             </div>
             {hasProjectedData && parseFloat(wilksChangePercent) !== 0 && (
               <div className={`text-sm font-semibold ${
@@ -258,11 +258,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               <div className="flex items-center gap-3">
                 <Calendar className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-0.5">Week</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Week</div>
                   <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{profile.current_week}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{getWeekSubtext(profile.current_week)}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">{getWeekSubtext(profile.current_week)}</div>
                 </div>
-                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-400 flex-shrink-0" aria-hidden="true" />
+                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-300 flex-shrink-0" aria-hidden="true" />
               </div>
             </div>
           </div>
@@ -287,11 +287,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               <div className="flex items-center gap-3">
                 <RefreshCw className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-0.5">Cycle</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Cycle</div>
                   <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{profile.current_cycle}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">+{progression} lbs</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">+{progression} lbs</div>
                 </div>
-                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-400 flex-shrink-0" aria-hidden="true" />
+                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-300 flex-shrink-0" aria-hidden="true" />
               </div>
             </div>
           </div>
@@ -328,7 +328,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           {profile.current_week === 4 && (
             <div className="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4 mb-4">
               <p className="text-gray-700 dark:text-gray-300 font-semibold mb-1">Deload Week - Active Recovery</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Complete your workouts at lighter weights. No need to log your reps this week!</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Complete your workouts at lighter weights. No need to log your reps this week!</p>
             </div>
           )}
           <div className="space-y-3">
@@ -365,7 +365,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     <div className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
                       {workout.name}
                     </div>
-                    <div className={`text-sm ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                    <div className={`text-sm ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-300'}`}>
                       {isCompleted && projected1RM
                         ? `Projected 1RM: ${Math.round(projected1RM)} ${profile.unit_preference || 'lb'}`
                         : isCompleted
@@ -412,7 +412,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         description={`Skip to Week ${profile.current_week === 4 ? 1 : profile.current_week + 1}${profile.current_week === 4 ? ` of Cycle ${profile.current_cycle + 1}` : ''}`}
         size="sm"
       >
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
           {completedWorkouts.size === 4
             ? "You've completed all workouts for this week. Ready to move to the next week?"
             : "You haven't completed all workouts yet. Are you sure you want to skip ahead?"}

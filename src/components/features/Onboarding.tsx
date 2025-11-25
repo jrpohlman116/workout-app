@@ -77,7 +77,7 @@ export default function Onboarding() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Welcome to 5-3-1</h1>
           <p className="text-gray-600">Let's set up your training maxes (1RM)</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Don't know your maxes? Use our calculator after setup!</p>
+          <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Don't know your maxes? Use our calculator after setup!</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
@@ -116,7 +116,7 @@ export default function Onboarding() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Squat - One Rep Max
             </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Your absolute maximum weight for one repetition</p>
+            <p className="text-xs text-gray-500 dark:text-gray-300 mb-2">Your absolute maximum weight for one repetition</p>
             <input
               type="number"
               value={squatMax}
@@ -130,7 +130,7 @@ export default function Onboarding() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Bench Press - One Rep Max
             </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Your absolute maximum weight for one repetition</p>
+            <p className="text-xs text-gray-500 dark:text-gray-300 mb-2">Your absolute maximum weight for one repetition</p>
             <input
               type="number"
               value={benchMax}
@@ -144,7 +144,7 @@ export default function Onboarding() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Deadlift - One Rep Max
             </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Your absolute maximum weight for one repetition</p>
+            <p className="text-xs text-gray-500 dark:text-gray-300 mb-2">Your absolute maximum weight for one repetition</p>
             <input
               type="number"
               value={deadliftMax}
@@ -158,7 +158,7 @@ export default function Onboarding() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Overhead Press - One Rep Max
             </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Your absolute maximum weight for one repetition</p>
+            <p className="text-xs text-gray-500 dark:text-gray-300 mb-2">Your absolute maximum weight for one repetition</p>
             <input
               type="number"
               value={ohpMax}
@@ -176,7 +176,7 @@ export default function Onboarding() {
             {loading ? 'Preparing your program...' : 'Get Started'}
           </button>
 
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-300 text-center">
             You can adjust these anytime - don't worry about being exact
           </p>
         </form>

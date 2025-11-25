@@ -72,7 +72,7 @@ export default function InstallPrompt() {
             onClick={handleDismiss}
             className="p-1 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
           >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <X className="w-5 h-5 text-gray-500 dark:text-gray-300" />
           </button>
         </div>
       </div>

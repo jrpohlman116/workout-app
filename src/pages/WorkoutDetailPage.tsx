@@ -425,7 +425,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
               <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
             </button>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">{liftNames[liftType]} Day</h1>
-            <p className="text-gray-600 dark:text-gray-400">Week {profile.current_week} - Cycle {profile.current_cycle}</p>
+            <p className="text-gray-600 dark:text-gray-300">Week {profile.current_week} - Cycle {profile.current_cycle}</p>
           </div>
         </div>
 
@@ -487,7 +487,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
               <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
             </button>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">{liftNames[liftType]} Day</h1>
-            <p className="text-gray-600 dark:text-gray-400">Week {profile.current_week} - Cycle {profile.current_cycle}</p>
+            <p className="text-gray-600 dark:text-gray-300">Week {profile.current_week} - Cycle {profile.current_cycle}</p>
           </div>
 
           <div className="max-w-md mx-auto px-4 pb-4">
@@ -560,7 +560,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-gray-900">{currentExercise.name}</h2>
               {exerciseSubstitutions[exerciseIndex] && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-300 mt-1">
                   Substituted from: {baseExercises[liftType as keyof typeof baseExercises][exerciseIndex].name}
                 </p>
               )}

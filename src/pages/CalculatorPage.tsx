@@ -99,7 +99,7 @@ export default function CalculatorPage() {
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">Calculator</h1>
-          <p className="text-gray-600 dark:text-gray-400">Calculate your strength based on standardized formulas</p>
+          <p className="text-gray-600 dark:text-gray-300">Calculate your strength based on standardized formulas</p>
         </div>
 
         <div className="max-w-md mx-auto px-4">
@@ -114,7 +114,7 @@ export default function CalculatorPage() {
                 className={`px-6 py-3 font-semibold transition-all ripple-container relative overflow-hidden ${
                   activeTab === tab.id
                     ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 -mb-[2px]'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
                 {tab.label}
@@ -129,7 +129,7 @@ export default function CalculatorPage() {
           <div className="space-y-4 animate-fade-in">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">1 Rep Max</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
+              <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
                 Calculate your one-rep max using the weight you lifted and the number of repetitions completed.
                 This 1 rep max is calculated using the Epley formula: Weight x (1 + (Reps / 30))
               </p>
@@ -180,7 +180,7 @@ export default function CalculatorPage() {
 
             {calculatedMax !== null && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Your Estimated 1RM</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">Your Estimated 1RM</p>
                 <div className="text-5xl font-bold text-gray-900 dark:text-gray-100">{calculatedMax} {unit}</div>
               </div>
             )}
@@ -191,7 +191,7 @@ export default function CalculatorPage() {
           <div className="space-y-4 animate-fade-in">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Wilks Score</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
+              <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
                 Compare powerlifting strength across bodyweights. Wilks score is typically used in competitions.
               </p>
 
@@ -289,9 +289,9 @@ export default function CalculatorPage() {
 
             {calculatedWilks !== null && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Your Wilks Score</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">Your Wilks Score</p>
                 <div className="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-3">{calculatedWilks}</div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   {calculatedWilks < 250 && 'Beginner (<250) - Building strength fundamentals'}
                   {calculatedWilks >= 250 && calculatedWilks < 350 && 'Intermediate (250-349) - Solid strength development'}
                   {calculatedWilks >= 350 && calculatedWilks < 450 && 'Advanced (350-449) - Impressive strength levels'}
@@ -306,7 +306,7 @@ export default function CalculatorPage() {
           <div className="space-y-4 animate-fade-in">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Plate Calculator</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
+              <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
                 Calculate which plates to load on each side of the bar to reach your target weight.
               </p>
 
@@ -344,7 +344,7 @@ export default function CalculatorPage() {
                   placeholder="e.g. 45, 35, 20"
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Standard bar is 45 lb / 20 kg</p>
+                <p className="text-xs text-gray-500 dark:text-gray-300 mt-1">Standard bar is 45 lb / 20 kg</p>
               </div>
 
               <button
@@ -357,9 +357,9 @@ export default function CalculatorPage() {
 
             {calculatedPlates !== null && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">Load per side:</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">Load per side:</p>
                 {calculatedPlates.length === 0 ? (
-                  <p className="text-gray-600 dark:text-gray-400">Just the bar (no plates needed)</p>
+                  <p className="text-gray-600 dark:text-gray-300">Just the bar (no plates needed)</p>
                 ) : (
                   <div className="space-y-3">
                     {calculatedPlates.map((plate, index) => (
@@ -373,7 +373,7 @@ export default function CalculatorPage() {
                       </div>
                     ))}
                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total weight breakdown:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Total weight breakdown:</p>
                       <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
                         <div className="flex justify-between">
                           <span>Bar:</span>

@@ -161,7 +161,7 @@ export default function ProfilePage() {
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">Profile</h1>
-          <p className="text-gray-600 dark:text-gray-400">Update your profile and lifts</p>
+          <p className="text-gray-600 dark:text-gray-300">Update your profile and lifts</p>
         </div>
 
         <div className="max-w-md mx-auto px-4">
@@ -171,7 +171,7 @@ export default function ProfilePage() {
               className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'body'
                   ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Body Stats
@@ -184,7 +184,7 @@ export default function ProfilePage() {
               className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'maxes'
                   ? 'text-blue-600'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Tested Maxes
@@ -197,7 +197,7 @@ export default function ProfilePage() {
               className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'security'
                   ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Settings
@@ -358,7 +358,7 @@ export default function ProfilePage() {
                   Save and Restart Plan
                 </button>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-300 text-center">
                 "Save and Restart Plan" will reset your progress to Cycle 1, Week 1
               </p>
             </div>
@@ -386,7 +386,7 @@ export default function ProfilePage() {
                   {isDarkMode ? 'Dark Mode' : 'Light Mode'}
                 </span>
               </div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-sm text-gray-500 dark:text-gray-300">
                 {isDarkMode ? 'On' : 'Off'}
               </span>
             </button>
@@ -473,7 +473,7 @@ export default function ProfilePage() {
         )}
 
         {activeTab === 'security' && (
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-center text-sm text-gray-500 dark:text-gray-300">
           Last updated: {lastUpdated}
         </p>
         )}

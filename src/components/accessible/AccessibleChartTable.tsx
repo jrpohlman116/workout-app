@@ -30,7 +30,7 @@ export default function AccessibleChartTable({
 
   if (!chartData || chartData.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center text-gray-600 dark:text-gray-400">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center text-gray-600 dark:text-gray-300">
         No data available
       </div>
     );
@@ -76,7 +76,7 @@ export default function AccessibleChartTable({
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Progress Data Table
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
           Alternative view of chart data with sorting and statistics
         </p>
       </div>
@@ -105,7 +105,7 @@ export default function AccessibleChartTable({
                     <div>
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</h4>
                       {stats && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                           {lift.data.length} sessions •
                           Avg: {stats.avg} {unitPreference} •
                           <span className={stats.change >= 0 ? 'text-green-600' : 'text-red-600'}>
@@ -132,15 +132,15 @@ export default function AccessibleChartTable({
                   {stats && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">Starting</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">Starting</p>
                         <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{stats.first} {unitPreference}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">Current</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">Current</p>
                         <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{stats.last} {unitPreference}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">Best</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">Best</p>
                         <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{stats.max} {unitPreference}</p>
                       </div>
                     </div>
@@ -214,7 +214,7 @@ export default function AccessibleChartTable({
                   </div>
 
                   {sortedData.length === 0 && (
-                    <p className="text-center text-gray-600 dark:text-gray-400 py-8">
+                    <p className="text-center text-gray-600 dark:text-gray-300 py-8">
                       No data available for {lift.name}
                     </p>
                   )}

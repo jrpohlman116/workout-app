@@ -160,11 +160,11 @@ export default function ExerciseSubstitutionModal({
                         </div>
                         <p className="text-sm text-gray-600 mb-2">{sub.description}</p>
                         <div className="flex flex-wrap gap-2 text-xs">
-                          <span className="text-gray-500 dark:text-gray-400">
+                          <span className="text-gray-500 dark:text-gray-300">
                             <span className="font-medium">Equipment:</span> {sub.equipment_needed}
                           </span>
                           {sub.muscle_groups.length > 0 && (
-                            <span className="text-gray-500 dark:text-gray-400">
+                            <span className="text-gray-500 dark:text-gray-300">
                               <span className="font-medium">Targets:</span>{' '}
                               {sub.muscle_groups.join(', ')}
                             </span>
