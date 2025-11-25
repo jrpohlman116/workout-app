@@ -30,7 +30,7 @@ export default function AccessibleChartTable({
 
   if (!chartData || chartData.length === 0) {
     return (
-      <div className="bg-white rounded-xl p-6 text-center text-gray-600">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center text-gray-600 dark:text-gray-400">
         No data available
       </div>
     );
@@ -71,27 +71,27 @@ export default function AccessibleChartTable({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+      <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Progress Data Table
         </h3>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Alternative view of chart data with sorting and statistics
         </p>
       </div>
 
-      <div className="divide-y divide-gray-200">
+      <div className="divide-y divide-gray-200 dark:divide-gray-700">
         {chartData.map((lift) => {
           const isExpanded = expandedLift === lift.type;
           const stats = getSummaryStats(lift.data);
           const sortedData = getSortedData(lift.data);
 
           return (
-            <div key={lift.type} className="border-b border-gray-100 last:border-0">
+            <div key={lift.type} className="border-b border-gray-100 dark:border-gray-700 last:border-0">
               <button
                 onClick={() => setExpandedLift(isExpanded ? null : lift.type)}
-                className="w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                className="w-full px-6 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
                 aria-expanded={isExpanded}
                 aria-controls={`table-${lift.type}`}
               >
@@ -103,9 +103,9 @@ export default function AccessibleChartTable({
                       aria-hidden="true"
                     />
                     <div>
-                      <h4 className="font-semibold text-gray-900">{lift.name}</h4>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</h4>
                       {stats && (
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                           {lift.data.length} sessions •
                           Avg: {stats.avg} {unitPreference} •
                           <span className={stats.change >= 0 ? 'text-green-600' : 'text-red-600'}>
@@ -130,18 +130,18 @@ export default function AccessibleChartTable({
                   className="px-6 pb-6 animate-slide-in-bottom"
                 >
                   {stats && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <div>
-                        <p className="text-xs text-gray-600">Starting</p>
-                        <p className="text-lg font-bold text-gray-900">{stats.first} {unitPreference}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Starting</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{stats.first} {unitPreference}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600">Current</p>
-                        <p className="text-lg font-bold text-gray-900">{stats.last} {unitPreference}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Current</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{stats.last} {unitPreference}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600">Best</p>
-                        <p className="text-lg font-bold text-gray-900">{stats.max} {unitPreference}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Best</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{stats.max} {unitPreference}</p>
                       </div>
                     </div>
                   )}
@@ -151,12 +151,12 @@ export default function AccessibleChartTable({
                       <caption className="sr-only">
                         {lift.name} progress data showing date, cycle, week, and estimated 1RM
                       </caption>
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
                           <th scope="col" className="px-4 py-2 text-left">
                             <button
                               onClick={() => handleSort('date')}
-                              className="font-semibold text-gray-700 hover:text-gray-900 flex items-center gap-1 focus:outline-none focus:underline"
+                              className="font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-1 focus:outline-none focus:underline"
                               aria-sort={sortColumn === 'date' ? sortDirection === 'asc' ? 'ascending' : 'descending' : 'none'}
                             >
                               Date
@@ -167,10 +167,10 @@ export default function AccessibleChartTable({
                               )}
                             </button>
                           </th>
-                          <th scope="col" className="px-4 py-2 text-left font-semibold text-gray-700">
+                          <th scope="col" className="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                             Cycle
                           </th>
-                          <th scope="col" className="px-4 py-2 text-left font-semibold text-gray-700">
+                          <th scope="col" className="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                             Week
                           </th>
                           <th scope="col" className="px-4 py-2 text-right">
@@ -189,22 +189,22 @@ export default function AccessibleChartTable({
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                         {sortedData.map((dataPoint, index) => (
                           <tr
                             key={index}
-                            className="hover:bg-gray-50 transition-colors"
+                            className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           >
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                               {new Date(dataPoint.date).toLocaleDateString('en-US', {
                                 month: 'short',
                                 day: 'numeric',
                                 year: 'numeric'
                               })}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">{dataPoint.cycle}</td>
-                            <td className="px-4 py-3 text-gray-700">{dataPoint.week}</td>
-                            <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{dataPoint.cycle}</td>
+                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{dataPoint.week}</td>
+                            <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
                               {Math.round(dataPoint.value)}
                             </td>
                           </tr>
@@ -214,7 +214,7 @@ export default function AccessibleChartTable({
                   </div>
 
                   {sortedData.length === 0 && (
-                    <p className="text-center text-gray-600 py-8">
+                    <p className="text-center text-gray-600 dark:text-gray-400 py-8">
                       No data available for {lift.name}
                     </p>
                   )}
