@@ -116,7 +116,7 @@ export function AnimationControls({ onToggle }: AnimationControlsProps) {
           role="switch"
           aria-checked={animationsEnabled}
           aria-label="Toggle animations"
-          className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="relative inline-flex h-6 min-h-xs min-w-xs w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           style={{
             backgroundColor: animationsEnabled
               ? 'rgb(37, 99, 235)'
