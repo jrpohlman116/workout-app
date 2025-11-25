@@ -95,9 +95,9 @@ export function AnimationControls({ onToggle }: AnimationControlsProps) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+          <h3 className="text-base font-semibold text-gray-900 mb-1">
             Animations
           </h3>
           <p className="text-sm text-gray-600">
@@ -111,25 +111,17 @@ export function AnimationControls({ onToggle }: AnimationControlsProps) {
             </p>
           )}
         </div>
-        <button
-          onClick={handleToggle}
-          role="switch"
-          aria-checked={animationsEnabled}
-          aria-label="Toggle animations"
-          className={`
-            relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent
-            transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-            ${animationsEnabled ? 'bg-blue-600' : 'bg-gray-200'}
-          `}
-        >
-          <span
-            className={`
-              pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0
-              transition duration-200 ease-in-out
-              ${animationsEnabled ? 'translate-x-5' : 'translate-x-0'}
-            `}
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={animationsEnabled}
+            onChange={handleToggle}
+            className="sr-only peer"
+            aria-label="Toggle animations"
           />
-        </button>
+          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500 peer-focus:ring-offset-2 peer-checked:bg-blue-600 transition-colors duration-200"></div>
+          <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full transition-transform duration-200 peer-checked:translate-x-5 shadow-sm"></div>
+        </label>
       </div>
     </div>
   );
