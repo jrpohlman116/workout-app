@@ -127,15 +127,15 @@ export default function CalculatorPage() {
       <div className="max-w-md mx-auto px-4 py-6">
         {activeTab === '1rm' && (
           <div className="space-y-4 animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">1 Rep Max</h2>
-              <p className="text-gray-600 text-sm mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">1 Rep Max</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
                 Calculate your one-rep max using the weight you lifted and the number of repetitions completed.
                 This 1 rep max is calculated using the Epley formula: Weight x (1 + (Reps / 30))
               </p>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Weight
                 </label>
                 <div className="flex gap-3">
@@ -144,12 +144,12 @@ export default function CalculatorPage() {
                     value={weight}
                     onChange={(e) => setWeight(e.target.value)}
                     placeholder="e.g. 125, 80, 45"
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                   <select
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
-                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="lb">lb</option>
                     <option value="kg">kg</option>
@@ -158,7 +158,7 @@ export default function CalculatorPage() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Repetitions
                 </label>
                 <input
@@ -166,22 +166,22 @@ export default function CalculatorPage() {
                   value={reps}
                   onChange={(e) => setReps(e.target.value)}
                   placeholder="e.g., 5, 8, 10"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
 
               <button
                 onClick={handleCalculate}
-                className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
               >
                 Calculate
               </button>
             </div>
 
             {calculatedMax !== null && (
-              <div className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up">
-                <p className="text-gray-600 text-sm mb-2">Your Estimated 1RM</p>
-                <div className="text-5xl font-bold text-gray-900">{calculatedMax} {unit}</div>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Your Estimated 1RM</p>
+                <div className="text-5xl font-bold text-gray-900 dark:text-gray-100">{calculatedMax} {unit}</div>
               </div>
             )}
           </div>
@@ -189,15 +189,15 @@ export default function CalculatorPage() {
 
         {activeTab === 'wilks' && (
           <div className="space-y-4 animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Wilks Score</h2>
-              <p className="text-gray-600 text-sm mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Wilks Score</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
                 Compare powerlifting strength across bodyweights. Wilks score is typically used in competitions.
               </p>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Squat Max
                   </label>
                   <input
@@ -205,12 +205,12 @@ export default function CalculatorPage() {
                     value={wilksSquat}
                     onChange={(e) => setWilksSquat(e.target.value)}
                     placeholder="e.g. 315"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Bench Press Max
                   </label>
                   <input
@@ -218,12 +218,12 @@ export default function CalculatorPage() {
                     value={wilksBench}
                     onChange={(e) => setWilksBench(e.target.value)}
                     placeholder="e.g. 225"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Deadlift Max
                   </label>
                   <input
@@ -231,12 +231,12 @@ export default function CalculatorPage() {
                     value={wilksDeadlift}
                     onChange={(e) => setWilksDeadlift(e.target.value)}
                     placeholder="e.g. 405"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Bodyweight
                   </label>
                   <input
@@ -244,19 +244,19 @@ export default function CalculatorPage() {
                     value={wilksBodyweight}
                     onChange={(e) => setWilksBodyweight(e.target.value)}
                     placeholder="e.g. 180"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Gender
                     </label>
                     <select
                       value={wilksGender}
                       onChange={(e) => setWilksGender(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     >
                       <option value="male">Male</option>
                       <option value="female">Female</option>
@@ -264,13 +264,13 @@ export default function CalculatorPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Unit
                     </label>
                     <select
                       value={wilksUnit}
                       onChange={(e) => setWilksUnit(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     >
                       <option value="lb">lb</option>
                       <option value="kg">kg</option>
@@ -280,7 +280,7 @@ export default function CalculatorPage() {
 
                 <button
                   onClick={handleWilksCalculate}
-                  className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                  className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
                 >
                   Calculate
                 </button>
@@ -288,10 +288,10 @@ export default function CalculatorPage() {
             </div>
 
             {calculatedWilks !== null && (
-              <div className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up">
-                <p className="text-gray-600 text-sm mb-2">Your Wilks Score</p>
-                <div className="text-5xl font-bold text-gray-900 mb-3">{calculatedWilks}</div>
-                <p className="text-sm text-gray-600">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Your Wilks Score</p>
+                <div className="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-3">{calculatedWilks}</div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {calculatedWilks < 250 && 'Beginner (<250) - Building strength fundamentals'}
                   {calculatedWilks >= 250 && calculatedWilks < 350 && 'Intermediate (250-349) - Solid strength development'}
                   {calculatedWilks >= 350 && calculatedWilks < 450 && 'Advanced (350-449) - Impressive strength levels'}
@@ -304,14 +304,14 @@ export default function CalculatorPage() {
 
         {activeTab === 'plates' && (
           <div className="space-y-4 animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Plate Calculator</h2>
-              <p className="text-gray-600 text-sm mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Plate Calculator</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
                 Calculate which plates to load on each side of the bar to reach your target weight.
               </p>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Target Weight
                 </label>
                 <div className="flex gap-3">
@@ -320,12 +320,12 @@ export default function CalculatorPage() {
                     value={targetWeight}
                     onChange={(e) => setTargetWeight(e.target.value)}
                     placeholder="e.g. 225, 315, 405"
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                   <select
                     value={plateUnit}
                     onChange={(e) => setPlateUnit(e.target.value)}
-                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="lb">lb</option>
                     <option value="kg">kg</option>
@@ -334,7 +334,7 @@ export default function CalculatorPage() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Bar Weight
                 </label>
                 <input
@@ -342,39 +342,39 @@ export default function CalculatorPage() {
                   value={barWeight}
                   onChange={(e) => setBarWeight(e.target.value)}
                   placeholder="e.g. 45, 35, 20"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
-                <p className="text-xs text-gray-500 mt-1">Standard bar is 45 lb / 20 kg</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Standard bar is 45 lb / 20 kg</p>
               </div>
 
               <button
                 onClick={handlePlateCalculate}
-                className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
               >
                 Calculate
               </button>
             </div>
 
             {calculatedPlates !== null && (
-              <div className="bg-white rounded-2xl shadow-sm p-6 animate-slide-up">
-                <p className="text-gray-600 text-sm mb-4">Load per side:</p>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">Load per side:</p>
                 {calculatedPlates.length === 0 ? (
-                  <p className="text-gray-600">Just the bar (no plates needed)</p>
+                  <p className="text-gray-600 dark:text-gray-400">Just the bar (no plates needed)</p>
                 ) : (
                   <div className="space-y-3">
                     {calculatedPlates.map((plate, index) => (
-                      <div key={index} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl">
-                        <span className="text-lg font-semibold text-gray-900">
+                      <div key={index} className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                           {plate.weight} {plateUnit}
                         </span>
-                        <span className="text-2xl font-bold text-blue-600">
+                        <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                           × {plate.count}
                         </span>
                       </div>
                     ))}
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <p className="text-sm text-gray-600 mb-2">Total weight breakdown:</p>
-                      <div className="space-y-1 text-sm text-gray-700">
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total weight breakdown:</p>
+                      <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
                         <div className="flex justify-between">
                           <span>Bar:</span>
                           <span className="font-semibold">{barWeight} {plateUnit}</span>
