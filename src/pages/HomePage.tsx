@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, getCycleProgression } from '../lib/calculations';
-import { Calendar, RefreshCw, ChevronRight, Check, SkipForward, Activity } from 'lucide-react';
+import { Calendar, RefreshCw, ChevronRight, ChevronDown, Check, SkipForward, Activity } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useCountUp, useRipple } from '../hooks/useAnimations';
 import OneRepMaxTest from '../components/OneRepMaxTest';
-import AccessibleNativeSelect from '../components/AccessibleNativeSelect';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -263,49 +262,57 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <Calendar className="w-10 h-10 text-blue-600" aria-hidden="true" />
-              <div>
-                <div className="text-3xl font-bold text-gray-900">{profile.current_week}</div>
-                <div className="text-sm text-gray-600">{getWeekSubtext(profile.current_week)}</div>
-              </div>
-            </div>
-            <AccessibleNativeSelect
+          <div className="relative group">
+            <label htmlFor="week-selector" className="sr-only">
+              Select training week
+            </label>
+            <select
               id="week-selector"
-              label="Change Week"
               value={profile.current_week}
-              options={[
-                { value: 1, label: 'Week 1', description: '5 reps' },
-                { value: 2, label: 'Week 2', description: '3 reps' },
-                { value: 3, label: 'Week 3', description: '5-3-1' },
-                { value: 4, label: 'Week 4', description: 'Deload' }
-              ]}
-              onChange={(week) => handleWeekChange(Number(week))}
-              className="mt-2"
-            />
+              onChange={(e) => handleWeekChange(Number(e.target.value))}
+              className="w-full bg-white rounded-2xl shadow-sm p-6 appearance-none cursor-pointer hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              <option value={1}>Week 1 - 5 reps</option>
+              <option value={2}>Week 2 - 3 reps</option>
+              <option value={3}>Week 3 - 5-3-1</option>
+              <option value={4}>Week 4 - Deload</option>
+            </select>
+            <div className="absolute inset-0 pointer-events-none p-6 flex items-center gap-3">
+              <Calendar className="w-10 h-10 text-blue-600 flex-shrink-0" aria-hidden="true" />
+              <div className="flex-1">
+                <div className="text-sm text-gray-600 font-medium mb-0.5">Week</div>
+                <div className="text-3xl font-bold text-gray-900">{profile.current_week}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{getWeekSubtext(profile.current_week)}</div>
+              </div>
+              <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" aria-hidden="true" />
+            </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <RefreshCw className="w-10 h-10 text-blue-600" aria-hidden="true" />
-              <div>
-                <div className="text-3xl font-bold text-gray-900">{profile.current_cycle}</div>
-                <div className="text-sm text-gray-600">+{progression} lbs</div>
-              </div>
-            </div>
-            <AccessibleNativeSelect
+          <div className="relative group">
+            <label htmlFor="cycle-selector" className="sr-only">
+              Select training cycle
+            </label>
+            <select
               id="cycle-selector"
-              label="Change Cycle"
               value={profile.current_cycle}
-              options={Array.from({ length: 12 }, (_, i) => ({
-                value: i + 1,
-                label: `Cycle ${i + 1}`,
-                description: `+${getCycleProgression(i + 1)} lbs`
-              }))}
-              onChange={(cycle) => handleCycleChange(Number(cycle))}
-              className="mt-2"
-            />
+              onChange={(e) => handleCycleChange(Number(e.target.value))}
+              className="w-full bg-white rounded-2xl shadow-sm p-6 appearance-none cursor-pointer hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              {Array.from({ length: 12 }, (_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  Cycle {i + 1} - +{getCycleProgression(i + 1)} lbs
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-0 pointer-events-none p-6 flex items-center gap-3">
+              <RefreshCw className="w-10 h-10 text-blue-600 flex-shrink-0" aria-hidden="true" />
+              <div className="flex-1">
+                <div className="text-sm text-gray-600 font-medium mb-0.5">Cycle</div>
+                <div className="text-3xl font-bold text-gray-900">{profile.current_cycle}</div>
+                <div className="text-xs text-gray-500 mt-0.5">+{progression} lbs</div>
+              </div>
+              <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" aria-hidden="true" />
+            </div>
           </div>
         </div>
 
