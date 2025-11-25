@@ -206,7 +206,7 @@ export default function ProfilePage() {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              Training Maxes
+              Tested Maxes
               {activeTab === 'maxes' && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
               )}
