@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../lib/supabase';
 import ProgressChart from '../components/ProgressChart';
+import AccessibleChartTable from '../components/AccessibleChartTable';
 import { useStaggeredAnimation, useRipple } from '../hooks/useAnimations';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -270,6 +271,13 @@ export default function ProgressPage() {
                 <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
               )}
             </div>
+
+            {nonDeloadSessions.length > 0 && (
+              <AccessibleChartTable
+                chartData={chartData}
+                unitPreference={profile.unit_preference || 'lb'}
+              />
+            )}
             
             <h2 className="text-lg font-semibold text-gray-700 mb-2">Average Projected 1RM</h2>
             <div className="grid grid-cols-2 gap-4">

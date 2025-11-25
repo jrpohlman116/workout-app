@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase';
 import { useConfetti } from '../hooks/useAnimations';
 import WorkoutSuccessModal from '../components/WorkoutSuccessModal';
 import ExerciseSubstitutionModal from '../components/ExerciseSubstitutionModal';
+import AccessibleProgressIndicator from '../components/AccessibleProgressIndicator';
+import AccessibleFormGroup from '../components/AccessibleFormGroup';
 
 interface WorkoutDetailPageProps {
   liftType: string;
@@ -489,56 +491,30 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           </div>
 
           <div className="max-w-md mx-auto px-4 pb-4">
-            <div className="relative">
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-600 transition-all duration-300 rounded-full"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-              <div
-                className="absolute -top-8 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded transition-all duration-300"
-                style={{ left: `calc(${progressPercent}% - 20px)` }}
-              >
-                {progressPercent}%
-              </div>
-            </div>
+            <AccessibleProgressIndicator
+              current={currentStep === 'main' ? 1 : typeof currentStep === 'number' ? currentStep + 2 : 0}
+              total={totalSteps}
+              label="Workout progress"
+              variant="bar"
+            />
           </div>
         </div>
 
         <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">Barbell {liftNames[liftType]}</h2>
-            <p className="text-sm text-gray-600 mb-6">Last Set: {getLastSetData('main')}</p>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Reps</label>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Weight</label>
-              </div>
-            </div>
-
-            {mainSets.map((set, index) => (
-              <div key={index} className="grid grid-cols-2 gap-4 mb-4">
-                <input
-                  type="number"
-                  value={set.reps}
-                  onChange={(e) => updateMainSet(index, 'reps', e.target.value)}
-                  placeholder={index === 2 ? `${mainReps}+` : String(mainReps)}
-                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <input
-                  type="number"
-                  value={set.weight}
-                  onChange={(e) => updateMainSet(index, 'weight', e.target.value)}
-                  placeholder={`${index === 0 ? weights.set1 : index === 1 ? weights.set2 : weights.set3}lb`}
-                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            ))}
-          </div>
+          <AccessibleFormGroup
+            legend={`Barbell ${liftNames[liftType]}`}
+            description="Record your main working sets. Set 3 is AMRAP (As Many Reps As Possible)"
+            sets={mainSets}
+            onUpdateSet={(index, field, value) => updateMainSet(index, field, value)}
+            onAddSet={() => {}}
+            onRemoveSet={() => {}}
+            weightUnit={profile.unit_preference || 'lb'}
+            repsPlaceholder={mainReps === '5-3-1' ? '5' : String(mainReps)}
+            weightPlaceholder="0"
+            minSets={3}
+            maxSets={3}
+            lastSetData={getLastSetData('main')}
+          />
 
           <button
             onClick={handleNext}
@@ -569,20 +545,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         </div>
 
         <div className="max-w-md mx-auto px-4 pb-4">
-          <div className="relative">
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-600 transition-all duration-300 rounded-full"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <div
-              className="absolute -top-8 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded transition-all duration-300"
-              style={{ left: `calc(${progressPercent}% - 20px)` }}
-            >
-              {progressPercent}%
-            </div>
-          </div>
+          <AccessibleProgressIndicator
+            current={typeof currentStep === 'number' ? currentStep + 2 : 0}
+            total={totalSteps}
+            label="Workout progress"
+            variant="bar"
+          />
         </div>
       </div>
 
@@ -606,90 +574,21 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
               <span className="text-sm font-medium">Substitute</span>
             </button>
           </div>
-          <p className="text-sm text-gray-600 mb-2">Last Set: {getLastSetData(currentExercise.name)}</p>
-          <p className="text-sm font-medium text-blue-600 mb-6">{currentExercise.sets} sets of {currentExercise.reps} reps</p>
-
-          {currentExercise.isBodyweight ? (
-            <>
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Duration</label>
-              </div>
-              {exerciseSets.map((set, index) => (
-                <div key={index} className="flex gap-2 mb-4">
-                  <input
-                    type="number"
-                    value={set.reps}
-                    onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
-                    placeholder={currentExercise.reps}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {exerciseSets.length > 1 && (
-                    <button
-                      onClick={() => removeAccessorySet(exerciseIndex, index)}
-                      className="p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                      aria-label="Remove set"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                onClick={() => addAccessorySet(exerciseIndex)}
-                className="w-full flex items-center justify-center gap-2 py-3 text-blue-600 border-2 border-dashed border-blue-300 rounded-xl hover:bg-blue-50 transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                <span className="font-medium">Add Set</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Reps</label>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Weight</label>
-                </div>
-              </div>
-              {exerciseSets.map((set, index) => (
-                <div key={index} className="flex gap-2 mb-4">
-                  <div className="grid grid-cols-2 gap-4 flex-1">
-                    <input
-                      type="number"
-                      value={set.reps}
-                      onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
-                      placeholder={currentExercise.reps}
-                      className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <input
-                      type="number"
-                      value={set.weight}
-                      onChange={(e) => updateAccessorySet(exerciseIndex, index, 'weight', e.target.value)}
-                      placeholder="0"
-                      className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  {exerciseSets.length > 1 && (
-                    <button
-                      onClick={() => removeAccessorySet(exerciseIndex, index)}
-                      className="p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                      aria-label="Remove set"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                onClick={() => addAccessorySet(exerciseIndex)}
-                className="w-full flex items-center justify-center gap-2 py-3 text-blue-600 border-2 border-dashed border-blue-300 rounded-xl hover:bg-blue-50 transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                <span className="font-medium">Add Set</span>
-              </button>
-            </>
-          )}
+          <AccessibleFormGroup
+            legend={currentExercise.name}
+            description={`${currentExercise.sets} sets of ${currentExercise.reps} reps`}
+            sets={exerciseSets}
+            onUpdateSet={(index, field, value) => updateAccessorySet(exerciseIndex, index, field, value)}
+            onAddSet={() => addAccessorySet(exerciseIndex)}
+            onRemoveSet={(index) => removeAccessorySet(exerciseIndex, index)}
+            weightUnit={profile.unit_preference || 'lb'}
+            repsPlaceholder={currentExercise.reps}
+            weightPlaceholder="0"
+            minSets={1}
+            maxSets={10}
+            isBodyweight={currentExercise.isBodyweight}
+            lastSetData={getLastSetData(currentExercise.name)}
+          />
         </div>
 
         <div className="flex gap-3">

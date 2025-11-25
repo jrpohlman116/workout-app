@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Eye, EyeOff, LogOut } from 'lucide-react';
+import { AnimationControls } from '../components/ReducedMotionWrapper';
 
 export default function ProfilePage() {
   const { profile, user, refreshProfile } = useAuth();
@@ -359,6 +360,12 @@ export default function ProfilePage() {
 
         {activeTab === 'security' && (
         <>
+        <AnimationControls
+          onToggle={(enabled) => {
+            localStorage.setItem('animations-enabled', String(enabled));
+          }}
+        />
+
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Change Password</h2>
           <form onSubmit={handleChangePassword} className="space-y-4">

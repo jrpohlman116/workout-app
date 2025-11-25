@@ -5,6 +5,7 @@ import { Calendar, RefreshCw, ChevronRight, Check, SkipForward, Activity } from 
 import { supabase } from '../lib/supabase';
 import { useCountUp, useRipple } from '../hooks/useAnimations';
 import OneRepMaxTest from '../components/OneRepMaxTest';
+import AccessibleNativeSelect from '../components/AccessibleNativeSelect';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -18,8 +19,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [initialMaxes, setInitialMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
-  const [showWeekSelector, setShowWeekSelector] = useState(false);
-  const [showCycleSelector, setShowCycleSelector] = useState(false);
   const createRipple = useRipple();
 
   useEffect(() => {
@@ -28,21 +27,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       loadProjectedMaxes();
     }
   }, [user, profile?.current_cycle, profile?.current_week]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.week-selector') && !target.closest('.cycle-selector')) {
-        setShowWeekSelector(false);
-        setShowCycleSelector(false);
-      }
-    };
-
-    if (showWeekSelector || showCycleSelector) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showWeekSelector, showCycleSelector]);
 
   const loadCompletedWorkouts = async () => {
     if (!user || !profile) return;
@@ -279,66 +263,49 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="relative week-selector">
-            <button
-              onClick={() => setShowWeekSelector(!showWeekSelector)}
-              className="w-full bg-white rounded-2xl shadow-sm p-6 text-left hover:shadow-md transition-all hover-lift"
-            >
-              <p className="text-gray-600 text-sm mb-2">Week</p>
-              <div className="flex items-center gap-3">
-                <Calendar className="w-10 h-10 text-blue-600" />
-                <div>
-                  <div className="text-3xl font-bold text-gray-900">{profile.current_week}</div>
-                  <div className="text-sm text-gray-600">{getWeekSubtext(profile.current_week)}</div>
-                </div>
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <Calendar className="w-10 h-10 text-blue-600" aria-hidden="true" />
+              <div>
+                <div className="text-3xl font-bold text-gray-900">{profile.current_week}</div>
+                <div className="text-sm text-gray-600">{getWeekSubtext(profile.current_week)}</div>
               </div>
-            </button>
-            {showWeekSelector && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-10">
-                {[1, 2, 3, 4].map((week) => (
-                  <button
-                    key={week}
-                    onClick={() => handleWeekChange(week)}
-                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                      week === profile.current_week ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700'
-                    }`}
-                  >
-                    Week {week} - {getWeekSubtext(week)}
-                  </button>
-                ))}
-              </div>
-            )}
+            </div>
+            <AccessibleNativeSelect
+              id="week-selector"
+              label="Change Week"
+              value={profile.current_week}
+              options={[
+                { value: 1, label: 'Week 1', description: '5 reps' },
+                { value: 2, label: 'Week 2', description: '3 reps' },
+                { value: 3, label: 'Week 3', description: '5-3-1' },
+                { value: 4, label: 'Week 4', description: 'Deload' }
+              ]}
+              onChange={(week) => handleWeekChange(Number(week))}
+              className="mt-2"
+            />
           </div>
 
-          <div className="relative cycle-selector">
-            <button
-              onClick={() => setShowCycleSelector(!showCycleSelector)}
-              className="w-full bg-white rounded-2xl shadow-sm p-6 text-left hover:shadow-md transition-all hover-lift"
-            >
-              <p className="text-gray-600 text-sm mb-2">Current Cycle</p>
-              <div className="flex items-center gap-3">
-                <RefreshCw className="w-10 h-10 text-blue-600" />
-                <div>
-                  <div className="text-3xl font-bold text-gray-900">{profile.current_cycle}</div>
-                  <div className="text-sm text-gray-600">+{progression} lbs</div>
-                </div>
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <RefreshCw className="w-10 h-10 text-blue-600" aria-hidden="true" />
+              <div>
+                <div className="text-3xl font-bold text-gray-900">{profile.current_cycle}</div>
+                <div className="text-sm text-gray-600">+{progression} lbs</div>
               </div>
-            </button>
-            {showCycleSelector && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-10 max-h-64 overflow-y-auto">
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((cycle) => (
-                  <button
-                    key={cycle}
-                    onClick={() => handleCycleChange(cycle)}
-                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                      cycle === profile.current_cycle ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700'
-                    }`}
-                  >
-                    Cycle {cycle} - +{getCycleProgression(cycle)} lbs
-                  </button>
-                ))}
-              </div>
-            )}
+            </div>
+            <AccessibleNativeSelect
+              id="cycle-selector"
+              label="Change Cycle"
+              value={profile.current_cycle}
+              options={Array.from({ length: 12 }, (_, i) => ({
+                value: i + 1,
+                label: `Cycle ${i + 1}`,
+                description: `+${getCycleProgression(i + 1)} lbs`
+              }))}
+              onChange={(cycle) => handleCycleChange(Number(cycle))}
+              className="mt-2"
+            />
           </div>
         </div>
 

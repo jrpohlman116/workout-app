@@ -56,9 +56,16 @@ export function useRipple() {
 
 export function useConfetti() {
   const celebrate = (count: number = 50) => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) {
+      return;
+    }
+
+    const reducedCount = prefersReducedMotion ? Math.min(count, 10) : count;
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < reducedCount; i++) {
       const confetti = document.createElement('div');
       confetti.classList.add('confetti');
       confetti.style.left = `${Math.random() * 100}%`;
