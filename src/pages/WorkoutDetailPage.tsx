@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useConfetti } from '../hooks/useAnimations';
 import WorkoutSuccessModal from '../components/WorkoutSuccessModal';
 import ExerciseSubstitutionModal from '../components/ExerciseSubstitutionModal';
+import FatigueRatingModal from '../components/FatigueRatingModal';
 
 interface WorkoutDetailPageProps {
   liftType: string;
@@ -39,10 +40,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [lastAccessoryData, setLastAccessoryData] = useState<{ [key: string]: { reps: string; weight: string }[] }>({});
   const [loading, setLoading] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [workoutStats, setWorkoutStats] = useState<{ estimated1RM: number; totalTonnage: number }>({ estimated1RM: 0, totalTonnage: 0 });
+  const [workoutStats, setWorkoutStats] = useState<{ estimated1RM: number; totalTonnage: number; sessionId: string }>({ estimated1RM: 0, totalTonnage: 0, sessionId: '' });
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
   const [substitutionTarget, setSubstitutionTarget] = useState<{ exerciseIndex: number; exerciseName: string } | null>(null);
   const [exerciseSubstitutions, setExerciseSubstitutions] = useState<{ [key: number]: string }>({});
+  const [showFatigueModal, setShowFatigueModal] = useState(false);
+  const [completedSessionId, setCompletedSessionId] = useState<string>('');
 
   useEffect(() => {
     if (user) {
@@ -382,7 +385,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           if (accessoryError) throw accessoryError;
         }
 
-        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage });
+        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage, sessionId: sessionData.id });
+        setCompletedSessionId(sessionData.id);
         celebrate(40);
         setShowSuccessModal(true);
       }
@@ -395,6 +399,24 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const handleSuccessClose = async () => {
     setShowSuccessModal(false);
+
+    if (profile?.skip_fatigue_rating_count !== undefined && profile.skip_fatigue_rating_count < 3) {
+      setTimeout(() => {
+        setShowFatigueModal(true);
+      }, 300);
+    } else {
+      await refreshProfile();
+      onNavigateToProgress();
+    }
+  };
+
+  const handleFatigueModalClose = async () => {
+    setShowFatigueModal(false);
+    await refreshProfile();
+    onNavigateToProgress();
+  };
+
+  const handleFatigueSubmit = async () => {
     await refreshProfile();
     onNavigateToProgress();
   };
@@ -727,6 +749,15 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           onClose={() => setShowSubstitutionModal(false)}
           currentExercise={substitutionTarget.exerciseName}
           onSubstitute={handleSubstitute}
+        />
+      )}
+      {showFatigueModal && user && (
+        <FatigueRatingModal
+          isOpen={showFatigueModal}
+          onClose={handleFatigueModalClose}
+          workoutSessionId={completedSessionId}
+          userId={user.id}
+          onSubmit={handleFatigueSubmit}
         />
       )}
     </div>

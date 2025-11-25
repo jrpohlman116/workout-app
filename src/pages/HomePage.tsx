@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, getCycleProgression } from '../lib/calculations';
-import { Calendar, RefreshCw, ChevronRight, Check, SkipForward, Activity } from 'lucide-react';
+import { Calendar, RefreshCw, ChevronRight, Check, SkipForward, Activity, TrendingUp, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useCountUp, useRipple } from '../hooks/useAnimations';
+import { useAnalytics } from '../hooks/useAnalytics';
 import OneRepMaxTest from '../components/OneRepMaxTest';
 
 interface HomePageProps {
@@ -18,6 +19,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
   const createRipple = useRipple();
+  const analyticsData = useAnalytics(user?.id, profile);
 
   useEffect(() => {
     if (user && profile) {
@@ -251,6 +253,57 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             <ChevronRight className="w-6 h-6" />
           </div>
         </button>
+
+        {analyticsData.isUnlocked && analyticsData.currentWeekFatigue && (
+          <button
+            onClick={() => onNavigate('progress')}
+            className="w-full bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-all hover-lift text-left"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Training Insights</h3>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Training Stress</p>
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {Math.round(analyticsData.currentWeekFatigue.trainingStressScore)}
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                    analyticsData.currentWeekFatigue.fatigueStatus === 'optimal' || analyticsData.currentWeekFatigue.fatigueStatus === 'fresh'
+                      ? 'bg-green-100 text-green-800'
+                      : analyticsData.currentWeekFatigue.fatigueStatus === 'moderate'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {analyticsData.currentWeekFatigue.fatigueStatus}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Next Milestone</p>
+                {analyticsData.predictions.length > 0 && (() => {
+                  const nextMilestone = Object.entries(analyticsData.predictions[0].milestoneWeights)[0];
+                  if (nextMilestone) {
+                    const [weight, _] = nextMilestone;
+                    return (
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-blue-600" />
+                        <div className="text-2xl font-bold text-gray-900">{weight}</div>
+                        <span className="text-sm text-gray-600">{profile.unit_preference || 'lb'}</span>
+                      </div>
+                    );
+                  }
+                  return <div className="text-sm text-gray-500">Keep training!</div>;
+                })()}
+              </div>
+            </div>
+            <div className="mt-3 text-sm text-blue-600 font-medium flex items-center gap-1">
+              View Full Analytics <ChevronRight className="w-4 h-4" />
+            </div>
+          </button>
+        )}
 
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
