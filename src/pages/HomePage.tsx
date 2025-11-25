@@ -270,21 +270,23 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               id="week-selector"
               value={profile.current_week}
               onChange={(e) => handleWeekChange(Number(e.target.value))}
-              className="w-full bg-white rounded-2xl shadow-sm p-6 appearance-none cursor-pointer hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             >
               <option value={1}>Week 1 - 5 reps</option>
               <option value={2}>Week 2 - 3 reps</option>
               <option value={3}>Week 3 - 5-3-1</option>
               <option value={4}>Week 4 - Deload</option>
             </select>
-            <div className="absolute inset-0 pointer-events-none p-6 flex items-center gap-3">
-              <Calendar className="w-10 h-10 text-blue-600 flex-shrink-0" aria-hidden="true" />
-              <div className="flex-1">
-                <div className="text-sm text-gray-600 font-medium mb-0.5">Week</div>
-                <div className="text-3xl font-bold text-gray-900">{profile.current_week}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{getWeekSubtext(profile.current_week)}</div>
+            <div className="bg-white rounded-2xl shadow-sm p-6 group-hover:shadow-md transition-all group-focus-within:ring-2 group-focus-within:ring-blue-500 group-focus-within:ring-offset-2">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-10 h-10 text-blue-600 flex-shrink-0" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-gray-600 font-medium mb-0.5">Week</div>
+                  <div className="text-3xl font-bold text-gray-900">{profile.current_week}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{getWeekSubtext(profile.current_week)}</div>
+                </div>
+                <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" aria-hidden="true" />
               </div>
-              <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" aria-hidden="true" />
             </div>
           </div>
 
@@ -296,7 +298,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               id="cycle-selector"
               value={profile.current_cycle}
               onChange={(e) => handleCycleChange(Number(e.target.value))}
-              className="w-full bg-white rounded-2xl shadow-sm p-6 appearance-none cursor-pointer hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             >
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
@@ -304,14 +306,16 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 </option>
               ))}
             </select>
-            <div className="absolute inset-0 pointer-events-none p-6 flex items-center gap-3">
-              <RefreshCw className="w-10 h-10 text-blue-600 flex-shrink-0" aria-hidden="true" />
-              <div className="flex-1">
-                <div className="text-sm text-gray-600 font-medium mb-0.5">Cycle</div>
-                <div className="text-3xl font-bold text-gray-900">{profile.current_cycle}</div>
-                <div className="text-xs text-gray-500 mt-0.5">+{progression} lbs</div>
+            <div className="bg-white rounded-2xl shadow-sm p-6 group-hover:shadow-md transition-all group-focus-within:ring-2 group-focus-within:ring-blue-500 group-focus-within:ring-offset-2">
+              <div className="flex items-center gap-3">
+                <RefreshCw className="w-10 h-10 text-blue-600 flex-shrink-0" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-gray-600 font-medium mb-0.5">Cycle</div>
+                  <div className="text-3xl font-bold text-gray-900">{profile.current_cycle}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">+{progression} lbs</div>
+                </div>
+                <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" aria-hidden="true" />
               </div>
-              <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" aria-hidden="true" />
             </div>
           </div>
         </div>
