@@ -210,7 +210,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-700 rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-gray-900 dark:text-gray-100 text-sm font-semibold">Wilks Score</p>
@@ -254,11 +254,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               <option value={3}>Week 3 - 5-3-1</option>
               <option value={4}>Week 4 - Deload</option>
             </select>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 group-hover:shadow-md transition-all group-focus-within:ring-2 group-focus-within:ring-blue-500 group-focus-within:ring-offset-2">
+            <div className="bg-white dark:bg-gray-700 rounded-2xl shadow-sm p-6 group-hover:shadow-md transition-all group-focus-within:ring-2 group-focus-within:ring-blue-500 group-focus-within:ring-offset-2">
               <div className="flex items-center gap-3">
                 <Calendar className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Week</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-200 font-medium mb-0.5">Week</div>
                   <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{profile.current_week}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">{getWeekSubtext(profile.current_week)}</div>
                 </div>
@@ -283,11 +283,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 </option>
               ))}
             </select>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 group-hover:shadow-md transition-all group-focus-within:ring-2 group-focus-within:ring-blue-500 group-focus-within:ring-offset-2">
+            <div className="bg-white dark:bg-gray-700 rounded-2xl shadow-sm p-6 group-hover:shadow-md transition-all group-focus-within:ring-2 group-focus-within:ring-blue-500 group-focus-within:ring-offset-2">
               <div className="flex items-center gap-3">
                 <RefreshCw className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Cycle</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-200 font-medium mb-0.5">Cycle</div>
                   <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{profile.current_cycle}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">+{progression} lbs</div>
                 </div>
@@ -313,7 +313,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </div>
         </button>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-700 rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Workouts</h2>
             <button
@@ -358,7 +358,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${
                     isCompleted
                       ? 'bg-green-50 dark:bg-green-900/20 cursor-not-allowed'
-                      : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+                      : 'bg-gray-50 dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500'
                   }`}
                 >
                   <div className="text-left">
