@@ -332,7 +332,7 @@ export default function ProfilePage() {
 
         {activeTab === 'maxes' && (
         <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Training Maxes</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Tested Maxes</h2>
           <form onSubmit={handleUpdateLifts} className="space-y-4">
 
             <div>
@@ -412,7 +412,7 @@ export default function ProfilePage() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              Save Training Maxes
+              Save Maxes
             </button>
             <p className="text-xs text-gray-500 mt-2 text-center">
               This will reset your progress to Cycle 1, Week 1
