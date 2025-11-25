@@ -130,11 +130,11 @@ h1, h2, h3, h4, h5, h6 {
 /* Ensure sufficient color contrast - these are examples */
 /* You may need to adjust based on your specific colors */
 .text-gray-600 {
-  color: #4b5563 !important; /* Ensures 4.5:1 contrast on white */
+  color: #4b5563; /* Ensures 4.5:1 contrast on white */
 }
 
 .text-gray-500 {
-  color: #6b7280 !important; /* Ensures 4.5:1 contrast on white */
+  color: #6b7280; /* Ensures 4.5:1 contrast on white */
 }
 
 /* Loading States - Accessible indicators */
