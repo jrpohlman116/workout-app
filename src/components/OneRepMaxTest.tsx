@@ -132,7 +132,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                       <div>
                         <p className="font-semibold text-gray-900">{lift.name}</p>
                         <p className="text-sm text-gray-600">
-                          Current training max: {lift.currentMax} {profile.unit_preference || 'lb'}
+                          Current tested max: {lift.currentMax} {profile.unit_preference || 'lb'}
                         </p>
                       </div>
                       <TrendingUp className="w-5 h-5 text-gray-400" />
@@ -148,7 +148,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{selectedLiftInfo.name}</h3>
                 <p className="text-gray-700">
-                  Current training max: <span className="font-semibold">{selectedLiftInfo.currentMax} {profile.unit_preference || 'lb'}</span>
+                  Current tested max: <span className="font-semibold">{selectedLiftInfo.currentMax} {profile.unit_preference || 'lb'}</span>
                 </p>
               </div>
 
@@ -222,7 +222,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{selectedLiftInfo.name}</h3>
                 <p className="text-gray-700">
-                  Previous training max: <span className="font-semibold">{selectedLiftInfo.currentMax} {profile.unit_preference || 'lb'}</span>
+                  Previous tested max: <span className="font-semibold">{selectedLiftInfo.currentMax} {profile.unit_preference || 'lb'}</span>
                 </p>
               </div>
 
@@ -249,12 +249,6 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                   <Info className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
                   <div className="text-sm">
                     <p className="font-semibold text-gray-900 mb-1">Your training max will be updated</p>
-                    <p className="text-gray-700">
-                      The 5/3/1 program uses 90% of your true max as your training max. Your new training max will be:{' '}
-                      <span className="font-semibold">
-                        {testedWeight ? Math.round(parseFloat(testedWeight) * 0.9) : '--'} {profile.unit_preference || 'lb'}
-                      </span>
-                    </p>
                   </div>
                 </div>
               </div>
