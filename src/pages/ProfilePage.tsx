@@ -216,27 +216,24 @@ export default function ProfilePage() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Bodyweight
               </label>
-              <div className="flex gap-3">
-                <input
-                  type="number"
-                  value={bodyweight}
-                  onChange={(e) => setBodyweight(e.target.value)}
-                  placeholder="e.g. 180"
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <div className="w-32">
-                  <AccessibleNativeSelect
-                    id="unit-preference-select"
-                    label="Unit"
-                    value={unitPreference}
-                    options={[
-                      { value: 'lb', label: 'lb', description: 'Pounds' },
-                      { value: 'kg', label: 'kg', description: 'Kilograms' }
-                    ]}
-                    onChange={(value) => setUnitPreference(value as 'lb' | 'kg')}
-                    hideLabel
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <input
+                    type="number"
+                    value={bodyweight}
+                    onChange={(e) => setBodyweight(e.target.value)}
+                    placeholder="e.g. 180"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
+                <select
+                  value={unitPreference}
+                  onChange={(e) => setUnitPreference(e.target.value as 'lb' | 'kg')}
+                  className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="lb">lb</option>
+                  <option value="kg">kg</option>
+                </select>
               </div>
             </div>
 
@@ -246,8 +243,8 @@ export default function ProfilePage() {
                 label="Gender"
                 value={gender}
                 options={[
-                  { value: 'male', label: 'Male', description: 'Uses male Wilks coefficient' },
-                  { value: 'female', label: 'Female', description: 'Uses female Wilks coefficient' }
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' }
                 ]}
                 onChange={setGender}
                 description="Used to calculate accurate Wilks scores"

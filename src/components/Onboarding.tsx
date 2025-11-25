@@ -102,8 +102,8 @@ export default function Onboarding() {
                 label="Gender"
                 value={gender}
                 options={[
-                  { value: 'male', label: 'Male', description: 'Uses male Wilks coefficient' },
-                  { value: 'female', label: 'Female', description: 'Uses female Wilks coefficient' }
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' }
                 ]}
                 onChange={setGender}
                 description="Used to calculate accurate Wilks scores"
