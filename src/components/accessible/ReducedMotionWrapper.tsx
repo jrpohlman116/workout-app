@@ -111,17 +111,25 @@ export function AnimationControls({ onToggle }: AnimationControlsProps) {
             </p>
           )}
         </div>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={animationsEnabled}
-            onChange={handleToggle}
-            className="sr-only peer"
-            aria-label="Toggle animations"
+        <button
+          onClick={handleToggle}
+          role="switch"
+          aria-checked={animationsEnabled}
+          aria-label="Toggle animations"
+          className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          style={{
+            backgroundColor: animationsEnabled
+              ? 'rgb(37, 99, 235)'
+              : 'rgb(229, 231, 235)'
+          }}
+        >
+          <span
+            className="inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+            style={{
+              transform: animationsEnabled ? 'translateX(1.375rem)' : 'translateX(0.125rem)'
+            }}
           />
-          <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500 peer-focus:ring-offset-2 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-500 transition-colors duration-200"></div>
-          <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full transition-transform duration-200 peer-checked:translate-x-5 shadow-sm"></div>
-        </label>
+        </button>
       </div>
     </div>
   );
