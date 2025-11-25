@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import AccessibleNativeSelect from './AccessibleNativeSelect';
 
 export default function Onboarding() {
   const { user, refreshProfile } = useAuth();
@@ -96,17 +97,18 @@ export default function Onboarding() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Gender
-              </label>
-              <select
+              <AccessibleNativeSelect
+                id="gender-select"
+                label="Gender"
                 value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
+                options={[
+                  { value: 'male', label: 'Male', description: 'Uses male Wilks coefficient' },
+                  { value: 'female', label: 'Female', description: 'Uses female Wilks coefficient' }
+                ]}
+                onChange={setGender}
+                description="Used to calculate accurate Wilks scores"
+                required
+              />
             </div>
           </div>
 

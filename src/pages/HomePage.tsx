@@ -5,6 +5,8 @@ import { Calendar, RefreshCw, ChevronRight, ChevronDown, Check, SkipForward, Act
 import { supabase } from '../lib/supabase';
 import { useCountUp, useRipple } from '../hooks/useAnimations';
 import OneRepMaxTest from '../components/OneRepMaxTest';
+import AccessibleProgressRing from '../components/AccessibleProgressRing';
+import AccessibleModal from '../components/AccessibleModal';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -18,6 +20,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [initialMaxes, setInitialMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
+  const [showSkipWeekModal, setShowSkipWeekModal] = useState(false);
   const createRipple = useRipple();
 
   useEffect(() => {
@@ -123,6 +126,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const handleSkipWeek = async () => {
     if (!user || !profile) return;
 
+    setShowSkipWeekModal(false);
     setSkipping(true);
     try {
       let nextWeek = profile.current_week + 1;
@@ -223,41 +227,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             )}
           </div>
           <div className="flex items-center justify-center mb-4">
-            <svg className="w-48 h-48 transform -rotate-90">
-              <circle
-                cx="96"
-                cy="96"
-                r="80"
-                fill="none"
-                stroke="#f3f4f6"
-                strokeWidth="16"
-              />
-              <circle
-                cx="96"
-                cy="96"
-                r="80"
-                fill="none"
-                stroke="url(#gradient)"
-                strokeWidth="16"
-                strokeDasharray={`${(displayWilks / 600) * 502.4} 502.4`}
-                strokeLinecap="round"
-              />
-              <defs>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="100%" stopColor="#3b82f6" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="absolute">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-gray-900 animate-count-up">{animatedWilks}</div>
-                <div className="text-sm text-gray-600 mt-1">{getWilksLevel(displayWilks)}</div>
-                {hasProjectedData && (
-                  <div className="text-xs text-gray-500 mt-1">Projected</div>
-                )}
-              </div>
-            </div>
+            <AccessibleProgressRing
+              value={displayWilks}
+              max={600}
+              label="Wilks Score"
+              description={`${getWilksLevel(displayWilks)}${hasProjectedData ? ' (Projected)' : ''}`}
+              size={192}
+              showValue={true}
+            />
           </div>
         </div>
 
@@ -340,7 +317,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900">Workouts</h2>
             <button
-              onClick={handleSkipWeek}
+              onClick={() => setShowSkipWeekModal(true)}
               disabled={skipping}
               className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
             >
@@ -407,7 +384,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </div>
           {completedWorkouts.size === 4 && (
             <button
-              onClick={handleSkipWeek}
+              onClick={() => setShowSkipWeekModal(true)}
               disabled={skipping}
               className="w-full mt-4 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
@@ -427,6 +404,34 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           }}
         />
       )}
+
+      <AccessibleModal
+        isOpen={showSkipWeekModal}
+        onClose={() => setShowSkipWeekModal(false)}
+        title="Move to Next Week"
+        description={`Skip to Week ${profile.current_week === 4 ? 1 : profile.current_week + 1}${profile.current_week === 4 ? ` of Cycle ${profile.current_cycle + 1}` : ''}`}
+        size="sm"
+      >
+        <p className="text-gray-600 mb-6">
+          {completedWorkouts.size === 4
+            ? "You've completed all workouts for this week. Ready to move to the next week?"
+            : "You haven't completed all workouts yet. Are you sure you want to skip ahead?"}
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowSkipWeekModal(false)}
+            className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSkipWeek}
+            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      </AccessibleModal>
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Eye, EyeOff, LogOut } from 'lucide-react';
 import { AnimationControls } from '../components/ReducedMotionWrapper';
+import AccessibleNativeSelect from '../components/AccessibleNativeSelect';
+import AccessibleModal from '../components/AccessibleModal';
 
 export default function ProfilePage() {
   const { profile, user, refreshProfile } = useAuth();
@@ -22,6 +24,7 @@ export default function ProfilePage() {
   const [bodyLoading, setBodyLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   const handleUpdateBodyweight = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +138,7 @@ export default function ProfilePage() {
   };
 
   const handleSignOut = async () => {
+    setShowSignOutModal(false);
     try {
       await supabase.auth.signOut();
     } catch (error) {
@@ -220,29 +224,34 @@ export default function ProfilePage() {
                   placeholder="e.g. 180"
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <select
-                  value={unitPreference}
-                  onChange={(e) => setUnitPreference(e.target.value as 'lb' | 'kg')}
-                  className="px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="lb">lb</option>
-                  <option value="kg">kg</option>
-                </select>
+                <div className="w-32">
+                  <AccessibleNativeSelect
+                    id="unit-preference-select"
+                    label="Unit"
+                    value={unitPreference}
+                    options={[
+                      { value: 'lb', label: 'lb', description: 'Pounds' },
+                      { value: 'kg', label: 'kg', description: 'Kilograms' }
+                    ]}
+                    onChange={(value) => setUnitPreference(value as 'lb' | 'kg')}
+                    hideLabel
+                  />
+                </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Gender
-              </label>
-              <select
+              <AccessibleNativeSelect
+                id="gender-select-profile"
+                label="Gender"
                 value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
+                options={[
+                  { value: 'male', label: 'Male', description: 'Uses male Wilks coefficient' },
+                  { value: 'female', label: 'Female', description: 'Uses female Wilks coefficient' }
+                ]}
+                onChange={setGender}
+                description="Used to calculate accurate Wilks scores"
+              />
             </div>
 
             <button
@@ -430,7 +439,7 @@ export default function ProfilePage() {
         </div>
 
         <button
-          onClick={handleSignOut}
+          onClick={() => setShowSignOutModal(true)}
           className="w-full flex items-center justify-center gap-2 bg-white border-2 border-red-600 text-red-600 py-4 rounded-2xl font-semibold hover:bg-red-50 transition-colors shadow-sm"
         >
           <LogOut className="w-5 h-5" />
@@ -445,6 +454,32 @@ export default function ProfilePage() {
         </p>
         )}
       </div>
+
+      <AccessibleModal
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+        title="Sign Out"
+        description="Are you sure you want to sign out?"
+        size="sm"
+      >
+        <p className="text-gray-600 mb-6">
+          You will need to sign in again to access your workout data.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowSignOutModal(false)}
+            className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+      </AccessibleModal>
     </div>
   );
 }
