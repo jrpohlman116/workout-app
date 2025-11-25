@@ -15,7 +15,7 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-bottom"
+      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 safe-bottom transition-colors"
       aria-label="Main navigation"
       role="navigation"
     >
@@ -31,10 +31,10 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
               aria-label={`${item.label} - ${item.description}`}
               aria-current={isActive ? 'page' : undefined}
               className={`flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 ${
-                isActive ? 'text-blue-600' : 'text-gray-600'
+                isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
               }`}
             >
-              <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-100' : ''}`}>
+              <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}>
                 <Icon className="w-6 h-6" aria-hidden="true" />
                 {isActive && (
                   <span className="sr-only">(current page)</span>

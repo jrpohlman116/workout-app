@@ -220,15 +220,15 @@ export default function ProgressPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <div className="bg-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
+      <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <h1 className="text-4xl font-bold text-gray-900 mb-1">Progress</h1>
-          <p className="text-gray-600">Track your strength gains over time</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">Progress</h1>
+          <p className="text-gray-600 dark:text-gray-400">Track your strength gains over time</p>
         </div>
 
         <div className="max-w-md mx-auto px-4">
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
