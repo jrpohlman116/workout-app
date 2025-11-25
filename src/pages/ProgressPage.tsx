@@ -66,6 +66,9 @@ export default function ProgressPage() {
   const nonDeloadSessions = sessions.filter(s => s.week !== 4);
 
   const getFirstRecordedMax = (liftType: string) => {
+    const initialSession = sessions.find(s => s.lift_type === liftType && s.cycle === 0 && s.week === 0);
+    if (initialSession) return initialSession.calculated_1rm;
+
     const liftSessions = nonDeloadSessions.filter(s => s.lift_type === liftType);
     if (liftSessions.length === 0) return 0;
     return liftSessions[0].calculated_1rm;

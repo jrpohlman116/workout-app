@@ -15,6 +15,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
   const [workoutData, setWorkoutData] = useState<Map<string, { calculated_1rm: number }>>(new Map());
   const [projectedMaxes, setProjectedMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
+  const [initialMaxes, setInitialMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
   const [showWeekSelector, setShowWeekSelector] = useState(false);
@@ -73,7 +74,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
     const { data } = await supabase
       .from('workout_sessions')
-      .select('lift_type, calculated_1rm, week')
+      .select('lift_type, calculated_1rm, week, cycle')
       .eq('user_id', user.id)
       .order('completed_at', { ascending: true });
 
@@ -84,11 +85,24 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         return liftSessions[liftSessions.length - 1].calculated_1rm;
       };
 
+      const getInitialMax = (liftType: string) => {
+        const initialSession = data.find(s => s.lift_type === liftType && s.cycle === 0 && s.week === 0);
+        if (initialSession) return initialSession.calculated_1rm;
+        return 0;
+      };
+
       setProjectedMaxes({
         squat: getLatestMax('squat') || profile.squat_max,
         bench: getLatestMax('bench') || profile.bench_max,
         deadlift: getLatestMax('deadlift') || profile.deadlift_max,
         ohp: getLatestMax('ohp') || profile.ohp_max,
+      });
+
+      setInitialMaxes({
+        squat: getInitialMax('squat') || profile.squat_max,
+        bench: getInitialMax('bench') || profile.bench_max,
+        deadlift: getInitialMax('deadlift') || profile.deadlift_max,
+        ohp: getInitialMax('ohp') || profile.ohp_max,
       });
     }
   };
@@ -165,10 +179,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const isLbs = profile.unit_preference === 'lb';
   const lbToKg = (weight: number) => isLbs ? weight * 0.453592 : weight;
 
-  const currentWilksScore = calculateWilksScore(
-    lbToKg(profile.squat_max),
-    lbToKg(profile.bench_max),
-    lbToKg(profile.deadlift_max),
+  const initialWilksScore = calculateWilksScore(
+    lbToKg(initialMaxes.squat),
+    lbToKg(initialMaxes.bench),
+    lbToKg(initialMaxes.deadlift),
     lbToKg(profile.bodyweight || 0),
     profile.gender || 'male'
   );
@@ -181,12 +195,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     profile.gender || 'male'
   );
 
-  const wilksChangePercent = currentWilksScore > 0
-    ? (((projectedWilksScore - currentWilksScore) / currentWilksScore) * 100).toFixed(1)
+  const wilksChangePercent = initialWilksScore > 0
+    ? (((projectedWilksScore - initialWilksScore) / initialWilksScore) * 100).toFixed(1)
     : '0.0';
 
   const hasProjectedData = projectedMaxes.squat > 0 || projectedMaxes.bench > 0 || projectedMaxes.deadlift > 0;
-  const displayWilks = hasProjectedData ? projectedWilksScore : currentWilksScore;
+  const displayWilks = hasProjectedData ? projectedWilksScore : initialWilksScore;
 
   const getWilksLevel = (score: number): string => {
     if (score < 200) return 'Beginner';
