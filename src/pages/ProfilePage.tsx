@@ -48,8 +48,33 @@ export default function ProfilePage() {
     }
   };
 
-  const handleUpdateLifts = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveMaxes = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          squat_max: parseFloat(squatMax) || 0,
+          bench_max: parseFloat(benchMax) || 0,
+          deadlift_max: parseFloat(deadliftMax) || 0,
+          ohp_max: parseFloat(ohpMax) || 0,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (!error) {
+        await refreshProfile();
+      }
+    } catch (error) {
+      console.error('Error updating lifts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveMaxesAndRestart = async () => {
     if (!user) return;
 
     setLoading(true);
@@ -233,7 +258,7 @@ export default function ProfilePage() {
         {activeTab === 'maxes' && (
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Tested Maxes</h2>
-          <form onSubmit={handleUpdateLifts} className="space-y-4">
+          <div className="space-y-4">
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -307,17 +332,26 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              Save Maxes
-            </button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              This will reset your progress to Cycle 1, Week 1
-            </p>
-          </form>
+            <div className="grid grid-cols-1 gap-3">
+              <button
+                onClick={handleSaveMaxes}
+                disabled={loading}
+                className="w-full bg-gray-600 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50"
+              >
+                Save Maxes
+              </button>
+              <button
+                onClick={handleSaveMaxesAndRestart}
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                Save and Restart Plan
+              </button>
+              <p className="text-xs text-gray-500 text-center">
+                "Save and Restart Plan" will reset your progress to Cycle 1, Week 1
+              </p>
+            </div>
+          </div>
         </div>
         )}
 
