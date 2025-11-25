@@ -76,7 +76,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
       await supabase
         .from('user_profiles')
         .update({
-          [maxField]: weight * 0.9,
+          [maxField]: weight,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
