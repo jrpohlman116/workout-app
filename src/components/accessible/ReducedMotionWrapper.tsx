@@ -124,9 +124,9 @@ export function AnimationControls({ onToggle }: AnimationControlsProps) {
           }}
         >
           <span
-            className="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+            className="inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200"
             style={{
-              transform: animationsEnabled ? 'translateX(1.5rem)' : 'translateX(0.25rem)'
+              transform: animationsEnabled ? 'translateX(1.375rem)' : 'translateX(0.125rem)'
             }}
           />
         </button>
