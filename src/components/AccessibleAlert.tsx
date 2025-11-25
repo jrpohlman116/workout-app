@@ -10,6 +10,7 @@ interface AccessibleAlertProps {
   dismissible?: boolean;
   onDismiss?: () => void;
   role?: 'alert' | 'status';
+  icon?: React.ReactNode;
 }
 
 export default function AccessibleAlert({
@@ -18,7 +19,8 @@ export default function AccessibleAlert({
   children,
   dismissible = false,
   onDismiss,
-  role = type === 'error' ? 'alert' : 'status'
+  role = type === 'error' ? 'alert' : 'status',
+  icon
 }: AccessibleAlertProps) {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -62,6 +64,7 @@ export default function AccessibleAlert({
 
   const style = styles[type];
   const Icon = style.icon;
+  const displayIcon = icon || <Icon className={`w-5 h-5 ${style.iconColor} flex-shrink-0 mt-0.5`} aria-hidden="true" />;
 
   return (
     <div
@@ -71,10 +74,7 @@ export default function AccessibleAlert({
       className={`${style.bg} border ${style.border} rounded-xl p-4 ${style.text}`}
     >
       <div className="flex gap-3">
-        <Icon
-          className={`w-5 h-5 ${style.iconColor} flex-shrink-0 mt-0.5`}
-          aria-hidden="true"
-        />
+        {displayIcon}
         <div className="flex-1 min-w-0">
           {title && (
             <h3 className="font-semibold mb-1" id={`alert-title-${Date.now()}`}>

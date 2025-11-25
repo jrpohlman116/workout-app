@@ -4,6 +4,7 @@ interface AccessibleProgressRingProps {
   label: string;
   description?: string;
   size?: number;
+  showValue?: boolean;
 }
 
 export default function AccessibleProgressRing({
@@ -11,7 +12,8 @@ export default function AccessibleProgressRing({
   max,
   label,
   description,
-  size = 192
+  size = 192,
+  showValue = true
 }: AccessibleProgressRingProps) {
   const percentage = Math.min(100, Math.max(0, (value / max) * 100));
   const radius = (size / 2) - 16;
@@ -21,15 +23,23 @@ export default function AccessibleProgressRing({
 
   return (
     <div className="relative" role="group" aria-label={label}>
-      <svg
-        width={size}
-        height={size}
-        className="transform -rotate-90"
-        role="img"
-        aria-label={`${label}: ${value} out of ${max}, ${percentage.toFixed(0)}% complete`}
+      <div
+        role="progressbar"
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-label={label}
+        aria-describedby={description ? `progress-desc-${value}` : undefined}
       >
-        <title>{`${label}: ${value} out of ${max}`}</title>
-        <desc>{description || `Progress indicator showing ${percentage.toFixed(0)}% completion`}</desc>
+        <svg
+          width={size}
+          height={size}
+          className="transform -rotate-90"
+          role="img"
+          aria-hidden="true"
+        >
+          <title>{`${label}: ${value} out of ${max}`}</title>
+          <desc>{description || `Progress indicator showing ${percentage.toFixed(0)}% completion`}</desc>
 
         {/* Background circle */}
         <circle
@@ -65,23 +75,26 @@ export default function AccessibleProgressRing({
         </defs>
       </svg>
 
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl font-bold text-gray-900" aria-hidden="true">
-            {value}
-          </div>
-          {description && (
-            <div className="text-sm text-gray-600 mt-1" aria-hidden="true">
-              {description}
+      {showValue && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <div className="text-4xl font-bold text-gray-900" aria-hidden="true">
+              {value}
             </div>
-          )}
+            {description && (
+              <div className="text-sm text-gray-600 mt-1" aria-hidden="true">
+                {description}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="sr-only">
+      <div className="sr-only" id={description ? `progress-desc-${value}` : undefined}>
         {label}: {value} out of {max}, which is {percentage.toFixed(0)} percent complete.
         {description && ` ${description}`}
       </div>
+    </div>
     </div>
   );
 }
