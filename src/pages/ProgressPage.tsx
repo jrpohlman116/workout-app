@@ -3,10 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../lib/supabase';
 import ProgressChart from '../components/ProgressChart';
 import { useStaggeredAnimation, useRipple } from '../hooks/useAnimations';
-import { useAnalytics } from '../hooks/useAnalytics';
-import FatigueManagementCard from '../components/analytics/FatigueManagementCard';
-import ProgressTrajectoryCard from '../components/analytics/ProgressTrajectoryCard';
-import { ChevronDown, ChevronUp, Lock, TrendingUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface AccessoryExercise {
   id: string;
@@ -15,7 +12,7 @@ interface AccessoryExercise {
   sets_data: { reps: string; weight: string }[];
 }
 
-type Tab = 'overview' | 'weight' | 'volume' | 'log' | 'analytics';
+type Tab = 'overview' | 'weight' | 'volume' | 'log';
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
@@ -25,7 +22,6 @@ export default function ProgressPage() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const visibleLifts = useStaggeredAnimation(4, 100);
   const createRipple = useRipple();
-  const analyticsData = useAnalytics(user?.id, profile);
 
   useEffect(() => {
     if (user) {
@@ -215,7 +211,6 @@ export default function ProgressPage() {
     { id: 'weight' as Tab, label: 'Best Weight' },
     { id: 'volume' as Tab, label: 'Best Volume' },
     { id: 'log' as Tab, label: 'Workout Log' },
-    { id: 'analytics' as Tab, label: 'Analytics', locked: !analyticsData.isUnlocked },
   ];
 
   return (
@@ -233,25 +228,15 @@ export default function ProgressPage() {
                 key={tab.id}
                 onClick={(e) => {
                   createRipple(e);
-                  if (tab.locked) {
-                    return;
-                  }
                   setActiveTab(tab.id);
                 }}
                 className={`flex-1 py-3 font-semibold text-sm transition-all ripple-container relative overflow-hidden whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'text-blue-600 border-b-2 border-blue-600 -mb-[2px]'
-                    : tab.locked
-                    ? 'text-gray-400 cursor-not-allowed'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
-                disabled={tab.locked}
-                title={tab.locked ? analyticsData.unlockMessage : ''}
               >
-                <span className="flex items-center justify-center gap-1">
-                  {tab.locked && <Lock className="w-3 h-3" />}
-                  {tab.label}
-                </span>
+                {tab.label}
               </button>
             ))}
           </div>
@@ -494,74 +479,6 @@ export default function ProgressPage() {
                 <p className="text-gray-700 font-semibold mb-1">No workouts logged yet</p>
                 <p className="text-sm text-gray-600">Complete your first workout to see it here.</p>
               </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'analytics' && (
-          <div className="space-y-6">
-            {analyticsData.loading ? (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-gray-600 mt-4">Loading analytics...</p>
-              </div>
-            ) : !analyticsData.isUnlocked ? (
-              <div className="bg-white rounded-xl shadow-sm p-8">
-                <div className="text-center space-y-4">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full">
-                    <Lock className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Analytics Locked</h3>
-                    <p className="text-gray-600">{analyticsData.unlockMessage}</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4 max-w-sm mx-auto">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Progress</span>
-                      <span className="text-sm font-bold text-gray-900">
-                        {analyticsData.weeksCompleted} / 4 weeks
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${(analyticsData.weeksCompleted / 4) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto text-left">
-                    <div className="flex items-start gap-3">
-                      <TrendingUp className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                      <div className="text-sm text-blue-800">
-                        <p className="font-semibold mb-1">What you'll unlock:</p>
-                        <ul className="space-y-1 list-disc list-inside">
-                          <li>Fatigue management with TSS tracking</li>
-                          <li>Progress predictions using AI</li>
-                          <li>Milestone weight projections</li>
-                          <li>Recovery recommendations</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                {analyticsData.currentWeekFatigue && (
-                  <FatigueManagementCard
-                    currentWeekData={analyticsData.currentWeekFatigue}
-                    historicalData={analyticsData.historicalFatigue}
-                    recommendedAction={analyticsData.recommendedAction}
-                    daysUntilDeload={analyticsData.daysUntilDeload}
-                  />
-                )}
-                {analyticsData.predictions.length > 0 && (
-                  <ProgressTrajectoryCard
-                    predictions={analyticsData.predictions}
-                    unitPreference={profile?.unit_preference || 'lb'}
-                  />
-                )}
-              </>
             )}
           </div>
         )}
