@@ -213,7 +213,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">Wilks Score</p>
+              <p className="text-gray-900 dark:text-gray-100 text-sm font-semibold">Wilks Score</p>
               <p className="text-xs text-gray-500 dark:text-gray-300">Strength normalized by bodyweight</p>
             </div>
             {hasProjectedData && parseFloat(wilksChangePercent) !== 0 && (

@@ -78,11 +78,11 @@ export default function AccessibleProgressRing({
       {showValue && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
-            <div className="text-4xl font-bold text-gray-900" aria-hidden="true">
+            <div className="text-4xl font-bold text-gray-900 dark:text-gray-100" aria-hidden="true">
               {value}
             </div>
             {description && (
-              <div className="text-sm text-gray-600 mt-1" aria-hidden="true">
+              <div className="text-sm text-gray-900 dark:text-gray-100 mt-1" aria-hidden="true">
                 {description}
               </div>
             )}
