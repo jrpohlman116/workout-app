@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { RefreshCw, Check, Info, Plus } from 'lucide-react';
-import AccessibleModal from './AccessibleModal';
-import { supabase } from '../lib/supabase';
-import { ExerciseSubstitution } from '../lib/supabase';
+import AccessibleModal from '../accessible/AccessibleModal';
+import { supabase } from '../../lib/supabase';
+import { ExerciseSubstitution } from '../../lib/supabase';
 
 interface ExerciseSubstitutionModalProps {
   isOpen: boolean;

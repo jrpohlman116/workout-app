@@ -4,9 +4,9 @@ import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksSco
 import { Calendar, RefreshCw, ChevronRight, ChevronDown, Check, SkipForward, Activity } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useCountUp, useRipple } from '../hooks/useAnimations';
-import OneRepMaxTest from '../components/OneRepMaxTest';
-import AccessibleProgressRing from '../components/AccessibleProgressRing';
-import AccessibleModal from '../components/AccessibleModal';
+import OneRepMaxTest from '../components/features/OneRepMaxTest';
+import AccessibleProgressRing from '../components/accessible/AccessibleProgressRing';
+import AccessibleModal from '../components/accessible/AccessibleModal';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;

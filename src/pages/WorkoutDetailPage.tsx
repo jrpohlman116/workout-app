@@ -4,10 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { calculateWorkoutWeights, calculateOneRepMax } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
 import { useConfetti } from '../hooks/useAnimations';
-import WorkoutSuccessModal from '../components/WorkoutSuccessModal';
-import ExerciseSubstitutionModal from '../components/ExerciseSubstitutionModal';
-import AccessibleProgressIndicator from '../components/AccessibleProgressIndicator';
-import AccessibleFormGroup from '../components/AccessibleFormGroup';
+import WorkoutSuccessModal from '../components/features/WorkoutSuccessModal';
+import ExerciseSubstitutionModal from '../components/features/ExerciseSubstitutionModal';
+import AccessibleProgressIndicator from '../components/accessible/AccessibleProgressIndicator';
+import AccessibleFormGroup from '../components/accessible/AccessibleFormGroup';
 
 interface WorkoutDetailPageProps {
   liftType: string;

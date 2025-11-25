@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
-import AccessibleNativeSelect from './AccessibleNativeSelect';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import AccessibleNativeSelect from '../accessible/AccessibleNativeSelect';
 
 export default function Onboarding() {
   const { user, refreshProfile } = useAuth();

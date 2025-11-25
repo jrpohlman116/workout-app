@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import AuthForm from './components/AuthForm';
-import Onboarding from './components/Onboarding';
-import Navigation from './components/Navigation';
-import SkipLink from './components/SkipLink';
-import InstallPrompt from './components/InstallPrompt';
+import AuthForm from './components/features/AuthForm';
+import Onboarding from './components/features/Onboarding';
+import Navigation from './components/layout/Navigation';
+import SkipLink from './components/accessible/SkipLink';
+import InstallPrompt from './components/features/InstallPrompt';
 import HomePage from './pages/HomePage';
 import CalculatorPage from './pages/CalculatorPage';
 import ProgressPage from './pages/ProgressPage';

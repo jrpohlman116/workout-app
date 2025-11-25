@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../lib/supabase';
-import ProgressChart from '../components/ProgressChart';
-import AccessibleChartTable from '../components/AccessibleChartTable';
+import ProgressChart from '../components/features/ProgressChart';
+import AccessibleChartTable from '../components/accessible/AccessibleChartTable';
 import { useStaggeredAnimation, useRipple } from '../hooks/useAnimations';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 

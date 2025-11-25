@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Eye, EyeOff, LogOut } from 'lucide-react';
-import { AnimationControls } from '../components/ReducedMotionWrapper';
-import AccessibleNativeSelect from '../components/AccessibleNativeSelect';
-import AccessibleModal from '../components/AccessibleModal';
+import { AnimationControls } from '../components/accessible/ReducedMotionWrapper';
+import AccessibleNativeSelect from '../components/accessible/AccessibleNativeSelect';
+import AccessibleModal from '../components/accessible/AccessibleModal';
 
 export default function ProfilePage() {
   const { profile, user, refreshProfile } = useAuth();
