@@ -1,0 +1,69 @@
+import { WorkoutSession } from '../../lib/supabase';
+
+export function calculateTonnage(session: WorkoutSession): number {
+  return session.weight_lifted * session.reps_performed;
+}
+
+export function getFirstRecordedMax(sessions: WorkoutSession[], liftType: string, nonDeloadSessions: WorkoutSession[]): number {
+  const initialSession = sessions.find(s => s.lift_type === liftType && s.cycle === 0 && s.week === 0);
+  if (initialSession) return initialSession.calculated_1rm;
+
+  const liftSessions = nonDeloadSessions.filter(s => s.lift_type === liftType);
+  if (liftSessions.length === 0) return 0;
+  return liftSessions[0].calculated_1rm;
+}
+
+export function getAverageOfLastThreeSessions(nonDeloadSessions: WorkoutSession[], liftType: string): number {
+  const liftSessions = nonDeloadSessions.filter(s => s.lift_type === liftType);
+  if (liftSessions.length === 0) return 0;
+
+  const lastThree = liftSessions.slice(-3);
+  const sum = lastThree.reduce((total, session) => total + session.calculated_1rm, 0);
+  return Math.round(sum / lastThree.length);
+}
+
+export function getLatestMaxForLift(nonDeloadSessions: WorkoutSession[], liftType: string): number {
+  const liftSessions = nonDeloadSessions.filter(s => s.lift_type === liftType);
+  if (liftSessions.length === 0) return 0;
+  return liftSessions[liftSessions.length - 1].calculated_1rm;
+}
+
+export function getMaxChangePercent(sessions: WorkoutSession[], nonDeloadSessions: WorkoutSession[], liftType: string): string {
+  const firstRecorded = getFirstRecordedMax(sessions, liftType, nonDeloadSessions);
+  const currentAverage = getAverageOfLastThreeSessions(nonDeloadSessions, liftType);
+
+  if (firstRecorded === 0) return '0';
+  return (((currentAverage - firstRecorded) / firstRecorded) * 100).toFixed(1);
+}
+
+export function getBestWeightForLift(sessions: WorkoutSession[], liftType: string) {
+  const liftSessions = sessions.filter(s => s.lift_type === liftType);
+  if (liftSessions.length === 0) return null;
+
+  let bestSession = liftSessions[0];
+  liftSessions.forEach(session => {
+    if (session.weight_lifted > bestSession.weight_lifted) {
+      bestSession = session;
+    }
+  });
+
+  return bestSession;
+}
+
+export function getBestVolumeForLift(sessions: WorkoutSession[], liftType: string) {
+  const liftSessions = sessions.filter(s => s.lift_type === liftType);
+  if (liftSessions.length === 0) return null;
+
+  let bestSession = liftSessions[0];
+  let bestTonnage = calculateTonnage(bestSession);
+
+  liftSessions.forEach(session => {
+    const tonnage = calculateTonnage(session);
+    if (tonnage > bestTonnage) {
+      bestSession = session;
+      bestTonnage = tonnage;
+    }
+  });
+
+  return { session: bestSession, tonnage: bestTonnage };
+}

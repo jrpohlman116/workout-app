@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff, LogOut, Moon, Sun } from 'lucide-react';
-import { AnimationControls } from '../components/accessible/ReducedMotionWrapper';
-import AccessibleNativeSelect from '../components/accessible/AccessibleNativeSelect';
-import AccessibleModal from '../components/accessible/AccessibleModal';
+import { AnimationControls } from '../../components/accessible/ReducedMotionWrapper';
+import AccessibleNativeSelect from '../../components/accessible/AccessibleNativeSelect';
+import AccessibleModal from '../../components/accessible/AccessibleModal';
 
 export default function ProfilePage() {
   const { profile, user, refreshProfile } = useAuth();

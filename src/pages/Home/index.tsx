@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, getCycleProgression } from '../lib/calculations';
+import { useAuth } from '../../contexts/AuthContext';
+import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, getCycleProgression } from '../../lib/calculations';
 import { Calendar, RefreshCw, ChevronRight, ChevronDown, Check, SkipForward, Activity } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { useCountUp, useRipple } from '../hooks/useAnimations';
-import OneRepMaxTest from '../components/features/OneRepMaxTest';
-import AccessibleProgressRing from '../components/accessible/AccessibleProgressRing';
-import AccessibleModal from '../components/accessible/AccessibleModal';
+import { supabase } from '../../lib/supabase';
+import { useCountUp, useRipple } from '../../hooks/useAnimations';
+import OneRepMaxTest from '../../components/features/OneRepMaxTest';
+import AccessibleProgressRing from '../../components/accessible/AccessibleProgressRing';
+import AccessibleModal from '../../components/accessible/AccessibleModal';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;

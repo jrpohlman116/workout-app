@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { calculateOneRepMax, calculateWilksScore } from '../lib/calculations';
+import { calculateOneRepMax, calculateWilksScore } from '../../lib/calculations';
 import { Info } from 'lucide-react';
-import { useRipple } from '../hooks/useAnimations';
-import { useAuth } from '../contexts/AuthContext';
+import { useRipple } from '../../hooks/useAnimations';
+import { useAuth } from '../../contexts/AuthContext';
 
 type Tab = '1rm' | 'wilks' | 'plates';
 

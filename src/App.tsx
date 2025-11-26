@@ -6,11 +6,11 @@ import Onboarding from './components/features/Onboarding';
 import Navigation from './components/layout/Navigation';
 import SkipLink from './components/accessible/SkipLink';
 import InstallPrompt from './components/features/InstallPrompt';
-import HomePage from './pages/HomePage';
-import CalculatorPage from './pages/CalculatorPage';
-import ProgressPage from './pages/ProgressPage';
-import ProfilePage from './pages/ProfilePage';
-import WorkoutDetailPage from './pages/WorkoutDetailPage';
+import HomePage from './pages/Home';
+import CalculatorPage from './pages/Calculator';
+import ProgressPage from './pages/Progress';
+import ProfilePage from './pages/Profile';
+import WorkoutDetailPage from './pages/WorkoutDetail';
 
 function AppContent() {
   const { user, profile, loading } = useAuth();

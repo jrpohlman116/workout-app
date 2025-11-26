@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import AccessibleProgressRing from '../components/accessible/AccessibleProgressRing';
-import AccessibleSelect from '../components/accessible/AccessibleSelect';
-import AccessibleAlert from '../components/accessible/AccessibleAlert';
-import AccessibleModal from '../components/accessible/AccessibleModal';
+import AccessibleProgressRing from '../../components/accessible/AccessibleProgressRing';
+import AccessibleSelect from '../../components/accessible/AccessibleSelect';
+import AccessibleAlert from '../../components/accessible/AccessibleAlert';
+import AccessibleModal from '../../components/accessible/AccessibleModal';
 
 export default function AccessibilityDemoPage() {
   const [selectedOption, setSelectedOption] = useState('option1');
