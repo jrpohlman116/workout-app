@@ -556,14 +556,17 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-          <div className="flex items-start justify-between gap-3 mb-1">
+          <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{currentExercise.name}</h2>
               {exerciseSubstitutions[exerciseIndex] && (
-                <p className="text-xs text-gray-500 dark:text-gray-300 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Substituted from: {baseExercises[liftType as keyof typeof baseExercises][exerciseIndex].name}
                 </p>
               )}
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                {currentExercise.sets} sets of {currentExercise.reps} reps
+              </p>
             </div>
             <button
               onClick={() => handleOpenSubstitution(exerciseIndex, currentExercise.name)}
@@ -574,21 +577,122 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
               <span className="text-sm font-medium">Substitute</span>
             </button>
           </div>
-          <AccessibleFormGroup
-            legend={currentExercise.name}
-            description={`${currentExercise.sets} sets of ${currentExercise.reps} reps`}
-            sets={exerciseSets}
-            onUpdateSet={(index, field, value) => updateAccessorySet(exerciseIndex, index, field, value)}
-            onAddSet={() => addAccessorySet(exerciseIndex)}
-            onRemoveSet={(index) => removeAccessorySet(exerciseIndex, index)}
-            weightUnit={profile.unit_preference || 'lb'}
-            repsPlaceholder={currentExercise.reps}
-            weightPlaceholder="0"
-            minSets={1}
-            maxSets={10}
-            isBodyweight={currentExercise.isBodyweight}
-            lastSetData={getLastSetData(currentExercise.name)}
-          />
+
+          {getLastSetData(currentExercise.name) && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 dark:border-blue-500 rounded-r-lg px-4 py-3 mb-4">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Previous Session</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{getLastSetData(currentExercise.name)}</p>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {!currentExercise.isBodyweight && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Reps
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Weight ({profile.unit_preference || 'lb'})
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {currentExercise.isBodyweight && (
+              <div>
+                <span className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Duration / Reps
+                </span>
+              </div>
+            )}
+
+            {exerciseSets.map((set, index) => {
+              const setNumber = index + 1;
+              const setId = `set-${index}`;
+
+              return (
+                <div
+                  key={index}
+                  className="flex gap-2"
+                  role="group"
+                  aria-labelledby={`${setId}-label`}
+                >
+                  <span id={`${setId}-label`} className="sr-only">
+                    Set {setNumber} of {exerciseSets.length}
+                  </span>
+
+                  {currentExercise.isBodyweight ? (
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={set.reps}
+                      onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
+                      placeholder={currentExercise.reps}
+                      className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+                      aria-label={`Set ${setNumber}: Reps`}
+                      min="0"
+                    />
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4 flex-1">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={set.reps}
+                        onChange={(e) => updateAccessorySet(exerciseIndex, index, 'reps', e.target.value)}
+                        placeholder={currentExercise.reps}
+                        className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+                        aria-label={`Set ${setNumber}: Reps`}
+                        min="0"
+                      />
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.5"
+                        value={set.weight}
+                        onChange={(e) => updateAccessorySet(exerciseIndex, index, 'weight', e.target.value)}
+                        placeholder="0"
+                        className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+                        aria-label={`Set ${setNumber}: Weight in ${profile.unit_preference || 'lb'}`}
+                        min="0"
+                      />
+                    </div>
+                  )}
+
+                  {exerciseSets.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeAccessorySet(exerciseIndex, index)}
+                      className="p-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400"
+                      aria-label={`Remove set ${setNumber}`}
+                    >
+                      <Trash2 className="w-5 h-5" aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {exerciseSets.length < 10 && (
+            <button
+              type="button"
+              onClick={() => addAccessorySet(exerciseIndex)}
+              className="w-full flex items-center justify-center gap-2 py-3 mt-4 text-blue-600 dark:text-blue-400 border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              aria-label={`Add another set (${exerciseSets.length} of 10 sets used)`}
+            >
+              <Plus className="w-5 h-5" aria-hidden="true" />
+              <span className="font-medium">Add Set</span>
+            </button>
+          )}
+
+          {exerciseSets.length >= 10 && (
+            <p className="text-sm text-gray-600 dark:text-gray-300 text-center mt-4">
+              Maximum of 10 sets reached
+            </p>
+          )}
         </div>
 
         <div className="flex gap-3">
