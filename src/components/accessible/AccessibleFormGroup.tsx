@@ -46,7 +46,7 @@ export default function AccessibleFormGroup({
 
   return (
     <fieldset className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 space-y-4 border-0">
-      <legend className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 float-none w-full px-0">
+      <legend className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 float-none w-full px-0" style={{ top: '35px', position: 'relative' }}>
         {legend}
       </legend>
 
