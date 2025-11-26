@@ -430,35 +430,35 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         </div>
 
         <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Main Sets</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Main Sets</h2>
             <div className="space-y-3">
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="font-medium text-gray-700">Set 1</span>
-                <span className="font-bold text-gray-900">{weights.set1} lb × {mainReps}</span>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
+                <span className="font-medium text-gray-700 dark:text-gray-300">Set 1</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">{weights.set1} lb × {mainReps}</span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="font-medium text-gray-700">Set 2</span>
-                <span className="font-bold text-gray-900">{weights.set2} lb × {mainReps}</span>
+              <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
+                <span className="font-medium text-gray-700 dark:text-gray-300">Set 2</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">{weights.set2} lb × {mainReps}</span>
               </div>
-              <div className="flex justify-between items-center py-3 bg-blue-50 rounded-xl px-4 border-2 border-blue-600">
+              <div className="flex justify-between items-center py-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 border-2 border-blue-600 dark:border-blue-500">
                 <div>
-                  <span className="font-medium text-gray-900">Set 3 - AMRAP</span>
-                  <p className="text-xs text-gray-600 mt-0.5">As Many Reps As Possible</p>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Set 3 - AMRAP</span>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">As Many Reps As Possible</p>
                 </div>
-                <span className="font-bold text-gray-900">{weights.set3} lb × {mainReps}+</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">{weights.set3} lb × {mainReps}+</span>
               </div>
-              <p className="text-sm text-gray-600 mt-3">Push yourself on this final set!</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-3">Push yourself on this final set!</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Accessory Exercises</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Accessory Exercises</h2>
             <div className="space-y-2">
               {currentExercises.map((exercise, idx) => (
-                <div key={idx} className="flex justify-between items-center py-3 px-4 bg-gray-50 rounded-xl">
-                  <span className="text-gray-900 font-medium">{exercise.name}</span>
-                  <span className="text-sm text-gray-600">{exercise.reps}</span>
+                <div key={idx} className="flex justify-between items-center py-3 px-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{exercise.name}</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">{exercise.reps}</span>
                 </div>
               ))}
             </div>
@@ -466,7 +466,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
           <button
             onClick={handleNext}
-            className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
           >
             Start Workout
           </button>
@@ -518,7 +518,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
           <button
             onClick={handleNext}
-            className="w-full bg-white text-blue-600 border-2 border-blue-600 py-4 rounded-xl font-semibold hover:bg-blue-50 transition-colors"
+            className="w-full bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-500 py-4 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
           >
             Next: {nextExercise}
           </button>
@@ -534,14 +534,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const exerciseSets = accessoryData[exerciseIndex] || Array(currentExercise.sets).fill(null).map(() => ({ reps: '', weight: '' }));
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <div className="bg-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
+      <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <button onClick={onBack} className="mb-4 p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <ArrowLeft className="w-6 h-6 text-gray-700" />
+          <button onClick={onBack} className="mb-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+            <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
           </button>
-          <h1 className="text-4xl font-bold text-gray-900 mb-1">{liftNames[liftType]} Day</h1>
-          <p className="text-gray-600">Week {profile.current_week} - Cycle {profile.current_cycle}</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">{liftNames[liftType]} Day</h1>
+          <p className="text-gray-600 dark:text-gray-300">Week {profile.current_week} - Cycle {profile.current_cycle}</p>
         </div>
 
         <div className="max-w-md mx-auto px-4 pb-4">
@@ -555,10 +555,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
           <div className="flex items-start justify-between gap-3 mb-1">
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900">{currentExercise.name}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{currentExercise.name}</h2>
               {exerciseSubstitutions[exerciseIndex] && (
                 <p className="text-xs text-gray-500 dark:text-gray-300 mt-1">
                   Substituted from: {baseExercises[liftType as keyof typeof baseExercises][exerciseIndex].name}
@@ -567,7 +567,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             </div>
             <button
               onClick={() => handleOpenSubstitution(exerciseIndex, currentExercise.name)}
-              className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
+              className="flex items-center gap-2 px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex-shrink-0"
               aria-label="Substitute exercise"
             >
               <RefreshCw className="w-4 h-4" />
@@ -594,7 +594,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         <div className="flex gap-3">
           <button
             onClick={handlePrevious}
-            className="flex-1 bg-white text-blue-600 border-2 border-blue-600 py-4 rounded-xl font-semibold hover:bg-blue-50 transition-colors"
+            className="flex-1 bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-500 py-4 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
           >
             Previous
           </button>
@@ -603,8 +603,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             disabled={saving}
             className={`flex-1 py-4 rounded-xl font-semibold transition-colors disabled:opacity-50 ${
               nextExercise
-                ? 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-600'
+                : 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
             }`}
           >
             {nextExercise ? `Next: ${nextExercise}` : saving ? 'Saving...' : 'Complete Workout'}
