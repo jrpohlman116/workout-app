@@ -92,9 +92,9 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">1RM Testing</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">1RM Testing</h2>
           <button
             onClick={onClose}
             className="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300 text-2xl leading-none"
@@ -106,12 +106,12 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
         <div className="p-6">
           {step === 'select' && (
             <div className="space-y-4">
-              <div className="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4 mb-6">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 dark:border-blue-500 rounded-xl p-4 mb-6">
                 <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-semibold text-gray-900 mb-1">About 1RM Testing</p>
-                    <p className="text-sm text-gray-700">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">About 1RM Testing</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
                       Test your true 1 rep max to update your training maxes. The app will guide you through
                       a proper warm-up protocol and update your program based on your tested max.
                     </p>
@@ -119,23 +119,23 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                 </div>
               </div>
 
-              <h3 className="font-semibold text-gray-900 mb-3">Select a lift to test:</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Select a lift to test:</h3>
 
               <div className="grid grid-cols-1 gap-3">
                 {lifts.map((lift) => (
                   <button
                     key={lift.type}
                     onClick={() => handleSelectLift(lift.type)}
-                    className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-blue-500 transition-all text-left"
+                    className="bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-all text-left"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-gray-900">{lift.name}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
                           Current tested max: {lift.currentMax} {profile.unit_preference || 'lb'}
                         </p>
                       </div>
-                      <TrendingUp className="w-5 h-5 text-gray-400" />
+                      <TrendingUp className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                     </div>
                   </button>
                 ))}
@@ -145,29 +145,29 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
 
           {step === 'guide' && selectedLiftInfo && (
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{selectedLiftInfo.name}</h3>
-                <p className="text-gray-700">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{selectedLiftInfo.name}</h3>
+                <p className="text-gray-700 dark:text-gray-300">
                   Current tested max: <span className="font-semibold">{selectedLiftInfo.currentMax} {profile.unit_preference || 'lb'}</span>
                 </p>
               </div>
 
               <div>
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <span className="bg-blue-600 dark:bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
                   Suggested Warm-up Protocol
                 </h4>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                   Follow these warm-up sets to prepare for your max attempt. Rest 2-3 minutes between sets.
                 </p>
                 <div className="space-y-2">
                   {generateWarmupSets(selectedLiftInfo.currentMax).map((set, index) => (
                     <div
                       key={index}
-                      className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between"
+                      className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-3 flex items-center justify-between"
                     >
-                      <span className="text-sm font-medium text-gray-700">{set.label}</span>
-                      <span className="font-semibold text-gray-900">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{set.label}</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">
                         {set.weight} {set.unit} × {set.reps}
                       </span>
                     </div>
@@ -176,25 +176,25 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
               </div>
 
               <div>
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <span className="bg-blue-600 dark:bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
                   Attempt Your Max
                 </h4>
-                <ul className="space-y-2 text-sm text-gray-700">
+                <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                   <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                     <span>Rest 5-7 minutes after your final warm-up</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                     <span>Start with a weight you are confident you can lift</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                     <span>If successful, rest 5-7 minutes and attempt a heavier weight</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                     <span>Continue until you find your true 1 rep max</span>
                   </li>
                 </ul>
@@ -203,13 +203,13 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep('select')}
-                  className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleProceedToRecord}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                  className="flex-1 bg-blue-600 dark:bg-blue-500 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
                 >
                   Record My Max
                 </button>
@@ -219,15 +219,15 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
 
           {step === 'record' && selectedLiftInfo && (
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{selectedLiftInfo.name}</h3>
-                <p className="text-gray-700">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{selectedLiftInfo.name}</h3>
+                <p className="text-gray-700 dark:text-gray-300">
                   Previous tested max: <span className="font-semibold">{selectedLiftInfo.currentMax} {profile.unit_preference || 'lb'}</span>
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Your Tested 1 Rep Max
                 </label>
                 <div className="flex gap-3">
@@ -236,19 +236,19 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                     value={testedWeight}
                     onChange={(e) => setTestedWeight(e.target.value)}
                     placeholder="Enter weight"
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                   />
-                  <div className="px-4 py-3 bg-gray-100 rounded-xl font-semibold text-gray-700 flex items-center">
+                  <div className="px-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl font-semibold text-gray-700 dark:text-gray-300 flex items-center">
                     {profile.unit_preference || 'lb'}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-amber-50 border-l-4 border-amber-600 rounded-xl p-4">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-600 dark:border-amber-500 rounded-xl p-4">
                 <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                   <div className="text-sm">
-                    <p className="font-semibold text-gray-900 mb-1">Your training max will be updated</p>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Your training max will be updated</p>
                   </div>
                 </div>
               </div>
@@ -256,14 +256,14 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep('guide')}
-                  className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleSaveTest}
                   disabled={!testedWeight || saving}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-blue-600 dark:bg-blue-500 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? 'Saving...' : 'Save & Update Program'}
                 </button>
