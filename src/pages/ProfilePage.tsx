@@ -279,9 +279,9 @@ export default function ProfilePage() {
                   value={squatMax}
                   onChange={(e) => setSquatMax(e.target.value)}
                   placeholder="e.g. 125, 80, 45"
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 />
-                <div className="px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600">
+                <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                   {unitPreference}
                 </div>
               </div>
@@ -297,9 +297,9 @@ export default function ProfilePage() {
                   value={benchMax}
                   onChange={(e) => setBenchMax(e.target.value)}
                   placeholder="e.g. 125, 80, 45"
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 />
-                <div className="px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600">
+                <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                   {unitPreference}
                 </div>
               </div>
@@ -315,9 +315,9 @@ export default function ProfilePage() {
                   value={deadliftMax}
                   onChange={(e) => setDeadliftMax(e.target.value)}
                   placeholder="e.g. 125, 80, 45"
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 />
-                <div className="px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600">
+                <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                   {unitPreference}
                 </div>
               </div>
@@ -333,9 +333,9 @@ export default function ProfilePage() {
                   value={ohpMax}
                   onChange={(e) => setOhpMax(e.target.value)}
                   placeholder="e.g. 125, 80, 45"
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 />
-                <div className="px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600">
+                <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                   {unitPreference}
                 </div>
               </div>
@@ -346,14 +346,14 @@ export default function ProfilePage() {
                 <button
                   onClick={handleSaveMaxes}
                   disabled={loading}
-                  className="w-1/3 bg-gray-600 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50"
+                  className="w-1/3 bg-gray-600 dark:bg-gray-500 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                 >
                   Save Maxes
                 </button>
                 <button
                   onClick={handleSaveMaxesAndRestart}
                   disabled={loading}
-                  className="w-2/3 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="w-2/3 bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50"
                 >
                   Save and Restart Plan
                 </button>
@@ -411,12 +411,12 @@ export default function ProfilePage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -432,12 +432,12 @@ export default function ProfilePage() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -447,7 +447,7 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={loading || !password || !confirmPassword}
-              className="w-full border-2 border-blue-600 text-blue-600 py-4 rounded-xl font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50"
+              className="w-full bg-white dark:bg-gray-700 border-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 py-4 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
             >
               Update Password
             </button>
@@ -455,7 +455,7 @@ export default function ProfilePage() {
               <p className="text-sm text-red-600 mt-2">{passwordError}</p>
             )}
             {passwordSuccess && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm mt-2">
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 px-4 py-3 rounded-xl text-sm mt-2">
                 Password updated! You can now use it to log in.
               </div>
             )}
@@ -464,7 +464,7 @@ export default function ProfilePage() {
 
         <button
           onClick={() => setShowSignOutModal(true)}
-          className="w-full flex items-center justify-center gap-2 bg-white border-2 border-red-600 text-red-600 py-4 rounded-2xl font-semibold hover:bg-red-50 transition-colors shadow-sm"
+          className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-700 border-2 border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 py-4 rounded-2xl font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shadow-sm"
         >
           <LogOut className="w-5 h-5" />
           Sign Out
@@ -486,19 +486,19 @@ export default function ProfilePage() {
         description="Are you sure you want to sign out?"
         size="sm"
       >
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
           You will need to sign in again to access your workout data.
         </p>
         <div className="flex gap-3">
           <button
             onClick={() => setShowSignOutModal(false)}
-            className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSignOut}
-            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors"
+            className="flex-1 px-4 py-3 bg-red-600 dark:bg-red-500 text-white rounded-xl font-semibold hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
           >
             Sign Out
           </button>
