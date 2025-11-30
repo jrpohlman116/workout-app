@@ -5,12 +5,14 @@ export function calculateTonnage(session: WorkoutSession): number {
 }
 
 export function getFirstRecordedMax(sessions: WorkoutSession[], liftType: string, nonDeloadSessions: WorkoutSession[]): number {
-  const initialSession = sessions.find(s => s.lift_type === liftType && s.cycle === 0 && s.week === 0);
-  if (initialSession) return initialSession.calculated_1rm;
-
-  const liftSessions = nonDeloadSessions.filter(s => s.lift_type === liftType);
+  const liftSessions = sessions.filter(s => s.lift_type === liftType);
   if (liftSessions.length === 0) return 0;
-  return liftSessions[0].calculated_1rm;
+
+  const sortedByDate = [...liftSessions].sort((a, b) =>
+    new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime()
+  );
+
+  return sortedByDate[0].calculated_1rm;
 }
 
 export function getAverageOfLastThreeSessions(nonDeloadSessions: WorkoutSession[], liftType: string): number {
