@@ -9,8 +9,8 @@ interface TabNavigationProps {
 export default function TabNavigation({ activeTab, onTabChange, onRipple }: TabNavigationProps) {
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
-    { id: 'weight', label: 'Weight Progress' },
-    { id: 'volume', label: 'Volume Progress' },
+    { id: 'weight', label: 'Best Weight' },
+    { id: 'volume', label: 'Best Volume' },
     { id: 'log', label: 'Workout Log' },
   ];
 
