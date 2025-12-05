@@ -29,6 +29,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
   };
 
   const allCycleWeeks = new Set<string>();
+  console.log(ChartData)
   chartData.forEach(lift => {
     lift.data.forEach(point => {
       const cycleWeekKey = getCycleWeekKey(point.cycle, point.week);
