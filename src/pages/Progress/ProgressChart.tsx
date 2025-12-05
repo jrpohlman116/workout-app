@@ -34,6 +34,9 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
     return point;
   }) || [];
 
+  
+  console.log(formattedData)
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const cycle = payload[0].payload.cycle;
