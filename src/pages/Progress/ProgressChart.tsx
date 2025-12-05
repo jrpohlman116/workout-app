@@ -31,9 +31,11 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
 
     // Add each lift's value and date to the point
     chartData.forEach(lift => {
-      if (lift.data[index]?.cycle == point.cycle && lift.data[index]?.week == point.week) {
-        point[lift.type] = lift.data[index]?.value ?? null;
-        point[`${lift.type}_date`] = lift.data[index]?.date ?? null;
+      for ( let i = 0; i < lift.data.length; i++) {
+        if (lift.data[i].cycle == point.cycle && lift.data[i].week == point.week) {
+          point[lift.type] = lift.data[i].value ?? null;
+          point[`${lift.type}_date`] = lift.data[i].date ?? null;
+        }
       }
     });
     return point;
