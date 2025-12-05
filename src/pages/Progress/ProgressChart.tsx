@@ -47,7 +47,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
     const [cycle, week] = cycleWeekKey.split('-').map(Number);
 
     let earliestDate: Date | null = null;
-    const liftValues: { [key: string]: { value: number; date: string } } = {};
+    const liftValues: Record<string, { value: number; date: string }> = {};
 
     chartData.forEach((lift) => {
       const pointsInCycleWeek = lift.data.filter(p =>
@@ -74,7 +74,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
       cycleWeekKey,
       cycle,
       week,
-      displayDate: earliestDate ? earliestDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+      displayDate: earliestDate ? (earliestDate as Date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
     };
 
     Object.entries(liftValues).forEach(([liftType, data]) => {
