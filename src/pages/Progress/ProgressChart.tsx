@@ -21,7 +21,7 @@ interface ProgressChartProps {
 
 export default function ProgressChart({ chartData, unitPreference }: ProgressChartProps) {
   console.log(chartData)
-  let formattedData = chartData[0]?.data.map((_, index) => {
+  let formattedData = chartData.data.map((_, index) => {
     const point: any = {
       displayDate: (new Date(chartData[0].data[index].date)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       cycle: chartData[0].data[index].cycle, 
