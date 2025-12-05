@@ -20,6 +20,19 @@ interface ProgressChartProps {
 }
 
 export default function ProgressChart({ chartData, unitPreference }: ProgressChartProps) {
+  let formattedData = chartData[0]?.data.map((_, index) => {
+    const point: any = {
+      displayDate: (new Date(chartData[0].data[index].date)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      cycle: chartData[0].data[index].cycle, 
+      week: chartData[0].data[index].week
+    };
+    chartData.forEach(lift => {
+      point[lift.type] = lift.data[index]?.value ?? null;
+      point[`${lift.type}_date`] = lift.data[index]?.date ?? null;
+    });
+    return point;
+  }) || [];
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const cycle = payload[0].payload.cycle;
@@ -52,14 +65,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
     <div className="space-y-4">
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
-          data={chartData[0]?.data.map((_, index) => {
-            const point: any = { displayDate: chartData[0].data[index].date, cycle: chartData[0].data[index].cycle, week: chartData[0].data[index].week };
-            chartData.forEach(lift => {
-              point[lift.type] = lift.data[index]?.value ?? null;
-              point[`${lift.type}_date`] = lift.data[index]?.date ?? null;
-            });
-            return point;
-          })}
+          data={formattedData}
           margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
