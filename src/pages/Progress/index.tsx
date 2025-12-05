@@ -170,10 +170,13 @@ export default function ProgressPage() {
               ) : (
                 <>
                   <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
-                  <AccessibleChartTable chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
                 </>
               )}
             </div>
+
+            {nonDeloadSessions.length > 0 && (
+              <AccessibleChartTable chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
+            )}
 
             <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Average Projected 1RM</h2>
             <div className="grid grid-cols-2 gap-4">
