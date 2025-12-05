@@ -20,7 +20,6 @@ interface ProgressChartProps {
 }
 
 export default function ProgressChart({ chartData, unitPreference }: ProgressChartProps) {
-  console.log(chartData)
   let formattedData = chartData[0]?.data.map((_, index) => {
     // Create a point for each date
     const point: any = {
@@ -40,9 +39,6 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
     });
     return point;
   }) || [];
-
-  
-  console.log(formattedData)
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
