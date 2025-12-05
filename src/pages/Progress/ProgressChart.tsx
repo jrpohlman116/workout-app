@@ -20,7 +20,6 @@ interface ProgressChartProps {
 }
 
 export default function ProgressChart({ chartData, unitPreference }: ProgressChartProps) {
-  console.log(chartData)
   let formattedData = chartData[0]?.data.map((_, index) => {
     // Create a point for each date
     const point: any = {
@@ -31,6 +30,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
 
     // Add each lift's value and date to the point
     chartData.forEach(lift => {
+      console.log(lift, point)
       if (lift.data[index]?.cycle == point.cycle && lift.data[index]?.week == point.week) {
         point[lift.type] = lift.data[index]?.value ?? null;
         point[`${lift.type}_date`] = lift.data[index]?.date ?? null;
