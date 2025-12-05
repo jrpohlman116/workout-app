@@ -52,6 +52,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
           <p className="text-xs text-gray-400 mb-2">Cycle {cycle}, Week {week}</p>
           {payload.map((entry: any, index: number) => {
             const liftDate = entry.payload[`${entry.dataKey}_date`];
+            const formattedDate = liftDate ? new Date(liftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
             return (
               <div key={index} className="flex items-center gap-2">
                 <div
@@ -59,7 +60,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
                   style={{ backgroundColor: entry.color }}
                 />
                 <span>{entry.name}: {Math.round(entry.value)} {unitPreference}</span>
-                {liftDate && <span className="text-xs text-gray-400">({liftDate})</span>}
+                {formattedDate && <span className="text-xs text-gray-400">({formattedDate})</span>}
               </div>
             );
           })}
