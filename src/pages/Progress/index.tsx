@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../../lib/supabase';
 import ProgressChart from './ProgressChart';
@@ -168,13 +168,12 @@ export default function ProgressPage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400">Your strength trend will appear here after completing workouts</p>
                 </div>
               ) : (
-                <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
+                <>
+                  <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
+                  <AccessibleChartTable chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
+                </>
               )}
             </div>
-
-            {nonDeloadSessions.length > 0 && (
-              <AccessibleChartTable chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
-            )}
 
             <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Average Projected 1RM</h2>
             <div className="grid grid-cols-2 gap-4">

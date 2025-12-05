@@ -20,71 +20,6 @@ interface ProgressChartProps {
 }
 
 export default function ProgressChart({ chartData, unitPreference }: ProgressChartProps) {
-  const maxDataPoints = Math.max(...chartData.map(d => d.data.length));
-
-  if (maxDataPoints === 0) return null;
-
-  const getCycleWeekKey = (cycle: number, week: number) => {
-    return `${cycle}-${week}`;
-  };
-
-  const allCycleWeeks = new Set<string>();
-  chartData.forEach(lift => {
-    lift.data.forEach(point => {
-      const cycleWeekKey = getCycleWeekKey(point.cycle, point.week);
-      allCycleWeeks.add(cycleWeekKey);
-    });
-  });
-
-  const sortedCycleWeeks = Array.from(allCycleWeeks).sort((a, b) => {
-    const [cycleA, weekA] = a.split('-').map(Number);
-    const [cycleB, weekB] = b.split('-').map(Number);
-    if (cycleA !== cycleB) return cycleA - cycleB;
-    return weekA - weekB;
-  });
-
-  const formattedData = sortedCycleWeeks.map(cycleWeekKey => {
-    const [cycle, week] = cycleWeekKey.split('-').map(Number);
-
-    let earliestDate: Date | null = null;
-    const liftValues: Record<string, { value: number; date: string }> = {};
-
-    chartData.forEach((lift) => {
-      const pointsInCycleWeek = lift.data.filter(p =>
-        getCycleWeekKey(p.cycle, p.week) === cycleWeekKey
-      );
-
-      if (pointsInCycleWeek.length > 0) {
-        const latestPoint = pointsInCycleWeek.sort((a, b) =>
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        )[0];
-
-        liftValues[lift.type] = { value: latestPoint.value, date: latestPoint.date };
-
-        pointsInCycleWeek.forEach(point => {
-          const pointDate = new Date(point.date);
-          if (!earliestDate || pointDate < earliestDate) {
-            earliestDate = pointDate;
-          }
-        });
-      }
-    });
-
-    const dataPoint: any = {
-      cycleWeekKey,
-      cycle,
-      week,
-      displayDate: earliestDate ? (earliestDate as Date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
-    };
-
-    Object.entries(liftValues).forEach(([liftType, data]) => {
-      dataPoint[liftType] = data.value;
-      dataPoint[`${liftType}_date`] = data.date;
-    });
-
-    return dataPoint;
-  });
-
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const cycle = payload[0].payload.cycle;
@@ -117,7 +52,14 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
     <div className="space-y-4">
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
-          data={formattedData}
+          data={chartData[0]?.data.map((_, index) => {
+            const point: any = { displayDate: chartData[0].data[index].date, cycle: chartData[0].data[index].cycle, week: chartData[0].data[index].week };
+            chartData.forEach(lift => {
+              point[lift.type] = lift.data[index]?.value ?? null;
+              point[`${lift.type}_date`] = lift.data[index]?.date ?? null;
+            });
+            return point;
+          })}
           margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
