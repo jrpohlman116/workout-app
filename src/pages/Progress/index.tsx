@@ -246,7 +246,7 @@ export default function ProgressPage() {
                   </div>
                   {bestVolume ? (
                     <>
-                      <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-1">{bestVolume.tonnage.toLocaleString()} lb</div>
+                      <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">{bestVolume.tonnage.toLocaleString()} lb</div>
                       <p className="text-sm text-gray-600 dark:text-gray-300">
                         {bestVolume.session.weight_lifted} lb × {bestVolume.session.reps_performed} reps
                       </p>
