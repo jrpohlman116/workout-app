@@ -21,14 +21,19 @@ interface ProgressChartProps {
 
 export default function ProgressChart({ chartData, unitPreference }: ProgressChartProps) {
   let formattedData = chartData[0]?.data.map((_, index) => {
+    // Create a point for each date
     const point: any = {
       displayDate: (new Date(chartData[0].data[index].date)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       cycle: chartData[0].data[index].cycle, 
       week: chartData[0].data[index].week
     };
+
+    // Add each lift's value and date to the point
     chartData.forEach(lift => {
-      point[lift.type] = lift.data[index]?.value ?? null;
-      point[`${lift.type}_date`] = lift.data[index]?.date ?? null;
+      if (lift.data[index]?.cycle == point.cycle && lift.data[index]?.week == point.week) {
+        point[lift.type] = lift.data[index]?.value ?? null;
+        point[`${lift.type}_date`] = lift.data[index]?.date ?? null;
+      }
     });
     return point;
   }) || [];
@@ -43,7 +48,6 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
           <p className="text-xs text-gray-400 mb-2">Cycle {cycle}, Week {week}</p>
           {payload.map((entry: any, index: number) => {
             const liftDate = entry.payload[`${entry.dataKey}_date`];
-            const formattedDate = liftDate ? new Date(liftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
             return (
               <div key={index} className="flex items-center gap-2">
                 <div
@@ -51,7 +55,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
                   style={{ backgroundColor: entry.color }}
                 />
                 <span>{entry.name}: {Math.round(entry.value)} {unitPreference}</span>
-                {formattedDate && <span className="text-xs text-gray-400">({formattedDate})</span>}
+                {liftDate && <span className="text-xs text-gray-400">({liftDate})</span>}
               </div>
             );
           })}
