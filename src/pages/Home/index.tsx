@@ -66,12 +66,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       .order('completed_at', { ascending: true });
 
     if (data) {
-      const getHighestMax = (liftType: string) => {
+      const getLatestAverageMax = (liftType: string) => {
         const liftSessions = data.filter(s => s.lift_type === liftType && s.week !== 4);
         if (liftSessions.length === 0) return 0;
-        const values = liftSessions.map(d => d.calculated_1rm);
-        const max = Math.max(...values);
-        return max;
+
+        const lastThree = liftSessions.slice(-3);
+        const sum = lastThree.reduce((total, session) => total + session.calculated_1rm, 0);
+        return Math.round(sum / lastThree.length);
       };
 
       const getInitialMax = (liftType: string) => {
@@ -81,13 +82,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       };
 
       console.log(getInitialMax('squat'), getInitialMax('bench'), getInitialMax('deadlift'))
-      console.log(getHighestMax('squat'), getHighestMax('bench'), getHighestMax('deadlift'))
+      console.log(getLatestAverageMax('squat'), getLatestAverageMax('bench'), getLatestAverageMax('deadlift'))
 
       setProjectedMaxes({
-        squat: getHighestMax('squat') || profile.squat_max,
-        bench: getHighestMax('bench') || profile.bench_max,
-        deadlift: getHighestMax('deadlift') || profile.deadlift_max,
-        ohp: getHighestMax('ohp') || profile.ohp_max,
+        squat: getLatestAverageMax('squat') || profile.squat_max,
+        bench: getLatestAverageMax('bench') || profile.bench_max,
+        deadlift: getLatestAverageMax('deadlift') || profile.deadlift_max,
+        ohp: getLatestAverageMax('ohp') || profile.ohp_max,
       });
 
       setInitialMaxes({
@@ -224,8 +225,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             </div>
             {hasProjectedData && parseFloat(wilksChangePercent) !== 0 && (
               <div className={`text-sm font-semibold ${parseFloat(wilksChangePercent) > 0 ? 'text-green-600' :
-                  parseFloat(wilksChangePercent) < 0 ? 'text-red-600' :
-                    'text-gray-500'
+                parseFloat(wilksChangePercent) < 0 ? 'text-red-600' :
+                  'text-gray-500'
                 }`}>
                 {parseFloat(wilksChangePercent) > 0 && '+'}({wilksChangePercent}%)
               </div>
@@ -361,8 +362,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   }}
                   disabled={isCompleted}
                   className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${isCompleted
-                      ? 'bg-green-50 dark:bg-green-900/20 cursor-not-allowed'
-                      : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    ? 'bg-green-50 dark:bg-green-900/20 cursor-not-allowed'
+                    : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
                 >
                   <div className="text-left">
