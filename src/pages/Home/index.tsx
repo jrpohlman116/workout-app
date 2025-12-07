@@ -7,6 +7,7 @@ import { useCountUp, useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
 import AccessibleProgressRing from '../../components/accessible/AccessibleProgressRing';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
+import * as utils from '../Progress/utils';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -65,10 +66,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       .order('completed_at', { ascending: true });
 
     if (data) {
-      const getLatestMax = (liftType: string) => {
+      const getHighestMax = (liftType: string) => {
         const liftSessions = data.filter(s => s.lift_type === liftType && s.week !== 4);
         if (liftSessions.length === 0) return 0;
-        return liftSessions[liftSessions.length - 1].calculated_1rm;
+        const values = liftSessions.map(d => d.calculated_1rm);
+        const max = Math.max(...values);
+        return max;
       };
 
       const getInitialMax = (liftType: string) => {
@@ -77,14 +80,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         return 0;
       };
 
-      console.log( getInitialMax('squat'), getInitialMax('bench'), getInitialMax('deadlift'))
-      console.log( getLatestMax('squat'), getLatestMax('bench'), getLatestMax('deadlift'))
+      console.log(getInitialMax('squat'), getInitialMax('bench'), getInitialMax('deadlift'))
+      console.log(getHighestMax('squat'), getHighestMax('bench'), getHighestMax('deadlift'))
 
       setProjectedMaxes({
-        squat: getLatestMax('squat') || profile.squat_max,
-        bench: getLatestMax('bench') || profile.bench_max,
-        deadlift: getLatestMax('deadlift') || profile.deadlift_max,
-        ohp: getLatestMax('ohp') || profile.ohp_max,
+        squat: getHighestMax('squat') || profile.squat_max,
+        bench: getHighestMax('bench') || profile.bench_max,
+        deadlift: getHighestMax('deadlift') || profile.deadlift_max,
+        ohp: getHighestMax('ohp') || profile.ohp_max,
       });
 
       setInitialMaxes({
@@ -220,11 +223,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               <p className="text-xs text-gray-500 dark:text-gray-300">Strength normalized by bodyweight</p>
             </div>
             {hasProjectedData && parseFloat(wilksChangePercent) !== 0 && (
-              <div className={`text-sm font-semibold ${
-                parseFloat(wilksChangePercent) > 0 ? 'text-green-600' :
-                parseFloat(wilksChangePercent) < 0 ? 'text-red-600' :
-                'text-gray-500'
-              }`}>
+              <div className={`text-sm font-semibold ${parseFloat(wilksChangePercent) > 0 ? 'text-green-600' :
+                  parseFloat(wilksChangePercent) < 0 ? 'text-red-600' :
+                    'text-gray-500'
+                }`}>
                 {parseFloat(wilksChangePercent) > 0 && '+'}({wilksChangePercent}%)
               </div>
             )}
@@ -358,11 +360,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     }
                   }}
                   disabled={isCompleted}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${
-                    isCompleted
+                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${isCompleted
                       ? 'bg-green-50 dark:bg-green-900/20 cursor-not-allowed'
                       : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
-                  }`}
+                    }`}
                 >
                   <div className="text-left">
                     <div className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
@@ -372,8 +373,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                       {isCompleted && projected1RM
                         ? `Projected 1RM: ${Math.round(projected1RM)} ${profile.unit_preference || 'lb'}`
                         : isCompleted
-                        ? 'Done ✓'
-                        : `Top set: ${weights.set3} ${profile.unit_preference || 'lb'}`}
+                          ? 'Done ✓'
+                          : `Top set: ${weights.set3} ${profile.unit_preference || 'lb'}`}
                     </div>
                   </div>
                   {isCompleted ? (
