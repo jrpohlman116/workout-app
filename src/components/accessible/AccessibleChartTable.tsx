@@ -108,6 +108,11 @@ export default function AccessibleChartTable({
                       )}
                     </div>
                   </div>
+                  {isExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" aria-hidden="true" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" aria-hidden="true" />
+                  )}
                 </div>
               </button>
 
