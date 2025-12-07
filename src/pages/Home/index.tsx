@@ -237,7 +237,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               value={displayWilks}
               max={600}
               label="Wilks Score"
-              description={`${getWilksLevel(displayWilks)}${hasProjectedData ? ' (Projected)' : ''}`}
+              description={`${getWilksLevel(displayWilks)}`}
               size={192}
               showValue={true}
             />
