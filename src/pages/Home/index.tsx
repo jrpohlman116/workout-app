@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, getCycleProgression } from '../../lib/calculations';
+import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, getCycleProgression } from '../../lib/calculations';
 import { Calendar, RefreshCw, ChevronRight, ChevronDown, Check, SkipForward, Activity } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useCountUp, useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
-import AccessibleProgressRing from '../../components/accessible/AccessibleProgressRing';
+import StrengthScoreCarousel from '../../components/features/StrengthScoreCarousel';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
 import * as utils from '../Progress/utils';
 
@@ -173,39 +173,88 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const isLbs = profile.unit_preference === 'lb';
   const lbToKg = (weight: number) => isLbs ? weight * 0.453592 : weight;
 
-  const initialWilksScore = calculateWilksScore(
-    lbToKg(initialMaxes.squat),
-    lbToKg(initialMaxes.bench),
-    lbToKg(initialMaxes.deadlift),
-    lbToKg(profile.bodyweight || 0),
-    profile.gender || 'male'
-  );
-
-  const projectedWilksScore = calculateWilksScore(
-    lbToKg(projectedMaxes.squat),
-    lbToKg(projectedMaxes.bench),
-    lbToKg(projectedMaxes.deadlift),
-    lbToKg(profile.bodyweight || 0),
-    profile.gender || 'male'
-  );
-
-  const wilksChangePercent = initialWilksScore > 0
-    ? (((projectedWilksScore - initialWilksScore) / initialWilksScore) * 100).toFixed(1)
-    : '0.0';
-
-  const hasProjectedData = projectedMaxes.squat > 0 || projectedMaxes.bench > 0 || projectedMaxes.deadlift > 0;
-  const displayWilks = hasProjectedData ? projectedWilksScore : initialWilksScore;
-
-  const getWilksLevel = (score: number): string => {
-    if (score < 200) return 'Beginner';
-    if (score < 238) return 'Novice';
-    if (score < 326) return 'Intermediate';
-    if (score < 414) return 'Advanced';
-    return 'Elite';
+  const initialScores = {
+    wilks: calculateWilksScore(
+      lbToKg(initialMaxes.squat),
+      lbToKg(initialMaxes.bench),
+      lbToKg(initialMaxes.deadlift),
+      lbToKg(profile.bodyweight || 0),
+      profile.gender || 'male'
+    ),
+    wilks2: calculateWilks2Score(
+      lbToKg(initialMaxes.squat),
+      lbToKg(initialMaxes.bench),
+      lbToKg(initialMaxes.deadlift),
+      lbToKg(profile.bodyweight || 0),
+      profile.gender || 'male'
+    ),
+    dots: calculateDOTSScore(
+      lbToKg(initialMaxes.squat),
+      lbToKg(initialMaxes.bench),
+      lbToKg(initialMaxes.deadlift),
+      lbToKg(profile.bodyweight || 0),
+      profile.gender || 'male'
+    ),
+    ipfgl: calculateIPFGLScore(
+      lbToKg(initialMaxes.squat),
+      lbToKg(initialMaxes.bench),
+      lbToKg(initialMaxes.deadlift),
+      lbToKg(profile.bodyweight || 0),
+      profile.gender || 'male'
+    ),
   };
 
+  const projectedScores = {
+    wilks: calculateWilksScore(
+      lbToKg(projectedMaxes.squat),
+      lbToKg(projectedMaxes.bench),
+      lbToKg(projectedMaxes.deadlift),
+      lbToKg(profile.bodyweight || 0),
+      profile.gender || 'male'
+    ),
+    wilks2: calculateWilks2Score(
+      lbToKg(projectedMaxes.squat),
+      lbToKg(projectedMaxes.bench),
+      lbToKg(projectedMaxes.deadlift),
+      lbToKg(profile.bodyweight || 0),
+      profile.gender || 'male'
+    ),
+    dots: calculateDOTSScore(
+      lbToKg(projectedMaxes.squat),
+      lbToKg(projectedMaxes.bench),
+      lbToKg(projectedMaxes.deadlift),
+      lbToKg(profile.bodyweight || 0),
+      profile.gender || 'male'
+    ),
+    ipfgl: calculateIPFGLScore(
+      lbToKg(projectedMaxes.squat),
+      lbToKg(projectedMaxes.bench),
+      lbToKg(projectedMaxes.deadlift),
+      lbToKg(profile.bodyweight || 0),
+      profile.gender || 'male'
+    ),
+  };
+
+  const hasProjectedData = projectedMaxes.squat > 0 || projectedMaxes.bench > 0 || projectedMaxes.deadlift > 0;
+
+  const changePercents = {
+    wilks: initialScores.wilks > 0
+      ? (((projectedScores.wilks - initialScores.wilks) / initialScores.wilks) * 100).toFixed(1)
+      : '0.0',
+    wilks2: initialScores.wilks2 > 0
+      ? (((projectedScores.wilks2 - initialScores.wilks2) / initialScores.wilks2) * 100).toFixed(1)
+      : '0.0',
+    dots: initialScores.dots > 0
+      ? (((projectedScores.dots - initialScores.dots) / initialScores.dots) * 100).toFixed(1)
+      : '0.0',
+    ipfgl: initialScores.ipfgl > 0
+      ? (((projectedScores.ipfgl - initialScores.ipfgl) / initialScores.ipfgl) * 100).toFixed(1)
+      : '0.0',
+  };
+
+  const displayScores = hasProjectedData ? projectedScores : initialScores;
+
   const progression = getCycleProgression(profile.current_cycle, 'squat');
-  const animatedWilks = useCountUp(displayWilks, 1500, 0);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
@@ -217,32 +266,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-gray-900 dark:text-gray-100 text-sm font-semibold">Wilks Score</p>
-              <p className="text-xs text-gray-500 dark:text-gray-300">Strength normalized by bodyweight</p>
-            </div>
-            {hasProjectedData && parseFloat(wilksChangePercent) !== 0 && (
-              <div className={`text-sm font-semibold ${parseFloat(wilksChangePercent) > 0 ? 'text-green-600' :
-                parseFloat(wilksChangePercent) < 0 ? 'text-red-600' :
-                  'text-gray-500'
-                }`}>
-                {parseFloat(wilksChangePercent) > 0 && '+'}({wilksChangePercent}%)
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-center mb-4">
-            <AccessibleProgressRing
-              value={displayWilks}
-              max={600}
-              label="Wilks Score"
-              description={`${getWilksLevel(displayWilks)}`}
-              size={192}
-              showValue={true}
-            />
-          </div>
-        </div>
+        <StrengthScoreCarousel
+          scores={displayScores}
+          changePercents={changePercents}
+          hasProjectedData={hasProjectedData}
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <div className="relative group">

@@ -93,6 +93,109 @@ export function calculateWilksScore(
   return Math.round((total * wilksCoefficient) * 100) / 100;
 }
 
+export function calculateWilks2Score(
+  squatMax: number,
+  benchMax: number,
+  deadliftMax: number,
+  bodyweight: number,
+  gender: string
+): number {
+  if (bodyweight <= 0) return 0;
+
+  const total = squatMax + benchMax + deadliftMax;
+
+  let a, b, c, d, e, f;
+
+  if (gender === 'female') {
+    a = -125.4255398;
+    b = 13.71219419;
+    c = -0.03307250631;
+    d = -0.001050400051;
+    e = 9.38773881462799e-6;
+    f = -2.3334613884954e-8;
+  } else {
+    a = 47.46178854;
+    b = 8.472061379;
+    c = 0.07369410346;
+    d = -0.001395833811;
+    e = 7.07665973070743e-6;
+    f = -1.20804336482315e-8;
+  }
+
+  const denominator = a + b * bodyweight + c * Math.pow(bodyweight, 2) +
+    d * Math.pow(bodyweight, 3) + e * Math.pow(bodyweight, 4) +
+    f * Math.pow(bodyweight, 5);
+
+  const wilks2Coefficient = 600 / denominator;
+
+  return Math.round((total * wilks2Coefficient) * 100) / 100;
+}
+
+export function calculateDOTSScore(
+  squatMax: number,
+  benchMax: number,
+  deadliftMax: number,
+  bodyweight: number,
+  gender: string
+): number {
+  if (bodyweight <= 0) return 0;
+
+  const total = squatMax + benchMax + deadliftMax;
+
+  let a, b, c, d, e;
+
+  if (gender === 'female') {
+    a = -57.96288;
+    b = 13.6175032;
+    c = -0.1126655495;
+    d = 0.0005158568;
+    e = -0.0000010706;
+  } else {
+    a = -307.75076;
+    b = 24.0900756;
+    c = -0.1918759221;
+    d = 0.0007391293;
+    e = -0.000001093;
+  }
+
+  const denominator = a + b * bodyweight + c * Math.pow(bodyweight, 2) +
+    d * Math.pow(bodyweight, 3) + e * Math.pow(bodyweight, 4);
+
+  const dotsCoefficient = 500 / denominator;
+
+  return Math.round((total * dotsCoefficient) * 100) / 100;
+}
+
+export function calculateIPFGLScore(
+  squatMax: number,
+  benchMax: number,
+  deadliftMax: number,
+  bodyweight: number,
+  gender: string
+): number {
+  if (bodyweight <= 0) return 0;
+
+  const total = squatMax + benchMax + deadliftMax;
+
+  let a, b, c;
+
+  if (gender === 'female') {
+    a = 610.32796;
+    b = 1045.59282;
+    c = 0.03048;
+  } else {
+    a = 1199.72839;
+    b = 1025.18162;
+    c = 0.00921;
+  }
+
+  const denominator = (a - b * Math.exp(-c * bodyweight));
+
+  const ipfglPoints = 100 / denominator;
+
+  return Math.round((total * ipfglPoints) * 100) / 100;
+}
+
 export function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return 'Good Morning';
