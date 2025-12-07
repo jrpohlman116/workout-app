@@ -15,7 +15,7 @@ export default function TabNavigation({ activeTab, onTabChange, onRipple }: TabN
   ];
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-1 flex gap-1 mb-6">
+    <div className="flex gap-6 overflow-x-auto border-b border-gray-200 dark:border-gray-700">
       {tabs.map(tab => (
         <button
           key={tab.id}
@@ -23,13 +23,15 @@ export default function TabNavigation({ activeTab, onTabChange, onRipple }: TabN
             onRipple(e);
             onTabChange(tab.id);
           }}
-          className={`flex-1 py-3 px-4 rounded-xl font-medium transition-colors relative overflow-hidden ${
-            activeTab === tab.id
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-          }`}
+          className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${activeTab === tab.id
+              ? 'text-blue-600 dark:text-blue-400'
+              : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
         >
           {tab.label}
+          {activeTab === tab.id && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+          )}
         </button>
       ))}
     </div>

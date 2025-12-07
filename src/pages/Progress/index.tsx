@@ -145,11 +145,11 @@ export default function ProgressPage() {
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">Progress</h1>
           <p className="text-gray-600 dark:text-gray-300">Track your strength gains over time</p>
         </div>
+
+        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} onRipple={createRipple} />
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} onRipple={createRipple} />
-
         {activeTab === 'overview' && (
           <div className="space-y-4">
             {nonDeloadSessions.length === 0 && (
