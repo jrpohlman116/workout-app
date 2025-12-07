@@ -6,13 +6,11 @@ import { useCountUp } from '../../hooks/useAnimations';
 interface StrengthScoreCarouselProps {
   scores: {
     wilks: number;
-    wilks2: number;
     dots: number;
     ipfgl: number;
   };
   changePercents: {
     wilks: string;
-    wilks2: string;
     dots: string;
     ipfgl: string;
   };
@@ -32,19 +30,6 @@ const scoreConfigs: ScoreConfig[] = [
     id: 'wilks',
     name: 'Wilks Score',
     description: 'Classic strength formula (1978)',
-    maxValue: 600,
-    getLevelFn: (score: number) => {
-      if (score < 200) return 'Beginner';
-      if (score < 238) return 'Novice';
-      if (score < 326) return 'Intermediate';
-      if (score < 414) return 'Advanced';
-      return 'Elite';
-    },
-  },
-  {
-    id: 'wilks2',
-    name: 'Wilks-2',
-    description: 'Updated Wilks formula (2020)',
     maxValue: 600,
     getLevelFn: (score: number) => {
       if (score < 200) return 'Beginner';
