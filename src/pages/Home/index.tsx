@@ -77,7 +77,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         return 0;
       };
 
-      console.log( getInitialMax('squat'))
+      console.log( getInitialMax('squat'), data)
 
       setProjectedMaxes({
         squat: getLatestMax('squat') || profile.squat_max,
