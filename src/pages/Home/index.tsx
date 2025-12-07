@@ -60,7 +60,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
     const { data } = await supabase
       .from('workout_sessions')
-      .select('lift_type, calculated_1rm, week, cycle')
+      .select('lift_type, calculated_1rm, week, cycle, completed_at')
       .eq('user_id', user.id)
       .order('completed_at', { ascending: true });
 
@@ -76,6 +76,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         if (initialSession) return initialSession.calculated_1rm;
         return 0;
       };
+
+      console.log( getInitialMax('squat'))
 
       setProjectedMaxes({
         squat: getLatestMax('squat') || profile.squat_max,
