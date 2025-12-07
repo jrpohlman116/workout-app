@@ -28,6 +28,7 @@ export interface UserProfile {
   bodyweight?: number;
   gender?: string;
   unit_preference?: string;
+  program_variation?: 'standard' | 'bbb' | 'bbs';
   created_at: string;
   updated_at: string;
 }

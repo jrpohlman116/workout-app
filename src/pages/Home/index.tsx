@@ -394,9 +394,16 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
                 >
-                  <div className="text-left">
-                    <div className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                      {workout.name}
+                  <div className="text-left flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                        {workout.name}
+                      </div>
+                      {profile.program_variation && profile.program_variation !== 'standard' && (
+                        <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded">
+                          {profile.program_variation.toUpperCase()}
+                        </span>
+                      )}
                     </div>
                     <div className={`text-sm ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-300'}`}>
                       {isCompleted && projected1RM
