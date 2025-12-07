@@ -42,6 +42,19 @@ const scoreConfigs: ScoreConfig[] = [
     },
   },
   {
+    id: 'wilks2',
+    name: 'Wilks-2',
+    description: 'Updated Wilks formula (2020)',
+    maxValue: 600,
+    getLevelFn: (score: number) => {
+      if (score < 200) return 'Beginner';
+      if (score < 238) return 'Novice';
+      if (score < 326) return 'Intermediate';
+      if (score < 414) return 'Advanced';
+      return 'Elite';
+    },
+  },
+  {
     id: 'dots',
     name: 'DOTS',
     description: 'Dynamic strength scoring',
