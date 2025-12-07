@@ -72,13 +72,10 @@ export default function AccessibleChartTable({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-      <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-6 py-4 bg-white dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Progress Data Table
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          Alternative view of chart data with sorting and statistics
-        </p>
       </div>
 
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -106,21 +103,11 @@ export default function AccessibleChartTable({
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</h4>
                       {stats && (
                         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                          {lift.data.length} sessions •
-                          Avg: {stats.avg} {unitPreference} •
-                          <span className={stats.change >= 0 ? 'text-green-600' : 'text-red-600'}>
-                            {stats.change >= 0 ? '+' : ''}{stats.change} {unitPreference}
-                            ({stats.changePercent}%)
-                          </span>
+                          {lift.data.length} sessions
                         </p>
                       )}
                     </div>
                   </div>
-                  {isExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" aria-hidden="true" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" aria-hidden="true" />
-                  )}
                 </div>
               </button>
 
