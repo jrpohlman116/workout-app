@@ -85,7 +85,7 @@ export default function AccessibleProgressRing({
               <div className="text-sm text-gray-900 dark:text-gray-100 mt-1" aria-hidden="true">
                 {description}
               </div>
-              <div className="text-sm text-gray-700 dark:text-gray-100 mt-1" aria-hidden="true">
+              <div className="text-xs text-gray-700 dark:text-gray-100 mt-1" aria-hidden="true">
                 (Projected)
               </div>
             </>)}
