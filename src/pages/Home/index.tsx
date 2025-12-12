@@ -3,11 +3,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, getCycleProgression } from '../../lib/calculations';
 import { Calendar, RefreshCw, ChevronRight, ChevronDown, Check, SkipForward, Activity } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useCountUp, useRipple } from '../../hooks/useAnimations';
+import { useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
 import StrengthScoreCarousel from '../../components/features/StrengthScoreCarousel';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
-import * as utils from '../Progress/utils';
+import { getAverageOfLastThreeSessions, getBestWeightForLift, getFirstRecordedMax } from '../Progress/utils';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -62,59 +62,33 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
     const { data } = await supabase
       .from('workout_sessions')
-      .select('lift_type, calculated_1rm, week, cycle, completed_at')
+      .select('id, user_id, lift_type, cycle, week, weight_lifted, reps_performed, calculated_1rm, completed_at, created_at, is_1rm_test, notes')
       .eq('user_id', user.id)
       .order('completed_at', { ascending: true });
 
     if (data) {
-      const getLatestAverageMax = (liftType: string) => {
-        const liftSessions = data.filter(s => s.lift_type === liftType && s.week !== 4);
-        if (liftSessions.length === 0) return 0;
-
-        const lastThree = liftSessions.slice(-3);
-        const sum = lastThree.reduce((total, session) => total + session.calculated_1rm, 0);
-        return Math.round(sum / lastThree.length);
-      };
-
-      const getBestMax = (liftType: string) => {
-        const liftSessions = data.filter(s => s.lift_type === liftType && s.week !== 4);
-        if (liftSessions.length === 0) return 0;
-
-        const bestSession = liftSessions.reduce((max, session) =>
-          session.calculated_1rm > max.calculated_1rm ? session : max
-        , liftSessions[0]);
-
-        return Math.round(bestSession.calculated_1rm);
-      };
-
-      const getInitialMax = (liftType: string) => {
-        const initialSession = data.find(s => s.lift_type === liftType && s.cycle === 0 && s.week === 0);
-        if (initialSession) return initialSession.calculated_1rm;
-        return 0;
-      };
-
       const projected = {
-        squat: getLatestAverageMax('squat') || profile.squat_max,
-        bench: getLatestAverageMax('bench') || profile.bench_max,
-        deadlift: getLatestAverageMax('deadlift') || profile.deadlift_max,
-        ohp: getLatestAverageMax('ohp') || profile.ohp_max,
+        squat: getAverageOfLastThreeSessions(data, 'squat') || profile.squat_max,
+        bench: getAverageOfLastThreeSessions(data, 'bench') || profile.bench_max,
+        deadlift: getAverageOfLastThreeSessions(data, 'deadlift') || profile.deadlift_max,
+        ohp: getAverageOfLastThreeSessions(data, 'ohp') || profile.ohp_max,
       };
 
       const best = {
-        squat: getBestMax('squat') || profile.squat_max,
-        bench: getBestMax('bench') || profile.bench_max,
-        deadlift: getBestMax('deadlift') || profile.deadlift_max,
-        ohp: getBestMax('ohp') || profile.ohp_max,
+        squat: getBestWeightForLift(data, 'squat')?.weight_lifted || profile.squat_max,
+        bench: getBestWeightForLift(data, 'bench')?.weight_lifted || profile.bench_max,
+        deadlift: getBestWeightForLift(data, 'deadlift')?.weight_lifted || profile.deadlift_max,
+        ohp: getBestWeightForLift(data, 'ohp')?.weight_lifted || profile.ohp_max,
       };
 
       setProjectedMaxes(projected);
       setBestMaxes(best);
 
       setInitialMaxes({
-        squat: getInitialMax('squat') || profile.squat_max,
-        bench: getInitialMax('bench') || profile.bench_max,
-        deadlift: getInitialMax('deadlift') || profile.deadlift_max,
-        ohp: getInitialMax('ohp') || profile.ohp_max,
+        squat: getFirstRecordedMax(data, 'squat') || profile.squat_max,
+        bench: getFirstRecordedMax(data, 'bench') || profile.bench_max,
+        deadlift: getFirstRecordedMax(data, 'deadlift') || profile.deadlift_max,
+        ohp: getFirstRecordedMax(data, 'ohp') || profile.ohp_max,
       });
     }
   };
@@ -339,7 +313,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             >
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
-                  Cycle {i + 1} - +{getCycleProgression(i + 1)} lbs
+                  Cycle {i + 1} - +{getCycleProgression(i + 1, 'squat')} lbs
                 </option>
               ))}
             </select>
@@ -501,3 +475,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     </div>
   );
 }
+function setShowWeekSelector(arg0: boolean) {
+  throw new Error('Function not implemented.');
+}
+
+function setShowCycleSelector(arg0: boolean) {
+  throw new Error('Function not implemented.');
+}
+
