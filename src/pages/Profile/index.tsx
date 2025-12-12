@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
-import { Eye, EyeOff, LogOut, Moon, Sun } from 'lucide-react';
+import { Eye, EyeOff, LogOut, Moon, Sun, Trash2 } from 'lucide-react';
 import { AnimationControls } from '../../components/accessible/ReducedMotionWrapper';
 import AccessibleNativeSelect from '../../components/accessible/AccessibleNativeSelect';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
@@ -28,6 +28,8 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const handleUpdateBodyweight = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,6 +169,32 @@ export default function ProfilePage() {
       await supabase.auth.signOut();
     } catch (error) {
       console.error('Error signing out:', error);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    setDeleteLoading(true);
+    try {
+      await supabase.from('workout_sessions').delete().eq('user_id', user.id);
+      await supabase.from('accessory_exercises').delete().eq('user_id', user.id);
+      await supabase.from('exercise_substitutions').delete().eq('user_id', user.id);
+      await supabase.from('one_rm_test_sessions').delete().eq('user_id', user.id);
+      await supabase.from('user_profiles').delete().eq('id', user.id);
+
+      const { error: deleteError } = await supabase.rpc('delete_user');
+
+      if (deleteError) {
+        console.error('Error deleting account:', deleteError);
+      }
+
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error deleting account:', error);
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteAccountModal(false);
     }
   };
 
@@ -574,6 +602,14 @@ export default function ProfilePage() {
           <LogOut className="w-5 h-5" />
           Sign Out
         </button>
+
+        <button
+          onClick={() => setShowDeleteAccountModal(true)}
+          className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-700 border-2 border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 py-4 rounded-2xl font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shadow-sm"
+        >
+          <Trash2 className="w-5 h-5" />
+          Delete Account
+        </button>
         </>
         )}
 
@@ -607,6 +643,52 @@ export default function ProfilePage() {
           >
             Sign Out
           </button>
+        </div>
+      </AccessibleModal>
+
+      <AccessibleModal
+        isOpen={showDeleteAccountModal}
+        onClose={() => setShowDeleteAccountModal(false)}
+        title="Delete Account"
+        description="This action cannot be undone"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-4">
+            <p className="text-red-800 dark:text-red-300 font-semibold mb-2">
+              Warning: This is permanent
+            </p>
+            <p className="text-red-700 dark:text-red-400 text-sm">
+              Deleting your account will permanently remove:
+            </p>
+            <ul className="mt-2 text-red-700 dark:text-red-400 text-sm list-disc list-inside space-y-1">
+              <li>All workout history and progress</li>
+              <li>Personal records and maxes</li>
+              <li>Custom exercises and substitutions</li>
+              <li>Your account and profile data</li>
+            </ul>
+          </div>
+
+          <p className="text-gray-600 dark:text-gray-300 text-sm">
+            This action cannot be reversed. Your data will be permanently deleted from our servers.
+          </p>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowDeleteAccountModal(false)}
+              disabled={deleteLoading}
+              className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleteLoading}
+              className="flex-1 px-4 py-3 bg-red-600 dark:bg-red-500 text-white rounded-xl font-semibold hover:bg-red-700 dark:hover:bg-red-600 transition-colors disabled:opacity-50"
+            >
+              {deleteLoading ? 'Deleting...' : 'Delete Forever'}
+            </button>
+          </div>
         </div>
       </AccessibleModal>
     </div>
