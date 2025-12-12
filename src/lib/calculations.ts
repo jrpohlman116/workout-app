@@ -202,3 +202,34 @@ export function getGreeting(): string {
   if (hour < 17) return 'Good Afternoon';
   return 'Good Evening';
 }
+
+export function calculateBBBSupplementalWeight(
+  type: string,
+  oneRepMax: number,
+  cycle: number
+): number {
+  const trainingMax = calculateTrainingMax(oneRepMax) + getCycleProgression(cycle, type);
+  return Math.round(trainingMax * 0.50 / 5) * 5;
+}
+
+export function calculateBBSSupplementalWeight(
+  type: string,
+  oneRepMax: number,
+  cycle: number,
+  week: number
+): number {
+  const weights = calculateWorkoutWeights(type, oneRepMax, cycle, week);
+  return weights.set1;
+}
+
+export function getSupplementalWorkConfig(
+  variation: 'standard' | 'bbb' | 'bbs' | undefined
+): { sets: number; reps: number } | null {
+  if (variation === 'bbb') {
+    return { sets: 5, reps: 10 };
+  }
+  if (variation === 'bbs') {
+    return { sets: 10, reps: 5 };
+  }
+  return null;
+}

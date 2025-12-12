@@ -183,7 +183,7 @@ export default function ProgressPage() {
               {lifts.map((lift, index) => {
                 const averageMax = utils.getAverageOfLastThreeSessions(nonDeloadSessions, lift.type);
                 const displayMax = averageMax > 0 ? averageMax : lift.initial;
-                const firstRecorded = utils.getFirstRecordedMax(sessions, lift.type, nonDeloadSessions);
+                const firstRecorded = utils.getFirstRecordedMax(sessions, lift.type);
                 const changePercent = utils.getMaxChangePercent(sessions, nonDeloadSessions, lift.type);
                 const isVisible = index < visibleLifts;
 

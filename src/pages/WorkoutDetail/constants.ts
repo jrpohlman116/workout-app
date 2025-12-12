@@ -38,3 +38,41 @@ export const baseExercises = {
     { name: 'Rear Delt Flyes', reps: '10-15', sets: 3, isBodyweight: false },
   ],
 };
+
+export const bbbExercises = {
+  squat: [
+    { name: 'Bulgarian Split Squats', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Abs', reps: '10-15', sets: 3, isBodyweight: true },
+  ],
+  bench: [
+    { name: 'Barbell Rows', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Face Pulls', reps: '15-20', sets: 3, isBodyweight: false },
+  ],
+  deadlift: [
+    { name: 'B Stance RDLs', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Abs', reps: '10-15', sets: 3, isBodyweight: true },
+  ],
+  ohp: [
+    { name: 'Pull-Ups', reps: '6-10', sets: 3, isBodyweight: true },
+    { name: 'Lateral Raise Complex', reps: '12-15', sets: 3, isBodyweight: false },
+  ],
+};
+
+export const bbsExercises = {
+  squat: [
+    { name: 'Bulgarian Split Squats', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Abs', reps: '10-15', sets: 3, isBodyweight: true },
+  ],
+  bench: [
+    { name: 'Barbell Rows', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Face Pulls', reps: '15-20', sets: 3, isBodyweight: false },
+  ],
+  deadlift: [
+    { name: 'B Stance RDLs', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Abs', reps: '10-15', sets: 3, isBodyweight: true },
+  ],
+  ohp: [
+    { name: 'Pull-Ups', reps: '6-10', sets: 3, isBodyweight: true },
+    { name: 'Lateral Raise Complex', reps: '12-15', sets: 3, isBodyweight: false },
+  ],
+};

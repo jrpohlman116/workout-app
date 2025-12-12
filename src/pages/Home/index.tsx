@@ -3,11 +3,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, getCycleProgression } from '../../lib/calculations';
 import { Calendar, RefreshCw, ChevronRight, ChevronDown, Check, SkipForward, Activity } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useCountUp, useRipple } from '../../hooks/useAnimations';
+import { useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
 import StrengthScoreCarousel from '../../components/features/StrengthScoreCarousel';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
-import * as utils from '../Progress/utils';
+import { getAverageOfLastThreeSessions, getBestWeightForLift, getFirstRecordedMax } from '../Progress/utils';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -18,6 +18,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
   const [workoutData, setWorkoutData] = useState<Map<string, { calculated_1rm: number }>>(new Map());
   const [projectedMaxes, setProjectedMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
+  const [bestMaxes, setBestMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
   const [initialMaxes, setInitialMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
@@ -61,41 +62,33 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
     const { data } = await supabase
       .from('workout_sessions')
-      .select('lift_type, calculated_1rm, week, cycle, completed_at')
+      .select('id, user_id, lift_type, cycle, week, weight_lifted, reps_performed, calculated_1rm, completed_at, created_at, is_1rm_test, notes')
       .eq('user_id', user.id)
       .order('completed_at', { ascending: true });
 
     if (data) {
-      const getLatestAverageMax = (liftType: string) => {
-        const liftSessions = data.filter(s => s.lift_type === liftType && s.week !== 4);
-        if (liftSessions.length === 0) return 0;
-
-        const lastThree = liftSessions.slice(-3);
-        const sum = lastThree.reduce((total, session) => total + session.calculated_1rm, 0);
-        return Math.round(sum / lastThree.length);
+      const projected = {
+        squat: getAverageOfLastThreeSessions(data, 'squat') || profile.squat_max,
+        bench: getAverageOfLastThreeSessions(data, 'bench') || profile.bench_max,
+        deadlift: getAverageOfLastThreeSessions(data, 'deadlift') || profile.deadlift_max,
+        ohp: getAverageOfLastThreeSessions(data, 'ohp') || profile.ohp_max,
       };
 
-      const getInitialMax = (liftType: string) => {
-        const initialSession = data.find(s => s.lift_type === liftType && s.cycle === 0 && s.week === 0);
-        if (initialSession) return initialSession.calculated_1rm;
-        return 0;
+      const best = {
+        squat: getBestWeightForLift(data, 'squat')?.weight_lifted || profile.squat_max,
+        bench: getBestWeightForLift(data, 'bench')?.weight_lifted || profile.bench_max,
+        deadlift: getBestWeightForLift(data, 'deadlift')?.weight_lifted || profile.deadlift_max,
+        ohp: getBestWeightForLift(data, 'ohp')?.weight_lifted || profile.ohp_max,
       };
 
-      console.log(getInitialMax('squat'), getInitialMax('bench'), getInitialMax('deadlift'))
-      console.log(getLatestAverageMax('squat'), getLatestAverageMax('bench'), getLatestAverageMax('deadlift'))
-
-      setProjectedMaxes({
-        squat: getLatestAverageMax('squat') || profile.squat_max,
-        bench: getLatestAverageMax('bench') || profile.bench_max,
-        deadlift: getLatestAverageMax('deadlift') || profile.deadlift_max,
-        ohp: getLatestAverageMax('ohp') || profile.ohp_max,
-      });
+      setProjectedMaxes(projected);
+      setBestMaxes(best);
 
       setInitialMaxes({
-        squat: getInitialMax('squat') || profile.squat_max,
-        bench: getInitialMax('bench') || profile.bench_max,
-        deadlift: getInitialMax('deadlift') || profile.deadlift_max,
-        ohp: getInitialMax('ohp') || profile.ohp_max,
+        squat: getFirstRecordedMax(data, 'squat') || profile.squat_max,
+        bench: getFirstRecordedMax(data, 'bench') || profile.bench_max,
+        deadlift: getFirstRecordedMax(data, 'deadlift') || profile.deadlift_max,
+        ohp: getFirstRecordedMax(data, 'ohp') || profile.ohp_max,
       });
     }
   };
@@ -204,32 +197,39 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     ),
   };
 
+  const effectiveMaxes = {
+    squat: Math.max(projectedMaxes.squat, bestMaxes.squat),
+    bench: Math.max(projectedMaxes.bench, bestMaxes.bench),
+    deadlift: Math.max(projectedMaxes.deadlift, bestMaxes.deadlift),
+    ohp: Math.max(projectedMaxes.ohp, bestMaxes.ohp),
+  };
+
   const projectedScores = {
     wilks: calculateWilksScore(
-      lbToKg(projectedMaxes.squat),
-      lbToKg(projectedMaxes.bench),
-      lbToKg(projectedMaxes.deadlift),
+      lbToKg(effectiveMaxes.squat),
+      lbToKg(effectiveMaxes.bench),
+      lbToKg(effectiveMaxes.deadlift),
       lbToKg(profile.bodyweight || 0),
       profile.gender || 'male'
     ),
     wilks2: calculateWilks2Score(
-      lbToKg(projectedMaxes.squat),
-      lbToKg(projectedMaxes.bench),
-      lbToKg(projectedMaxes.deadlift),
+      lbToKg(effectiveMaxes.squat),
+      lbToKg(effectiveMaxes.bench),
+      lbToKg(effectiveMaxes.deadlift),
       lbToKg(profile.bodyweight || 0),
       profile.gender || 'male'
     ),
     dots: calculateDOTSScore(
-      lbToKg(projectedMaxes.squat),
-      lbToKg(projectedMaxes.bench),
-      lbToKg(projectedMaxes.deadlift),
+      lbToKg(effectiveMaxes.squat),
+      lbToKg(effectiveMaxes.bench),
+      lbToKg(effectiveMaxes.deadlift),
       lbToKg(profile.bodyweight || 0),
       profile.gender || 'male'
     ),
     ipfgl: calculateIPFGLScore(
-      lbToKg(projectedMaxes.squat),
-      lbToKg(projectedMaxes.bench),
-      lbToKg(projectedMaxes.deadlift),
+      lbToKg(effectiveMaxes.squat),
+      lbToKg(effectiveMaxes.bench),
+      lbToKg(effectiveMaxes.deadlift),
       lbToKg(profile.bodyweight || 0),
       profile.gender || 'male'
     ),
@@ -313,7 +313,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             >
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
-                  Cycle {i + 1} - +{getCycleProgression(i + 1)} lbs
+                  Cycle {i + 1} - +{getCycleProgression(i + 1, 'squat')} lbs
                 </option>
               ))}
             </select>
@@ -394,9 +394,16 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
                 >
-                  <div className="text-left">
-                    <div className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                      {workout.name}
+                  <div className="text-left flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                        {workout.name}
+                      </div>
+                      {profile.program_variation && profile.program_variation !== 'standard' && (
+                        <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded">
+                          {profile.program_variation.toUpperCase()}
+                        </span>
+                      )}
                     </div>
                     <div className={`text-sm ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-300'}`}>
                       {isCompleted && projected1RM
@@ -468,3 +475,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     </div>
   );
 }
+function setShowWeekSelector(arg0: boolean) {
+  throw new Error('Function not implemented.');
+}
+
+function setShowCycleSelector(arg0: boolean) {
+  throw new Error('Function not implemented.');
+}
+

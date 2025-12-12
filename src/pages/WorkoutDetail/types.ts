@@ -4,7 +4,7 @@ export interface WorkoutDetailPageProps {
   onNavigateToProgress: () => void;
 }
 
-export type WorkoutStep = 'summary' | 'main' | number;
+export type WorkoutStep = 'summary' | 'main' | 'supplemental' | number;
 
 export interface SetInput {
   reps: string;

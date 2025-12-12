@@ -4,7 +4,7 @@ export function calculateTonnage(session: WorkoutSession): number {
   return session.weight_lifted * session.reps_performed;
 }
 
-export function getFirstRecordedMax(sessions: WorkoutSession[], liftType: string, nonDeloadSessions: WorkoutSession[]): number {
+export function getFirstRecordedMax(sessions: WorkoutSession[], liftType: string): number {
   const liftSessions = sessions.filter(s => s.lift_type === liftType);
   if (liftSessions.length === 0) return 0;
 
@@ -31,7 +31,7 @@ export function getLatestMaxForLift(nonDeloadSessions: WorkoutSession[], liftTyp
 }
 
 export function getMaxChangePercent(sessions: WorkoutSession[], nonDeloadSessions: WorkoutSession[], liftType: string): string {
-  const firstRecorded = getFirstRecordedMax(sessions, liftType, nonDeloadSessions);
+  const firstRecorded = getFirstRecordedMax(sessions, liftType);
   const currentAverage = getAverageOfLastThreeSessions(nonDeloadSessions, liftType);
 
   if (firstRecorded === 0) return '0';

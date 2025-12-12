@@ -5,9 +5,20 @@ interface WorkoutSummaryViewProps {
   mainReps: string | number;
   exercises: Exercise[];
   onStartWorkout: () => void;
+  programVariation?: 'standard' | 'bbb' | 'bbs';
+  supplementalWeight?: number;
+  supplementalConfig?: { sets: number; reps: number } | null;
 }
 
-export default function WorkoutSummaryView({ mainWeights, mainReps, exercises, onStartWorkout }: WorkoutSummaryViewProps) {
+export default function WorkoutSummaryView({
+  mainWeights,
+  mainReps,
+  exercises,
+  onStartWorkout,
+  programVariation = 'standard',
+  supplementalWeight = 0,
+  supplementalConfig = null,
+}: WorkoutSummaryViewProps) {
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
@@ -31,6 +42,32 @@ export default function WorkoutSummaryView({ mainWeights, mainReps, exercises, o
           <p className="text-sm text-gray-600 dark:text-gray-300 mt-3">Push yourself on this final set!</p>
         </div>
       </div>
+
+      {supplementalConfig && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              {programVariation === 'bbb' ? 'Boring But Big' : 'Boring But Strong'}
+            </h2>
+            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-full">
+              {programVariation?.toUpperCase()}
+            </span>
+          </div>
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+            <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
+              {programVariation === 'bbb'
+                ? 'Complete 5 sets of 10 reps at 50% of your Training Max'
+                : 'Complete 10 sets of 5 reps at First Set Last weight'}
+            </p>
+            <div className="flex justify-between items-center pt-2 border-t border-blue-200 dark:border-blue-800">
+              <span className="font-medium text-blue-900 dark:text-blue-100">Supplemental Work</span>
+              <span className="font-bold text-blue-900 dark:text-blue-100">
+                {supplementalWeight} lb × {supplementalConfig.reps} reps × {supplementalConfig.sets} sets
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Accessory Exercises</h2>
