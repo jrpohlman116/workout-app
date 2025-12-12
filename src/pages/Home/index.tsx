@@ -18,6 +18,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
   const [workoutData, setWorkoutData] = useState<Map<string, { calculated_1rm: number }>>(new Map());
   const [projectedMaxes, setProjectedMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
+  const [bestMaxes, setBestMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
   const [initialMaxes, setInitialMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
@@ -75,21 +76,39 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         return Math.round(sum / lastThree.length);
       };
 
+      const getBestMax = (liftType: string) => {
+        const liftSessions = data.filter(s => s.lift_type === liftType && s.week !== 4);
+        if (liftSessions.length === 0) return 0;
+
+        const bestSession = liftSessions.reduce((max, session) =>
+          session.calculated_1rm > max.calculated_1rm ? session : max
+        , liftSessions[0]);
+
+        return Math.round(bestSession.calculated_1rm);
+      };
+
       const getInitialMax = (liftType: string) => {
         const initialSession = data.find(s => s.lift_type === liftType && s.cycle === 0 && s.week === 0);
         if (initialSession) return initialSession.calculated_1rm;
         return 0;
       };
 
-      console.log(getInitialMax('squat'), getInitialMax('bench'), getInitialMax('deadlift'))
-      console.log(getLatestAverageMax('squat'), getLatestAverageMax('bench'), getLatestAverageMax('deadlift'))
-
-      setProjectedMaxes({
+      const projected = {
         squat: getLatestAverageMax('squat') || profile.squat_max,
         bench: getLatestAverageMax('bench') || profile.bench_max,
         deadlift: getLatestAverageMax('deadlift') || profile.deadlift_max,
         ohp: getLatestAverageMax('ohp') || profile.ohp_max,
-      });
+      };
+
+      const best = {
+        squat: getBestMax('squat') || profile.squat_max,
+        bench: getBestMax('bench') || profile.bench_max,
+        deadlift: getBestMax('deadlift') || profile.deadlift_max,
+        ohp: getBestMax('ohp') || profile.ohp_max,
+      };
+
+      setProjectedMaxes(projected);
+      setBestMaxes(best);
 
       setInitialMaxes({
         squat: getInitialMax('squat') || profile.squat_max,
@@ -204,32 +223,39 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     ),
   };
 
+  const effectiveMaxes = {
+    squat: Math.max(projectedMaxes.squat, bestMaxes.squat),
+    bench: Math.max(projectedMaxes.bench, bestMaxes.bench),
+    deadlift: Math.max(projectedMaxes.deadlift, bestMaxes.deadlift),
+    ohp: Math.max(projectedMaxes.ohp, bestMaxes.ohp),
+  };
+
   const projectedScores = {
     wilks: calculateWilksScore(
-      lbToKg(projectedMaxes.squat),
-      lbToKg(projectedMaxes.bench),
-      lbToKg(projectedMaxes.deadlift),
+      lbToKg(effectiveMaxes.squat),
+      lbToKg(effectiveMaxes.bench),
+      lbToKg(effectiveMaxes.deadlift),
       lbToKg(profile.bodyweight || 0),
       profile.gender || 'male'
     ),
     wilks2: calculateWilks2Score(
-      lbToKg(projectedMaxes.squat),
-      lbToKg(projectedMaxes.bench),
-      lbToKg(projectedMaxes.deadlift),
+      lbToKg(effectiveMaxes.squat),
+      lbToKg(effectiveMaxes.bench),
+      lbToKg(effectiveMaxes.deadlift),
       lbToKg(profile.bodyweight || 0),
       profile.gender || 'male'
     ),
     dots: calculateDOTSScore(
-      lbToKg(projectedMaxes.squat),
-      lbToKg(projectedMaxes.bench),
-      lbToKg(projectedMaxes.deadlift),
+      lbToKg(effectiveMaxes.squat),
+      lbToKg(effectiveMaxes.bench),
+      lbToKg(effectiveMaxes.deadlift),
       lbToKg(profile.bodyweight || 0),
       profile.gender || 'male'
     ),
     ipfgl: calculateIPFGLScore(
-      lbToKg(projectedMaxes.squat),
-      lbToKg(projectedMaxes.bench),
-      lbToKg(projectedMaxes.deadlift),
+      lbToKg(effectiveMaxes.squat),
+      lbToKg(effectiveMaxes.bench),
+      lbToKg(effectiveMaxes.deadlift),
       lbToKg(profile.bodyweight || 0),
       profile.gender || 'male'
     ),
