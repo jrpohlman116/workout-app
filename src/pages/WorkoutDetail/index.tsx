@@ -551,6 +551,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           liftName={liftNames[liftType]}
           estimated1RM={workoutStats.estimated1RM}
           totalTonnage={workoutStats.totalTonnage}
+          unitPreference={profile?.unit_preference || 'lb'}
           onClose={handleSuccessClose}
         />
       )}
