@@ -23,9 +23,10 @@ interface WorkoutLogEntryProps {
   accessories: AccessoryExercise[];
   isExpanded: boolean;
   onToggle: () => void;
+  unitPreference?: string;
 }
 
-export default function WorkoutLogEntry({ session, accessories, isExpanded, onToggle }: WorkoutLogEntryProps) {
+export default function WorkoutLogEntry({ session, accessories, isExpanded, onToggle, unitPreference = 'lb' }: WorkoutLogEntryProps) {
   const liftTypeNames: Record<string, string> = {
     squat: 'Squat',
     bench: 'Bench Press',
@@ -57,9 +58,9 @@ export default function WorkoutLogEntry({ session, accessories, isExpanded, onTo
         <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-300">
           <span>Week {session.week}, Cycle {session.cycle}</span>
           <span>•</span>
-          <span>{session.weight_lifted}lb × {session.reps_performed} reps</span>
+          <span>{session.weight_lifted}{unitPreference} × {session.reps_performed} reps</span>
           <span>•</span>
-          <span>Est. 1RM: {Math.round(session.calculated_1rm)}lb</span>
+          <span>Est. 1RM: {Math.round(session.calculated_1rm)}{unitPreference}</span>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           {new Date(session.completed_at).toLocaleDateString('en-US', {
@@ -92,7 +93,7 @@ export default function WorkoutLogEntry({ session, accessories, isExpanded, onTo
                         <div key={idx} className="text-sm">
                           <span className="text-gray-600 dark:text-gray-300">Set {idx + 1}:</span>{' '}
                           <span className="font-semibold text-gray-900 dark:text-gray-100">
-                            {set.weight ? `${set.weight}lb × ${set.reps}` : `${set.reps} reps`}
+                            {set.weight ? `${set.weight}${unitPreference} × ${set.reps}` : `${set.reps} reps`}
                           </span>
                         </div>
                       ))}

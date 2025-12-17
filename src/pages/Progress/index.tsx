@@ -196,6 +196,7 @@ export default function ProgressPage() {
                     initial={firstRecorded > 0 ? firstRecorded : lift.initial}
                     changePercent={changePercent}
                     isVisible={isVisible}
+                    unitPreference={profile.unit_preference || 'lb'}
                   />
                 );
               })}
@@ -244,9 +245,9 @@ export default function ProgressPage() {
                   </div>
                   {bestVolume ? (
                     <>
-                      <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">{bestVolume.tonnage.toLocaleString()} lb</div>
+                      <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">{bestVolume.tonnage.toLocaleString()} {profile.unit_preference || 'lb'}</div>
                       <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {bestVolume.session.weight_lifted} lb × {bestVolume.session.reps_performed} reps
+                        {bestVolume.session.weight_lifted} {profile.unit_preference || 'lb'} × {bestVolume.session.reps_performed} reps
                       </p>
                     </>
                   ) : (
@@ -271,6 +272,7 @@ export default function ProgressPage() {
                       accessories={accessoryData[session.id] || []}
                       isExpanded={expandedSessions.has(session.id)}
                       onToggle={() => toggleSessionExpansion(session.id)}
+                      unitPreference={profile.unit_preference || 'lb'}
                     />
                   ))}
                 </div>

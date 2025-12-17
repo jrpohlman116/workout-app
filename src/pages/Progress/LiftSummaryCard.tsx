@@ -7,9 +7,10 @@ interface LiftSummaryCardProps {
   initial: number;
   changePercent: string;
   isVisible: boolean;
+  unitPreference?: string;
 }
 
-export default function LiftSummaryCard({ name, displayName, current, initial, changePercent, isVisible }: LiftSummaryCardProps) {
+export default function LiftSummaryCard({ name, displayName, current, initial, changePercent, isVisible, unitPreference = 'lb' }: LiftSummaryCardProps) {
   const change = parseFloat(changePercent);
   const isPositive = change >= 0;
 
@@ -32,8 +33,8 @@ export default function LiftSummaryCard({ name, displayName, current, initial, c
           </span>
         )}
       </div>
-      <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{current} lb</p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">Started: {initial} lb</p>
+      <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{current} {unitPreference}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">Started: {initial} {unitPreference}</p>
     </div>
   );
 }
