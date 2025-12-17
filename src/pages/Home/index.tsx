@@ -383,14 +383,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 <button
                   key={workout.type}
                   onClick={(e) => {
-                    if (!isCompleted) {
-                      createRipple(e);
-                      onNavigate('workout', workout.type);
-                    }
+                    createRipple(e);
+                    onNavigate('workout', workout.type);
                   }}
-                  disabled={isCompleted}
                   className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${isCompleted
-                    ? 'bg-green-50 dark:bg-green-900/20 cursor-not-allowed'
+                    ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
                     : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
                 >
