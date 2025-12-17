@@ -29,6 +29,8 @@ export interface UserProfile {
   gender?: string;
   unit_preference?: string;
   program_variation?: 'standard' | 'bbb' | 'bbs';
+  available_plates_lb?: number[];
+  available_plates_kg?: number[];
   created_at: string;
   updated_at: string;
 }

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { calculateOneRepMax, calculateWilksScore } from '../../lib/calculations';
 import { Info } from 'lucide-react';
 import { useRipple } from '../../hooks/useAnimations';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 type Tab = '1rm' | 'wilks' | 'plates';
 
@@ -28,6 +29,53 @@ export default function CalculatorPage() {
   const [barWeight, setBarWeight] = useState('45');
   const [plateUnit, setPlateUnit] = useState('lb');
   const [calculatedPlates, setCalculatedPlates] = useState<{ weight: number; count: number }[] | null>(null);
+
+  const defaultPlatesLb = [45, 35, 25, 10, 5, 2.5];
+  const defaultPlatesKg = [25, 20, 15, 10, 5, 2.5, 1.25];
+
+  const [selectedPlatesLb, setSelectedPlatesLb] = useState<number[]>(defaultPlatesLb);
+  const [selectedPlatesKg, setSelectedPlatesKg] = useState<number[]>(defaultPlatesKg);
+
+  useEffect(() => {
+    if (profile?.available_plates_lb) {
+      setSelectedPlatesLb(profile.available_plates_lb);
+    }
+    if (profile?.available_plates_kg) {
+      setSelectedPlatesKg(profile.available_plates_kg);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    setBarWeight(plateUnit === 'lb' ? '45' : '20');
+  }, [plateUnit]);
+
+  const togglePlate = (plate: number, unit: 'lb' | 'kg') => {
+    if (unit === 'lb') {
+      setSelectedPlatesLb(prev =>
+        prev.includes(plate)
+          ? prev.filter(p => p !== plate)
+          : [...prev, plate].sort((a, b) => b - a)
+      );
+    } else {
+      setSelectedPlatesKg(prev =>
+        prev.includes(plate)
+          ? prev.filter(p => p !== plate)
+          : [...prev, plate].sort((a, b) => b - a)
+      );
+    }
+  };
+
+  const savePlatePreferences = async () => {
+    if (!profile) return;
+
+    await supabase
+      .from('user_profiles')
+      .update({
+        available_plates_lb: selectedPlatesLb,
+        available_plates_kg: selectedPlatesKg,
+      })
+      .eq('id', profile.id);
+  };
 
   const handleCalculate = () => {
     const w = parseFloat(weight);
@@ -70,9 +118,7 @@ export default function CalculatorPage() {
     const weightToLoad = target - bar;
     const perSide = weightToLoad / 2;
 
-    const availablePlates = plateUnit === 'lb'
-      ? [45, 25, 10, 5, 2.5]
-      : [25, 20, 15, 10, 5, 2.5, 1.25];
+    const availablePlates = plateUnit === 'lb' ? selectedPlatesLb : selectedPlatesKg;
 
     const plates: { weight: number; count: number }[] = [];
     let remaining = perSide;
@@ -86,6 +132,7 @@ export default function CalculatorPage() {
     }
 
     setCalculatedPlates(plates);
+    savePlatePreferences();
   };
 
   const tabs = [
@@ -323,43 +370,78 @@ export default function CalculatorPage() {
 
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Target Weight
+                  Unit
                 </label>
-                <div className="flex gap-3">
-                  <input
-                    type="number"
-                    value={targetWeight}
-                    onChange={(e) => setTargetWeight(e.target.value)}
-                    placeholder="e.g. 225, 315, 405"
-                    min="0"
-                    step="0.5"
-                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  />
-                  <select
-                    value={plateUnit}
-                    onChange={(e) => setPlateUnit(e.target.value)}
-                    className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  >
-                    <option value="lb">lb</option>
-                    <option value="kg">kg</option>
-                  </select>
+                <select
+                  value={plateUnit}
+                  onChange={(e) => setPlateUnit(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="lb">lb</option>
+                  <option value="kg">kg</option>
+                </select>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  Available Plates
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {(plateUnit === 'lb' ? defaultPlatesLb : defaultPlatesKg).map(plate => {
+                    const isSelected = plateUnit === 'lb'
+                      ? selectedPlatesLb.includes(plate)
+                      : selectedPlatesKg.includes(plate);
+
+                    return (
+                      <button
+                        key={plate}
+                        type="button"
+                        onClick={() => togglePlate(plate, plateUnit as 'lb' | 'kg')}
+                        className={`px-4 py-3 rounded-xl font-semibold transition-all ${
+                          isSelected
+                            ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        {plate} {plateUnit}
+                      </button>
+                    );
+                  })}
                 </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Select the plates you have available
+                </p>
               </div>
 
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Bar Weight
+                  Target Weight ({plateUnit})
+                </label>
+                <input
+                  type="number"
+                  value={targetWeight}
+                  onChange={(e) => setTargetWeight(e.target.value)}
+                  placeholder="e.g. 225, 315, 405"
+                  min="0"
+                  step="0.5"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Bar Weight ({plateUnit})
                 </label>
                 <input
                   type="number"
                   value={barWeight}
                   onChange={(e) => setBarWeight(e.target.value)}
-                  placeholder="e.g. 45, 35, 20"
+                  placeholder={plateUnit === 'lb' ? 'e.g. 45' : 'e.g. 20'}
                   min="0"
                   step="0.5"
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-300 mt-1">Standard bar is 45 lb / 20 kg</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Standard bar is 45 lb / 20 kg</p>
               </div>
 
               <button
