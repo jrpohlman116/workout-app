@@ -8,8 +8,8 @@ interface NavigationProps {
 export default function Navigation({ currentPage, onNavigate }: NavigationProps) {
   const navItems = [
     { id: 'home', label: 'Home', icon: Home, description: 'View your workouts and progress overview' },
-    { id: 'calculator', label: 'Calculator', icon: Calculator, description: 'Calculate your one rep max and Wilks score' },
     { id: 'progress', label: 'Progress', icon: TrendingUp, description: 'Track your strength gains over time' },
+    { id: 'calculator', label: 'Calculator', icon: Calculator, description: 'Calculate your one rep max and Wilks score' },
     { id: 'profile', label: 'Profile', icon: User, description: 'Manage your account and training settings' },
   ];
 
