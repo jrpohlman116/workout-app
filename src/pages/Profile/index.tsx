@@ -10,7 +10,7 @@ import AccessibleModal from '../../components/accessible/AccessibleModal';
 export default function ProfilePage() {
   const { profile, user, refreshProfile } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
-  const [activeTab, setActiveTab] = useState<'body' | 'maxes' | 'security'>('body');
+  const [activeTab, setActiveTab] = useState<'body' | 'maxes' | 'variation' | 'security'>('body');
   const [squatMax, setSquatMax] = useState(profile?.squat_max?.toString() || '');
   const [benchMax, setBenchMax] = useState(profile?.bench_max?.toString() || '');
   const [deadliftMax, setDeadliftMax] = useState(profile?.deadlift_max?.toString() || '');
@@ -243,6 +243,19 @@ export default function ProfilePage() {
               )}
             </button>
             <button
+              onClick={() => setActiveTab('variation')}
+              className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
+                activeTab === 'variation'
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              Variation
+              {activeTab === 'variation' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+              )}
+            </button>
+            <button
               onClick={() => setActiveTab('security')}
               className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${
                 activeTab === 'security'
@@ -416,33 +429,7 @@ export default function ProfilePage() {
         </div>
         )}
 
-        {activeTab === 'security' && (
-        <>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Appearance</h2>
-          <div className="space-y-4">
-            <button
-              type="button"
-              onClick={toggleDarkMode}
-              className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                {isDarkMode ? (
-                  <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                ) : (
-                  <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                )}
-                <span className="text-gray-900 dark:text-gray-100 font-medium">
-                  {isDarkMode ? 'Dark Mode' : 'Light Mode'}
-                </span>
-              </div>
-              <span className="text-sm text-gray-500 dark:text-gray-300">
-                {isDarkMode ? 'On' : 'Off'}
-              </span>
-            </button>
-          </div>
-        </div>
-
+        {activeTab === 'variation' && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Program Variation</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
@@ -522,6 +509,34 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
+            </button>
+          </div>
+        </div>
+        )}
+
+        {activeTab === 'security' && (
+        <>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Appearance</h2>
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                {isDarkMode ? (
+                  <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                ) : (
+                  <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                )}
+                <span className="text-gray-900 dark:text-gray-100 font-medium">
+                  {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                </span>
+              </div>
+              <span className="text-sm text-gray-500 dark:text-gray-300">
+                {isDarkMode ? 'On' : 'Off'}
+              </span>
             </button>
           </div>
         </div>
