@@ -144,6 +144,8 @@ export default function CalculatorPage() {
                     value={weight}
                     onChange={(e) => setWeight(e.target.value)}
                     placeholder="e.g. 125, 80, 45"
+                    min="0"
+                    step="0.5"
                     className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                   <select
@@ -166,6 +168,7 @@ export default function CalculatorPage() {
                   value={reps}
                   onChange={(e) => setReps(e.target.value)}
                   placeholder="e.g., 5, 8, 10"
+                  min="0"
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
@@ -205,6 +208,8 @@ export default function CalculatorPage() {
                     value={wilksSquat}
                     onChange={(e) => setWilksSquat(e.target.value)}
                     placeholder="e.g. 315"
+                    min="0"
+                    step="0.5"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -218,6 +223,8 @@ export default function CalculatorPage() {
                     value={wilksBench}
                     onChange={(e) => setWilksBench(e.target.value)}
                     placeholder="e.g. 225"
+                    min="0"
+                    step="0.5"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -231,6 +238,8 @@ export default function CalculatorPage() {
                     value={wilksDeadlift}
                     onChange={(e) => setWilksDeadlift(e.target.value)}
                     placeholder="e.g. 405"
+                    min="0"
+                    step="0.5"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -244,6 +253,8 @@ export default function CalculatorPage() {
                     value={wilksBodyweight}
                     onChange={(e) => setWilksBodyweight(e.target.value)}
                     placeholder="e.g. 180"
+                    min="0"
+                    step="0.1"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -320,6 +331,8 @@ export default function CalculatorPage() {
                     value={targetWeight}
                     onChange={(e) => setTargetWeight(e.target.value)}
                     placeholder="e.g. 225, 315, 405"
+                    min="0"
+                    step="0.5"
                     className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                   <select
@@ -342,6 +355,8 @@ export default function CalculatorPage() {
                   value={barWeight}
                   onChange={(e) => setBarWeight(e.target.value)}
                   placeholder="e.g. 45, 35, 20"
+                  min="0"
+                  step="0.5"
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-300 mt-1">Standard bar is 45 lb / 20 kg</p>

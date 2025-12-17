@@ -288,6 +288,8 @@ export default function ProfilePage() {
                     value={bodyweight}
                     onChange={(e) => setBodyweight(e.target.value)}
                     placeholder="e.g. 180"
+                    min="0"
+                    step="0.1"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -342,6 +344,8 @@ export default function ProfilePage() {
                   value={squatMax}
                   onChange={(e) => setSquatMax(e.target.value)}
                   placeholder="e.g. 125, 80, 45"
+                  min="0"
+                  step="0.5"
                   className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 />
                 <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
@@ -360,6 +364,8 @@ export default function ProfilePage() {
                   value={benchMax}
                   onChange={(e) => setBenchMax(e.target.value)}
                   placeholder="e.g. 125, 80, 45"
+                  min="0"
+                  step="0.5"
                   className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 />
                 <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
@@ -378,6 +384,8 @@ export default function ProfilePage() {
                   value={deadliftMax}
                   onChange={(e) => setDeadliftMax(e.target.value)}
                   placeholder="e.g. 125, 80, 45"
+                  min="0"
+                  step="0.5"
                   className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 />
                 <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
@@ -396,6 +404,8 @@ export default function ProfilePage() {
                   value={ohpMax}
                   onChange={(e) => setOhpMax(e.target.value)}
                   placeholder="e.g. 125, 80, 45"
+                  min="0"
+                  step="0.5"
                   className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 />
                 <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
