@@ -254,7 +254,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
   const displayScores = hasProjectedData ? projectedScores : initialScores;
 
-  const progression = getCycleProgression(profile.current_cycle, 'squat');
+  const progression = getCycleProgression(profile.current_cycle, 'squat', profile.unit_preference || 'lb');
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
@@ -313,7 +313,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             >
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
-                  Cycle {i + 1} - +{getCycleProgression(i + 1, 'squat')} {profile.unit_preference || 'lb'}
+                  Cycle {i + 1} - +{getCycleProgression(i + 1, 'squat', profile.unit_preference || 'lb')} {profile.unit_preference || 'lb'}
                 </option>
               ))}
             </select>
@@ -371,7 +371,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 workout.type,
                 workout.max,
                 profile.current_cycle,
-                profile.current_week
+                profile.current_week,
+                profile.unit_preference || 'lb'
               );
               const isCompleted = completedWorkouts.has(workout.type);
               const sessionData = workoutData.get(workout.type);

@@ -53,7 +53,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         liftType,
         maxes[liftType],
         profile.current_cycle,
-        profile.current_week
+        profile.current_week,
+        profile.unit_preference || 'lb'
       );
 
       const mainReps = profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5;
@@ -82,9 +83,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
         let supplementalWeight = 0;
         if (programVariation === 'bbb') {
-          supplementalWeight = calculateBBBSupplementalWeight(liftType, maxes[liftType], profile.current_cycle);
+          supplementalWeight = calculateBBBSupplementalWeight(liftType, maxes[liftType], profile.current_cycle, profile.unit_preference || 'lb');
         } else if (programVariation === 'bbs') {
-          supplementalWeight = calculateBBSSupplementalWeight(liftType, maxes[liftType], profile.current_cycle, profile.current_week);
+          supplementalWeight = calculateBBSSupplementalWeight(liftType, maxes[liftType], profile.current_cycle, profile.current_week, profile.unit_preference || 'lb');
         }
 
         const sets = Array(supplementalConfig.sets).fill(null).map(() => ({
@@ -146,7 +147,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     liftType,
     maxes[liftType],
     profile.current_cycle,
-    profile.current_week
+    profile.current_week,
+    profile.unit_preference || 'lb'
   );
 
   const programVariation = profile.program_variation || 'standard';
@@ -422,9 +424,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           programVariation={programVariation}
           supplementalWeight={
             programVariation === 'bbb'
-              ? calculateBBBSupplementalWeight(liftType, maxes[liftType], profile.current_cycle)
+              ? calculateBBBSupplementalWeight(liftType, maxes[liftType], profile.current_cycle, profile.unit_preference || 'lb')
               : programVariation === 'bbs'
-              ? calculateBBSSupplementalWeight(liftType, maxes[liftType], profile.current_cycle, profile.current_week)
+              ? calculateBBSSupplementalWeight(liftType, maxes[liftType], profile.current_cycle, profile.current_week, profile.unit_preference || 'lb')
               : 0
           }
           supplementalConfig={getSupplementalWorkConfig(programVariation)}

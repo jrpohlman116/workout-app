@@ -6,44 +6,49 @@ export function calculateTrainingMax(oneRepMax: number): number {
   return Math.round(oneRepMax * 0.9);
 }
 
-export function getCycleProgression(cycle: number, type: string): number {
-  if (type === 'bench' || type === 'ohp') {
-    return (cycle - 1) * 5;
+export function getCycleProgression(cycle: number, type: string, unit: string = 'lb'): number {
+  const isUpperBody = type === 'bench' || type === 'ohp';
+
+  if (unit === 'kg') {
+    return (cycle - 1) * (isUpperBody ? 2.5 : 5);
   }
-  return (cycle - 1) * 10;
+
+  return (cycle - 1) * (isUpperBody ? 5 : 10);
 }
 
 export function calculateWorkoutWeights(
   type: string,
   oneRepMax: number,
   cycle: number,
-  week: number
+  week: number,
+  unit: string = 'lb'
 ): { set1: number; set2: number; set3: number } {
-  const trainingMax = calculateTrainingMax(oneRepMax) + getCycleProgression(cycle, type);
+  const trainingMax = calculateTrainingMax(oneRepMax) + getCycleProgression(cycle, type, unit);
+  const roundTo = unit === 'kg' ? 2.5 : 5;
 
   if (week === 1) {
     return {
-      set1: Math.round(trainingMax * 0.65 / 5) * 5,
-      set2: Math.round(trainingMax * 0.75 / 5) * 5,
-      set3: Math.round(trainingMax * 0.85 / 5) * 5,
+      set1: Math.round(trainingMax * 0.65 / roundTo) * roundTo,
+      set2: Math.round(trainingMax * 0.75 / roundTo) * roundTo,
+      set3: Math.round(trainingMax * 0.85 / roundTo) * roundTo,
     };
   } else if (week === 2) {
     return {
-      set1: Math.round(trainingMax * 0.70 / 5) * 5,
-      set2: Math.round(trainingMax * 0.80 / 5) * 5,
-      set3: Math.round(trainingMax * 0.90 / 5) * 5,
+      set1: Math.round(trainingMax * 0.70 / roundTo) * roundTo,
+      set2: Math.round(trainingMax * 0.80 / roundTo) * roundTo,
+      set3: Math.round(trainingMax * 0.90 / roundTo) * roundTo,
     };
   } else if (week === 3) {
     return {
-      set1: Math.round(trainingMax * 0.75 / 5) * 5,
-      set2: Math.round(trainingMax * 0.85 / 5) * 5,
-      set3: Math.round(trainingMax * 0.95 / 5) * 5,
+      set1: Math.round(trainingMax * 0.75 / roundTo) * roundTo,
+      set2: Math.round(trainingMax * 0.85 / roundTo) * roundTo,
+      set3: Math.round(trainingMax * 0.95 / roundTo) * roundTo,
     };
   } else {
     return {
-      set1: Math.round(trainingMax * 0.40 / 5) * 5,
-      set2: Math.round(trainingMax * 0.50 / 5) * 5,
-      set3: Math.round(trainingMax * 0.60 / 5) * 5,
+      set1: Math.round(trainingMax * 0.40 / roundTo) * roundTo,
+      set2: Math.round(trainingMax * 0.50 / roundTo) * roundTo,
+      set3: Math.round(trainingMax * 0.60 / roundTo) * roundTo,
     };
   }
 }
@@ -206,19 +211,22 @@ export function getGreeting(): string {
 export function calculateBBBSupplementalWeight(
   type: string,
   oneRepMax: number,
-  cycle: number
+  cycle: number,
+  unit: string = 'lb'
 ): number {
-  const trainingMax = calculateTrainingMax(oneRepMax) + getCycleProgression(cycle, type);
-  return Math.round(trainingMax * 0.50 / 5) * 5;
+  const trainingMax = calculateTrainingMax(oneRepMax) + getCycleProgression(cycle, type, unit);
+  const roundTo = unit === 'kg' ? 2.5 : 5;
+  return Math.round(trainingMax * 0.50 / roundTo) * roundTo;
 }
 
 export function calculateBBSSupplementalWeight(
   type: string,
   oneRepMax: number,
   cycle: number,
-  week: number
+  week: number,
+  unit: string = 'lb'
 ): number {
-  const weights = calculateWorkoutWeights(type, oneRepMax, cycle, week);
+  const weights = calculateWorkoutWeights(type, oneRepMax, cycle, week, unit);
   return weights.set1;
 }
 
