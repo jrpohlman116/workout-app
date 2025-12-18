@@ -14,7 +14,7 @@ export default function CalculatorPage() {
 
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
-  const [unit, setUnit] = useState('lb');
+  const [unit, setUnit] = useState(profile?.unit_preference || 'lb');
   const [calculatedMax, setCalculatedMax] = useState<number | null>(null);
 
   const [wilksSquat, setWilksSquat] = useState('');
@@ -22,12 +22,12 @@ export default function CalculatorPage() {
   const [wilksDeadlift, setWilksDeadlift] = useState('');
   const [wilksBodyweight, setWilksBodyweight] = useState('');
   const [wilksGender, setWilksGender] = useState('male');
-  const [wilksUnit, setWilksUnit] = useState('lb');
+  const [wilksUnit, setWilksUnit] = useState(profile?.unit_preference || 'lb');
   const [calculatedWilks, setCalculatedWilks] = useState<number | null>(null);
 
   const [targetWeight, setTargetWeight] = useState('');
   const [barWeight, setBarWeight] = useState('45');
-  const [plateUnit, setPlateUnit] = useState('lb');
+  const [plateUnit, setPlateUnit] = useState(profile?.unit_preference || 'lb');
   const [calculatedPlates, setCalculatedPlates] = useState<{ weight: number; count: number }[] | null>(null);
 
   const defaultPlatesLb = [45, 35, 25, 10, 5, 2.5];
@@ -37,6 +37,11 @@ export default function CalculatorPage() {
   const [selectedPlatesKg, setSelectedPlatesKg] = useState<number[]>(defaultPlatesKg);
 
   useEffect(() => {
+    if (profile?.unit_preference) {
+      setUnit(profile.unit_preference);
+      setWilksUnit(profile.unit_preference);
+      setPlateUnit(profile.unit_preference);
+    }
     if (profile?.available_plates_lb) {
       setSelectedPlatesLb(profile.available_plates_lb);
     }
