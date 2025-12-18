@@ -39,6 +39,26 @@ export const baseExercises = {
   ],
 };
 
+export const additionalExercises = [
+  { name: 'Box Squats', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: 'Pause Squats', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: 'Front Squats', reps: '6-10', sets: 3, isBodyweight: false },
+  { name: 'Goblet Squats', reps: '10-15', sets: 3, isBodyweight: false },
+  { name: 'Walking Lunges', reps: '8-12', sets: 3, isBodyweight: false },
+  { name: 'Leg Extensions', reps: '12-15', sets: 3, isBodyweight: false },
+  { name: 'Calf Raises', reps: '15-20', sets: 3, isBodyweight: false },
+  { name: 'Seated Calf Raises', reps: '15-20', sets: 3, isBodyweight: false },
+  { name: 'Hip Thrusts', reps: '8-12', sets: 3, isBodyweight: false },
+  { name: 'Hip Abduction', reps: '12-15', sets: 3, isBodyweight: false },
+  { name: 'Nordic Curls', reps: '5-8', sets: 3, isBodyweight: true },
+  { name: 'Chin-Ups', reps: '6-10', sets: 3, isBodyweight: true },
+  { name: 'Pull-Ups', reps: '6-10', sets: 3, isBodyweight: true },
+  { name: 'Chest Flyes', reps: '10-15', sets: 3, isBodyweight: false },
+  { name: 'Cable Flyes', reps: '10-15', sets: 3, isBodyweight: false },
+  { name: 'Shrugs', reps: '12-15', sets: 3, isBodyweight: false },
+  { name: 'Farmer Walks', reps: '30-60 sec', sets: 3, isBodyweight: false },
+];
+
 export const bbbExercises = {
   squat: [
     { name: 'Bulgarian Split Squats', reps: '8-12', sets: 3, isBodyweight: false },

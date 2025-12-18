@@ -13,7 +13,7 @@ import MainLiftView from './MainLiftView';
 import SupplementalLiftView from './SupplementalLiftView';
 import AccessoryExerciseView from './AccessoryExerciseView';
 import { useWorkoutData } from './useWorkoutData';
-import { liftNames, liftNamesShort, baseExercises, bbbExercises, bbsExercises } from './constants';
+import { liftNames, liftNamesShort, baseExercises, bbbExercises, bbsExercises, additionalExercises } from './constants';
 import { WorkoutDetailPageProps, WorkoutStep, SetInput } from './types';
 
 export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgress }: WorkoutDetailPageProps) {
@@ -434,6 +434,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             ...bbbExercises.bench,
             ...bbbExercises.deadlift,
             ...bbbExercises.ohp,
+            ...additionalExercises,
           ].filter((ex, index, self) =>
             index === self.findIndex(e => e.name === ex.name)
           )}
@@ -584,6 +585,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             ...bbsExercises.bench,
             ...bbsExercises.deadlift,
             ...bbsExercises.ohp,
+            ...additionalExercises,
           ].filter((ex, index, self) =>
             index === self.findIndex(e => e.name === ex.name)
           )}
