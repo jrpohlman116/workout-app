@@ -142,19 +142,20 @@ export default function ExerciseSubstitutionModal({
           />
         </div>
 
-        {loading ? (
-          <div className="py-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400" aria-hidden="true"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading substitution options...</p>
-          </div>
-        ) : isSearching ? (
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-              Search Results ({filteredAvailableExercises.length})
-            </h3>
-            {filteredAvailableExercises.length > 0 ? (
-              <div role="list" className="space-y-2 max-h-96 overflow-y-auto">
-                {filteredAvailableExercises.map((exercise, index) => {
+        <div className="min-h-[400px]">
+          {loading ? (
+            <div className="py-12 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400" aria-hidden="true"></div>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">Loading substitution options...</p>
+            </div>
+          ) : isSearching ? (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                Search Results ({filteredAvailableExercises.length})
+              </h3>
+              {filteredAvailableExercises.length > 0 ? (
+                <div role="list" className="space-y-2 max-h-96 overflow-y-auto">
+                  {filteredAvailableExercises.map((exercise, index) => {
                   const isRecommended = recommendedExerciseNames.has(exercise.name);
                   const recommendedData = substitutions.find(s => s.substitute_exercise === exercise.name);
 
@@ -293,6 +294,7 @@ export default function ExerciseSubstitutionModal({
             </p>
           </div>
         )}
+        </div>
 
         <div className="flex gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
           <button
