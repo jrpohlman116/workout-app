@@ -60,3 +60,18 @@ export interface ExerciseSubstitution {
   muscle_groups: string[];
   created_at: string;
 }
+
+export interface WorkoutTemplate {
+  id: string;
+  user_id: string;
+  lift_type: 'squat' | 'bench' | 'deadlift' | 'ohp';
+  program_variation: 'standard' | 'bbb' | 'bbs';
+  exercises_data: {
+    name: string;
+    reps: string;
+    sets: number;
+    isBodyweight: boolean;
+  }[];
+  created_at: string;
+  updated_at: string;
+}

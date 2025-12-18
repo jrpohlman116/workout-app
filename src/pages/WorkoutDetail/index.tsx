@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { calculateWorkoutWeights, calculateOneRepMax, calculateBBBSupplementalWeight, calculateBBSSupplementalWeight, getSupplementalWorkConfig } from '../../lib/calculations';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
+import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
 import WorkoutSuccessModal from '../../components/features/WorkoutSuccessModal';
 import ExerciseSubstitutionModal from '../../components/features/ExerciseSubstitutionModal';
 import AccessibleProgressIndicator from '../../components/accessible/AccessibleProgressIndicator';
@@ -36,9 +37,31 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [workoutStats, setWorkoutStats] = useState({ estimated1RM: 0, totalTonnage: 0 });
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
   const [substitutionTarget, setSubstitutionTarget] = useState<{ exerciseIndex: number; exerciseName: string } | null>(null);
-  const [exerciseSubstitutions, setExerciseSubstitutions] = useState<{ [key: number]: string }>({});
 
   const { lastAccessoryData, loading, getLastSetData } = useWorkoutData(user?.id, liftType);
+
+  const programVariation = profile?.program_variation || 'standard';
+  let defaultExerciseTemplate = baseExercises;
+  if (programVariation === 'bbb') {
+    defaultExerciseTemplate = bbbExercises;
+  } else if (programVariation === 'bbs') {
+    defaultExerciseTemplate = bbsExercises;
+  }
+  const defaultExercises = defaultExerciseTemplate[liftType as keyof typeof defaultExerciseTemplate];
+
+  const {
+    exercises: templateExercises,
+    loading: templateLoading,
+    saving: templateSaving,
+    error: templateError,
+    saveTemplate,
+    resetToDefault,
+  } = useWorkoutTemplate(
+    user?.id,
+    liftType as 'squat' | 'bench' | 'deadlift' | 'ohp',
+    programVariation,
+    defaultExercises
+  );
 
   useEffect(() => {
     if (!loading && profile && !initialMainSetsSet) {
@@ -151,34 +174,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     profile.unit_preference || 'lb'
   );
 
-  const programVariation = profile.program_variation || 'standard';
-  let exerciseTemplate = baseExercises;
-  if (programVariation === 'bbb') {
-    exerciseTemplate = bbbExercises;
-  } else if (programVariation === 'bbs') {
-    exerciseTemplate = bbsExercises;
-  }
-
-  const exercises = {
-    squat: exerciseTemplate.squat.map((ex, idx) => ({
-      ...ex,
-      name: exerciseSubstitutions[idx] || ex.name,
-    })),
-    bench: exerciseTemplate.bench.map((ex, idx) => ({
-      ...ex,
-      name: exerciseSubstitutions[idx] || ex.name,
-    })),
-    deadlift: exerciseTemplate.deadlift.map((ex, idx) => ({
-      ...ex,
-      name: exerciseSubstitutions[idx] || ex.name,
-    })),
-    ohp: exerciseTemplate.ohp.map((ex, idx) => ({
-      ...ex,
-      name: exerciseSubstitutions[idx] || ex.name,
-    })),
-  };
-
-  const currentExercises = exercises[liftType as keyof typeof exercises];
+  const currentExercises = templateExercises;
   const hasSupplemental = programVariation === 'bbb' || programVariation === 'bbs';
   const totalSteps = 1 + (hasSupplemental ? 1 : 0) + currentExercises.length;
 
@@ -390,17 +386,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   };
 
   const handleOpenSubstitution = (exerciseIndex: number) => {
-    const baseExercise = baseExercises[liftType as keyof typeof baseExercises][exerciseIndex];
-    setSubstitutionTarget({ exerciseIndex, exerciseName: baseExercise.name });
+    const currentExercise = currentExercises[exerciseIndex];
+    setSubstitutionTarget({ exerciseIndex, exerciseName: currentExercise.name });
     setShowSubstitutionModal(true);
   };
 
   const handleSubstitute = (newExercise: string) => {
     if (substitutionTarget) {
-      setExerciseSubstitutions({
-        ...exerciseSubstitutions,
-        [substitutionTarget.exerciseIndex]: newExercise,
-      });
+      console.log('Substitution handled in template system');
     }
   };
 
@@ -430,6 +423,22 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
               : 0
           }
           supplementalConfig={getSupplementalWorkConfig(programVariation)}
+          onSaveExercises={saveTemplate}
+          onResetExercises={() => resetToDefault(defaultExercises)}
+          availableExercises={[
+            ...baseExercises.squat,
+            ...baseExercises.bench,
+            ...baseExercises.deadlift,
+            ...baseExercises.ohp,
+            ...bbbExercises.squat,
+            ...bbbExercises.bench,
+            ...bbbExercises.deadlift,
+            ...bbbExercises.ohp,
+          ].filter((ex, index, self) =>
+            index === self.findIndex(e => e.name === ex.name)
+          )}
+          isSaving={templateSaving}
+          saveError={templateError}
         />
       </div>
     );
@@ -537,7 +546,6 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         exerciseSets={exerciseSets}
         unitPreference={profile.unit_preference || 'lb'}
         lastSetData={getLastSetData(currentExercise.name)}
-        substitutedFrom={exerciseSubstitutions[exerciseIndex] ? baseExercises[liftType as keyof typeof baseExercises][exerciseIndex].name : undefined}
         onUpdateSet={(index, field, value) => updateAccessorySet(exerciseIndex, index, field, value)}
         onAddSet={() => addAccessorySet(exerciseIndex)}
         onRemoveSet={(index) => removeAccessorySet(exerciseIndex, index)}
