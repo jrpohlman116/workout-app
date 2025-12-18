@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
-import { RefreshCw, Check, Info, Plus } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { RefreshCw, Check, Info, Search } from 'lucide-react';
 import AccessibleModal from '../accessible/AccessibleModal';
 import { supabase } from '../../lib/supabase';
 import { ExerciseSubstitution } from '../../lib/supabase';
+import { Exercise } from '../../pages/WorkoutDetail/types';
 
 interface ExerciseSubstitutionModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentExercise: string;
   onSubstitute: (newExercise: string) => void;
+  availableExercises?: Exercise[];
 }
 
 export default function ExerciseSubstitutionModal({
@@ -16,20 +18,29 @@ export default function ExerciseSubstitutionModal({
   onClose,
   currentExercise,
   onSubstitute,
+  availableExercises = [],
 }: ExerciseSubstitutionModalProps) {
   const [substitutions, setSubstitutions] = useState<ExerciseSubstitution[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubstitution, setSelectedSubstitution] = useState<string>('');
-  const [showCustomInput, setShowCustomInput] = useState(false);
-  const [customExerciseName, setCustomExerciseName] = useState('');
+  const [showAllExercises, setShowAllExercises] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen && currentExercise) {
       loadSubstitutions();
-      setShowCustomInput(false);
-      setCustomExerciseName('');
+      setShowAllExercises(false);
+      setSearchQuery('');
+      setSelectedSubstitution('');
     }
   }, [isOpen, currentExercise]);
+
+  useEffect(() => {
+    if (showAllExercises && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [showAllExercises]);
 
   const loadSubstitutions = async () => {
     setLoading(true);
@@ -51,42 +62,34 @@ export default function ExerciseSubstitutionModal({
   };
 
   const handleConfirm = () => {
-    const exerciseToUse = showCustomInput ? customExerciseName.trim() : selectedSubstitution;
-    if (exerciseToUse) {
-      onSubstitute(exerciseToUse);
+    if (selectedSubstitution) {
+      onSubstitute(selectedSubstitution);
       setSelectedSubstitution('');
-      setCustomExerciseName('');
-      setShowCustomInput(false);
+      setSearchQuery('');
+      setShowAllExercises(false);
       onClose();
     }
   };
 
   const handleCancel = () => {
     setSelectedSubstitution('');
-    setCustomExerciseName('');
-    setShowCustomInput(false);
+    setSearchQuery('');
+    setShowAllExercises(false);
     onClose();
   };
 
-  const handleSelectPredefined = (exercise: string) => {
+  const handleSelectExercise = (exercise: string) => {
     setSelectedSubstitution(exercise);
-    setShowCustomInput(false);
-    setCustomExerciseName('');
-  };
-
-  const handleShowCustomInput = () => {
-    setShowCustomInput(true);
-    setSelectedSubstitution('');
   };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easier':
-        return 'text-green-600 bg-green-50';
+        return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30';
       case 'harder':
-        return 'text-red-600 bg-red-50';
+        return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
       default:
-        return 'text-blue-600 bg-blue-50';
+        return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30';
     }
   };
 
@@ -101,6 +104,16 @@ export default function ExerciseSubstitutionModal({
     }
   };
 
+  const filteredAvailableExercises = availableExercises.filter(
+    ex => ex.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      ex.name !== currentExercise
+  );
+
+  const recommendedExerciseNames = new Set(substitutions.map(s => s.substitute_exercise));
+  const otherExercises = filteredAvailableExercises.filter(
+    ex => !recommendedExerciseNames.has(ex.name)
+  );
+
   return (
     <AccessibleModal
       isOpen={isOpen}
@@ -110,9 +123,9 @@ export default function ExerciseSubstitutionModal({
       size="lg"
     >
       <div className="space-y-4">
-        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-          <div className="flex items-center gap-2 text-gray-700">
-            <Info className="w-5 h-5 flex-shrink-0" />
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+            <Info className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
             <p className="text-sm">
               Current exercise: <span className="font-semibold">{currentExercise}</span>
             </p>
@@ -121,110 +134,185 @@ export default function ExerciseSubstitutionModal({
 
         {loading ? (
           <div className="py-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading substitution options...</p>
-          </div>
-        ) : substitutions.length === 0 ? (
-          <div className="py-12 text-center">
-            <RefreshCw className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No substitutions available for this exercise.</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400" aria-hidden="true"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading substitution options...</p>
           </div>
         ) : (
           <>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                Available Substitutions ({substitutions.length})
-              </h3>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {substitutions.map((sub) => (
-                  <button
-                    key={sub.id}
-                    onClick={() => handleSelectPredefined(sub.substitute_exercise)}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                      selectedSubstitution === sub.substitute_exercise
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-900">{sub.substitute_exercise}</h4>
-                          <span
-                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${getDifficultyColor(
-                              sub.difficulty
-                            )}`}
-                          >
-                            {getDifficultyLabel(sub.difficulty)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">{sub.description}</p>
-                        <div className="flex flex-wrap gap-2 text-xs">
-                          <span className="text-gray-500 dark:text-gray-300">
-                            <span className="font-medium">Equipment:</span> {sub.equipment_needed}
-                          </span>
-                          {sub.muscle_groups.length > 0 && (
-                            <span className="text-gray-500 dark:text-gray-300">
-                              <span className="font-medium">Targets:</span>{' '}
-                              {sub.muscle_groups.join(', ')}
+            {substitutions.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  Recommended Substitutions ({substitutions.length})
+                </h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto" role="list">
+                  {substitutions.map((sub) => (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => handleSelectExercise(sub.substitute_exercise)}
+                      className={`w-full text-left p-4 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+                        selectedSubstitution === sub.substitute_exercise
+                          ? 'border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                      role="listitem"
+                      aria-label={`${sub.substitute_exercise}, ${getDifficultyLabel(sub.difficulty)} difficulty. ${sub.description}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">{sub.substitute_exercise}</h4>
+                            <span
+                              className={`text-xs font-medium px-2 py-0.5 rounded-full ${getDifficultyColor(
+                                sub.difficulty
+                              )}`}
+                            >
+                              {getDifficultyLabel(sub.difficulty)}
                             </span>
-                          )}
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{sub.description}</p>
+                          <div className="flex flex-wrap gap-2 text-xs">
+                            <span className="text-gray-500 dark:text-gray-400">
+                              <span className="font-medium">Equipment:</span> {sub.equipment_needed}
+                            </span>
+                            {sub.muscle_groups.length > 0 && (
+                              <span className="text-gray-500 dark:text-gray-400">
+                                <span className="font-medium">Targets:</span>{' '}
+                                {sub.muscle_groups.join(', ')}
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        {selectedSubstitution === sub.substitute_exercise && (
+                          <Check className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
+                        )}
                       </div>
-                      {selectedSubstitution === sub.substitute_exercise && (
-                        <Check className="w-6 h-6 text-blue-600 flex-shrink-0" aria-hidden="true" />
-                      )}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="pt-4 border-t border-gray-200">
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
-                onClick={handleShowCustomInput}
-                className={`w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all mb-4 ${
-                  showCustomInput
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                type="button"
+                onClick={() => setShowAllExercises(!showAllExercises)}
+                className={`w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+                  showAllExercises
+                    ? 'border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
+                aria-expanded={showAllExercises}
+                aria-controls="all-exercises-list"
               >
-                <Plus className="w-5 h-5 text-blue-600" />
-                <span className="font-semibold text-gray-900">Add Custom Exercise</span>
+                <Search className="w-5 h-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  {showAllExercises ? 'Hide All Exercises' : 'Search All Exercises'}
+                </span>
               </button>
 
-              {showCustomInput && (
-                <div className="mb-4">
-                  <label htmlFor="custom-exercise" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Custom Exercise Name
-                  </label>
-                  <input
-                    id="custom-exercise"
-                    type="text"
-                    value={customExerciseName}
-                    onChange={(e) => setCustomExerciseName(e.target.value)}
-                    placeholder="Enter exercise name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    autoFocus
-                  />
+              {showAllExercises && (
+                <div id="all-exercises-list" className="mt-4 space-y-4">
+                  <div className="relative">
+                    <label htmlFor="exercise-search" className="sr-only">
+                      Search exercises
+                    </label>
+                    <Search
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5"
+                      aria-hidden="true"
+                    />
+                    <input
+                      ref={searchInputRef}
+                      id="exercise-search"
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search for an exercise..."
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+                      role="searchbox"
+                      aria-autocomplete="list"
+                      aria-controls="available-exercises-list"
+                    />
+                  </div>
+
+                  {otherExercises.length > 0 ? (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Available Exercises ({otherExercises.length})
+                      </h3>
+                      <div
+                        id="available-exercises-list"
+                        role="list"
+                        className="space-y-2 max-h-64 overflow-y-auto"
+                      >
+                        {otherExercises.map((exercise, index) => (
+                          <button
+                            key={`${exercise.name}-${index}`}
+                            type="button"
+                            onClick={() => handleSelectExercise(exercise.name)}
+                            className={`w-full text-left p-4 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+                              selectedSubstitution === exercise.name
+                                ? 'border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                            }`}
+                            role="listitem"
+                            aria-label={`${exercise.name}, ${exercise.sets} sets of ${exercise.reps} reps${exercise.isBodyweight ? ', bodyweight exercise' : ''}`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                                  {exercise.name}
+                                </h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                  {exercise.sets} sets × {exercise.reps} reps
+                                  {exercise.isBodyweight && (
+                                    <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
+                                      Bodyweight
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                              {selectedSubstitution === exercise.name && (
+                                <Check className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : searchQuery ? (
+                    <div className="py-8 text-center">
+                      <p className="text-gray-600 dark:text-gray-400">
+                        No exercises found matching "{searchQuery}"
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Start typing to search for exercises
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
+            </div>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={handleCancel}
-                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirm}
-                  disabled={!selectedSubstitution && (!showCustomInput || !customExerciseName.trim())}
-                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Confirm Substitution
-                </button>
-              </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={!selectedSubstitution}
+                className="flex-1 px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              >
+                Confirm Substitution
+              </button>
             </div>
           </>
         )}

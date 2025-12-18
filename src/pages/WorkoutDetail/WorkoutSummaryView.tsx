@@ -316,6 +316,7 @@ export default function WorkoutSummaryView({
           onClose={() => setShowSubstitutionModal(false)}
           currentExercise={substitutionTarget.name}
           onSubstitute={handleConfirmSubstitution}
+          availableExercises={availableExercises}
         />
       )}
     </div>

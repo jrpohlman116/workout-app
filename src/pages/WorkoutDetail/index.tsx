@@ -571,6 +571,18 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           onClose={() => setShowSubstitutionModal(false)}
           currentExercise={substitutionTarget.exerciseName}
           onSubstitute={handleSubstitute}
+          availableExercises={[
+            ...baseExercises.squat,
+            ...baseExercises.bench,
+            ...baseExercises.deadlift,
+            ...baseExercises.ohp,
+            ...bbbExercises.squat,
+            ...bbbExercises.bench,
+            ...bbbExercises.deadlift,
+            ...bbbExercises.ohp,
+          ].filter((ex, index, self) =>
+            index === self.findIndex(e => e.name === ex.name)
+          )}
         />
       )}
     </div>
