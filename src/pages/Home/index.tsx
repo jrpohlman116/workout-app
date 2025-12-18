@@ -313,7 +313,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             >
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
-                  Cycle {i + 1} - +{getCycleProgression(i + 1, 'squat')} lbs
+                  Cycle {i + 1} - +{getCycleProgression(i + 1, 'squat')} {profile.unit_preference || 'lb'}
                 </option>
               ))}
             </select>
@@ -323,7 +323,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Cycle</div>
                   <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{profile.current_cycle}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">+{progression} lbs</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">+{progression} {profile.unit_preference || 'lb'}</div>
                 </div>
                 <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-300 flex-shrink-0" aria-hidden="true" />
               </div>
