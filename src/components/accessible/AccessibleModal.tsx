@@ -34,9 +34,9 @@ export default function AccessibleModal({
   if (!isOpen) return null;
 
   const sizeClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-2xl'
+    sm: 'w-96 max-w-[calc(100vw-2rem)]',
+    md: 'w-[28rem] max-w-[calc(100vw-2rem)]',
+    lg: 'w-[42rem] max-w-[calc(100vw-2rem)]'
   };
 
   const titleId = `modal-title-${title.replace(/\s+/g, '-').toLowerCase()}`;
@@ -58,17 +58,17 @@ export default function AccessibleModal({
 
       <FocusTrap active={isOpen} onEscape={onClose}>
         <div
-          className={`relative bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
+          className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl ${sizeClasses[size]} max-h-[90vh] overflow-y-auto transition-colors`}
         >
-          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-            <h2 id={titleId} className="text-xl font-bold text-gray-900">
+          <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between transition-colors">
+            <h2 id={titleId} className="text-xl font-bold text-gray-900 dark:text-gray-100">
               {title}
             </h2>
             <button
               type="button"
               onClick={onClose}
               aria-label="Close dialog"
-              className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-1"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded-lg p-1 transition-colors"
             >
               <X className="w-6 h-6" aria-hidden="true" />
             </button>

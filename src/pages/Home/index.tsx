@@ -294,7 +294,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Week</div>
                   <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{profile.current_week}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">{getWeekSubtext(profile.current_week)}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5 whitespace-nowrap">{getWeekSubtext(profile.current_week)}</div>
                 </div>
                 <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-300 flex-shrink-0" aria-hidden="true" />
               </div>
