@@ -580,6 +580,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             ...bbbExercises.bench,
             ...bbbExercises.deadlift,
             ...bbbExercises.ohp,
+            ...bbsExercises.squat,
+            ...bbsExercises.bench,
+            ...bbsExercises.deadlift,
+            ...bbsExercises.ohp,
           ].filter((ex, index, self) =>
             index === self.findIndex(e => e.name === ex.name)
           )}
