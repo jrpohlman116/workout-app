@@ -51,7 +51,7 @@ export default function AccessibleModal({
       aria-describedby={descId}
     >
       <div
-        className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="absolute inset-0 bg-blue-950/60 transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />

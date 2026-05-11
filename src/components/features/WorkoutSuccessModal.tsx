@@ -14,7 +14,7 @@ export default function WorkoutSuccessModal({
   onClose
 }: WorkoutSuccessModalProps) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-blue-950/60 flex items-center justify-center p-4 z-50">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 max-w-md w-full animate-scale-in">
         <div className="text-center">
           <p className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-6">

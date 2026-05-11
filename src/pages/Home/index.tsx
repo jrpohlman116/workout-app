@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateWorkoutWeights, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
-import { Calendar, RefreshCw, ChevronRight, Check, SkipForward, Activity, Layers } from 'lucide-react';
+import { Calendar, RefreshCw, ChevronRight, Check, Activity, Layers } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
@@ -270,17 +270,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         )}
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Workouts</h2>
-            <button
-              onClick={() => setShowSkipWeekModal(true)}
-              disabled={skipping}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
-            >
-              <SkipForward className="w-4 h-4" />
-              Move to Next Week
-            </button>
-          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Workouts</h2>
           {isDeload && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4 mb-4">
               <p className="text-gray-900 dark:text-gray-100 font-semibold mb-1">Deload Week</p>

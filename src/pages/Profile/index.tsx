@@ -65,6 +65,7 @@ export default function ProfilePage() {
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const toggleWeakPoint = (lift: keyof WeakPoints, point: StickingPoint) => {
     setWeakPoints(prev => {
@@ -406,7 +407,7 @@ export default function ProfilePage() {
                 Training Settings
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Your program is built around your meet date and tailored to your weak points.
+                Your program is built around your meet date and tailored to your sticking points.
               </p>
             </div>
 
@@ -617,7 +618,7 @@ export default function ProfilePage() {
 
       <AccessibleModal
         isOpen={showDeleteAccountModal}
-        onClose={() => setShowDeleteAccountModal(false)}
+        onClose={() => { setShowDeleteAccountModal(false); setDeleteConfirmText(''); setDeleteError(''); }}
         title="Delete Account"
         description="This action cannot be undone"
         size="sm"
@@ -632,15 +633,25 @@ export default function ProfilePage() {
               <li>Your account and profile data</li>
             </ul>
           </div>
-          <p className="text-gray-600 dark:text-gray-300 text-sm">
-            This action cannot be reversed. Your data will be permanently deleted.
-          </p>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+              Type <span className="font-mono font-bold">DELETE</span> to confirm
+            </label>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={e => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              autoComplete="off"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono"
+            />
+          </div>
           {deleteError && (
             <p className="text-sm text-red-600 dark:text-red-400" role="alert">{deleteError}</p>
           )}
           <div className="flex gap-3">
             <button
-              onClick={() => setShowDeleteAccountModal(false)}
+              onClick={() => { setShowDeleteAccountModal(false); setDeleteConfirmText(''); setDeleteError(''); }}
               disabled={deleteLoading}
               className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
             >
@@ -648,7 +659,7 @@ export default function ProfilePage() {
             </button>
             <button
               onClick={handleDeleteAccount}
-              disabled={deleteLoading}
+              disabled={deleteLoading || deleteConfirmText !== 'DELETE'}
               className="flex-1 px-4 py-3 bg-red-600 dark:bg-red-500 text-white rounded-xl font-semibold hover:bg-red-700 dark:hover:bg-red-600 transition-colors disabled:opacity-50"
             >
               {deleteLoading ? 'Deleting...' : 'Delete Forever'}

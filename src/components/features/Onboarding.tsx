@@ -72,7 +72,7 @@ export default function Onboarding() {
     if (step === 1) return 'Basic Information';
     if (step === 2) return 'Starting Maxes';
     if (step === 3) return 'Meet or Test Date';
-    return 'Weak Points';
+    return 'Sticking Points';
   };
 
   const handleNextStep = () => {
