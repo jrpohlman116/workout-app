@@ -265,6 +265,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setMainSets(newSets);
   };
 
+  const handleWorkingWeightAdjust = (weight: number) => {
+    setMainSets(prev => prev.map(set => ({ ...set, weight: String(weight) })));
+  };
+
   const updateAccessorySet = (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: string) => {
     const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill(null).map(() => ({ reps: '', weight: '' }));
     const newSets = [...exerciseSets];
@@ -480,6 +484,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           phase={currentBlock?.phase}
           onUpdateSet={updateMainSet}
           onRpeChange={setRpe}
+          onWorkingWeightAdjust={handleWorkingWeightAdjust}
           onNext={handleNext}
           nextExerciseName={nextExercise}
         />

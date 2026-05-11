@@ -241,12 +241,25 @@ export interface WarmupSet {
   percentage?: number;
 }
 
+export type WarmupFeel = 'easy' | 'good' | 'bad';
+
+const APPROACH_PCT: Record<WarmupFeel, number> = {
+  bad:  0.90,
+  good: 0.90,
+  easy: 0.93,
+};
+
+const WORKING_SET_PCT: Record<WarmupFeel, Record<WarmupFeel, number>> = {
+  bad:  { bad: 0.96, good: 0.98, easy: 1.00 },
+  good: { bad: 0.98, good: 1.00, easy: 1.02 },
+  easy: { bad: 1.00, good: 1.02, easy: 1.04 },
+};
+
 export interface WarmupProgression {
   fixedSets: WarmupSet[];
-  approachWeights: {
-    smooth: number;
-    tough: number;
-  };
+  getApproachWeight: (set4Feel: WarmupFeel) => number;
+  getAdjustedWorkingWeight: (set4Feel: WarmupFeel, set5Feel: WarmupFeel) => number;
+  approachWeights: { smooth: number; tough: number }; // legacy — used by meet day flow
 }
 
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
@@ -369,12 +382,18 @@ export function calculateWarmupSets(
     { weight: Math.round(topSetWeight * 0.82 / roundTo) * roundTo, reps: 2, percentage: 82 },
   ];
 
+  const getApproachWeight = (set4Feel: WarmupFeel): number =>
+    Math.round(topSetWeight * APPROACH_PCT[set4Feel] / roundTo) * roundTo;
+
+  const getAdjustedWorkingWeight = (set4Feel: WarmupFeel, set5Feel: WarmupFeel): number =>
+    Math.round(topSetWeight * WORKING_SET_PCT[set4Feel][set5Feel] / roundTo) * roundTo;
+
   const approachWeights = {
     smooth: Math.round(topSetWeight * 0.95 / roundTo) * roundTo,
-    tough: Math.round(topSetWeight * 0.93 / roundTo) * roundTo,
+    tough:  Math.round(topSetWeight * 0.93 / roundTo) * roundTo,
   };
 
-  return { fixedSets, approachWeights };
+  return { fixedSets, getApproachWeight, getAdjustedWorkingWeight, approachWeights };
 }
 
 /**

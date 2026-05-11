@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import AccessibleFormGroup from '../../components/accessible/AccessibleFormGroup';
-import { WavePhase, calculateBackoffSets, calculateWarmupSets } from '../../lib/calculations';
+import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets } from '../../lib/calculations';
 import { SetInput } from './types';
 
 interface MainLiftViewProps {
@@ -12,6 +12,7 @@ interface MainLiftViewProps {
   phase?: WavePhase;
   onUpdateSet: (index: number, field: 'reps' | 'weight', value: string) => void;
   onRpeChange?: (rpe: number | null) => void;
+  onWorkingWeightAdjust?: (weight: number) => void;
   onNext: () => void;
   nextExerciseName: string | null;
 }
@@ -35,11 +36,13 @@ export default function MainLiftView({
   phase,
   onUpdateSet,
   onRpeChange,
+  onWorkingWeightAdjust,
   onNext,
   nextExerciseName,
 }: MainLiftViewProps) {
   const [selectedRpe, setSelectedRpe] = useState<number | null>(null);
-  const [warmupFeel, setWarmupFeel] = useState<'smooth' | 'tough' | null>(null);
+  const [set4Feel, setSet4Feel] = useState<WarmupFeel | null>(null);
+  const [set5Feel, setSet5Feel] = useState<WarmupFeel | null>(null);
 
   const isRealization = phase === 'realization';
   const isDeload = phase === 'deload';
@@ -63,7 +66,8 @@ export default function MainLiftView({
       : `Complete all ${mainSets.length} sets at the prescribed weight.`;
 
   const warmup = topSetWeight > 0 ? calculateWarmupSets(topSetWeight, unitPreference) : null;
-  const approachWeight = warmupFeel === 'smooth' ? warmup?.approachWeights.smooth : warmupFeel === 'tough' ? warmup?.approachWeights.tough : null;
+  const approachWeight = set4Feel && warmup ? warmup.getApproachWeight(set4Feel) : null;
+  const adjustedWeight = set4Feel && set5Feel && warmup ? warmup.getAdjustedWorkingWeight(set4Feel, set5Feel) : null;
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
@@ -82,36 +86,70 @@ export default function MainLiftView({
               </div>
             ))}
           </div>
-          {isRealization && !warmupFeel && topSetWeight > 0 && (
+          {/* Stage 1: how did 82% feel? */}
+          {!set4Feel && topSetWeight > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">How did the 82% set feel?</p>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setWarmupFeel('smooth')}
-                  className="flex-1 py-2.5 rounded-lg font-semibold text-sm transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 active-press"
-                >
-                  Smooth
-                </button>
-                <button
-                  onClick={() => setWarmupFeel('tough')}
-                  className="flex-1 py-2.5 rounded-lg font-semibold text-sm transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 active-press"
-                >
-                  Tough
-                </button>
+                {(['easy', 'good', 'bad'] as WarmupFeel[]).map(feel => (
+                  <button
+                    key={feel}
+                    onClick={() => setSet4Feel(feel)}
+                    className="flex-1 py-2.5 rounded-lg font-semibold text-sm capitalize transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                  >
+                    {feel.charAt(0).toUpperCase() + feel.slice(1)}
+                  </button>
+                ))}
               </div>
             </div>
           )}
-          {isRealization && approachWeight && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
-              <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
-                {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unitPreference}</span>
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                {warmupFeel === 'smooth'
-                  ? 'You felt strong. Approach at 95%, then go for your planned top set if smooth.'
-                  : 'That was tough. Approach at 93%, then reassess before going heavier.'}
-              </p>
+
+          {/* Stage 2: approach single + how did it feel? */}
+          {set4Feel && approachWeight && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
+                <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+                  {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unitPreference} × 1</span>
+                </p>
+              </div>
+
+              {!set5Feel && (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">How did the approach feel?</p>
+                  <div className="flex gap-2">
+                    {(['easy', 'good', 'bad'] as WarmupFeel[]).map(feel => (
+                      <button
+                        key={feel}
+                        onClick={() => {
+                          setSet5Feel(feel);
+                          if (warmup) {
+                            onWorkingWeightAdjust?.(warmup.getAdjustedWorkingWeight(set4Feel, feel));
+                          }
+                        }}
+                        className="flex-1 py-2.5 rounded-lg font-semibold text-sm capitalize transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                      >
+                        {feel.charAt(0).toUpperCase() + feel.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Stage 3: adjusted working weight */}
+              {set5Feel && adjustedWeight !== null && (
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                  <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Your Working Weight</p>
+                  <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+                    {adjustedWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unitPreference}</span>
+                  </p>
+                  {adjustedWeight !== topSetWeight && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                      {adjustedWeight > topSetWeight ? '+' : ''}{adjustedWeight - topSetWeight} {unitPreference} from planned — adjusted for today.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
