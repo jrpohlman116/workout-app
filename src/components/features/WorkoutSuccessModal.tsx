@@ -17,11 +17,9 @@ export default function WorkoutSuccessModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 max-w-md w-full animate-scale-in">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          <p className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-6">
             {liftName}
-          </h2>
-          <div className="w-16 h-1 bg-blue-600 dark:bg-blue-500 mx-auto mb-6 rounded-full"></div>
-
+          </p>
           <div className="space-y-8 mb-8">
             <div className="text-left">
               <p className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Estimated Max</p>

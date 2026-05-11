@@ -46,6 +46,11 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
   const [substitutionTarget, setSubstitutionTarget] = useState<{ exerciseIndex: number; exerciseName: string } | null>(null);
   const [workoutSaveError, setWorkoutSaveError] = useState<string | null>(null);
+  const [draftOffer, setDraftOffer] = useState<{
+    mainSets: SetInput[];
+    accessoryData: { [key: number]: SetInput[] };
+    savedAt: string;
+  } | null>(null);
 
   const { lastAccessoryData, loading, getLastSetData } = useWorkoutData(user?.id, liftType);
 
@@ -128,6 +133,42 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       }
     }
   }, [loading, lastAccessoryData, liftType, profile, templateExercises]);
+
+  useEffect(() => {
+    if (!user || !profile) return;
+    const key = `jt_draft_${user.id}_${liftType}`;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed.cycle !== profile.current_cycle || parsed.week !== profile.current_week) {
+        localStorage.removeItem(key);
+        return;
+      }
+      const ageMs = Date.now() - new Date(parsed.savedAt).getTime();
+      if (ageMs > 7 * 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(key);
+        return;
+      }
+      setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, savedAt: parsed.savedAt });
+    } catch {
+      try { localStorage.removeItem(key); } catch {}
+    }
+  }, [user?.id, liftType, profile?.current_cycle, profile?.current_week]);
+
+  const handleRestoreDraft = () => {
+    if (!draftOffer || !user) return;
+    setMainSets(draftOffer.mainSets);
+    setAccessoryData(draftOffer.accessoryData);
+    try { localStorage.removeItem(`jt_draft_${user.id}_${liftType}`); } catch {}
+    setDraftOffer(null);
+  };
+
+  const handleDismissDraft = () => {
+    if (!user) return;
+    try { localStorage.removeItem(`jt_draft_${user.id}_${liftType}`); } catch {}
+    setDraftOffer(null);
+  };
 
   if (!profile) return null;
 
@@ -343,6 +384,30 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         <div className="bg-white dark:bg-gray-800">
           <WorkoutHeader {...headerProps} />
         </div>
+        {draftOffer && (
+          <div className="max-w-md mx-auto px-4 pt-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">Unsaved session found</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
+                Your last workout was interrupted while saving. Restore your sets to try again.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDismissDraft}
+                  className="flex-1 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Start Fresh
+                </button>
+                <button
+                  onClick={handleRestoreDraft}
+                  className="flex-1 px-3 py-2 text-xs font-semibold bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                >
+                  Restore Sets
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <WorkoutSummaryView
           mainWeights={weights}
           mainReps={mainReps}

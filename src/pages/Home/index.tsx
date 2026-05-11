@@ -228,14 +228,23 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             <div className="flex items-center gap-3">
               <Calendar className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
               <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Phase</div>
-                <div className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
-                  {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
-                </div>
-                {profile.meet_date && (
-                  <div className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">
-                    {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)))}w to meet
-                  </div>
+                {profile.meet_date ? (
+                  <>
+                    <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Meet</div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)))}w
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Phase</div>
+                    <div className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
+                      {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
+                    </div>
+                  </>
                 )}
               </div>
             </div>

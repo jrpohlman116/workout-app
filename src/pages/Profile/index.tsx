@@ -220,11 +220,16 @@ export default function ProfilePage() {
     setDeleteLoading(true);
     setDeleteError('');
     try {
-      await supabase.from('workout_sessions').delete().eq('user_id', user.id);
-      await supabase.from('accessory_exercises').delete().eq('user_id', user.id);
-      await supabase.from('exercise_substitutions').delete().eq('user_id', user.id);
-      await supabase.from('one_rm_test_sessions').delete().eq('user_id', user.id);
-      await supabase.from('user_profiles').delete().eq('id', user.id);
+      const { error: e1 } = await supabase.from('workout_sessions').delete().eq('user_id', user.id);
+      if (e1) throw e1;
+      const { error: e2 } = await supabase.from('accessory_exercises').delete().eq('user_id', user.id);
+      if (e2) throw e2;
+      const { error: e3 } = await supabase.from('exercise_substitutions').delete().eq('user_id', user.id);
+      if (e3) throw e3;
+      const { error: e4 } = await supabase.from('one_rm_test_sessions').delete().eq('user_id', user.id);
+      if (e4) throw e4;
+      const { error: e5 } = await supabase.from('user_profiles').delete().eq('id', user.id);
+      if (e5) throw e5;
       const { error } = await supabase.rpc('delete_user');
       if (error) throw error;
       await supabase.auth.signOut();
@@ -260,7 +265,7 @@ export default function ProfilePage() {
           <div className="flex gap-6 overflow-x-auto border-b border-gray-200 dark:border-gray-700">
             {(['body', 'maxes', 'training', 'security'] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)} className={tabClass(tab)}>
-                {{ body: 'Body Stats', maxes: 'Tested Maxes', training: 'Training', security: 'Settings' }[tab]}
+                {{ body: 'Body Stats', maxes: 'Tested Maxes', training: 'Training', security: 'Account' }[tab]}
                 {activeTab === tab && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
                 )}

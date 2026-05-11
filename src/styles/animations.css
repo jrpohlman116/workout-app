@@ -186,20 +186,6 @@
   animation: wiggle 0.5s ease-in-out;
 }
 
-/* Pulse Glow */
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-  }
-}
-
-.animate-pulse-glow {
-  animation: pulseGlow 2s infinite;
-}
-
 /* Shimmer Loading Effect */
 @keyframes shimmer {
   0% {
@@ -291,23 +277,6 @@
   animation: confettiFall 3s linear forwards;
   z-index: 9999;
   pointer-events: none;
-}
-
-/* Staggered Animation Delays */
-.stagger-1 {
-  animation-delay: 0.1s;
-}
-
-.stagger-2 {
-  animation-delay: 0.2s;
-}
-
-.stagger-3 {
-  animation-delay: 0.3s;
-}
-
-.stagger-4 {
-  animation-delay: 0.4s;
 }
 
 /* Hover Effects */

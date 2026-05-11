@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../../lib/supabase';
 import ProgressChart from './ProgressChart';
@@ -79,7 +79,7 @@ export default function ProgressPage() {
 
   const liftTypes = ['squat', 'bench', 'deadlift'];
   const liftNames = ['Squat', 'Bench', 'Deadlift'];
-  const colors = ['#3b82f6', '#10b981', '#6366f1'];
+  const colors = ['#2563eb', '#059669', '#4f46e5'];
 
   const chartData = liftTypes.map((type, idx) => {
     const liftSessions = nonDeloadSessions.filter(s => s.lift_type === type);
