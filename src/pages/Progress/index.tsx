@@ -25,7 +25,7 @@ export default function ProgressPage() {
   const [accessoryData, setAccessoryData] = useState<{ [sessionId: string]: AccessoryExercise[] }>({});
   const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<Tab>('overview');
-  const visibleLifts = useStaggeredAnimation(4, 100);
+  const visibleLifts = useStaggeredAnimation(3, 100);
   const createRipple = useRipple();
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function ProgressPage() {
 
     const { data } = await supabase
       .from('workout_sessions')
-      .select('id, user_id, lift_type, cycle, week, weight_lifted, reps_performed, calculated_1rm, completed_at, created_at, is_1rm_test, notes')
+      .select('id, user_id, lift_type, cycle, week, weight_lifted, reps_performed, calculated_1rm, completed_at, created_at, is_1rm_test, notes, wave, phase, rpe')
       .eq('user_id', user.id)
       .order('completed_at', { ascending: true });
 
@@ -68,18 +68,18 @@ export default function ProgressPage() {
 
   if (!profile) return null;
 
-  const nonDeloadSessions = sessions.filter(s => s.week !== 4);
+  // Filter deloads: use phase if available (new sessions), fall back to week 4 (legacy)
+  const nonDeloadSessions = sessions.filter(s => s.phase !== 'deload' && s.week !== 4);
 
   const lifts = [
     { name: '1RM Squat', displayName: 'Max Squat', type: 'squat', initial: profile.squat_max },
     { name: '1RM Bench', displayName: 'Max Bench', type: 'bench', initial: profile.bench_max },
     { name: '1RM Deadlift', displayName: 'Max Deadlift', type: 'deadlift', initial: profile.deadlift_max },
-    { name: '1RM OHP', displayName: 'Max Overhead Press', type: 'ohp', initial: profile.ohp_max },
   ];
 
-  const liftTypes = ['squat', 'bench', 'deadlift', 'ohp'];
-  const liftNames = ['Squat', 'Bench', 'Deadlift', 'OHP'];
-  const colors = ['#3b82f6', '#10b981', '#6366f1', '#f59e0b'];
+  const liftTypes = ['squat', 'bench', 'deadlift'];
+  const liftNames = ['Squat', 'Bench', 'Deadlift'];
+  const colors = ['#3b82f6', '#10b981', '#6366f1'];
 
   const chartData = liftTypes.map((type, idx) => {
     const liftSessions = nonDeloadSessions.filter(s => s.lift_type === type);
@@ -120,7 +120,7 @@ export default function ProgressPage() {
     return Object.entries(grouped).map(([date, sessions]) => ({
       date,
       sessions: sessions.sort((a, b) => {
-        const order = ['squat', 'bench', 'deadlift', 'ohp'];
+        const order = ['squat', 'upper', 'deadlift', 'bench'];
         return order.indexOf(a.lift_type) - order.indexOf(b.lift_type);
       }),
     }));
@@ -161,7 +161,7 @@ export default function ProgressPage() {
 
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Estimated 1RM Over Time</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Based on your AMRAP set performance each week</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Based on your AMAP set performance each realization week</p>
               {nonDeloadSessions.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-600 dark:text-gray-300 mb-2">Complete your first workout to see progress</p>
