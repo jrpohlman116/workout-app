@@ -57,7 +57,7 @@ export default function AccessibleFormGroup({
       )}
 
       {lastSetData && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 dark:border-blue-500 rounded-r-lg px-4 py-3 mb-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-4">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Previous Session</p>
           <p className="text-sm text-gray-700 dark:text-gray-300">{lastSetData}</p>
         </div>

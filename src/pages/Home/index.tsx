@@ -245,7 +245,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         {isMeetDay && (
           <button
             onClick={() => setShowOneRMTest(true)}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-all hover-lift"
+            className="w-full bg-blue-700 dark:bg-blue-600 text-white rounded-2xl shadow-sm p-6 hover:bg-blue-800 dark:hover:bg-blue-700 transition-colors hover-lift"
           >
             <div className="flex items-center gap-4">
               <div className="bg-white bg-opacity-20 rounded-full p-3">
@@ -273,9 +273,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             </button>
           </div>
           {isDeload && (
-            <div className="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4 mb-4">
-              <p className="text-gray-700 dark:text-gray-300 font-semibold mb-1">Deload Week — Active Recovery</p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Complete your workouts at lighter weights. No need to log your reps this week!</p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4 mb-4">
+              <p className="text-gray-900 dark:text-gray-100 font-semibold mb-1">Deload Week</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Lighter weights, same movements. Complete the sets and move on.</p>
             </div>
           )}
           <div className="space-y-3">

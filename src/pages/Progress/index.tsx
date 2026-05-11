@@ -153,8 +153,8 @@ export default function ProgressPage() {
         {activeTab === 'overview' && (
           <div className="space-y-4">
             {nonDeloadSessions.length === 0 && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 dark:border-blue-500 rounded-xl p-4">
-                <p className="text-gray-900 dark:text-gray-100 font-semibold mb-1">Start tracking your progress!</p>
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
+                <p className="text-gray-900 dark:text-gray-100 font-semibold mb-1">Start tracking your progress</p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">Complete your first workout to see your progress here.</p>
               </div>
             )}

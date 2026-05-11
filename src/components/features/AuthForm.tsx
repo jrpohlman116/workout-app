@@ -49,13 +49,13 @@ export default function AuthForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-blue-700 dark:bg-blue-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-white">Juggernaut</h1>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-lg p-8">
           <div className="flex gap-2 mb-6">
             <button
               onClick={() => setIsLogin(true)}
