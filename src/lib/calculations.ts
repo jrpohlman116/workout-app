@@ -263,6 +263,61 @@ export function calculateNewTrainingMax(amapWeight: number, amapReps: number): n
   return calculateTrainingMax(calculateOneRepMax(amapWeight, amapReps));
 }
 
+export interface JuggernautSetsConfig {
+  numSets: number;
+  reps: number;
+  weight: number;
+  isAmap: boolean;
+}
+
+const JUGGERNAUT_WAVE_PERCENTS: Record<RepWave, {
+  accumulation: { sets: number; pct: number };
+  intensification: { sets: number; pct: number };
+  realization: { pct: number };
+  deload: { sets: number; pct: number };
+}> = {
+  10: { accumulation: { sets: 5, pct: 0.60 }, intensification: { sets: 3, pct: 0.65 }, realization: { pct: 0.70 }, deload: { sets: 3, pct: 0.45 } },
+  8:  { accumulation: { sets: 5, pct: 0.65 }, intensification: { sets: 4, pct: 0.70 }, realization: { pct: 0.75 }, deload: { sets: 3, pct: 0.50 } },
+  5:  { accumulation: { sets: 5, pct: 0.70 }, intensification: { sets: 4, pct: 0.75 }, realization: { pct: 0.80 }, deload: { sets: 3, pct: 0.50 } },
+  3:  { accumulation: { sets: 5, pct: 0.75 }, intensification: { sets: 4, pct: 0.80 }, realization: { pct: 0.85 }, deload: { sets: 3, pct: 0.55 } },
+};
+
+export function calculateJuggernautSets(
+  wave: RepWave,
+  phase: WavePhase,
+  trainingMax: number,
+  unit: string = 'lb'
+): JuggernautSetsConfig {
+  const roundTo = unit === 'kg' ? 2.5 : 5;
+  const waveCfg = JUGGERNAUT_WAVE_PERCENTS[wave];
+
+  if (phase === 'realization') {
+    return {
+      numSets: 1,
+      reps: wave,
+      weight: Math.round(trainingMax * waveCfg.realization.pct / roundTo) * roundTo,
+      isAmap: true,
+    };
+  }
+
+  if (phase === 'deload') {
+    return {
+      numSets: waveCfg.deload.sets,
+      reps: 10,
+      weight: Math.round(trainingMax * waveCfg.deload.pct / roundTo) * roundTo,
+      isAmap: false,
+    };
+  }
+
+  const phaseCfg = phase === 'intensification' ? waveCfg.intensification : waveCfg.accumulation;
+  return {
+    numSets: phaseCfg.sets,
+    reps: wave,
+    weight: Math.round(trainingMax * phaseCfg.pct / roundTo) * roundTo,
+    isAmap: false,
+  };
+}
+
 /**
  * Returns back-off weight, sets, and reps based on RPE of the top set.
  * RPE ≤7: 10% drop, 3×5

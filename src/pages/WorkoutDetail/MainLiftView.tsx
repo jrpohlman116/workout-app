@@ -57,10 +57,10 @@ export default function MainLiftView({
   };
 
   const description = isRealization
-    ? 'Complete all sets. The final set is AMAP — push for max reps.'
+    ? 'After warm-ups, push for max reps on your top set.'
     : isDeload
-      ? 'Deload week. Complete all reps at reduced effort, no grinding.'
-      : 'Complete all prescribed reps with good technique.';
+      ? 'Complete all sets at reduced effort. No grinding.'
+      : `Complete all ${mainSets.length} sets at the prescribed weight.`;
 
   const warmup = topSetWeight > 0 ? calculateWarmupSets(topSetWeight, unitPreference) : null;
   const approachWeight = warmupFeel === 'smooth' ? warmup?.approachWeights.smooth : warmupFeel === 'tough' ? warmup?.approachWeights.tough : null;
@@ -82,7 +82,7 @@ export default function MainLiftView({
               </div>
             ))}
           </div>
-          {!warmupFeel && topSetWeight > 0 && (
+          {isRealization && !warmupFeel && topSetWeight > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">How did the 82% set feel?</p>
               <div className="flex gap-2">
@@ -101,7 +101,7 @@ export default function MainLiftView({
               </div>
             </div>
           )}
-          {approachWeight && (
+          {isRealization && approachWeight && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
               <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
               <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
@@ -125,10 +125,12 @@ export default function MainLiftView({
         onAddSet={() => {}}
         onRemoveSet={() => {}}
         weightUnit={unitPreference}
-        repsPlaceholder={mainReps === '5-3-1' ? '5' : String(mainReps)}
+        repsPlaceholder={isRealization
+          ? `${typeof mainReps === 'number' ? mainReps : 1}+`
+          : mainReps === '5-3-1' ? '5' : String(mainReps)}
         weightPlaceholder="0"
-        minSets={3}
-        maxSets={3}
+        minSets={mainSets.length}
+        maxSets={mainSets.length}
         lastSetData={lastSetData}
       />
 

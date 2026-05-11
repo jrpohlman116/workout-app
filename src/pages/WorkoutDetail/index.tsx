@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateWorkoutWeights, calculateOneRepMax, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
+import { calculateWorkoutWeights, calculateOneRepMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculateTrainingMax, getCycleProgression, JuggernautSetsConfig } from '../../lib/calculations';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
@@ -82,28 +82,41 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   useEffect(() => {
     if (!loading && profile && !initialMainSetsSet && !isUpperDay) {
-      const maxes: Record<string, number> = {
+      const lift1RM: Record<string, number> = {
         squat: profile.squat_max,
         bench: profile.bench_max,
         deadlift: profile.deadlift_max,
       };
+      const max = lift1RM[liftType] ?? 0;
+      const unit = profile.unit_preference || 'lb';
+      const block = getCurrentWeekBlock(profile.program_start_date, profile.meet_date);
 
-      const max = maxes[liftType] ?? 0;
-      const weights = calculateWorkoutWeights(
-        liftType,
-        max,
-        profile.current_cycle,
-        profile.current_week,
-        profile.unit_preference || 'lb'
+      let numSets: number;
+      let reps: number;
+      let weight: number;
+      let isAmap = false;
+
+      if (block) {
+        const trainingMax = calculateTrainingMax(max) + getCycleProgression(profile.current_cycle, liftType, unit);
+        const cfg = calculateJuggernautSets(block.wave, block.phase, trainingMax, unit);
+        numSets = cfg.numSets;
+        reps = cfg.reps;
+        weight = cfg.weight;
+        isAmap = cfg.isAmap;
+      } else {
+        const w = calculateWorkoutWeights(liftType, max, profile.current_cycle, profile.current_week, unit);
+        numSets = 3;
+        reps = profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : 1;
+        weight = w.set3;
+        isAmap = profile.current_week === 3;
+      }
+
+      setMainSets(
+        Array.from({ length: numSets }, () => ({
+          reps: isAmap ? '' : String(reps),
+          weight: String(weight),
+        }))
       );
-
-      const mainReps = profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5;
-
-      setMainSets([
-        { reps: String(mainReps), weight: String(weights.set1) },
-        { reps: String(mainReps), weight: String(weights.set2) },
-        { reps: String(mainReps), weight: String(weights.set3) },
-      ]);
       setInitialMainSetsSet(true);
     }
   }, [loading, profile, initialMainSetsSet, liftType, isUpperDay]);
@@ -179,20 +192,27 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     deadlift: profile.deadlift_max,
   };
 
-  const weights = isUpperDay
-    ? { set1: 0, set2: 0, set3: 0 }
-    : calculateWorkoutWeights(
-        liftType,
-        maxes[liftType] ?? 0,
-        profile.current_cycle,
-        profile.current_week,
-        profile.unit_preference || 'lb'
-      );
+  const unit = profile.unit_preference || 'lb';
+
+  const mainConfig: JuggernautSetsConfig | null = isUpperDay ? null : (() => {
+    const lift1RM = maxes[liftType] ?? 0;
+    if (currentBlock) {
+      const trainingMax = calculateTrainingMax(lift1RM) + getCycleProgression(profile.current_cycle, liftType, unit);
+      return calculateJuggernautSets(currentBlock.wave, currentBlock.phase, trainingMax, unit);
+    }
+    const w = calculateWorkoutWeights(liftType, lift1RM, profile.current_cycle, profile.current_week, unit);
+    return {
+      numSets: 3,
+      reps: profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : 1,
+      weight: w.set3,
+      isAmap: profile.current_week === 3,
+    };
+  })();
+
+  const mainReps = currentBlock ? currentBlock.wave : (profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5);
 
   const currentExercises = templateExercises;
   const totalSteps = (isUpperDay ? 0 : 1) + currentExercises.length;
-
-  const mainReps = profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5;
 
   const getProgressPercentage = () => {
     if (currentStep === 'summary') return 0;
@@ -421,8 +441,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           </div>
         )}
         <WorkoutSummaryView
-          mainWeights={weights}
-          mainReps={mainReps}
+          mainConfig={mainConfig}
           exercises={currentExercises}
           onStartWorkout={handleNext}
           unitPreference={profile.unit_preference || 'lb'}

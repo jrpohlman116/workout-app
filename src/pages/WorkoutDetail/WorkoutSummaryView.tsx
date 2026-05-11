@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Edit2, Save, X, RotateCcw, Plus } from 'lucide-react';
 import { Exercise } from './types';
+import { JuggernautSetsConfig } from '../../lib/calculations';
 import EditableExerciseList from '../../components/features/EditableExerciseList';
 import AddExerciseModal from '../../components/features/AddExerciseModal';
 import ExerciseSubstitutionModal from '../../components/features/ExerciseSubstitutionModal';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
 
 interface WorkoutSummaryViewProps {
-  mainWeights: { set1: number; set2: number; set3: number };
-  mainReps: string | number;
+  mainConfig: JuggernautSetsConfig | null;
   exercises: Exercise[];
   onStartWorkout: () => void;
   unitPreference?: string;
@@ -29,8 +29,7 @@ const PHASE_LABELS: Record<string, string> = {
 };
 
 export default function WorkoutSummaryView({
-  mainWeights,
-  mainReps,
+  mainConfig,
   exercises,
   onStartWorkout,
   unitPreference = 'lb',
@@ -160,47 +159,46 @@ export default function WorkoutSummaryView({
         {announcement}
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Main Sets</h2>
-          {wave && phase && (
-            <span className="text-xs font-semibold px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
-              {wave}-Rep Wave
-            </span>
-          )}
-        </div>
-        {phase && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{PHASE_LABELS[phase] ?? phase}</p>
-        )}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
-            <span className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400">Set 1</span>
-            <span className="text-lg font-bold tabular-nums text-gray-500 dark:text-gray-400">{mainWeights.set1} <span className="text-xs font-normal text-gray-400 dark:text-gray-500">{unitPreference} × {mainReps}</span></span>
-          </div>
-          <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
-            <span className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400">Set 2</span>
-            <span className="text-xl font-bold tabular-nums text-gray-700 dark:text-gray-300">{mainWeights.set2} <span className="text-xs font-normal text-gray-400 dark:text-gray-500">{unitPreference} × {mainReps}</span></span>
-          </div>
-          <div className={`flex justify-between items-center py-4 rounded-xl px-4 border-2 ${
-            phase === 'realization'
-              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 dark:border-blue-500'
-              : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
-          }`}>
-            <div>
-              <span className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400">
-                Set 3{phase === 'realization' ? ' — AMAP' : ''}
+      {mainConfig && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">Main Sets</p>
+            {wave && (
+              <span className="text-xs font-semibold px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full tabular-nums">
+                {wave}-Rep Wave
               </span>
-              {phase === 'realization' && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Push for max reps</p>
+            )}
+          </div>
+          {phase && (
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-4">
+              {PHASE_LABELS[phase] ?? phase}
+            </p>
+          )}
+          <div className="flex justify-between items-center py-4 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+            <div>
+              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">
+                {mainConfig.isAmap
+                  ? 'AMAP Set'
+                  : `${mainConfig.numSets} sets × ${mainConfig.reps}`}
+              </p>
+              {mainConfig.isAmap && (
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Push for max reps after warm-ups</p>
+              )}
+              {phase === 'deload' && (
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Easy effort, no grinding</p>
               )}
             </div>
             <div className="text-right">
-              <span className="text-3xl font-black text-gray-900 dark:text-gray-100 tabular-nums">{mainWeights.set3}</span>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 ml-1">{unitPreference} × {phase === 'realization' ? `${mainReps}+` : mainReps}</span>
+              <p className="text-3xl font-black tabular-nums text-gray-900 dark:text-gray-100 leading-none">
+                {mainConfig.weight}
+              </p>
+              <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-1">
+                {unitPreference}{mainConfig.isAmap ? ` × ${mainConfig.reps}+` : ''}
+              </p>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
