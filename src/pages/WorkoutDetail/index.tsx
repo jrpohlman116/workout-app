@@ -45,6 +45,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [workoutStats, setWorkoutStats] = useState({ estimated1RM: 0, totalTonnage: 0 });
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
   const [substitutionTarget, setSubstitutionTarget] = useState<{ exerciseIndex: number; exerciseName: string } | null>(null);
+  const [workoutSaveError, setWorkoutSaveError] = useState<string | null>(null);
 
   const { lastAccessoryData, loading, getLastSetData } = useWorkoutData(user?.id, liftType);
 
@@ -233,6 +234,18 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     if (!user) return;
 
     setSaving(true);
+    setWorkoutSaveError(null);
+
+    const draftKey = `jt_draft_${user.id}_${liftType}`;
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({
+        liftType, mainSets, accessoryData,
+        cycle: profile.current_cycle,
+        week: profile.current_week,
+        savedAt: new Date().toISOString(),
+      }));
+    } catch { /* storage unavailable — proceed anyway */ }
+
     try {
       const topSet = mainSets[mainSets.length - 1];
       const topWeight = parseFloat(topSet.weight);
@@ -283,11 +296,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         if (accessoryError) throw accessoryError;
       }
 
+      try { localStorage.removeItem(draftKey); } catch {}
+
       setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage });
       celebrate(40);
       setShowSuccessModal(true);
-    } catch (error) {
-      console.error('Error saving workout:', error);
+    } catch {
+      setWorkoutSaveError('Workout not saved. Your sets are still here — tap "Try again" when ready.');
     } finally {
       setSaving(false);
     }
@@ -390,6 +405,21 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           <AccessibleProgressIndicator current={progressCurrent} total={totalSteps} label="Workout progress" variant="bar" />
         </div>
       </div>
+
+      {workoutSaveError && (
+        <div className="max-w-md mx-auto px-4 pt-4" role="alert">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-4">
+            <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-3">{workoutSaveError}</p>
+            <button
+              onClick={handleComplete}
+              disabled={saving}
+              className="text-sm font-semibold text-red-700 dark:text-red-300 underline underline-offset-2 disabled:opacity-50"
+            >
+              {saving ? 'Retrying...' : 'Try again'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <AccessoryExerciseView
         exercise={currentExercise}

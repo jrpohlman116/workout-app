@@ -4,6 +4,7 @@ import { Exercise } from './types';
 import EditableExerciseList from '../../components/features/EditableExerciseList';
 import AddExerciseModal from '../../components/features/AddExerciseModal';
 import ExerciseSubstitutionModal from '../../components/features/ExerciseSubstitutionModal';
+import AccessibleModal from '../../components/accessible/AccessibleModal';
 
 interface WorkoutSummaryViewProps {
   mainWeights: { set1: number; set2: number; set3: number };
@@ -46,6 +47,7 @@ export default function WorkoutSummaryView({
   const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
   const [substitutionTarget, setSubstitutionTarget] = useState<{ index: number; name: string } | null>(null);
+  const [showResetModal, setShowResetModal] = useState(false);
   const [announcement, setAnnouncement] = useState('');
 
   useEffect(() => {
@@ -81,17 +83,20 @@ export default function WorkoutSummaryView({
     }
   };
 
-  const handleResetToDefault = async () => {
+  const handleResetToDefault = () => {
     if (!onResetExercises) return;
+    setShowResetModal(true);
+  };
 
-    if (confirm('Are you sure you want to reset to the default exercises? This cannot be undone.')) {
-      const success = await onResetExercises();
-      if (success) {
-        setIsEditMode(false);
-        announce('Workout template reset to defaults.');
-      } else {
-        announce('Failed to reset workout template. Please try again.');
-      }
+  const handleConfirmReset = async () => {
+    if (!onResetExercises) return;
+    setShowResetModal(false);
+    const success = await onResetExercises();
+    if (success) {
+      setIsEditMode(false);
+      announce('Workout template reset to defaults.');
+    } else {
+      announce('Failed to reset workout template. Please try again.');
     }
   };
 
@@ -319,6 +324,34 @@ export default function WorkoutSummaryView({
           availableExercises={availableExercises}
         />
       )}
+
+      <AccessibleModal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        title="Reset Exercises"
+        description="Restore default accessory exercises"
+        size="sm"
+      >
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          This replaces your customized exercise list with the default template. This cannot be undone.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowResetModal(false)}
+            disabled={isSaving}
+            className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirmReset}
+            disabled={isSaving}
+            className="flex-1 px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50"
+          >
+            Reset to Default
+          </button>
+        </div>
+      </AccessibleModal>
     </div>
   );
 }

@@ -32,12 +32,17 @@ export default function ProfilePage() {
   const [gender, setGender] = useState(profile?.gender || 'male');
   const [unitPreference, setUnitPreference] = useState(profile?.unit_preference || 'lb');
   const [bodyLoading, setBodyLoading] = useState(false);
+  const [bodyError, setBodyError] = useState('');
+  const [bodySaved, setBodySaved] = useState(false);
 
   // Maxes
   const [squatMax, setSquatMax] = useState(profile?.squat_max?.toString() || '');
   const [benchMax, setBenchMax] = useState(profile?.bench_max?.toString() || '');
   const [deadliftMax, setDeadliftMax] = useState(profile?.deadlift_max?.toString() || '');
   const [maxesLoading, setMaxesLoading] = useState(false);
+  const [maxesError, setMaxesError] = useState('');
+  const [maxesSaved, setMaxesSaved] = useState(false);
+  const [showRestartModal, setShowRestartModal] = useState(false);
 
   // Training settings
   const [meetDate, setMeetDate] = useState(profile?.meet_date || '');
@@ -46,6 +51,7 @@ export default function ProfilePage() {
   );
   const [trainingSaved, setTrainingSaved] = useState(false);
   const [trainingLoading, setTrainingLoading] = useState(false);
+  const [trainingError, setTrainingError] = useState('');
 
   // Security
   const [password, setPassword] = useState('');
@@ -58,6 +64,7 @@ export default function ProfilePage() {
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const toggleWeakPoint = (lift: keyof WeakPoints, point: StickingPoint) => {
     setWeakPoints(prev => {
@@ -74,6 +81,8 @@ export default function ProfilePage() {
     e.preventDefault();
     if (!user) return;
     setBodyLoading(true);
+    setBodyError('');
+    setBodySaved(false);
     try {
       const { error } = await supabase
         .from('user_profiles')
@@ -84,9 +93,11 @@ export default function ProfilePage() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
-      if (!error) await refreshProfile();
-    } catch (err) {
-      console.error('Error updating body stats:', err);
+      if (error) throw error;
+      await refreshProfile();
+      setBodySaved(true);
+    } catch {
+      setBodyError('Failed to save body stats. Please try again.');
     } finally {
       setBodyLoading(false);
     }
@@ -95,6 +106,8 @@ export default function ProfilePage() {
   const handleSaveMaxes = async () => {
     if (!user) return;
     setMaxesLoading(true);
+    setMaxesError('');
+    setMaxesSaved(false);
     try {
       const { error } = await supabase
         .from('user_profiles')
@@ -105,9 +118,11 @@ export default function ProfilePage() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
-      if (!error) await refreshProfile();
-    } catch (err) {
-      console.error('Error updating maxes:', err);
+      if (error) throw error;
+      await refreshProfile();
+      setMaxesSaved(true);
+    } catch {
+      setMaxesError('Failed to save maxes. Please try again.');
     } finally {
       setMaxesLoading(false);
     }
@@ -115,7 +130,10 @@ export default function ProfilePage() {
 
   const handleSaveMaxesAndRestart = async () => {
     if (!user) return;
+    setShowRestartModal(false);
     setMaxesLoading(true);
+    setMaxesError('');
+    setMaxesSaved(false);
     try {
       const { error } = await supabase
         .from('user_profiles')
@@ -129,9 +147,11 @@ export default function ProfilePage() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
-      if (!error) await refreshProfile();
-    } catch (err) {
-      console.error('Error restarting program:', err);
+      if (error) throw error;
+      await refreshProfile();
+      setMaxesSaved(true);
+    } catch {
+      setMaxesError('Failed to restart program. Please try again.');
     } finally {
       setMaxesLoading(false);
     }
@@ -141,6 +161,7 @@ export default function ProfilePage() {
     if (!user) return;
     setTrainingLoading(true);
     setTrainingSaved(false);
+    setTrainingError('');
     try {
       const { error } = await supabase
         .from('user_profiles')
@@ -150,12 +171,11 @@ export default function ProfilePage() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
-      if (!error) {
-        await refreshProfile();
-        setTrainingSaved(true);
-      }
-    } catch (err) {
-      console.error('Error saving training settings:', err);
+      if (error) throw error;
+      await refreshProfile();
+      setTrainingSaved(true);
+    } catch {
+      setTrainingError('Failed to save training settings. Please try again.');
     } finally {
       setTrainingLoading(false);
     }
@@ -198,6 +218,7 @@ export default function ProfilePage() {
   const handleDeleteAccount = async () => {
     if (!user) return;
     setDeleteLoading(true);
+    setDeleteError('');
     try {
       await supabase.from('workout_sessions').delete().eq('user_id', user.id);
       await supabase.from('accessory_exercises').delete().eq('user_id', user.id);
@@ -205,13 +226,12 @@ export default function ProfilePage() {
       await supabase.from('one_rm_test_sessions').delete().eq('user_id', user.id);
       await supabase.from('user_profiles').delete().eq('id', user.id);
       const { error } = await supabase.rpc('delete_user');
-      if (error) console.error('Error deleting account:', error);
+      if (error) throw error;
       await supabase.auth.signOut();
-    } catch (err) {
-      console.error('Error deleting account:', err);
+    } catch {
+      setDeleteError('Failed to delete account. Please try again or contact support.');
     } finally {
       setDeleteLoading(false);
-      setShowDeleteAccountModal(false);
     }
   };
 
@@ -299,6 +319,14 @@ export default function ProfilePage() {
               >
                 {bodyLoading ? 'Saving...' : 'Save Body Stats'}
               </button>
+              {bodyError && (
+                <p className="text-sm text-red-600 dark:text-red-400" role="alert">{bodyError}</p>
+              )}
+              {bodySaved && !bodyError && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 px-4 py-3 rounded-xl text-sm text-center">
+                  Body stats saved.
+                </div>
+              )}
             </form>
           </div>
         )}
@@ -340,10 +368,10 @@ export default function ProfilePage() {
                   disabled={maxesLoading}
                   className="w-1/3 bg-gray-600 dark:bg-gray-500 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                 >
-                  Save
+                  {maxesLoading ? 'Saving...' : 'Save'}
                 </button>
                 <button
-                  onClick={handleSaveMaxesAndRestart}
+                  onClick={() => setShowRestartModal(true)}
                   disabled={maxesLoading}
                   className="w-2/3 bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50"
                 >
@@ -353,6 +381,14 @@ export default function ProfilePage() {
               <p className="text-xs text-gray-500 dark:text-gray-300 text-center">
                 "Save & Restart Program" rebuilds your wave schedule from today
               </p>
+              {maxesError && (
+                <p className="text-sm text-red-600 dark:text-red-400 text-center" role="alert">{maxesError}</p>
+              )}
+              {maxesSaved && !maxesError && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 px-4 py-3 rounded-xl text-sm text-center">
+                  Maxes saved.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -438,7 +474,10 @@ export default function ProfilePage() {
               {trainingLoading ? 'Saving...' : 'Save Training Settings'}
             </button>
 
-            {trainingSaved && (
+            {trainingError && (
+              <p className="text-sm text-red-600 dark:text-red-400 text-center" role="alert">{trainingError}</p>
+            )}
+            {trainingSaved && !trainingError && (
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 px-4 py-3 rounded-xl text-sm text-center">
                 Training settings saved.
               </div>
@@ -591,6 +630,9 @@ export default function ProfilePage() {
           <p className="text-gray-600 dark:text-gray-300 text-sm">
             This action cannot be reversed. Your data will be permanently deleted.
           </p>
+          {deleteError && (
+            <p className="text-sm text-red-600 dark:text-red-400" role="alert">{deleteError}</p>
+          )}
           <div className="flex gap-3">
             <button
               onClick={() => setShowDeleteAccountModal(false)}
@@ -607,6 +649,34 @@ export default function ProfilePage() {
               {deleteLoading ? 'Deleting...' : 'Delete Forever'}
             </button>
           </div>
+        </div>
+      </AccessibleModal>
+
+      <AccessibleModal
+        isOpen={showRestartModal}
+        onClose={() => setShowRestartModal(false)}
+        title="Restart Program"
+        description="Your wave schedule will reset to Cycle 1, Week 1"
+        size="sm"
+      >
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          Your updated maxes will be saved and your program will restart from the beginning. This cannot be undone.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowRestartModal(false)}
+            disabled={maxesLoading}
+            className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSaveMaxesAndRestart}
+            disabled={maxesLoading}
+            className="flex-1 px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50"
+          >
+            {maxesLoading ? 'Restarting...' : 'Save & Restart'}
+          </button>
         </div>
       </AccessibleModal>
     </div>
