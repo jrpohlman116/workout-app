@@ -1,273 +1,367 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { TrendingUp, Info, Check } from 'lucide-react';
+import { calculateWarmupSets } from '../../lib/calculations';
+import { Activity } from 'lucide-react';
 
 interface OneRepMaxTestProps {
   onClose: () => void;
   onComplete: () => void;
 }
 
-type LiftType = 'squat' | 'bench' | 'deadlift' | 'ohp';
+type LiftType = 'squat' | 'bench' | 'deadlift';
+type Step = 'select' | 'warmup' | 'attempt' | 'complete';
+
+const LIFTS: { name: string; type: LiftType; maxKey: 'squat_max' | 'bench_max' | 'deadlift_max' }[] = [
+  { name: 'Squat', type: 'squat', maxKey: 'squat_max' },
+  { name: 'Bench Press', type: 'bench', maxKey: 'bench_max' },
+  { name: 'Deadlift', type: 'deadlift', maxKey: 'deadlift_max' },
+];
 
 export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProps) {
   const { profile, user, refreshProfile } = useAuth();
+
+  const [step, setStep] = useState<Step>('select');
   const [selectedLift, setSelectedLift] = useState<LiftType | null>(null);
-  const [testedWeight, setTestedWeight] = useState('');
-  const [step, setStep] = useState<'select' | 'guide' | 'record'>('select');
+  const [plannedAttempt, setPlannedAttempt] = useState('');
+  const [warmupFeel, setWarmupFeel] = useState<'smooth' | 'tough' | null>(null);
+  const [attemptResult, setAttemptResult] = useState<'success' | 'fail' | null>(null);
+  const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
   if (!profile || !user) return null;
 
-  const lifts = [
-    { name: 'Squat', type: 'squat' as LiftType, currentMax: profile.squat_max },
-    { name: 'Bench Press', type: 'bench' as LiftType, currentMax: profile.bench_max },
-    { name: 'Deadlift', type: 'deadlift' as LiftType, currentMax: profile.deadlift_max },
-    { name: 'Overhead Press', type: 'ohp' as LiftType, currentMax: profile.ohp_max },
-  ];
+  const unit = profile.unit_preference || 'lb';
+  const roundTo = unit === 'kg' ? 2.5 : 5;
 
-  const selectedLiftInfo = lifts.find(l => l.type === selectedLift);
+  const currentMax = selectedLift
+    ? profile[LIFTS.find(l => l.type === selectedLift)!.maxKey]
+    : 0;
 
-  const generateWarmupSets = (estimatedMax: number) => {
-    const unit = profile.unit_preference || 'lb';
-    const warmup = [
-      { weight: Math.round(estimatedMax * 0.5 / 5) * 5, reps: 5, label: 'Warm-up Set 1' },
-      { weight: Math.round(estimatedMax * 0.7 / 5) * 5, reps: 3, label: 'Warm-up Set 2' },
-      { weight: Math.round(estimatedMax * 0.85 / 5) * 5, reps: 1, label: 'Warm-up Set 3' },
-      { weight: Math.round(estimatedMax * 0.95 / 5) * 5, reps: 1, label: 'Final Warm-up' },
-    ];
+  const suggestedOpening = Math.round((currentMax * 0.9) / roundTo) * roundTo;
+  const suggestedSecond = Math.round((currentMax * 0.95) / roundTo) * roundTo;
 
-    return warmup.map(set => ({
-      ...set,
-      unit,
-    }));
+  const planned = parseFloat(plannedAttempt) || 0;
+  const warmup = planned > 0 ? calculateWarmupSets(planned, unit) : null;
+  const approachWeight = warmup
+    ? warmupFeel === 'smooth'
+      ? warmup.approachWeights.smooth
+      : warmupFeel === 'tough'
+        ? warmup.approachWeights.tough
+        : null
+    : null;
+
+  const handleSelectLift = (lift: LiftType) => {
+    setSelectedLift(lift);
+    const max = profile[LIFTS.find(l => l.type === lift)!.maxKey];
+    setPlannedAttempt(String(max));
+    setStep('warmup');
   };
 
-  const handleSelectLift = (liftType: LiftType) => {
-    setSelectedLift(liftType);
-    setStep('guide');
-  };
-
-  const handleProceedToRecord = () => {
-    setStep('record');
-  };
-
-  const handleSaveTest = async () => {
-    if (!selectedLift || !testedWeight || !selectedLiftInfo) return;
+  const handleSave = async () => {
+    if (!selectedLift || !attemptResult || planned <= 0) return;
 
     setSaving(true);
     try {
-      const weight = parseFloat(testedWeight);
-
       await supabase.from('workout_sessions').insert({
         user_id: user.id,
         lift_type: selectedLift,
         cycle: profile.current_cycle,
         week: profile.current_week,
-        weight_lifted: weight,
-        reps_performed: 1,
-        calculated_1rm: weight,
+        weight_lifted: planned,
+        reps_performed: attemptResult === 'success' ? 1 : 0,
+        calculated_1rm: attemptResult === 'success' ? planned : 0,
         is_1rm_test: true,
-        notes: `1RM Test - Previous estimated max: ${selectedLiftInfo.currentMax} ${profile.unit_preference || 'lb'}`,
+        notes: notes.trim() || null,
         completed_at: new Date().toISOString(),
       });
 
-      const maxField = `${selectedLift}_max`;
-      await supabase
-        .from('user_profiles')
-        .update({
-          [maxField]: weight,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
+      if (attemptResult === 'success' && planned > currentMax) {
+        const maxField = `${selectedLift}_max`;
+        await supabase
+          .from('user_profiles')
+          .update({ [maxField]: planned, updated_at: new Date().toISOString() })
+          .eq('id', user.id);
+        await refreshProfile();
+      }
 
-      await refreshProfile();
-      onComplete();
+      setStep('complete');
     } catch (error) {
-      console.error('Error saving 1RM test:', error);
+      console.error('Error saving 1RM attempt:', error);
     } finally {
       setSaving(false);
     }
   };
 
+  const handleLogAnother = () => {
+    const nextDefault = attemptResult === 'success' ? planned : currentMax;
+    setPlannedAttempt(String(nextDefault));
+    setWarmupFeel(null);
+    setAttemptResult(null);
+    setNotes('');
+    setStep('warmup');
+  };
+
+  const handleClose = () => {
+    setStep('select');
+    setSelectedLift(null);
+    setPlannedAttempt('');
+    setWarmupFeel(null);
+    setAttemptResult(null);
+    setNotes('');
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">1RM Testing</h2>
+          <div className="flex items-center gap-3">
+            <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Meet Day — 1RM Attempts</h2>
+          </div>
           <button
-            onClick={onClose}
-            className="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300 text-2xl leading-none"
+            onClick={handleClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl leading-none"
+            aria-label="Close"
           >
             &times;
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 space-y-6">
           {step === 'select' && (
-            <div className="space-y-4">
-              <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 dark:border-blue-500 rounded-xl p-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">About 1RM Testing</p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Test your true 1 rep max to update your training maxes. The app will guide you through
-                      a proper warm-up protocol and update your program based on your tested max.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Select a lift to test:</h3>
-
-              <div className="grid grid-cols-1 gap-3">
-                {lifts.map((lift) => (
+            <>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Select a lift to start your meet day attempt protocol.
+              </p>
+              <div className="space-y-3">
+                {LIFTS.map(lift => (
                   <button
                     key={lift.type}
                     onClick={() => handleSelectLift(lift.type)}
-                    className="bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-all text-left"
+                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors text-left"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                          Current tested max: {lift.currentMax} {profile.unit_preference || 'lb'}
-                        </p>
-                      </div>
-                      <TrendingUp className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Current max: {profile[lift.maxKey]} {unit}
+                      </p>
                     </div>
+                    <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">Select →</span>
                   </button>
                 ))}
               </div>
-            </div>
+            </>
           )}
 
-          {step === 'guide' && selectedLiftInfo && (
-            <div className="space-y-6">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{selectedLiftInfo.name}</h3>
-                <p className="text-gray-700 dark:text-gray-300">
-                  Current tested max: <span className="font-semibold">{selectedLiftInfo.currentMax} {profile.unit_preference || 'lb'}</span>
-                </p>
+          {step === 'warmup' && selectedLift && (
+            <>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {LIFTS.find(l => l.type === selectedLift)!.name}
+                  </p>
+                  <button onClick={() => setStep('select')} className="text-xs text-blue-600 dark:text-blue-400">
+                    Change lift
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <button
+                    onClick={() => setPlannedAttempt(String(suggestedOpening))}
+                    className={`p-3 rounded-xl border-2 text-left transition-colors ${
+                      plannedAttempt === String(suggestedOpening)
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
+                    }`}
+                  >
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Opening (90%)</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      {suggestedOpening} {unit}
+                    </p>
+                  </button>
+                  <button
+                    onClick={() => setPlannedAttempt(String(suggestedSecond))}
+                    className={`p-3 rounded-xl border-2 text-left transition-colors ${
+                      plannedAttempt === String(suggestedSecond)
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
+                    }`}
+                  >
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Second (95%)</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      {suggestedSecond} {unit}
+                    </p>
+                  </button>
+                </div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Planned attempt ({unit})
+                </label>
+                <input
+                  type="number"
+                  value={plannedAttempt}
+                  onChange={e => setPlannedAttempt(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
 
-              <div>
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                  <span className="bg-blue-600 dark:bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
-                  Suggested Warm-up Protocol
-                </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                  Follow these warm-up sets to prepare for your max attempt. Rest 2-3 minutes between sets.
-                </p>
-                <div className="space-y-2">
-                  {generateWarmupSets(selectedLiftInfo.currentMax).map((set, index) => (
-                    <div
-                      key={index}
-                      className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-3 flex items-center justify-between"
-                    >
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{set.label}</span>
-                      <span className="font-semibold text-gray-900 dark:text-gray-100">
-                        {set.weight} {set.unit} × {set.reps}
+              {warmup && (
+                <div className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 p-4 space-y-2">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-3">
+                    Warm-up to {planned} {unit}
+                  </h3>
+                  {warmup.fixedSets.map((set, idx) => (
+                    <div key={idx} className="flex justify-between items-center py-1.5 px-3 bg-gray-50 dark:bg-gray-600 rounded-lg text-sm">
+                      <span className="text-gray-600 dark:text-gray-300 font-medium">
+                        {set.percentage === 0 ? 'Bar' : `${set.percentage}%`}
+                      </span>
+                      <span className="text-gray-900 dark:text-gray-100 font-bold">
+                        {set.weight} {unit} × {set.reps}
                       </span>
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
 
-              <div>
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                  <span className="bg-blue-600 dark:bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
-                  Attempt Your Max
-                </h4>
-                <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>Rest 5-7 minutes after your final warm-up</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>Start with a weight you are confident you can lift</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>If successful, rest 5-7 minutes and attempt a heavier weight</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>Continue until you find your true 1 rep max</span>
-                  </li>
-                </ul>
-              </div>
+              {warmup && !warmupFeel && (
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">How did the 82% set feel?</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setWarmupFeel('smooth')}
+                      className="flex-1 py-2 rounded-lg font-semibold text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 transition-colors"
+                    >
+                      Smooth
+                    </button>
+                    <button
+                      onClick={() => setWarmupFeel('tough')}
+                      className="flex-1 py-2 rounded-lg font-semibold text-sm bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 transition-colors"
+                    >
+                      Tough
+                    </button>
+                  </div>
+                </div>
+              )}
 
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setStep('select')}
-                  className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={handleProceedToRecord}
-                  className="flex-1 bg-blue-600 dark:bg-blue-500 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                >
-                  Record My Max
-                </button>
-              </div>
-            </div>
+              {approachWeight && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Suggested approach single</p>
+                  <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                    {approachWeight} {unit}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mt-2">
+                    {warmupFeel === 'smooth'
+                      ? 'You felt strong. Take this approach, then go for your planned attempt.'
+                      : 'That was tough. Take this conservative approach and reassess before attempting.'}
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={() => setStep('attempt')}
+                disabled={!plannedAttempt || planned <= 0}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                Ready to attempt {planned > 0 ? `${planned} ${unit}` : ''}
+              </button>
+            </>
           )}
 
-          {step === 'record' && selectedLiftInfo && (
-            <div className="space-y-6">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{selectedLiftInfo.name}</h3>
-                <p className="text-gray-700 dark:text-gray-300">
-                  Previous tested max: <span className="font-semibold">{selectedLiftInfo.currentMax} {profile.unit_preference || 'lb'}</span>
+          {step === 'attempt' && selectedLift && (
+            <>
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                  {LIFTS.find(l => l.type === selectedLift)!.name} — Attempting
                 </p>
+                <p className="text-5xl font-bold text-gray-900 dark:text-gray-100">
+                  {planned}
+                </p>
+                <p className="text-lg text-gray-500 dark:text-gray-400">{unit}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setAttemptResult('success')}
+                  className={`py-5 rounded-xl font-bold text-lg transition-colors ${
+                    attemptResult === 'success'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200'
+                  }`}
+                >
+                  Made it
+                </button>
+                <button
+                  onClick={() => setAttemptResult('fail')}
+                  className={`py-5 rounded-xl font-bold text-lg transition-colors ${
+                    attemptResult === 'fail'
+                      ? 'bg-red-600 text-white'
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200'
+                  }`}
+                >
+                  Missed
+                </button>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Your Tested 1 Rep Max
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Notes (optional)
                 </label>
-                <div className="flex gap-3">
-                  <input
-                    type="number"
-                    value={testedWeight}
-                    onChange={(e) => setTestedWeight(e.target.value)}
-                    placeholder="Enter weight"
-                    min="0"
-                    step="0.5"
-                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-                  />
-                  <div className="px-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl font-semibold text-gray-700 dark:text-gray-300 flex items-center">
-                    {profile.unit_preference || 'lb'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-600 dark:border-amber-500 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm">
-                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Your training max will be updated</p>
-                  </div>
-                </div>
+                <textarea
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  rows={2}
+                  placeholder="How did it feel? What broke down?"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                />
               </div>
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => setStep('guide')}
-                  className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 py-3 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  onClick={() => setStep('warmup')}
+                  className="flex-1 py-3 rounded-xl font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Back
                 </button>
                 <button
-                  onClick={handleSaveTest}
-                  disabled={!testedWeight || saving}
-                  className="flex-1 bg-blue-600 dark:bg-blue-500 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleSave}
+                  disabled={!attemptResult || saving}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
-                  {saving ? 'Saving...' : 'Save & Update Program'}
+                  {saving ? 'Saving...' : 'Save attempt'}
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 'complete' && (
+            <div className="text-center space-y-6 py-4">
+              <div>
+                <p className="text-4xl mb-3">{attemptResult === 'success' ? '🏆' : '💪'}</p>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  {attemptResult === 'success' ? 'Attempt successful!' : 'Attempt logged'}
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">
+                  {planned} {unit} — {attemptResult === 'success' ? 'lift made' : 'missed'}
+                </p>
+                {attemptResult === 'success' && planned > currentMax && (
+                  <p className="text-green-600 dark:text-green-400 font-semibold mt-2">
+                    New personal best! Training max updated.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleLogAnother}
+                  className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Log another attempt
+                </button>
+                <button
+                  onClick={() => { onComplete(); handleClose(); }}
+                  className="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Done for today
                 </button>
               </div>
             </div>

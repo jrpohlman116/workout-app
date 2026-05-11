@@ -140,6 +140,15 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
   if (!profile) return null;
 
+  const isMeetDay = (() => {
+    if (!profile.meet_date) return false;
+    const meet = new Date(profile.meet_date);
+    const now = new Date();
+    const diffMs = meet.getTime() - now.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    return diffDays >= -1 && diffDays <= 1;
+  })();
+
   const currentBlock = getCurrentWeekBlock(profile.program_start_date, profile.meet_date);
   const isDeload = currentBlock ? currentBlock.phase === 'deload' : profile.current_week === 4;
 
@@ -234,21 +243,23 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowOneRMTest(true)}
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-all hover-lift"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-white bg-opacity-20 rounded-full p-3">
-              <Activity className="w-6 h-6" />
+        {isMeetDay && (
+          <button
+            onClick={() => setShowOneRMTest(true)}
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-all hover-lift"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-white bg-opacity-20 rounded-full p-3">
+                <Activity className="w-6 h-6" />
+              </div>
+              <div className="text-left flex-1">
+                <p className="font-bold text-lg mb-1">Meet Day — Log Attempts</p>
+                <p className="text-sm text-blue-100">Guided warm-up and attempt logging for your lifts</p>
+              </div>
+              <ChevronRight className="w-6 h-6" />
             </div>
-            <div className="text-left flex-1">
-              <p className="font-bold text-lg mb-1">Test Your 1 Rep Max</p>
-              <p className="text-sm text-blue-100">Update your training maxes with guided testing protocol</p>
-            </div>
-            <ChevronRight className="w-6 h-6" />
-          </div>
-        </button>
+          </button>
+        )}
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
