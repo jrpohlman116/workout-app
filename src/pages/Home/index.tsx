@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateWorkoutWeights, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
-import { Calendar, RefreshCw, ChevronRight, Check, Activity, Layers } from 'lucide-react';
+import { ChevronRight, Check, Activity } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
@@ -13,7 +13,6 @@ interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
 }
 
-const WAVE_LABELS: Record<number, string> = { 10: '10-Rep', 8: '8-Rep', 5: '5-Rep', 3: '3-Rep' };
 const PHASE_LABELS: Record<string, string> = {
   accumulation: 'Accumulation',
   intensification: 'Intensification',
@@ -209,45 +208,41 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         />
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-            <div className="flex items-center gap-3">
-              <Layers className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Wave</div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {currentBlock ? WAVE_LABELS[currentBlock.wave] : `Week ${profile.current_week}`}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {currentBlock ? `${currentBlock.wave} reps` : `Cycle ${profile.current_cycle}`}
-                </div>
-              </div>
-            </div>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Wave</p>
+            <p className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
+              {currentBlock ? currentBlock.wave : profile.current_week}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 truncate">
+              {currentBlock
+                ? `${currentBlock.wave}-rep · ${PHASE_LABELS[currentBlock.phase]}`
+                : `Cycle ${profile.current_cycle}`}
+            </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
-              <div className="flex-1 min-w-0">
-                {profile.meet_date ? (
-                  <>
-                    <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Meet</div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)))}w
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Phase</div>
-                    <div className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
-                      {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
+            {profile.meet_date ? (
+              <>
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Meet</p>
+                <p className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
+                  {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)))}
+                  <span className="text-xl font-semibold text-gray-400 dark:text-gray-500 ml-0.5">w</span>
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 truncate">
+                  {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Phase</p>
+                <p className="text-2xl font-black leading-tight text-gray-900 dark:text-gray-100">
+                  {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  {currentBlock ? `Wave ${currentBlock.wave}` : `Week ${profile.current_week}`}
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -278,29 +273,19 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             </div>
           )}
           <div className="space-y-3">
-            {workouts.map((workout) => {
+            {workouts.map((workout, index) => {
               const isCompleted = completedWorkouts.has(workout.type);
               const sessionData = workoutData.get(workout.type);
               const projected1RM = sessionData?.calculated_1rm;
-              const isUpperDay = workout.type === 'upper';
-
-              let subtitleText: string;
-              if (isCompleted && projected1RM) {
-                subtitleText = `Projected 1RM: ${Math.round(projected1RM)} ${profile.unit_preference || 'lb'}`;
-              } else if (isCompleted) {
-                subtitleText = 'Done ✓';
-              } else if (isUpperDay) {
-                subtitleText = 'Bench accessory work';
-              } else {
-                const weights = calculateWorkoutWeights(
-                  workout.type,
-                  workout.max,
-                  profile.current_cycle,
-                  profile.current_week,
-                  profile.unit_preference || 'lb'
-                );
-                subtitleText = `Top set: ${weights.set3} ${profile.unit_preference || 'lb'}`;
-              }
+              const isUpperDayWorkout = workout.type === 'upper';
+              const unit = profile.unit_preference || 'lb';
+              const topWeight = !isUpperDayWorkout ? calculateWorkoutWeights(
+                workout.type,
+                workout.max,
+                profile.current_cycle,
+                profile.current_week,
+                unit
+              ).set3 : null;
 
               return (
                 <button
@@ -309,24 +294,40 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     createRipple(e);
                     onNavigate('workout', workout.type);
                   }}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${isCompleted
-                    ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
-                    : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
-                    }`}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${
+                    isCompleted
+                      ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
+                      : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+                  }`}
                 >
-                  <div className="text-left flex-1">
-                    <div className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                  <span className="w-7 text-center font-mono text-sm font-bold text-gray-300 dark:text-gray-600 flex-shrink-0 select-none">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className={`text-xs uppercase tracking-widest font-semibold mb-0.5 ${
+                      isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
+                    }`}>
                       {workout.name}
-                    </div>
-                    <div className={`text-sm ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-300'}`}>
-                      {subtitleText}
-                    </div>
+                    </p>
+                    {isCompleted ? (
+                      <p className="text-sm font-semibold text-green-700 dark:text-green-300 tabular-nums">
+                        {projected1RM ? `${Math.round(projected1RM)} ${unit} proj.` : 'Done'}
+                      </p>
+                    ) : isUpperDayWorkout ? (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Accessory work</p>
+                    ) : (
+                      <p className="text-xl font-black tabular-nums leading-tight text-gray-900 dark:text-gray-100">
+                        {topWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unit}</span>
+                      </p>
+                    )}
                   </div>
-                  {isCompleted ? (
-                    <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                  )}
+                  <div className="flex-shrink-0">
+                    {isCompleted ? (
+                      <Check className="w-5 h-5 text-green-500 dark:text-green-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+                    )}
+                  </div>
                 </button>
               );
             })}

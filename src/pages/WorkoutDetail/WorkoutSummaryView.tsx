@@ -174,12 +174,12 @@ export default function WorkoutSummaryView({
         )}
         <div className="space-y-3">
           <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
-            <span className="text-xs uppercase tracking-wide font-semibold text-gray-400 dark:text-gray-500">Set 1</span>
-            <span className="font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{mainWeights.set1} <span className="text-sm font-normal text-gray-400 dark:text-gray-500">{unitPreference} × {mainReps}</span></span>
+            <span className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400">Set 1</span>
+            <span className="text-lg font-bold tabular-nums text-gray-500 dark:text-gray-400">{mainWeights.set1} <span className="text-xs font-normal text-gray-400 dark:text-gray-500">{unitPreference} × {mainReps}</span></span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
-            <span className="text-xs uppercase tracking-wide font-semibold text-gray-400 dark:text-gray-500">Set 2</span>
-            <span className="font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{mainWeights.set2} <span className="text-sm font-normal text-gray-400 dark:text-gray-500">{unitPreference} × {mainReps}</span></span>
+            <span className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400">Set 2</span>
+            <span className="text-xl font-bold tabular-nums text-gray-700 dark:text-gray-300">{mainWeights.set2} <span className="text-xs font-normal text-gray-400 dark:text-gray-500">{unitPreference} × {mainReps}</span></span>
           </div>
           <div className={`flex justify-between items-center py-4 rounded-xl px-4 border-2 ${
             phase === 'realization'
@@ -187,7 +187,7 @@ export default function WorkoutSummaryView({
               : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
           }`}>
             <div>
-              <span className="text-xs uppercase tracking-wide font-semibold text-gray-400 dark:text-gray-500">
+              <span className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400">
                 Set 3{phase === 'realization' ? ' — AMAP' : ''}
               </span>
               {phase === 'realization' && (
@@ -195,8 +195,8 @@ export default function WorkoutSummaryView({
               )}
             </div>
             <div className="text-right">
-              <span className="text-2xl font-black text-gray-900 dark:text-gray-100 tabular-nums">{mainWeights.set3}</span>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400 ml-1">{unitPreference} × {phase === 'realization' ? `${mainReps}+` : mainReps}</span>
+              <span className="text-3xl font-black text-gray-900 dark:text-gray-100 tabular-nums">{mainWeights.set3}</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 ml-1">{unitPreference} × {phase === 'realization' ? `${mainReps}+` : mainReps}</span>
             </div>
           </div>
         </div>

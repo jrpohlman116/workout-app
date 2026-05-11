@@ -80,13 +80,13 @@ export default function MainLiftView({
               <div className="flex gap-2">
                 <button
                   onClick={() => setWarmupFeel('smooth')}
-                  className="flex-1 py-2 rounded-lg font-semibold text-sm transition-colors bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                  className="flex-1 py-2.5 rounded-lg font-semibold text-sm transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 active-press"
                 >
                   Smooth
                 </button>
                 <button
                   onClick={() => setWarmupFeel('tough')}
-                  className="flex-1 py-2 rounded-lg font-semibold text-sm transition-colors bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50"
+                  className="flex-1 py-2.5 rounded-lg font-semibold text-sm transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 active-press"
                 >
                   Tough
                 </button>
@@ -94,12 +94,12 @@ export default function MainLiftView({
             </div>
           )}
           {approachWeight && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Suggested approach single</p>
-              <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                {approachWeight} {unitPreference}
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
+              <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+                {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unitPreference}</span>
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-300 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {warmupFeel === 'smooth'
                   ? 'You felt strong. Approach at 95%, then go for your planned top set if smooth.'
                   : 'That was tough. Approach at 93%, then reassess before going heavier.'}
@@ -153,13 +153,13 @@ export default function MainLiftView({
           </div>
 
           {backoff && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
-              <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">Back-off Sets</p>
-              <p className="text-blue-800 dark:text-blue-200 font-bold">
-                {backoff.sets} × {backoff.reps} @ {backoff.weight} {unitPreference}
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Back-off Sets</p>
+              <p className="text-xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+                {backoff.sets} × {backoff.reps} @ {backoff.weight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unitPreference}</span>
               </p>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                RPE {selectedRpe} → {Math.round((1 - backoff.weight / topSetWeight) * 100)}% drop from top set
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                RPE {selectedRpe} · {Math.round((1 - backoff.weight / topSetWeight) * 100)}% drop from top set
               </p>
             </div>
           )}

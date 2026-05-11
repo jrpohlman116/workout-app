@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { useCountUp } from '../../hooks/useAnimations';
 
 interface StrengthScoreCarouselProps {
@@ -27,8 +27,8 @@ interface ScoreConfig {
 const scoreConfigs: ScoreConfig[] = [
   {
     id: 'wilks',
-    name: 'Wilks Score',
-    description: 'Classic strength formula (1978)',
+    name: 'Wilks',
+    description: 'Bodyweight-adjusted total, the oldest standard formula. 300+ is competitive club level; 400+ qualifies for most national events.',
     maxValue: 600,
     getLevelFn: (score: number) => {
       if (score < 200) return 'Beginner';
@@ -41,7 +41,7 @@ const scoreConfigs: ScoreConfig[] = [
   {
     id: 'dots',
     name: 'DOTS',
-    description: 'Dynamic strength scoring',
+    description: 'Modern gender-neutral formula used by many federations. 400+ is advanced; 500+ is elite international level.',
     maxValue: 600,
     getLevelFn: (score: number) => {
       if (score < 300) return 'Beginner';
@@ -53,8 +53,8 @@ const scoreConfigs: ScoreConfig[] = [
   },
   {
     id: 'ipfgl',
-    name: 'IPF GL Points',
-    description: 'IPF Goodlift formula',
+    name: 'IPF GL',
+    description: 'Official IPF Goodlift points used in international competition. 80+ is world-class; 100+ is podium territory at World Championships.',
     maxValue: 120,
     getLevelFn: (score: number) => {
       if (score < 40) return 'Beginner';
@@ -72,6 +72,7 @@ export default function StrengthScoreCarousel({
   hasProjectedData,
 }: StrengthScoreCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showInfo, setShowInfo] = useState(false);
 
   const currentConfig = scoreConfigs[currentIndex];
   const currentScore = scores[currentConfig.id as keyof typeof scores];
@@ -81,34 +82,45 @@ export default function StrengthScoreCarousel({
 
   const handlePrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? scoreConfigs.length - 1 : prev - 1));
+    setShowInfo(false);
   };
 
   const handleNext = () => {
     setCurrentIndex((prev) => (prev === scoreConfigs.length - 1 ? 0 : prev + 1));
+    setShowInfo(false);
   };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <p className="text-gray-900 dark:text-gray-100 text-sm font-semibold">
-            {currentConfig.name}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {currentConfig.description}
-          </p>
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">
+              {currentConfig.name}
+            </p>
+            <button
+              onClick={() => setShowInfo(v => !v)}
+              aria-label={`About ${currentConfig.name}`}
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex-shrink-0"
+            >
+              <Info className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </div>
+          {showInfo && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed pr-4">
+              {currentConfig.description}
+            </p>
+          )}
         </div>
         {hasProjectedData && parseFloat(currentChangePercent) !== 0 && (
           <div
-            className={`text-sm font-semibold ${
+            className={`text-sm font-semibold flex-shrink-0 ${
               parseFloat(currentChangePercent) > 0
-                ? 'text-green-600'
-                : parseFloat(currentChangePercent) < 0
-                ? 'text-red-600'
-                : 'text-gray-500'
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-red-600 dark:text-red-400'
             }`}
           >
-            {parseFloat(currentChangePercent) > 0 && '+'}({currentChangePercent}%)
+            {parseFloat(currentChangePercent) > 0 && '+'}{currentChangePercent}%
           </div>
         )}
       </div>
