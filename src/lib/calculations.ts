@@ -235,6 +235,20 @@ export interface BackoffSet {
   reps: number;
 }
 
+export interface WarmupSet {
+  weight: number;
+  reps: number;
+  percentage?: number;
+}
+
+export interface WarmupProgression {
+  fixedSets: WarmupSet[];
+  approachWeights: {
+    smooth: number;
+    tough: number;
+  };
+}
+
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 
 const STANDARD_PHASES: WavePhase[] = ['accumulation', 'intensification', 'realization', 'deload'];
@@ -279,6 +293,33 @@ export function calculateBackoffSets(
 
   const weight = Math.round(topSetWeight * (1 - dropPct) / roundTo) * roundTo;
   return { weight, sets, reps };
+}
+
+/**
+ * Calculates warm-up set progression leading to a top set.
+ * Fixed progression: bar (10), 50% (5), 67% (3), 82% (2)
+ * Then calculates approach weights based on feel of 82% set.
+ */
+export function calculateWarmupSets(
+  topSetWeight: number,
+  unit: string = 'lb'
+): WarmupProgression {
+  const roundTo = unit === 'kg' ? 2.5 : 5;
+  const bar = unit === 'kg' ? 20 : 45;
+
+  const fixedSets: WarmupSet[] = [
+    { weight: bar, reps: 10, percentage: 0 },
+    { weight: Math.round(topSetWeight * 0.5 / roundTo) * roundTo, reps: 5, percentage: 50 },
+    { weight: Math.round(topSetWeight * 0.67 / roundTo) * roundTo, reps: 3, percentage: 67 },
+    { weight: Math.round(topSetWeight * 0.82 / roundTo) * roundTo, reps: 2, percentage: 82 },
+  ];
+
+  const approachWeights = {
+    smooth: Math.round(topSetWeight * 0.95 / roundTo) * roundTo,
+    tough: Math.round(topSetWeight * 0.93 / roundTo) * roundTo,
+  };
+
+  return { fixedSets, approachWeights };
 }
 
 /**

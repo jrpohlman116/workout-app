@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import AccessibleFormGroup from '../../components/accessible/AccessibleFormGroup';
-import { WavePhase, calculateBackoffSets } from '../../lib/calculations';
+import { WavePhase, calculateBackoffSets, calculateWarmupSets } from '../../lib/calculations';
 import { SetInput } from './types';
 
 interface MainLiftViewProps {
@@ -31,6 +31,7 @@ export default function MainLiftView({
   nextExerciseName,
 }: MainLiftViewProps) {
   const [selectedRpe, setSelectedRpe] = useState<number | null>(null);
+  const [warmupFeel, setWarmupFeel] = useState<'smooth' | 'tough' | null>(null);
 
   const isRealization = phase === 'realization';
   const isDeload = phase === 'deload';
@@ -53,8 +54,61 @@ export default function MainLiftView({
       ? 'Deload week. Complete all reps at reduced effort, no grinding.'
       : 'Complete all prescribed reps with good technique.';
 
+  const warmup = topSetWeight > 0 ? calculateWarmupSets(topSetWeight, unitPreference) : null;
+  const approachWeight = warmupFeel === 'smooth' ? warmup?.approachWeights.smooth : warmupFeel === 'tough' ? warmup?.approachWeights.tough : null;
+
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+      {warmup && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Warm-up Progression</h3>
+          <div className="space-y-3">
+            {warmup.fixedSets.map((set, idx) => (
+              <div key={idx} className="flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm">
+                <span className="text-gray-700 dark:text-gray-300 font-medium">
+                  {set.percentage === 0 ? 'Bar' : `${set.percentage}%`}
+                </span>
+                <span className="text-gray-900 dark:text-gray-100 font-bold">
+                  {set.weight} {unitPreference} × {set.reps}
+                </span>
+              </div>
+            ))}
+          </div>
+          {!warmupFeel && topSetWeight > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">How did the 82% set feel?</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setWarmupFeel('smooth')}
+                  className="flex-1 py-2 rounded-lg font-semibold text-sm transition-colors bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                >
+                  Smooth
+                </button>
+                <button
+                  onClick={() => setWarmupFeel('tough')}
+                  className="flex-1 py-2 rounded-lg font-semibold text-sm transition-colors bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50"
+                >
+                  Tough
+                </button>
+              </div>
+            </div>
+          )}
+          {approachWeight && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Suggested approach single</p>
+              <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                {approachWeight} {unitPreference}
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-2">
+                {warmupFeel === 'smooth'
+                  ? 'You felt strong. Approach at 95%, then go for your planned top set if smooth.'
+                  : 'That was tough. Approach at 93%, then reassess before going heavier.'}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       <AccessibleFormGroup
         legend={`Barbell ${liftName}`}
         description={description}
