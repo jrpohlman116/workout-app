@@ -1,10 +1,12 @@
+import { WavePhase, RepWave } from '../../lib/calculations';
+
 export interface WorkoutDetailPageProps {
   liftType: string;
   onBack: () => void;
   onNavigateToProgress: () => void;
 }
 
-export type WorkoutStep = 'summary' | 'main' | 'supplemental' | number;
+export type WorkoutStep = 'summary' | 'main' | number;
 
 export interface SetInput {
   reps: string;
@@ -26,4 +28,10 @@ export interface LastWorkoutData {
 export interface WorkoutStats {
   estimated1RM: number;
   totalTonnage: number;
+}
+
+export interface CurrentBlock {
+  wave: RepWave;
+  phase: WavePhase;
+  weekIndex: number;
 }

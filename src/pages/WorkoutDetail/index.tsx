@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateWorkoutWeights, calculateOneRepMax, calculateBBBSupplementalWeight, calculateBBSSupplementalWeight, getSupplementalWorkConfig } from '../../lib/calculations';
+import { calculateWorkoutWeights, calculateOneRepMax, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
@@ -10,11 +10,21 @@ import AccessibleProgressIndicator from '../../components/accessible/AccessibleP
 import WorkoutHeader from './WorkoutHeader';
 import WorkoutSummaryView from './WorkoutSummaryView';
 import MainLiftView from './MainLiftView';
-import SupplementalLiftView from './SupplementalLiftView';
 import AccessoryExerciseView from './AccessoryExerciseView';
 import { useWorkoutData } from './useWorkoutData';
-import { liftNames, liftNamesShort, baseExercises, bbbExercises, bbsExercises, additionalExercises } from './constants';
+import { liftNames, liftNamesShort, baseExercises, additionalExercises } from './constants';
 import { WorkoutDetailPageProps, WorkoutStep, SetInput } from './types';
+
+function getCurrentWeekBlock(programStartDate: string | undefined, meetDate: string | undefined): WeekBlock | null {
+  if (!programStartDate || !meetDate) return null;
+  const start = new Date(programStartDate);
+  const meet = new Date(meetDate);
+  const schedule = buildWaveSchedule(start, meet);
+  const now = Date.now();
+  return schedule.weeks.find(w => w.startDate.getTime() <= now && w.endDate.getTime() >= now) ?? null;
+}
+
+const IS_UPPER_DAY = (liftType: string) => liftType === 'upper';
 
 export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgress }: WorkoutDetailPageProps) {
   const { profile, user, refreshProfile } = useAuth();
@@ -28,9 +38,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     { reps: '', weight: '' },
   ]);
   const [initialMainSetsSet, setInitialMainSetsSet] = useState(false);
-
-  const [supplementalSets, setSupplementalSets] = useState<SetInput[]>([]);
-  const [initialSupplementalSetsSet, setInitialSupplementalSetsSet] = useState(false);
+  const [rpe, setRpe] = useState<number | null>(null);
 
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: SetInput[] }>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -40,14 +48,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const { lastAccessoryData, loading, getLastSetData } = useWorkoutData(user?.id, liftType);
 
-  const programVariation = profile?.program_variation || 'standard';
-  let defaultExerciseTemplate = baseExercises;
-  if (programVariation === 'bbb') {
-    defaultExerciseTemplate = bbbExercises;
-  } else if (programVariation === 'bbs') {
-    defaultExerciseTemplate = bbsExercises;
-  }
-  const defaultExercises = defaultExerciseTemplate[liftType as keyof typeof defaultExerciseTemplate];
+  const isUpperDay = IS_UPPER_DAY(liftType);
+  const currentBlock = getCurrentWeekBlock(profile?.program_start_date, profile?.meet_date);
+
+  const defaultExercises = baseExercises[liftType as keyof typeof baseExercises] ?? baseExercises.upper;
 
   const {
     exercises: templateExercises,
@@ -59,22 +63,22 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   } = useWorkoutTemplate(
     user?.id,
     liftType as 'squat' | 'bench' | 'deadlift' | 'ohp',
-    programVariation,
+    'standard',
     defaultExercises
   );
 
   useEffect(() => {
-    if (!loading && profile && !initialMainSetsSet) {
+    if (!loading && profile && !initialMainSetsSet && !isUpperDay) {
       const maxes: Record<string, number> = {
         squat: profile.squat_max,
         bench: profile.bench_max,
         deadlift: profile.deadlift_max,
-        ohp: profile.ohp_max,
       };
 
+      const max = maxes[liftType] ?? 0;
       const weights = calculateWorkoutWeights(
         liftType,
-        maxes[liftType],
+        max,
         profile.current_cycle,
         profile.current_week,
         profile.unit_preference || 'lb'
@@ -89,57 +93,18 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       ]);
       setInitialMainSetsSet(true);
     }
-  }, [loading, profile, initialMainSetsSet, liftType]);
-
-  useEffect(() => {
-    if (!loading && profile && !initialSupplementalSetsSet) {
-      const programVariation = profile.program_variation || 'standard';
-      const supplementalConfig = getSupplementalWorkConfig(programVariation);
-
-      if (supplementalConfig) {
-        const maxes: Record<string, number> = {
-          squat: profile.squat_max,
-          bench: profile.bench_max,
-          deadlift: profile.deadlift_max,
-          ohp: profile.ohp_max,
-        };
-
-        let supplementalWeight = 0;
-        if (programVariation === 'bbb') {
-          supplementalWeight = calculateBBBSupplementalWeight(liftType, maxes[liftType], profile.current_cycle, profile.unit_preference || 'lb');
-        } else if (programVariation === 'bbs') {
-          supplementalWeight = calculateBBSSupplementalWeight(liftType, maxes[liftType], profile.current_cycle, profile.current_week, profile.unit_preference || 'lb');
-        }
-
-        const sets = Array(supplementalConfig.sets).fill(null).map(() => ({
-          reps: String(supplementalConfig.reps),
-          weight: String(supplementalWeight),
-        }));
-
-        setSupplementalSets(sets);
-      }
-      setInitialSupplementalSetsSet(true);
-    }
-  }, [loading, profile, initialSupplementalSetsSet, liftType]);
+  }, [loading, profile, initialMainSetsSet, liftType, isUpperDay]);
 
   useEffect(() => {
     if (!loading && Object.keys(lastAccessoryData).length > 0 && profile) {
-      const programVariation = profile.program_variation || 'standard';
-      let exerciseTemplate = baseExercises;
-      if (programVariation === 'bbb') {
-        exerciseTemplate = bbbExercises;
-      } else if (programVariation === 'bbs') {
-        exerciseTemplate = bbsExercises;
-      }
-
-      const currentExercises = exerciseTemplate[liftType as keyof typeof exerciseTemplate];
+      const currentExercises = templateExercises;
       const initialAccessoryData: { [key: number]: SetInput[] } = {};
       currentExercises.forEach((exercise, index) => {
         const lastData = lastAccessoryData[exercise.name];
         if (lastData && lastData.length > 0) {
           initialAccessoryData[index] = lastData.map(set => ({
             reps: set.reps || '',
-            weight: set.weight || ''
+            weight: set.weight || '',
           }));
         }
       });
@@ -155,7 +120,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         });
       }
     }
-  }, [loading, lastAccessoryData, liftType, profile]);
+  }, [loading, lastAccessoryData, liftType, profile, templateExercises]);
 
   if (!profile) return null;
 
@@ -163,29 +128,28 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     squat: profile.squat_max,
     bench: profile.bench_max,
     deadlift: profile.deadlift_max,
-    ohp: profile.ohp_max,
   };
 
-  const weights = calculateWorkoutWeights(
-    liftType,
-    maxes[liftType],
-    profile.current_cycle,
-    profile.current_week,
-    profile.unit_preference || 'lb'
-  );
+  const weights = isUpperDay
+    ? { set1: 0, set2: 0, set3: 0 }
+    : calculateWorkoutWeights(
+        liftType,
+        maxes[liftType] ?? 0,
+        profile.current_cycle,
+        profile.current_week,
+        profile.unit_preference || 'lb'
+      );
 
   const currentExercises = templateExercises;
-  const hasSupplemental = programVariation === 'bbb' || programVariation === 'bbs';
-  const totalSteps = 1 + (hasSupplemental ? 1 : 0) + currentExercises.length;
+  const totalSteps = (isUpperDay ? 0 : 1) + currentExercises.length;
 
   const mainReps = profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5;
 
   const getProgressPercentage = () => {
     if (currentStep === 'summary') return 0;
     if (currentStep === 'main') return (1 / totalSteps) * 100;
-    if (currentStep === 'supplemental') return (2 / totalSteps) * 100;
-    const offset = hasSupplemental ? 3 : 2;
-    return ((currentStep as number + offset) / totalSteps) * 100;
+    const offset = isUpperDay ? 1 : 2;
+    return (((currentStep as number) + offset) / totalSteps) * 100;
   };
 
   const getCurrentExercise = () => {
@@ -196,33 +160,16 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   };
 
   const getNextExerciseName = () => {
-    if (currentStep === 'summary') return liftNamesShort[liftType];
-    if (currentStep === 'main') {
-      if (hasSupplemental) {
-        return `Supplemental ${liftNamesShort[liftType]}`;
-      }
-      return currentExercises[0]?.name;
-    }
-    if (currentStep === 'supplemental') {
-      return currentExercises[0]?.name;
-    }
+    if (currentStep === 'summary') return isUpperDay ? currentExercises[0]?.name : liftNamesShort[liftType];
+    if (currentStep === 'main') return currentExercises[0]?.name ?? null;
     const nextIndex = (currentStep as number) + 1;
-    if (nextIndex < currentExercises.length) {
-      return currentExercises[nextIndex].name;
-    }
-    return null;
+    return nextIndex < currentExercises.length ? currentExercises[nextIndex].name : null;
   };
 
   const handleNext = () => {
     if (currentStep === 'summary') {
-      setCurrentStep('main');
+      setCurrentStep(isUpperDay ? 0 : 'main');
     } else if (currentStep === 'main') {
-      if (hasSupplemental) {
-        setCurrentStep('supplemental');
-      } else {
-        setCurrentStep(0);
-      }
-    } else if (currentStep === 'supplemental') {
       setCurrentStep(0);
     } else if (typeof currentStep === 'number') {
       if (currentStep < currentExercises.length - 1) {
@@ -236,14 +183,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const handlePrevious = () => {
     if (currentStep === 'main') {
       setCurrentStep('summary');
-    } else if (currentStep === 'supplemental') {
-      setCurrentStep('main');
     } else if (currentStep === 0) {
-      if (hasSupplemental) {
-        setCurrentStep('supplemental');
-      } else {
-        setCurrentStep('main');
-      }
+      setCurrentStep(isUpperDay ? 'summary' : 'main');
     } else if (typeof currentStep === 'number') {
       setCurrentStep(currentStep - 1);
     }
@@ -255,57 +196,30 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setMainSets(newSets);
   };
 
-  const updateSupplementalSet = (index: number, field: 'reps' | 'weight', value: string) => {
-    const newSets = [...supplementalSets];
-    newSets[index][field] = value;
-    setSupplementalSets(newSets);
-  };
-
   const updateAccessorySet = (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: string) => {
-    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill({ reps: '', weight: '' }).map(() => ({ reps: '', weight: '' }));
+    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill(null).map(() => ({ reps: '', weight: '' }));
     const newSets = [...exerciseSets];
     newSets[setIndex] = { ...newSets[setIndex], [field]: value };
     setAccessoryData({ ...accessoryData, [exerciseIndex]: newSets });
   };
 
   const addAccessorySet = (exerciseIndex: number) => {
-    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill({ reps: '', weight: '' }).map(() => ({ reps: '', weight: '' }));
-    const newSets = [...exerciseSets, { reps: '', weight: '' }];
-    setAccessoryData({ ...accessoryData, [exerciseIndex]: newSets });
+    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill(null).map(() => ({ reps: '', weight: '' }));
+    setAccessoryData({ ...accessoryData, [exerciseIndex]: [...exerciseSets, { reps: '', weight: '' }] });
   };
 
   const removeAccessorySet = (exerciseIndex: number, setIndex: number) => {
-    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill({ reps: '', weight: '' }).map(() => ({ reps: '', weight: '' }));
+    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill(null).map(() => ({ reps: '', weight: '' }));
     if (exerciseSets.length <= 1) return;
-    const newSets = exerciseSets.filter((_, idx) => idx !== setIndex);
-    setAccessoryData({ ...accessoryData, [exerciseIndex]: newSets });
+    setAccessoryData({ ...accessoryData, [exerciseIndex]: exerciseSets.filter((_, idx) => idx !== setIndex) });
   };
 
   const calculateTotalTonnage = () => {
     let tonnage = 0;
-
-    mainSets.forEach(set => {
-      const weight = parseFloat(set.weight) || 0;
-      const reps = parseInt(set.reps) || 0;
-      tonnage += weight * reps;
-    });
-
-    if (hasSupplemental) {
-      supplementalSets.forEach(set => {
-        const weight = parseFloat(set.weight) || 0;
-        const reps = parseInt(set.reps) || 0;
-        tonnage += weight * reps;
-      });
-    }
-
+    mainSets.forEach(set => { tonnage += (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0); });
     Object.values(accessoryData).forEach(sets => {
-      sets.forEach(set => {
-        const weight = parseFloat(set.weight) || 0;
-        const reps = parseInt(set.reps) || 0;
-        tonnage += weight * reps;
-      });
+      sets.forEach(set => { tonnage += (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0); });
     });
-
     return tonnage;
   };
 
@@ -314,64 +228,58 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
     setSaving(true);
     try {
-      const amrapWeight = parseFloat(mainSets[2].weight);
-      const amrapReps = parseInt(mainSets[2].reps);
+      const topSet = mainSets[mainSets.length - 1];
+      const topWeight = parseFloat(topSet.weight);
+      const topReps = parseInt(topSet.reps);
+      const totalTonnage = calculateTotalTonnage();
 
-      if (amrapWeight && amrapReps) {
-        const calculated1RM = calculateOneRepMax(amrapWeight, amrapReps);
-        const totalTonnage = calculateTotalTonnage();
+      const calculated1RM = topWeight && topReps ? calculateOneRepMax(topWeight, topReps) : 0;
 
-        const { data: sessionData, error: sessionError } = await supabase
-          .from('workout_sessions')
-          .insert({
-            user_id: user.id,
-            lift_type: liftType,
-            cycle: profile.current_cycle,
-            week: profile.current_week,
-            weight_lifted: amrapWeight,
-            reps_performed: amrapReps,
-            calculated_1rm: calculated1RM,
-          })
-          .select()
-          .single();
+      const sessionPayload: Record<string, unknown> = {
+        user_id: user.id,
+        lift_type: liftType,
+        cycle: profile.current_cycle,
+        week: profile.current_week,
+        weight_lifted: topWeight || 0,
+        reps_performed: topReps || 0,
+        calculated_1rm: calculated1RM,
+      };
 
-        if (sessionError) throw sessionError;
-
-        const allExerciseInserts = [];
-
-        if (hasSupplemental && supplementalSets.length > 0) {
-          const variationLabel = programVariation === 'bbb' ? 'BBB' : 'BBS';
-          allExerciseInserts.push({
-            workout_session_id: sessionData.id,
-            exercise_name: `Supplemental ${liftNamesShort[liftType]} (${variationLabel})`,
-            exercise_order: -1,
-            sets_data: supplementalSets,
-          });
-        }
-
-        const accessoryInserts = Object.entries(accessoryData)
-          .filter(([_, sets]) => sets.some(set => set.reps || set.weight))
-          .map(([exerciseIndex, sets]) => ({
-            workout_session_id: sessionData.id,
-            exercise_name: currentExercises[parseInt(exerciseIndex)].name,
-            exercise_order: parseInt(exerciseIndex),
-            sets_data: sets,
-          }));
-
-        allExerciseInserts.push(...accessoryInserts);
-
-        if (allExerciseInserts.length > 0) {
-          const { error: accessoryError } = await supabase
-            .from('accessory_exercises')
-            .insert(allExerciseInserts);
-
-          if (accessoryError) throw accessoryError;
-        }
-
-        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage });
-        celebrate(40);
-        setShowSuccessModal(true);
+      if (currentBlock) {
+        sessionPayload.wave = currentBlock.wave;
+        sessionPayload.phase = currentBlock.phase;
       }
+      if (rpe !== null) {
+        sessionPayload.rpe = rpe;
+      }
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('workout_sessions')
+        .insert(sessionPayload)
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      const accessoryInserts = Object.entries(accessoryData)
+        .filter(([_, sets]) => sets.some(set => set.reps || set.weight))
+        .map(([exerciseIndex, sets]) => ({
+          workout_session_id: sessionData.id,
+          exercise_name: currentExercises[parseInt(exerciseIndex)].name,
+          exercise_order: parseInt(exerciseIndex),
+          sets_data: sets,
+        }));
+
+      if (accessoryInserts.length > 0) {
+        const { error: accessoryError } = await supabase
+          .from('accessory_exercises')
+          .insert(accessoryInserts);
+        if (accessoryError) throw accessoryError;
+      }
+
+      setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage });
+      celebrate(40);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error saving workout:', error);
     } finally {
@@ -391,53 +299,40 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setShowSubstitutionModal(true);
   };
 
-  const handleSubstitute = (newExercise: string) => {
-    if (substitutionTarget) {
-      console.log('Substitution handled in template system');
-    }
+  const allAvailableExercises = [
+    ...baseExercises.squat,
+    ...baseExercises.bench,
+    ...baseExercises.deadlift,
+    ...baseExercises.upper,
+    ...additionalExercises,
+  ].filter((ex, index, self) => index === self.findIndex(e => e.name === ex.name));
+
+  const headerProps = {
+    liftName: liftNames[liftType] ?? liftType,
+    wave: currentBlock?.wave,
+    phase: currentBlock?.phase,
+    week: currentBlock ? undefined : profile.current_week,
+    cycle: currentBlock ? undefined : profile.current_cycle,
+    onBack,
   };
 
   if (currentStep === 'summary') {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
         <div className="bg-white dark:bg-gray-800">
-          <WorkoutHeader
-            liftName={liftNames[liftType]}
-            week={profile.current_week}
-            cycle={profile.current_cycle}
-            onBack={onBack}
-          />
+          <WorkoutHeader {...headerProps} />
         </div>
-
         <WorkoutSummaryView
           mainWeights={weights}
           mainReps={mainReps}
           exercises={currentExercises}
           onStartWorkout={handleNext}
-          programVariation={programVariation}
-          supplementalWeight={
-            programVariation === 'bbb'
-              ? calculateBBBSupplementalWeight(liftType, maxes[liftType], profile.current_cycle, profile.unit_preference || 'lb')
-              : programVariation === 'bbs'
-              ? calculateBBSSupplementalWeight(liftType, maxes[liftType], profile.current_cycle, profile.current_week, profile.unit_preference || 'lb')
-              : 0
-          }
-          supplementalConfig={getSupplementalWorkConfig(programVariation)}
+          unitPreference={profile.unit_preference || 'lb'}
+          wave={currentBlock?.wave}
+          phase={currentBlock?.phase}
           onSaveExercises={saveTemplate}
           onResetExercises={() => resetToDefault(defaultExercises)}
-          availableExercises={[
-            ...baseExercises.squat,
-            ...baseExercises.bench,
-            ...baseExercises.deadlift,
-            ...baseExercises.ohp,
-            ...bbbExercises.squat,
-            ...bbbExercises.bench,
-            ...bbbExercises.deadlift,
-            ...bbbExercises.ohp,
-            ...additionalExercises,
-          ].filter((ex, index, self) =>
-            index === self.findIndex(e => e.name === ex.name)
-          )}
+          availableExercises={allAvailableExercises}
           isSaving={templateSaving}
           saveError={templateError}
         />
@@ -446,69 +341,28 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   }
 
   const nextExercise = getNextExerciseName();
+  const progressCurrent = currentStep === 'main'
+    ? 1
+    : (currentStep as number) + (isUpperDay ? 1 : 2);
 
   if (currentStep === 'main') {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
         <div className="bg-white dark:bg-gray-800">
-          <WorkoutHeader
-            liftName={liftNames[liftType]}
-            week={profile.current_week}
-            cycle={profile.current_cycle}
-            onBack={onBack}
-          />
-
+          <WorkoutHeader {...headerProps} />
           <div className="max-w-md mx-auto px-4 pb-4">
-            <AccessibleProgressIndicator
-              current={1}
-              total={totalSteps}
-              label="Workout progress"
-              variant="bar"
-            />
+            <AccessibleProgressIndicator current={1} total={totalSteps} label="Workout progress" variant="bar" />
           </div>
         </div>
-
         <MainLiftView
-          liftName={liftNames[liftType]}
+          liftName={liftNames[liftType] ?? liftType}
           mainSets={mainSets}
           mainReps={mainReps}
           unitPreference={profile.unit_preference || 'lb'}
           lastSetData={getLastSetData('main')}
+          phase={currentBlock?.phase}
           onUpdateSet={updateMainSet}
-          onNext={handleNext}
-          nextExerciseName={nextExercise}
-        />
-      </div>
-    );
-  }
-
-  if (currentStep === 'supplemental') {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
-        <div className="bg-white dark:bg-gray-800">
-          <WorkoutHeader
-            liftName={liftNames[liftType]}
-            week={profile.current_week}
-            cycle={profile.current_cycle}
-            onBack={onBack}
-          />
-
-          <div className="max-w-md mx-auto px-4 pb-4">
-            <AccessibleProgressIndicator
-              current={2}
-              total={totalSteps}
-              label="Workout progress"
-              variant="bar"
-            />
-          </div>
-        </div>
-
-        <SupplementalLiftView
-          liftName={liftNames[liftType]}
-          variationType={programVariation as 'bbb' | 'bbs'}
-          supplementalSets={supplementalSets}
-          unitPreference={profile.unit_preference || 'lb'}
-          onUpdateSet={updateSupplementalSet}
+          onRpeChange={setRpe}
           onNext={handleNext}
           nextExerciseName={nextExercise}
         />
@@ -525,20 +379,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
       <div className="bg-white dark:bg-gray-800">
-        <WorkoutHeader
-          liftName={liftNames[liftType]}
-          week={profile.current_week}
-          cycle={profile.current_cycle}
-          onBack={onBack}
-        />
-
+        <WorkoutHeader {...headerProps} />
         <div className="max-w-md mx-auto px-4 pb-4">
-          <AccessibleProgressIndicator
-            current={exerciseIndex + (hasSupplemental ? 3 : 2)}
-            total={totalSteps}
-            label="Workout progress"
-            variant="bar"
-          />
+          <AccessibleProgressIndicator current={progressCurrent} total={totalSteps} label="Workout progress" variant="bar" />
         </div>
       </div>
 
@@ -559,7 +402,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
       {showSuccessModal && (
         <WorkoutSuccessModal
-          liftName={liftNames[liftType]}
+          liftName={liftNames[liftType] ?? liftType}
           estimated1RM={workoutStats.estimated1RM}
           totalTonnage={workoutStats.totalTonnage}
           unitPreference={profile?.unit_preference || 'lb'}
@@ -571,24 +414,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           isOpen={showSubstitutionModal}
           onClose={() => setShowSubstitutionModal(false)}
           currentExercise={substitutionTarget.exerciseName}
-          onSubstitute={handleSubstitute}
-          availableExercises={[
-            ...baseExercises.squat,
-            ...baseExercises.bench,
-            ...baseExercises.deadlift,
-            ...baseExercises.ohp,
-            ...bbbExercises.squat,
-            ...bbbExercises.bench,
-            ...bbbExercises.deadlift,
-            ...bbbExercises.ohp,
-            ...bbsExercises.squat,
-            ...bbsExercises.bench,
-            ...bbsExercises.deadlift,
-            ...bbsExercises.ohp,
-            ...additionalExercises,
-          ].filter((ex, index, self) =>
-            index === self.findIndex(e => e.name === ex.name)
-          )}
+          onSubstitute={() => console.log('Substitution handled in template system')}
+          availableExercises={allAvailableExercises}
         />
       )}
     </div>
