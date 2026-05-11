@@ -18,13 +18,9 @@ export default function WorkoutSuccessModal({
       <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full animate-scale-in">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            {liftName} Day Success Story
+            {liftName}
           </h2>
           <div className="w-16 h-1 bg-blue-600 mx-auto mb-6 rounded-full"></div>
-
-          <p className="text-gray-600 mb-8 leading-relaxed">
-            Great job completing your {liftName.toLowerCase()} day! Don't forget to hydrate and engage in some active recovery for your next workout.
-          </p>
 
           <div className="space-y-6 mb-8">
             <div className="text-left">

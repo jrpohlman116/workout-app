@@ -197,8 +197,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1 animate-slide-in-left">{getGreeting()}</h1>
-          <p className="text-gray-600 dark:text-gray-300 animate-slide-in-left stagger-1">Are you ready to lift heavy?</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 animate-slide-in-left">{getGreeting()}</h1>
         </div>
       </div>
 
@@ -379,7 +378,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             onClick={handleSkipWeek}
             className="flex-1 px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
           >
-            Continue
+            Advance Week
           </button>
         </div>
       </AccessibleModal>
