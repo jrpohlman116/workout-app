@@ -22,15 +22,19 @@ export default function WorkoutSuccessModal({
           </h2>
           <div className="w-16 h-1 bg-blue-600 dark:bg-blue-500 mx-auto mb-6 rounded-full"></div>
 
-          <div className="space-y-6 mb-8">
+          <div className="space-y-8 mb-8">
             <div className="text-left">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Estimated 1 Rep Max</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{Math.round(estimated1RM)} {unitPreference}</p>
+              <p className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Estimated Max</p>
+              <p className="text-7xl font-black text-gray-900 dark:text-gray-100 leading-none tabular-nums">
+                {Math.round(estimated1RM)}<span className="text-2xl font-semibold text-gray-400 dark:text-gray-500 ml-2">{unitPreference}</span>
+              </p>
             </div>
 
-            <div className="text-left">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Today's Tonnage</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{totalTonnage.toLocaleString()} {unitPreference}</p>
+            <div className="text-left pt-4 border-t border-gray-100 dark:border-gray-700">
+              <p className="text-xs uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Tonnage</p>
+              <p className="text-3xl font-bold text-gray-700 dark:text-gray-300 tabular-nums">
+                {totalTonnage.toLocaleString()}<span className="text-base font-medium text-gray-400 dark:text-gray-500 ml-2">{unitPreference}</span>
+              </p>
             </div>
           </div>
 

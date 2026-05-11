@@ -65,7 +65,7 @@ export default function AccessibleFormGroup({
 
       <div className="space-y-3">
         {!isBodyweight && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 pl-10">
             <div>
               <span className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 {repsLabel}
@@ -80,7 +80,7 @@ export default function AccessibleFormGroup({
         )}
 
         {isBodyweight && (
-          <div>
+          <div className="pl-10">
             <span className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               Duration / {repsLabel}
             </span>
@@ -94,12 +94,16 @@ export default function AccessibleFormGroup({
           return (
             <div
               key={index}
-              className="flex gap-2"
+              className="flex items-center gap-3"
               role="group"
               aria-labelledby={`${setId}-label`}
             >
-              <span id={`${setId}-label`} className="sr-only">
-                Set {setNumber} of {sets.length}
+              <span id={`${setId}-label`} className="sr-only">Set {setNumber} of {sets.length}</span>
+              <span
+                aria-hidden="true"
+                className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400 flex-shrink-0 tabular-nums select-none"
+              >
+                {setNumber}
               </span>
 
               {isBodyweight ? (

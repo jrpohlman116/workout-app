@@ -174,29 +174,30 @@ export default function WorkoutSummaryView({
         )}
         <div className="space-y-3">
           <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Set 1</span>
-            <span className="font-bold text-gray-900 dark:text-gray-100">{mainWeights.set1} {unitPreference} × {mainReps}</span>
+            <span className="text-xs uppercase tracking-wide font-semibold text-gray-400 dark:text-gray-500">Set 1</span>
+            <span className="font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{mainWeights.set1} <span className="text-sm font-normal text-gray-400 dark:text-gray-500">{unitPreference} × {mainReps}</span></span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Set 2</span>
-            <span className="font-bold text-gray-900 dark:text-gray-100">{mainWeights.set2} {unitPreference} × {mainReps}</span>
+            <span className="text-xs uppercase tracking-wide font-semibold text-gray-400 dark:text-gray-500">Set 2</span>
+            <span className="font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{mainWeights.set2} <span className="text-sm font-normal text-gray-400 dark:text-gray-500">{unitPreference} × {mainReps}</span></span>
           </div>
-          <div className={`flex justify-between items-center py-3 rounded-xl px-4 border-2 ${
+          <div className={`flex justify-between items-center py-4 rounded-xl px-4 border-2 ${
             phase === 'realization'
               ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 dark:border-blue-500'
               : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
           }`}>
             <div>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
+              <span className="text-xs uppercase tracking-wide font-semibold text-gray-400 dark:text-gray-500">
                 Set 3{phase === 'realization' ? ' — AMAP' : ''}
               </span>
               {phase === 'realization' && (
-                <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">As Many As Possible — push for max reps</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Push for max reps</p>
               )}
             </div>
-            <span className="font-bold text-gray-900 dark:text-gray-100">
-              {mainWeights.set3} {unitPreference} × {phase === 'realization' ? `${mainReps}+` : mainReps}
-            </span>
+            <div className="text-right">
+              <span className="text-2xl font-black text-gray-900 dark:text-gray-100 tabular-nums">{mainWeights.set3}</span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400 ml-1">{unitPreference} × {phase === 'realization' ? `${mainReps}+` : mainReps}</span>
+            </div>
           </div>
         </div>
       </div>
