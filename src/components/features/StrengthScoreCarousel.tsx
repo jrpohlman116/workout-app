@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import AccessibleProgressRing from '../accessible/AccessibleProgressRing';
 import { useCountUp } from '../../hooks/useAnimations';
 
 interface StrengthScoreCarouselProps {
@@ -123,14 +122,14 @@ export default function StrengthScoreCarousel({
           <ChevronLeft className="w-6 h-6 text-gray-600 dark:text-gray-400" />
         </button>
 
-        <AccessibleProgressRing
-          value={currentScore}
-          max={currentConfig.maxValue}
-          label={currentConfig.name}
-          description={currentConfig.getLevelFn(currentScore)}
-          size={192}
-          showValue={true}
-        />
+        <div className="text-center flex-1 py-4">
+          <p className="text-6xl font-black text-gray-900 dark:text-gray-100 tabular-nums leading-none mb-3">
+            {animatedScore}
+          </p>
+          <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+            {currentConfig.getLevelFn(currentScore)}
+          </p>
+        </div>
 
         <button
           onClick={handleNext}

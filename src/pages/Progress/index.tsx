@@ -179,7 +179,7 @@ export default function ProgressPage() {
             )}
 
             <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Average Projected 1RM</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               {lifts.map((lift, index) => {
                 const averageMax = utils.getAverageOfLastThreeSessions(nonDeloadSessions, lift.type);
                 const displayMax = averageMax > 0 ? averageMax : lift.initial;

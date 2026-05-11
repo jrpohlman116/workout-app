@@ -233,7 +233,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
                 </div>
                 {profile.meet_date && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <div className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">
                     {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)))}w to meet
                   </div>
                 )}

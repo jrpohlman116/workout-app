@@ -16,12 +16,12 @@ export default function LiftSummaryCard({ name, displayName, current, initial, c
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 transition-all duration-300 ${
+      className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 transition-all duration-300 ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
     >
       <div className="flex items-start justify-between mb-2">
-        <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">{displayName}</h3>
+        <h3 className="text-xs font-medium text-gray-600 dark:text-gray-300">{displayName}</h3>
         {change !== 0 && (
           <span
             className={`flex items-center text-xs font-semibold ${
@@ -33,8 +33,8 @@ export default function LiftSummaryCard({ name, displayName, current, initial, c
           </span>
         )}
       </div>
-      <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{current} {unitPreference}</p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">Started: {initial} {unitPreference}</p>
+      <p className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{current} {unitPreference}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">Started: {initial} {unitPreference}</p>
     </div>
   );
 }
