@@ -23,6 +23,7 @@ export interface WeakPoints {
   squat: StickingPoint[];
   bench: StickingPoint[];
   deadlift: StickingPoint[];
+  upper?: StickingPoint[];
 }
 
 export interface UserProfile {

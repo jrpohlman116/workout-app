@@ -53,6 +53,11 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const defaultExercises = baseExercises[liftType as keyof typeof baseExercises] ?? baseExercises.upper;
 
+  const liftTypeKey = liftType as 'squat' | 'bench' | 'deadlift' | 'ohp' | 'upper';
+  const userWeakPoints = (liftTypeKey in (profile?.weak_points || {}))
+    ? (profile?.weak_points?.[liftTypeKey as keyof typeof profile.weak_points] as string[] | undefined)
+    : undefined;
+
   const {
     exercises: templateExercises,
     loading: templateLoading,
@@ -62,9 +67,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     resetToDefault,
   } = useWorkoutTemplate(
     user?.id,
-    liftType as 'squat' | 'bench' | 'deadlift' | 'ohp',
+    liftTypeKey,
     'standard',
-    defaultExercises
+    defaultExercises,
+    userWeakPoints as any
   );
 
   useEffect(() => {

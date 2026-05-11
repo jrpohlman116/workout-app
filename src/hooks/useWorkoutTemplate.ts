@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, WorkoutTemplate } from '../lib/supabase';
 import { Exercise } from '../pages/WorkoutDetail/types';
+import { StickingPoint, selectMixedAccessories } from '../pages/WorkoutDetail/weakPointExercises';
 
 interface UseWorkoutTemplateResult {
   template: WorkoutTemplate | null;
@@ -14,9 +15,10 @@ interface UseWorkoutTemplateResult {
 
 export function useWorkoutTemplate(
   userId: string | undefined,
-  liftType: 'squat' | 'bench' | 'deadlift' | 'ohp',
+  liftType: 'squat' | 'bench' | 'deadlift' | 'ohp' | 'upper',
   programVariation: 'standard' | 'bbb' | 'bbs',
-  defaultExercises: Exercise[]
+  defaultExercises: Exercise[],
+  weakPoints?: StickingPoint[]
 ): UseWorkoutTemplateResult {
   const [template, setTemplate] = useState<WorkoutTemplate | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>(defaultExercises);
@@ -31,7 +33,7 @@ export function useWorkoutTemplate(
       setExercises(defaultExercises);
       setLoading(false);
     }
-  }, [userId, liftType, programVariation]);
+  }, [userId, liftType, programVariation, weakPoints]);
 
   const loadTemplate = async () => {
     if (!userId) return;
@@ -55,7 +57,20 @@ export function useWorkoutTemplate(
         setExercises(data.exercises_data as Exercise[]);
       } else {
         setTemplate(null);
-        setExercises(defaultExercises);
+        // If weak points are defined, generate weak-point-based exercises
+        if (weakPoints && weakPoints.length > 0) {
+          const selectedNames = selectMixedAccessories(liftType, weakPoints);
+          // Map exercise names to default exercises or create placeholders
+          const selectedExercises = selectedNames
+            .map(name => {
+              const found = defaultExercises.find(e => e.name === name);
+              return found || { name, reps: '8-12', sets: 3, isBodyweight: false };
+            })
+            .slice(0, 4);
+          setExercises(selectedExercises);
+        } else {
+          setExercises(defaultExercises);
+        }
       }
     } catch (err) {
       console.error('Error loading workout template:', err);
