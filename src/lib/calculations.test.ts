@@ -7,6 +7,9 @@ import {
   getWeekSubtext,
   calculateWilksScore,
   getGreeting,
+  calculateNewTrainingMax,
+  calculateBackoffSets,
+  buildWaveSchedule,
 } from './calculations';
 
 describe('calculateOneRepMax', () => {
@@ -164,5 +167,198 @@ describe('getGreeting', () => {
     const greeting = getGreeting();
     expect(greeting).toBeTruthy();
     expect(typeof greeting).toBe('string');
+  });
+});
+
+// ─── Juggernaut Method ────────────────────────────────────────────────────────
+
+describe('calculateNewTrainingMax', () => {
+  it('should equal calculateTrainingMax(calculateOneRepMax(weight, reps))', () => {
+    expect(calculateNewTrainingMax(315, 5)).toBe(
+      calculateTrainingMax(calculateOneRepMax(315, 5))
+    );
+  });
+
+  it('should produce a higher TM when more reps are hit', () => {
+    const tm8 = calculateNewTrainingMax(225, 8);
+    const tm12 = calculateNewTrainingMax(225, 12);
+    expect(tm12).toBeGreaterThan(tm8);
+  });
+
+  it('should produce a higher TM when heavier weight is used', () => {
+    const tmLight = calculateNewTrainingMax(200, 5);
+    const tmHeavy = calculateNewTrainingMax(250, 5);
+    expect(tmHeavy).toBeGreaterThan(tmLight);
+  });
+});
+
+describe('calculateBackoffSets', () => {
+  it('RPE ≤7: 10% drop, 3 sets, 5 reps', () => {
+    const result = calculateBackoffSets(300, 7);
+    expect(result.sets).toBe(3);
+    expect(result.reps).toBe(5);
+    expect(result.weight).toBe(270); // 300 * 0.90 = 270
+  });
+
+  it('RPE 8: 15% drop, 3 sets, 3 reps', () => {
+    const result = calculateBackoffSets(300, 8);
+    expect(result.sets).toBe(3);
+    expect(result.reps).toBe(3);
+    expect(result.weight).toBe(255); // 300 * 0.85 = 255
+  });
+
+  it('RPE 9: 20% drop, 2 sets, 3 reps', () => {
+    const result = calculateBackoffSets(300, 9);
+    expect(result.sets).toBe(2);
+    expect(result.reps).toBe(3);
+    expect(result.weight).toBe(240); // 300 * 0.80 = 240
+  });
+
+  it('RPE 10: 25% drop, 2 sets, 3 reps', () => {
+    const result = calculateBackoffSets(300, 10);
+    expect(result.sets).toBe(2);
+    expect(result.reps).toBe(3);
+    expect(result.weight).toBe(225); // 300 * 0.75 = 225
+  });
+
+  it('should treat RPE 6 same as RPE ≤7', () => {
+    const result = calculateBackoffSets(300, 6);
+    expect(result.sets).toBe(3);
+    expect(result.reps).toBe(5);
+  });
+
+  it('should round weight to nearest 5 lb', () => {
+    const result = calculateBackoffSets(275, 7); // 275 * 0.90 = 247.5 → rounds to 250
+    expect(result.weight % 5).toBe(0);
+    expect(result.weight).toBe(250);
+  });
+
+  it('should round weight to nearest 2.5 kg', () => {
+    const result = calculateBackoffSets(100, 7, 'kg'); // 100 * 0.90 = 90 → 90
+    expect(result.weight % 2.5).toBe(0);
+    expect(result.weight).toBe(90);
+  });
+});
+
+describe('buildWaveSchedule', () => {
+  const monday = (weeksFromNow: number) => {
+    const d = new Date('2026-05-11');
+    d.setDate(d.getDate() + weeksFromNow * 7);
+    return d;
+  };
+
+  const start = monday(0);
+
+  it('16-week timeline: runs all 4 waves at standard length', () => {
+    const schedule = buildWaveSchedule(start, monday(16));
+    expect(schedule.totalWeeks).toBe(16);
+    expect(schedule.skippedWaves).toHaveLength(0);
+    expect(schedule.adjustments).toHaveLength(0);
+
+    const waves = [...new Set(schedule.weeks.map(w => w.wave))];
+    expect(waves).toEqual([10, 8, 5, 3]);
+  });
+
+  it('each wave has all 4 phases in a standard schedule', () => {
+    const schedule = buildWaveSchedule(start, monday(16));
+    for (const wave of [10, 8, 5, 3] as const) {
+      const phases = schedule.weeks.filter(w => w.wave === wave).map(w => w.phase);
+      expect(phases).toContain('accumulation');
+      expect(phases).toContain('intensification');
+      expect(phases).toContain('realization');
+      expect(phases).toContain('deload');
+    }
+  });
+
+  it('deload is always present in every wave regardless of compression', () => {
+    const schedule = buildWaveSchedule(start, monday(13));
+    for (const wave of [...new Set(schedule.weeks.map(w => w.wave))]) {
+      const phases = schedule.weeks.filter(w => w.wave === wave).map(w => w.phase);
+      expect(phases).toContain('deload');
+    }
+  });
+
+  it('12-week timeline: all 4 waves compressed to 3 weeks each', () => {
+    const schedule = buildWaveSchedule(start, monday(12));
+    expect(schedule.totalWeeks).toBe(12);
+    expect(schedule.skippedWaves).toHaveLength(0);
+
+    for (const wave of [10, 8, 5, 3] as const) {
+      const waveWeeks = schedule.weeks.filter(w => w.wave === wave);
+      expect(waveWeeks).toHaveLength(3);
+      const phases = waveWeeks.map(w => w.phase);
+      expect(phases).not.toContain('intensification');
+    }
+  });
+
+  it('9-week timeline: skips 10-rep wave, runs 8/5/3', () => {
+    const schedule = buildWaveSchedule(start, monday(9));
+    expect(schedule.skippedWaves).toContain(10);
+    const waves = [...new Set(schedule.weeks.map(w => w.wave))];
+    expect(waves).not.toContain(10);
+    expect(waves).toContain(8);
+    expect(waves).toContain(5);
+    expect(waves).toContain(3);
+  });
+
+  it('6-week timeline: skips 10 and 8, runs 5/3', () => {
+    const schedule = buildWaveSchedule(start, monday(6));
+    expect(schedule.skippedWaves).toContain(10);
+    expect(schedule.skippedWaves).toContain(8);
+    const waves = [...new Set(schedule.weeks.map(w => w.wave))];
+    expect(waves).not.toContain(10);
+    expect(waves).not.toContain(8);
+    expect(waves).toContain(5);
+    expect(waves).toContain(3);
+  });
+
+  it('3-week timeline: only 3-rep wave (compressed)', () => {
+    const schedule = buildWaveSchedule(start, monday(3));
+    const waves = [...new Set(schedule.weeks.map(w => w.wave))];
+    expect(waves).toEqual([3]);
+    expect(schedule.totalWeeks).toBe(3);
+  });
+
+  it('< 3-week timeline: returns empty schedule', () => {
+    const schedule = buildWaveSchedule(start, monday(2));
+    expect(schedule.weeks).toHaveLength(0);
+    expect(schedule.totalWeeks).toBe(0);
+    expect(schedule.peakWeekIndex).toBe(-1);
+  });
+
+  it('20-week timeline: elongates early waves to 5 weeks', () => {
+    const schedule = buildWaveSchedule(start, monday(20));
+    expect(schedule.totalWeeks).toBe(20);
+    const tenWave = schedule.weeks.filter(w => w.wave === 10);
+    expect(tenWave).toHaveLength(5);
+  });
+
+  it('peak week is the 3-rep realization week', () => {
+    const schedule = buildWaveSchedule(start, monday(16));
+    const peakWeek = schedule.weeks[schedule.peakWeekIndex];
+    expect(peakWeek.wave).toBe(3);
+    expect(peakWeek.phase).toBe('realization');
+  });
+
+  it('peak week is the last week before the deload in a standard schedule', () => {
+    const schedule = buildWaveSchedule(start, monday(16));
+    const peakWeek = schedule.weeks[schedule.peakWeekIndex];
+    const weekAfterPeak = schedule.weeks[schedule.peakWeekIndex + 1];
+    expect(weekAfterPeak.phase).toBe('deload');
+  });
+
+  it('records adjustments in plain English when waves are skipped or resized', () => {
+    const schedule = buildWaveSchedule(start, monday(9));
+    expect(schedule.adjustments.length).toBeGreaterThan(0);
+    expect(typeof schedule.adjustments[0]).toBe('string');
+  });
+
+  it('week dates are sequential with no gaps', () => {
+    const schedule = buildWaveSchedule(start, monday(16));
+    for (let i = 1; i < schedule.weeks.length; i++) {
+      const prev = schedule.weeks[i - 1].endDate.getTime();
+      const curr = schedule.weeks[i].startDate.getTime();
+      expect(curr - prev).toBe(1); // endDate + 1ms = next startDate
+    }
   });
 });

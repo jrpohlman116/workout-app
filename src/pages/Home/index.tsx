@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateWorkoutWeights, getWeekSubtext, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, getCycleProgression } from '../../lib/calculations';
-import { Calendar, RefreshCw, ChevronRight, ChevronDown, Check, SkipForward, Activity } from 'lucide-react';
+import { calculateWorkoutWeights, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
+import { Calendar, RefreshCw, ChevronRight, Check, SkipForward, Activity, Layers } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
@@ -13,13 +13,30 @@ interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
 }
 
+const WAVE_LABELS: Record<number, string> = { 10: '10-Rep', 8: '8-Rep', 5: '5-Rep', 3: '3-Rep' };
+const PHASE_LABELS: Record<string, string> = {
+  accumulation: 'Accumulation',
+  intensification: 'Intensification',
+  realization: 'Realization',
+  deload: 'Deload',
+};
+
+function getCurrentWeekBlock(programStartDate: string | undefined, meetDate: string | undefined): WeekBlock | null {
+  if (!programStartDate || !meetDate) return null;
+  const start = new Date(programStartDate);
+  const meet = new Date(meetDate);
+  const schedule = buildWaveSchedule(start, meet);
+  const now = Date.now();
+  return schedule.weeks.find(w => w.startDate.getTime() <= now && w.endDate.getTime() >= now) ?? null;
+}
+
 export default function HomePage({ onNavigate }: HomePageProps) {
   const { profile, user, refreshProfile } = useAuth();
   const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
   const [workoutData, setWorkoutData] = useState<Map<string, { calculated_1rm: number }>>(new Map());
-  const [projectedMaxes, setProjectedMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
-  const [bestMaxes, setBestMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
-  const [initialMaxes, setInitialMaxes] = useState<{ squat: number; bench: number; deadlift: number; ohp: number }>({ squat: 0, bench: 0, deadlift: 0, ohp: 0 });
+  const [projectedMaxes, setProjectedMaxes] = useState<{ squat: number; bench: number; deadlift: number }>({ squat: 0, bench: 0, deadlift: 0 });
+  const [bestMaxes, setBestMaxes] = useState<{ squat: number; bench: number; deadlift: number }>({ squat: 0, bench: 0, deadlift: 0 });
+  const [initialMaxes, setInitialMaxes] = useState<{ squat: number; bench: number; deadlift: number }>({ squat: 0, bench: 0, deadlift: 0 });
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
   const [showSkipWeekModal, setShowSkipWeekModal] = useState(false);
@@ -71,14 +88,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         squat: getAverageOfLastThreeSessions(data, 'squat') || profile.squat_max,
         bench: getAverageOfLastThreeSessions(data, 'bench') || profile.bench_max,
         deadlift: getAverageOfLastThreeSessions(data, 'deadlift') || profile.deadlift_max,
-        ohp: getAverageOfLastThreeSessions(data, 'ohp') || profile.ohp_max,
       };
 
       const best = {
         squat: getBestWeightForLift(data, 'squat')?.weight_lifted || profile.squat_max,
         bench: getBestWeightForLift(data, 'bench')?.weight_lifted || profile.bench_max,
         deadlift: getBestWeightForLift(data, 'deadlift')?.weight_lifted || profile.deadlift_max,
-        ohp: getBestWeightForLift(data, 'ohp')?.weight_lifted || profile.ohp_max,
       };
 
       setProjectedMaxes(projected);
@@ -88,39 +103,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         squat: getFirstRecordedMax(data, 'squat') || profile.squat_max,
         bench: getFirstRecordedMax(data, 'bench') || profile.bench_max,
         deadlift: getFirstRecordedMax(data, 'deadlift') || profile.deadlift_max,
-        ohp: getFirstRecordedMax(data, 'ohp') || profile.ohp_max,
       });
     }
-  };
-
-  const handleWeekChange = async (newWeek: number) => {
-    if (!user || !profile) return;
-
-    await supabase
-      .from('user_profiles')
-      .update({
-        current_week: newWeek,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
-
-    await refreshProfile();
-    setShowWeekSelector(false);
-  };
-
-  const handleCycleChange = async (newCycle: number) => {
-    if (!user || !profile) return;
-
-    await supabase
-      .from('user_profiles')
-      .update({
-        current_cycle: newCycle,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
-
-    await refreshProfile();
-    setShowCycleSelector(false);
   };
 
   const handleSkipWeek = async () => {
@@ -156,105 +140,49 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
   if (!profile) return null;
 
+  const currentBlock = getCurrentWeekBlock(profile.program_start_date, profile.meet_date);
+  const isDeload = currentBlock ? currentBlock.phase === 'deload' : profile.current_week === 4;
+
   const workouts = [
     { name: 'Squat', max: profile.squat_max, type: 'squat' },
-    { name: 'Bench', max: profile.bench_max, type: 'bench' },
+    { name: 'Upper', max: 0, type: 'upper' },
     { name: 'Deadlift', max: profile.deadlift_max, type: 'deadlift' },
-    { name: 'Overhead Press', max: profile.ohp_max, type: 'ohp' },
+    { name: 'Bench', max: profile.bench_max, type: 'bench' },
   ];
 
   const isLbs = profile.unit_preference === 'lb';
   const lbToKg = (weight: number) => isLbs ? weight * 0.453592 : weight;
 
   const initialScores = {
-    wilks: calculateWilksScore(
-      lbToKg(initialMaxes.squat),
-      lbToKg(initialMaxes.bench),
-      lbToKg(initialMaxes.deadlift),
-      lbToKg(profile.bodyweight || 0),
-      profile.gender || 'male'
-    ),
-    wilks2: calculateWilks2Score(
-      lbToKg(initialMaxes.squat),
-      lbToKg(initialMaxes.bench),
-      lbToKg(initialMaxes.deadlift),
-      lbToKg(profile.bodyweight || 0),
-      profile.gender || 'male'
-    ),
-    dots: calculateDOTSScore(
-      lbToKg(initialMaxes.squat),
-      lbToKg(initialMaxes.bench),
-      lbToKg(initialMaxes.deadlift),
-      lbToKg(profile.bodyweight || 0),
-      profile.gender || 'male'
-    ),
-    ipfgl: calculateIPFGLScore(
-      lbToKg(initialMaxes.squat),
-      lbToKg(initialMaxes.bench),
-      lbToKg(initialMaxes.deadlift),
-      lbToKg(profile.bodyweight || 0),
-      profile.gender || 'male'
-    ),
+    wilks: calculateWilksScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
+    wilks2: calculateWilks2Score(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
+    dots: calculateDOTSScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
+    ipfgl: calculateIPFGLScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
   };
 
   const effectiveMaxes = {
     squat: Math.max(projectedMaxes.squat, bestMaxes.squat),
     bench: Math.max(projectedMaxes.bench, bestMaxes.bench),
     deadlift: Math.max(projectedMaxes.deadlift, bestMaxes.deadlift),
-    ohp: Math.max(projectedMaxes.ohp, bestMaxes.ohp),
   };
 
   const projectedScores = {
-    wilks: calculateWilksScore(
-      lbToKg(effectiveMaxes.squat),
-      lbToKg(effectiveMaxes.bench),
-      lbToKg(effectiveMaxes.deadlift),
-      lbToKg(profile.bodyweight || 0),
-      profile.gender || 'male'
-    ),
-    wilks2: calculateWilks2Score(
-      lbToKg(effectiveMaxes.squat),
-      lbToKg(effectiveMaxes.bench),
-      lbToKg(effectiveMaxes.deadlift),
-      lbToKg(profile.bodyweight || 0),
-      profile.gender || 'male'
-    ),
-    dots: calculateDOTSScore(
-      lbToKg(effectiveMaxes.squat),
-      lbToKg(effectiveMaxes.bench),
-      lbToKg(effectiveMaxes.deadlift),
-      lbToKg(profile.bodyweight || 0),
-      profile.gender || 'male'
-    ),
-    ipfgl: calculateIPFGLScore(
-      lbToKg(effectiveMaxes.squat),
-      lbToKg(effectiveMaxes.bench),
-      lbToKg(effectiveMaxes.deadlift),
-      lbToKg(profile.bodyweight || 0),
-      profile.gender || 'male'
-    ),
+    wilks: calculateWilksScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
+    wilks2: calculateWilks2Score(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
+    dots: calculateDOTSScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
+    ipfgl: calculateIPFGLScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
   };
 
   const hasProjectedData = projectedMaxes.squat > 0 || projectedMaxes.bench > 0 || projectedMaxes.deadlift > 0;
 
   const changePercents = {
-    wilks: initialScores.wilks > 0
-      ? (((projectedScores.wilks - initialScores.wilks) / initialScores.wilks) * 100).toFixed(1)
-      : '0.0',
-    wilks2: initialScores.wilks2 > 0
-      ? (((projectedScores.wilks2 - initialScores.wilks2) / initialScores.wilks2) * 100).toFixed(1)
-      : '0.0',
-    dots: initialScores.dots > 0
-      ? (((projectedScores.dots - initialScores.dots) / initialScores.dots) * 100).toFixed(1)
-      : '0.0',
-    ipfgl: initialScores.ipfgl > 0
-      ? (((projectedScores.ipfgl - initialScores.ipfgl) / initialScores.ipfgl) * 100).toFixed(1)
-      : '0.0',
+    wilks: initialScores.wilks > 0 ? (((projectedScores.wilks - initialScores.wilks) / initialScores.wilks) * 100).toFixed(1) : '0.0',
+    wilks2: initialScores.wilks2 > 0 ? (((projectedScores.wilks2 - initialScores.wilks2) / initialScores.wilks2) * 100).toFixed(1) : '0.0',
+    dots: initialScores.dots > 0 ? (((projectedScores.dots - initialScores.dots) / initialScores.dots) * 100).toFixed(1) : '0.0',
+    ipfgl: initialScores.ipfgl > 0 ? (((projectedScores.ipfgl - initialScores.ipfgl) / initialScores.ipfgl) * 100).toFixed(1) : '0.0',
   };
 
   const displayScores = hasProjectedData ? projectedScores : initialScores;
-
-  const progression = getCycleProgression(profile.current_cycle, 'squat', profile.unit_preference || 'lb');
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
@@ -273,59 +201,34 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         />
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="relative group">
-            <label htmlFor="week-selector" className="sr-only">
-              Select training week
-            </label>
-            <select
-              id="week-selector"
-              value={profile.current_week}
-              onChange={(e) => handleWeekChange(Number(e.target.value))}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-            >
-              <option value={1}>Week 1 - 5 reps</option>
-              <option value={2}>Week 2 - 3 reps</option>
-              <option value={3}>Week 3 - 5-3-1</option>
-              <option value={4}>Week 4 - Deload</option>
-            </select>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 group-hover:shadow-md transition-all group-focus-within:ring-2 group-focus-within:ring-blue-500 group-focus-within:ring-offset-2">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Week</div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{profile.current_week}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5 whitespace-nowrap">{getWeekSubtext(profile.current_week)}</div>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+            <div className="flex items-center gap-3">
+              <Layers className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Wave</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {currentBlock ? WAVE_LABELS[currentBlock.wave] : `Week ${profile.current_week}`}
                 </div>
-                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-300 flex-shrink-0" aria-hidden="true" />
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {currentBlock ? `${currentBlock.wave} reps` : `Cycle ${profile.current_cycle}`}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="relative group">
-            <label htmlFor="cycle-selector" className="sr-only">
-              Select training cycle
-            </label>
-            <select
-              id="cycle-selector"
-              value={profile.current_cycle}
-              onChange={(e) => handleCycleChange(Number(e.target.value))}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-            >
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  Cycle {i + 1} - +{getCycleProgression(i + 1, 'squat', profile.unit_preference || 'lb')} {profile.unit_preference || 'lb'}
-                </option>
-              ))}
-            </select>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 group-hover:shadow-md transition-all group-focus-within:ring-2 group-focus-within:ring-blue-500 group-focus-within:ring-offset-2">
-              <div className="flex items-center gap-3">
-                <RefreshCw className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Cycle</div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{profile.current_cycle}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">+{progression} {profile.unit_preference || 'lb'}</div>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-10 h-10 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-0.5">Phase</div>
+                <div className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
+                  {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
                 </div>
-                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-300 flex-shrink-0" aria-hidden="true" />
+                {profile.meet_date && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)))}w to meet
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -359,26 +262,36 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               Move to Next Week
             </button>
           </div>
-          {profile.current_week === 4 && (
+          {isDeload && (
             <div className="bg-blue-50 border-l-4 border-blue-600 rounded-xl p-4 mb-4">
-              <p className="text-gray-700 dark:text-gray-300 font-semibold mb-1">Deload Week - Active Recovery</p>
+              <p className="text-gray-700 dark:text-gray-300 font-semibold mb-1">Deload Week — Active Recovery</p>
               <p className="text-sm text-gray-600 dark:text-gray-300">Complete your workouts at lighter weights. No need to log your reps this week!</p>
             </div>
           )}
           <div className="space-y-3">
             {workouts.map((workout) => {
-              const weights = calculateWorkoutWeights(
-                workout.type,
-                workout.max,
-                profile.current_cycle,
-                profile.current_week,
-                profile.unit_preference || 'lb'
-              );
               const isCompleted = completedWorkouts.has(workout.type);
               const sessionData = workoutData.get(workout.type);
               const projected1RM = sessionData?.calculated_1rm;
+              const isUpperDay = workout.type === 'upper';
 
-              const isDeloadWeek = profile.current_week === 4;
+              let subtitleText: string;
+              if (isCompleted && projected1RM) {
+                subtitleText = `Projected 1RM: ${Math.round(projected1RM)} ${profile.unit_preference || 'lb'}`;
+              } else if (isCompleted) {
+                subtitleText = 'Done ✓';
+              } else if (isUpperDay) {
+                subtitleText = 'Bench accessory work';
+              } else {
+                const weights = calculateWorkoutWeights(
+                  workout.type,
+                  workout.max,
+                  profile.current_cycle,
+                  profile.current_week,
+                  profile.unit_preference || 'lb'
+                );
+                subtitleText = `Top set: ${weights.set3} ${profile.unit_preference || 'lb'}`;
+              }
 
               return (
                 <button
@@ -393,22 +306,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     }`}
                 >
                   <div className="text-left flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        {workout.name}
-                      </div>
-                      {profile.program_variation && profile.program_variation !== 'standard' && (
-                        <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded">
-                          {profile.program_variation.toUpperCase()}
-                        </span>
-                      )}
+                    <div className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                      {workout.name}
                     </div>
                     <div className={`text-sm ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-300'}`}>
-                      {isCompleted && projected1RM
-                        ? `Projected 1RM: ${Math.round(projected1RM)} ${profile.unit_preference || 'lb'}`
-                        : isCompleted
-                          ? 'Done ✓'
-                          : `Top set: ${weights.set3} ${profile.unit_preference || 'lb'}`}
+                      {subtitleText}
                     </div>
                   </div>
                   {isCompleted ? (
@@ -473,11 +375,3 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     </div>
   );
 }
-function setShowWeekSelector(arg0: boolean) {
-  throw new Error('Function not implemented.');
-}
-
-function setShowCycleSelector(arg0: boolean) {
-  throw new Error('Function not implemented.');
-}
-
