@@ -208,6 +208,186 @@ export function getGreeting(): string {
   return 'Good Evening';
 }
 
+// ─── Juggernaut Method ────────────────────────────────────────────────────────
+
+export type RepWave = 10 | 8 | 5 | 3;
+export type WavePhase = 'accumulation' | 'intensification' | 'realization' | 'deload';
+
+export interface WeekBlock {
+  wave: RepWave;
+  phase: WavePhase;
+  weekIndex: number;
+  startDate: Date;
+  endDate: Date;
+}
+
+export interface WaveSchedule {
+  weeks: WeekBlock[];
+  skippedWaves: RepWave[];
+  adjustments: string[];
+  totalWeeks: number;
+  peakWeekIndex: number;
+}
+
+export interface BackoffSet {
+  weight: number;
+  sets: number;
+  reps: number;
+}
+
+const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+const STANDARD_PHASES: WavePhase[] = ['accumulation', 'intensification', 'realization', 'deload'];
+const COMPRESSED_PHASES: WavePhase[] = ['accumulation', 'realization', 'deload'];
+const ELONGATED_PHASES: WavePhase[] = ['accumulation', 'accumulation', 'intensification', 'realization', 'deload'];
+
+/**
+ * Calculates the new training max after a Realization week AMAP set.
+ * Uses Epley formula to estimate 1RM, then takes 90%.
+ */
+export function calculateNewTrainingMax(amapWeight: number, amapReps: number): number {
+  return calculateTrainingMax(calculateOneRepMax(amapWeight, amapReps));
+}
+
+/**
+ * Returns back-off weight, sets, and reps based on RPE of the top set.
+ * RPE ≤7: 10% drop, 3×5
+ * RPE  8: 15% drop, 3×3
+ * RPE  9: 20% drop, 2×3
+ * RPE 10: 25% drop, 2×3
+ */
+export function calculateBackoffSets(
+  topSetWeight: number,
+  rpe: number,
+  unit: string = 'lb'
+): BackoffSet {
+  const roundTo = unit === 'kg' ? 2.5 : 5;
+
+  let dropPct: number;
+  let sets: number;
+  let reps: number;
+
+  if (rpe <= 7) {
+    dropPct = 0.10; sets = 3; reps = 5;
+  } else if (rpe === 8) {
+    dropPct = 0.15; sets = 3; reps = 3;
+  } else if (rpe === 9) {
+    dropPct = 0.20; sets = 2; reps = 3;
+  } else {
+    dropPct = 0.25; sets = 2; reps = 3;
+  }
+
+  const weight = Math.round(topSetWeight * (1 - dropPct) / roundTo) * roundTo;
+  return { weight, sets, reps };
+}
+
+/**
+ * Builds a wave schedule working backwards from a meet/test date.
+ *
+ * Rules:
+ * - Always includes the 3-rep wave (competition peak)
+ * - Waves can be compressed to 3 weeks (intensification dropped) or elongated to 5 weeks
+ * - Waves are skipped starting from the earliest (10s first) when time is short
+ * - Deloads are never removed
+ * - All adjustments are recorded in plain English for display to the user
+ */
+export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule {
+  const availableWeeks = Math.floor(
+    (meetDate.getTime() - startDate.getTime()) / MS_PER_WEEK
+  );
+
+  const adjustments: string[] = [];
+  const skippedWaves: RepWave[] = [];
+
+  if (availableWeeks < 3) {
+    return { weeks: [], skippedWaves: [10, 8, 5, 3], adjustments: ['Not enough time to run any wave before your meet date.'], totalWeeks: 0, peakWeekIndex: -1 };
+  }
+
+  // Select waves — minimum 3 weeks per wave, so thresholds are multiples of 3
+  let selectedWaves: RepWave[];
+
+  if (availableWeeks >= 12) {
+    selectedWaves = [10, 8, 5, 3];
+  } else if (availableWeeks >= 9) {
+    selectedWaves = [8, 5, 3];
+    skippedWaves.push(10);
+    adjustments.push(
+      `Your timeline is ${availableWeeks} weeks. The 10-rep wave was skipped so there's enough time for full 8-rep, 5-rep, and 3-rep waves before your meet.`
+    );
+  } else if (availableWeeks >= 6) {
+    selectedWaves = [5, 3];
+    skippedWaves.push(10, 8);
+    adjustments.push(
+      `Your timeline is ${availableWeeks} weeks. The 10-rep and 8-rep waves were skipped so you can run a full 5-rep and 3-rep wave before your meet.`
+    );
+  } else {
+    selectedWaves = [3];
+    skippedWaves.push(10, 8, 5);
+    adjustments.push(
+      `Your timeline is ${availableWeeks} weeks. Only the 3-rep wave fits before your meet.`
+    );
+  }
+
+  // Fit wave lengths to available time
+  const waveLengths = new Map<RepWave, number>(selectedWaves.map(w => [w, 4]));
+  const standardTotal = selectedWaves.length * 4;
+  const diff = availableWeeks - standardTotal;
+
+  if (diff > 0) {
+    // Elongate waves (max 5 weeks each), prioritising earlier waves
+    let extra = diff;
+    for (const wave of selectedWaves) {
+      if (extra <= 0) break;
+      if (waveLengths.get(wave)! < 5) {
+        waveLengths.set(wave, 5);
+        extra--;
+        adjustments.push(
+          `The ${wave}-rep wave was extended to 5 weeks (an extra accumulation week was added) to fill your timeline.`
+        );
+      }
+    }
+  } else if (diff < 0) {
+    // Compress waves (min 3 weeks each), prioritising earlier waves
+    let shortage = Math.abs(diff);
+    for (const wave of selectedWaves) {
+      if (shortage <= 0) break;
+      if (waveLengths.get(wave)! > 3) {
+        waveLengths.set(wave, 3);
+        shortage--;
+        adjustments.push(
+          `The ${wave}-rep wave was compressed to 3 weeks (the intensification phase was removed) to fit your timeline.`
+        );
+      }
+    }
+  }
+
+  // Build week-by-week blocks with dates
+  const weeks: WeekBlock[] = [];
+  let weekIndex = 0;
+
+  for (const wave of selectedWaves) {
+    const length = waveLengths.get(wave)!;
+    const phases =
+      length === 3 ? COMPRESSED_PHASES :
+      length === 5 ? ELONGATED_PHASES :
+      STANDARD_PHASES;
+
+    for (const phase of phases) {
+      const weekStart = new Date(startDate.getTime() + weekIndex * MS_PER_WEEK);
+      const weekEnd = new Date(weekStart.getTime() + MS_PER_WEEK - 1);
+      weeks.push({ wave, phase, weekIndex, startDate: weekStart, endDate: weekEnd });
+      weekIndex++;
+    }
+  }
+
+  const peakWeekIndex = weeks.reduce(
+    (found, w, i) => w.wave === 3 && w.phase === 'realization' ? i : found,
+    -1
+  );
+
+  return { weeks, skippedWaves, adjustments, totalWeeks: weekIndex, peakWeekIndex };
+}
+
 export function calculateBBBSupplementalWeight(
   type: string,
   oneRepMax: number,
