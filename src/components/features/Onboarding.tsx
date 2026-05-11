@@ -22,6 +22,11 @@ const STICKING_POINT_LABELS: Record<StickingPoint, string> = {
   mid_range: 'Mid Range',
   lockout: 'Lockout',
 };
+const STICKING_POINT_DESCRIPTIONS: Record<StickingPoint, string> = {
+  in_the_hole: 'Bottom position',
+  mid_range: 'Halfway up',
+  lockout: 'Final inches',
+};
 const LIFT_LABELS: Record<MainLift, string> = {
   squat: 'Squat',
   bench: 'Bench',
@@ -215,11 +220,14 @@ export default function Onboarding() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome to Juggernaut
+          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-2">
+            Juggernaut Method
+          </p>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2">
+            Build Your Program
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Let's build your strength program
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Four steps. Done in under two minutes.
           </p>
         </div>
 
@@ -229,15 +237,15 @@ export default function Onboarding() {
 
         <div className="mb-6" role="group" aria-label="Progress indicator">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500">
               Step {currentStep} of {TOTAL_STEPS}
             </span>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500">
               {getStepTitle(currentStep)}
             </span>
           </div>
           <div
-            className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2"
+            className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1"
             role="progressbar"
             aria-valuenow={currentStep}
             aria-valuemin={1}
@@ -245,13 +253,13 @@ export default function Onboarding() {
             aria-label={`Progress: step ${currentStep} of ${TOTAL_STEPS}`}
           >
             <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-gray-900 dark:bg-gray-100 h-1 rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
             />
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 space-y-6">
 
           {/* ── Step 1: Basic info ── */}
           {currentStep === 1 && (
@@ -329,7 +337,7 @@ export default function Onboarding() {
           {/* ── Step 2: Starting maxes ── */}
           {currentStep === 2 && (
             <fieldset>
-              <legend className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <legend className="text-2xl font-black text-gray-900 dark:text-white mb-2">
                 Enter Your Starting Maxes
               </legend>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
@@ -456,7 +464,7 @@ export default function Onboarding() {
           {/* ── Step 3: Meet / test date ── */}
           {currentStep === 3 && (
             <fieldset>
-              <legend className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <legend className="text-2xl font-black text-gray-900 dark:text-white mb-2">
                 When's your next meet or 1RM test?
               </legend>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
@@ -477,7 +485,7 @@ export default function Onboarding() {
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {weeksAway !== null && weeksAway > 0 && (
-                    <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-2 tabular-nums">
                       {weeksAway} week{weeksAway !== 1 ? 's' : ''} away
                     </p>
                   )}
@@ -489,16 +497,17 @@ export default function Onboarding() {
                 </div>
 
                 {meetDate && weeksAway !== null && weeksAway > 0 && (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Program Structure</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
                       {weeksAway >= 12
-                        ? `${weeksAway} weeks — full program: 10-rep → 8-rep → 5-rep → 3-rep waves`
+                        ? `Full program: 10-rep → 8-rep → 5-rep → 3-rep waves`
                         : weeksAway >= 9
-                          ? `${weeksAway} weeks — 10-rep wave skipped; 8-rep → 5-rep → 3-rep waves`
+                          ? `10-rep wave skipped; 8-rep → 5-rep → 3-rep waves`
                           : weeksAway >= 6
-                            ? `${weeksAway} weeks — 5-rep → 3-rep waves only`
+                            ? `5-rep → 3-rep waves only`
                             : weeksAway >= 3
-                              ? `${weeksAway} weeks — 3-rep wave only (peaking block)`
+                              ? `3-rep wave only (peaking block)`
                               : 'Not enough time for a full wave — consider a later date'}
                     </p>
                   </div>
@@ -510,7 +519,7 @@ export default function Onboarding() {
           {/* ── Step 4: Weak points ── */}
           {currentStep === 4 && (
             <fieldset>
-              <legend className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <legend className="text-2xl font-black text-gray-900 dark:text-white mb-2">
                 Where do you struggle?
               </legend>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
@@ -529,13 +538,14 @@ export default function Onboarding() {
                             key={point}
                             type="button"
                             onClick={() => toggleWeakPoint(lift, point)}
-                            className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium border-2 transition-colors ${
+                            className={`flex-1 py-2.5 px-3 rounded-xl border-2 transition-colors text-left ${
                               active
-                                ? 'bg-blue-600 border-blue-600 text-white'
-                                : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-blue-400'
+                                ? 'bg-gray-900 dark:bg-gray-100 border-gray-900 dark:border-gray-100 text-white dark:text-gray-900'
+                                : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500'
                             }`}
                           >
-                            {STICKING_POINT_LABELS[point]}
+                            <span className="block text-sm font-semibold">{STICKING_POINT_LABELS[point]}</span>
+                            <span className="block text-xs font-normal opacity-60 mt-0.5">{STICKING_POINT_DESCRIPTIONS[point]}</span>
                           </button>
                         );
                       })}
@@ -552,7 +562,7 @@ export default function Onboarding() {
               <button
                 type="button"
                 onClick={handlePreviousStep}
-                className="flex-1 px-6 py-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-6 py-4 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-gray-400"
               >
                 Back
               </button>

@@ -9,6 +9,7 @@ interface AccessibleModalProps {
   description?: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg';
+  preventClose?: boolean;
 }
 
 export default function AccessibleModal({
@@ -17,7 +18,8 @@ export default function AccessibleModal({
   title,
   description,
   children,
-  size = 'md'
+  size = 'md',
+  preventClose = false,
 }: AccessibleModalProps) {
   useEffect(() => {
     if (isOpen) {
@@ -51,12 +53,12 @@ export default function AccessibleModal({
       aria-describedby={descId}
     >
       <div
-        className="absolute inset-0 bg-blue-950/60 transition-opacity"
-        onClick={onClose}
+        className="absolute inset-0 bg-gray-900/75 transition-opacity"
+        onClick={preventClose ? undefined : onClose}
         aria-hidden="true"
       />
 
-      <FocusTrap active={isOpen} onEscape={onClose}>
+      <FocusTrap active={isOpen} onEscape={preventClose ? undefined : onClose}>
         <div
           className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg ${sizeClasses[size]} max-h-[90vh] overflow-y-auto transition-colors`}
         >
@@ -67,8 +69,9 @@ export default function AccessibleModal({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close dialog"
-              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded-lg p-1 transition-colors"
+              disabled={preventClose}
+              aria-label={preventClose ? 'Close (operation in progress)' : 'Close dialog'}
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded-lg p-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <X className="w-6 h-6" aria-hidden="true" />
             </button>

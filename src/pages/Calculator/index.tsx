@@ -150,8 +150,8 @@ export default function CalculatorPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">Calculator</h1>
-          <p className="text-gray-600 dark:text-gray-300">Calculate your strength based on standardized formulas</p>
+          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Tools</p>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">Calculator</h1>
         </div>
 
         <div className="max-w-md mx-auto px-4">
@@ -165,8 +165,8 @@ export default function CalculatorPage() {
                 }}
                 className={`px-6 py-3 font-semibold transition-all ripple-container relative overflow-hidden ${
                   activeTab === tab.id
-                    ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 -mb-[2px]'
-                    : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'text-gray-900 dark:text-gray-100 border-b-2 border-gray-900 dark:border-gray-100 -mb-[2px]'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 }`}
               >
                 {tab.label}
@@ -235,8 +235,11 @@ export default function CalculatorPage() {
 
             {calculatedMax !== null && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
-                <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">Your Estimated 1RM</p>
-                <div className="text-5xl font-bold text-gray-900 dark:text-gray-100">{calculatedMax} {unit}</div>
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Estimated 1RM</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-black tabular-nums text-gray-900 dark:text-gray-100">{calculatedMax}</span>
+                  <span className="text-lg font-medium text-gray-400 dark:text-gray-500">{unit}</span>
+                </div>
               </div>
             )}
           </div>
@@ -352,13 +355,19 @@ export default function CalculatorPage() {
 
             {calculatedWilks !== null && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
-                <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">Your Wilks Score</p>
-                <div className="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-3">{calculatedWilks}</div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  {calculatedWilks < 250 && 'Beginner (<250) - Building strength fundamentals'}
-                  {calculatedWilks >= 250 && calculatedWilks < 350 && 'Intermediate (250-349) - Solid strength development'}
-                  {calculatedWilks >= 350 && calculatedWilks < 450 && 'Advanced (350-449) - Impressive strength levels'}
-                  {calculatedWilks >= 450 && 'Elite (450+) - Competition-level strength'}
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Wilks Score</p>
+                <p className="text-5xl font-black tabular-nums text-gray-900 dark:text-gray-100 mb-2">{calculatedWilks}</p>
+                <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-1">
+                  {calculatedWilks < 250 && 'Beginner'}
+                  {calculatedWilks >= 250 && calculatedWilks < 350 && 'Intermediate'}
+                  {calculatedWilks >= 350 && calculatedWilks < 450 && 'Advanced'}
+                  {calculatedWilks >= 450 && 'Elite'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {calculatedWilks < 250 && '300+ is competitive club level'}
+                  {calculatedWilks >= 250 && calculatedWilks < 350 && 'Solid development. 300+ is competitive club level.'}
+                  {calculatedWilks >= 350 && calculatedWilks < 450 && '400+ qualifies for most national events.'}
+                  {calculatedWilks >= 450 && 'Competition-level. 400+ qualifies for most national events.'}
                 </p>
               </div>
             )}
@@ -402,9 +411,9 @@ export default function CalculatorPage() {
                         key={plate}
                         type="button"
                         onClick={() => togglePlate(plate, plateUnit as 'lb' | 'kg')}
-                        className={`px-4 py-3 rounded-xl font-semibold transition-all ${
+                        className={`px-4 py-3 rounded-xl font-semibold tabular-nums transition-all ${
                           isSelected
-                            ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                            ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
                             : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                         }`}
                       >
@@ -459,38 +468,35 @@ export default function CalculatorPage() {
 
             {calculatedPlates !== null && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
-                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">Load per side:</p>
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-4">Load per side</p>
                 {calculatedPlates.length === 0 ? (
-                  <p className="text-gray-600 dark:text-gray-300">Just the bar (no plates needed)</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Just the bar — no plates needed</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {calculatedPlates.map((plate, index) => (
-                      <div key={index} className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                        <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      <div key={index} className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                        <span className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">
                           {plate.weight} {plateUnit}
                         </span>
-                        <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        <span className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
                           × {plate.count}
                         </span>
                       </div>
                     ))}
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Total weight breakdown:</p>
-                      <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                        <div className="flex justify-between">
-                          <span>Bar:</span>
-                          <span className="font-semibold">{barWeight} {plateUnit}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Plates (both sides):</span>
-                          <span className="font-semibold">
-                            {calculatedPlates.reduce((sum, p) => sum + (p.weight * p.count * 2), 0)} {plateUnit}
-                          </span>
-                        </div>
-                        <div className="flex justify-between pt-2 border-t border-gray-200 font-bold">
-                          <span>Total:</span>
-                          <span className="text-blue-600">{targetWeight} {plateUnit}</span>
-                        </div>
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-1.5">
+                      <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                        <span>Bar</span>
+                        <span className="tabular-nums">{barWeight} {plateUnit}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                        <span>Plates (both sides)</span>
+                        <span className="tabular-nums">
+                          {calculatedPlates.reduce((sum, p) => sum + (p.weight * p.count * 2), 0)} {plateUnit}
+                        </span>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total</span>
+                        <span className="text-xl font-black tabular-nums text-gray-900 dark:text-gray-100">{targetWeight} {plateUnit}</span>
                       </div>
                     </div>
                   </div>

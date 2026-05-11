@@ -142,8 +142,8 @@ export default function ProgressPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">Progress</h1>
-          <p className="text-gray-600 dark:text-gray-300">Track your strength gains over time</p>
+          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Juggernaut</p>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">Progress</h1>
         </div>
 
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} onRipple={createRipple} />
@@ -153,15 +153,15 @@ export default function ProgressPage() {
         {activeTab === 'overview' && (
           <div className="space-y-4">
             {nonDeloadSessions.length === 0 && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
-                <p className="text-gray-900 dark:text-gray-100 font-semibold mb-1">Start tracking your progress</p>
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">No data yet</p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">Complete your first workout to see your progress here.</p>
               </div>
             )}
 
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Estimated 1RM Over Time</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Based on your AMAP set performance each realization week</p>
+              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Estimated 1RM Over Time</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">AMAP sets, realization weeks only</p>
               {nonDeloadSessions.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-600 dark:text-gray-300 mb-2">Complete your first workout to see progress</p>
@@ -178,7 +178,7 @@ export default function ProgressPage() {
               <AccessibleChartTable chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
             )}
 
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Average Projected 1RM</h2>
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Average Projected 1RM</p>
             <div className="grid grid-cols-3 gap-3">
               {lifts.map((lift, index) => {
                 const averageMax = utils.getAverageOfLastThreeSessions(nonDeloadSessions, lift.type);
@@ -212,19 +212,19 @@ export default function ProgressPage() {
               return (
                 <div key={lift.type} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6" style={{ animationDelay: `${index * 0.05}s` }}>
                   <div className="flex items-start justify-between mb-3">
-                    <p className="text-gray-700 dark:text-gray-300 font-medium">{lift.displayName}</p>
-                    {bestSession && <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(bestSession.completed_at)}</p>}
+                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">{lift.displayName}</p>
+                    {bestSession && <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(bestSession.completed_at)}</p>}
                   </div>
                   {bestSession ? (
                     <>
-                      <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                        {bestSession.weight_lifted} {profile.unit_preference || 'lb'}
+                      <div className="flex items-baseline gap-1.5 mb-1">
+                        <span className="text-4xl font-black tabular-nums text-gray-900 dark:text-gray-100">{bestSession.weight_lifted}</span>
+                        <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{profile.unit_preference || 'lb'} × {bestSession.reps_performed}</span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">for {bestSession.reps_performed} reps</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Est. 1RM: {Math.round(bestSession.calculated_1rm)} {profile.unit_preference || 'lb'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">Est. 1RM {Math.round(bestSession.calculated_1rm)} {profile.unit_preference || 'lb'}</p>
                     </>
                   ) : (
-                    <p className="text-gray-500 dark:text-gray-400">No data yet</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
                   )}
                 </div>
               );
@@ -240,18 +240,21 @@ export default function ProgressPage() {
               return (
                 <div key={lift.type} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6" style={{ animationDelay: `${index * 0.05}s` }}>
                   <div className="flex items-start justify-between mb-3">
-                    <p className="text-gray-700 dark:text-gray-300 font-medium">{lift.displayName}</p>
-                    {bestVolume && <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(bestVolume.session.completed_at)}</p>}
+                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">{lift.displayName}</p>
+                    {bestVolume && <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(bestVolume.session.completed_at)}</p>}
                   </div>
                   {bestVolume ? (
                     <>
-                      <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">{bestVolume.tonnage.toLocaleString()} {profile.unit_preference || 'lb'}</div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {bestVolume.session.weight_lifted} {profile.unit_preference || 'lb'} × {bestVolume.session.reps_performed} reps
+                      <div className="flex items-baseline gap-1.5 mb-1">
+                        <span className="text-4xl font-black tabular-nums text-gray-900 dark:text-gray-100">{bestVolume.tonnage.toLocaleString()}</span>
+                        <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{profile.unit_preference || 'lb'}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+                        {bestVolume.session.weight_lifted} × {bestVolume.session.reps_performed}
                       </p>
                     </>
                   ) : (
-                    <p className="text-gray-500 dark:text-gray-400">No data yet</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
                   )}
                 </div>
               );
@@ -263,7 +266,7 @@ export default function ProgressPage() {
           <div className="space-y-4">
             {groupSessionsByDate().map(group => (
               <div key={group.date}>
-                <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">{formatDate(group.date + 'T00:00:00')}</h3>
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-2 px-1">{formatDate(group.date + 'T00:00:00')}</p>
                 <div className="space-y-3">
                   {group.sessions.map(session => (
                     <WorkoutLogEntry

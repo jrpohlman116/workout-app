@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateWorkoutWeights, calculateOneRepMax, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
 import { supabase } from '../../lib/supabase';
@@ -43,6 +43,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: SetInput[] }>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [workoutStats, setWorkoutStats] = useState({ estimated1RM: 0, totalTonnage: 0 });
+  const savedSessionIdRef = useRef<string | null>(null);
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
   const [substitutionTarget, setSubstitutionTarget] = useState<{ exerciseIndex: number; exerciseName: string } | null>(null);
   const [workoutSaveError, setWorkoutSaveError] = useState<string | null>(null);
@@ -288,49 +289,58 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     } catch { /* storage unavailable — proceed anyway */ }
 
     try {
-      const topSet = mainSets[mainSets.length - 1];
-      const topWeight = parseFloat(topSet.weight);
-      const topReps = parseInt(topSet.reps);
-      const totalTonnage = calculateTotalTonnage();
+      let sessionId = savedSessionIdRef.current;
 
-      const calculated1RM = topWeight && topReps ? calculateOneRepMax(topWeight, topReps) : 0;
+      if (!sessionId) {
+        const topSet = mainSets[mainSets.length - 1];
+        const topWeight = parseFloat(topSet.weight);
+        const topReps = parseInt(topSet.reps);
+        const totalTonnage = calculateTotalTonnage();
+        const calculated1RM = topWeight && topReps ? calculateOneRepMax(topWeight, topReps) : 0;
 
-      const sessionPayload: Record<string, unknown> = {
-        user_id: user.id,
-        lift_type: liftType,
-        cycle: profile.current_cycle,
-        week: profile.current_week,
-        weight_lifted: topWeight || 0,
-        reps_performed: topReps || 0,
-        calculated_1rm: calculated1RM,
-      };
+        const sessionPayload: Record<string, unknown> = {
+          user_id: user.id,
+          lift_type: liftType,
+          cycle: profile.current_cycle,
+          week: profile.current_week,
+          weight_lifted: topWeight || 0,
+          reps_performed: topReps || 0,
+          calculated_1rm: calculated1RM,
+        };
 
-      if (currentBlock) {
-        sessionPayload.wave = currentBlock.wave;
-        sessionPayload.phase = currentBlock.phase;
+        if (currentBlock) {
+          sessionPayload.wave = currentBlock.wave;
+          sessionPayload.phase = currentBlock.phase;
+        }
+        if (rpe !== null) {
+          sessionPayload.rpe = rpe;
+        }
+
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('workout_sessions')
+          .insert(sessionPayload)
+          .select()
+          .single();
+
+        if (sessionError) throw sessionError;
+
+        sessionId = sessionData.id;
+        savedSessionIdRef.current = sessionId;
+        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage });
       }
-      if (rpe !== null) {
-        sessionPayload.rpe = rpe;
-      }
-
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('workout_sessions')
-        .insert(sessionPayload)
-        .select()
-        .single();
-
-      if (sessionError) throw sessionError;
 
       const accessoryInserts = Object.entries(accessoryData)
         .filter(([_, sets]) => sets.some(set => set.reps || set.weight))
         .map(([exerciseIndex, sets]) => ({
-          workout_session_id: sessionData.id,
+          workout_session_id: sessionId,
           exercise_name: currentExercises[parseInt(exerciseIndex)].name,
           exercise_order: parseInt(exerciseIndex),
           sets_data: sets,
         }));
 
       if (accessoryInserts.length > 0) {
+        // Delete before insert: idempotent on retry, no-op on first call.
+        await supabase.from('accessory_exercises').delete().eq('workout_session_id', sessionId);
         const { error: accessoryError } = await supabase
           .from('accessory_exercises')
           .insert(accessoryInserts);
@@ -338,12 +348,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       }
 
       try { localStorage.removeItem(draftKey); } catch {}
-
-      setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage });
       celebrate(40);
       setShowSuccessModal(true);
     } catch {
-      setWorkoutSaveError('Workout not saved. Your sets are still here — tap "Try again" when ready.');
+      setWorkoutSaveError(
+        savedSessionIdRef.current
+          ? 'Session logged, but accessories failed to save. Tap "Try again" to retry.'
+          : 'Workout not saved. Your sets are still here — tap "Try again" when ready.'
+      );
     } finally {
       setSaving(false);
     }
@@ -386,15 +398,15 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         </div>
         {draftOffer && (
           <div className="max-w-md mx-auto px-4 pt-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">Unsaved session found</p>
+            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Unsaved session found</p>
               <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
-                Your last workout was interrupted while saving. Restore your sets to try again.
+                Your last workout was interrupted. Restore your sets to try again.
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={handleDismissDraft}
-                  className="flex-1 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="flex-1 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                   Start Fresh
                 </button>

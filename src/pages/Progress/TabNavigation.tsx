@@ -25,13 +25,13 @@ export default function TabNavigation({ activeTab, onTabChange, onRipple }: TabN
               onTabChange(tab.id);
             }}
             className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${activeTab === tab.id
-                ? 'text-blue-600 dark:text-blue-400'
-                : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'text-gray-900 dark:text-gray-100'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
           >
             {tab.label}
             {activeTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 dark:bg-gray-100" />
             )}
           </button>
         ))}

@@ -18,6 +18,14 @@ interface MainLiftViewProps {
 
 const RPE_OPTIONS = [6, 7, 8, 9, 10] as const;
 
+const RPE_DESCRIPTIONS: Record<typeof RPE_OPTIONS[number], string> = {
+  6: '4+ reps left',
+  7: '3 reps left',
+  8: '2 reps left',
+  9: '1 rep left',
+  10: 'Max effort',
+};
+
 export default function MainLiftView({
   liftName,
   mainSets,
@@ -148,8 +156,14 @@ export default function MainLiftView({
           </div>
 
           <div className="text-xs text-gray-400 dark:text-gray-500 flex justify-between px-1">
-            <span>Moderate</span>
-            <span>All-out</span>
+            {selectedRpe !== null ? (
+              <span className="tabular-nums">RPE {selectedRpe} — {RPE_DESCRIPTIONS[selectedRpe]}</span>
+            ) : (
+              <>
+                <span>6 — 4+ reps left</span>
+                <span>10 — max effort</span>
+              </>
+            )}
           </div>
 
           {backoff && (

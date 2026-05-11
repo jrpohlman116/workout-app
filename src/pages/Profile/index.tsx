@@ -13,6 +13,11 @@ const STICKING_POINT_LABELS: Record<StickingPoint, string> = {
   mid_range: 'Mid Range',
   lockout: 'Lockout',
 };
+const STICKING_POINT_DESCRIPTIONS: Record<StickingPoint, string> = {
+  in_the_hole: 'Bottom position',
+  mid_range: 'Halfway up',
+  lockout: 'Final inches',
+};
 
 const STICKING_POINTS: StickingPoint[] = ['in_the_hole', 'mid_range', 'lockout'];
 
@@ -220,9 +225,11 @@ export default function ProfilePage() {
     if (!user) return;
     setDeleteLoading(true);
     setDeleteError('');
+    let partialDeletionOccurred = false;
     try {
       const { error: e1 } = await supabase.from('workout_sessions').delete().eq('user_id', user.id);
       if (e1) throw e1;
+      partialDeletionOccurred = true;
       const { error: e2 } = await supabase.from('accessory_exercises').delete().eq('user_id', user.id);
       if (e2) throw e2;
       const { error: e3 } = await supabase.from('exercise_substitutions').delete().eq('user_id', user.id);
@@ -235,7 +242,11 @@ export default function ProfilePage() {
       if (error) throw error;
       await supabase.auth.signOut();
     } catch {
-      setDeleteError('Failed to delete account. Please try again or contact support.');
+      setDeleteError(
+        partialDeletionOccurred
+          ? 'Some data was deleted but account removal failed. Your account still exists. Contact support to complete the deletion.'
+          : 'Failed to delete account. Please try again.'
+      );
     } finally {
       setDeleteLoading(false);
     }
@@ -250,16 +261,16 @@ export default function ProfilePage() {
   const tabClass = (tab: typeof activeTab) =>
     `pb-3 font-semibold whitespace-nowrap transition-colors relative ${
       activeTab === tab
-        ? 'text-blue-600 dark:text-blue-400'
-        : 'text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300'
+        ? 'text-gray-900 dark:text-gray-100'
+        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
     }`;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">Profile</h1>
-          <p className="text-gray-600 dark:text-gray-300">Update your profile and training settings</p>
+          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Settings</p>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">Profile</h1>
         </div>
 
         <div className="max-w-md mx-auto px-4">
@@ -268,7 +279,7 @@ export default function ProfilePage() {
               <button key={tab} onClick={() => setActiveTab(tab)} className={tabClass(tab)}>
                 {{ body: 'Body Stats', maxes: 'Tested Maxes', training: 'Training', security: 'Account' }[tab]}
                 {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 dark:bg-gray-100" />
                 )}
               </button>
             ))}
@@ -426,7 +437,7 @@ export default function ProfilePage() {
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {meetDate && (
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                <p className="text-xs font-semibold tabular-nums text-gray-700 dark:text-gray-300 mt-1">
                   {Math.max(0, Math.floor(
                     (new Date(meetDate).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)
                   ))} weeks away
@@ -456,13 +467,14 @@ export default function ProfilePage() {
                             key={point}
                             type="button"
                             onClick={() => toggleWeakPoint(lift, point)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                            className={`px-3 py-2 rounded-lg transition-all text-left ${
                               selected
-                                ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                                ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
                                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                             }`}
                           >
-                            {STICKING_POINT_LABELS[point]}
+                            <span className="block text-sm font-medium">{STICKING_POINT_LABELS[point]}</span>
+                            <span className="block text-xs font-normal opacity-60 mt-0.5">{STICKING_POINT_DESCRIPTIONS[point]}</span>
                           </button>
                         );
                       })}
@@ -622,6 +634,7 @@ export default function ProfilePage() {
         title="Delete Account"
         description="This action cannot be undone"
         size="sm"
+        preventClose={deleteLoading}
       >
         <div className="space-y-4">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-4">
@@ -634,17 +647,29 @@ export default function ProfilePage() {
             </ul>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+            <label
+              htmlFor="delete-confirm-input"
+              className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5"
+            >
               Type <span className="font-mono font-bold">DELETE</span> to confirm
             </label>
             <input
+              id="delete-confirm-input"
               type="text"
               value={deleteConfirmText}
               onChange={e => setDeleteConfirmText(e.target.value)}
               placeholder="DELETE"
               autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              maxLength={10}
+              aria-describedby="delete-confirm-hint"
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono"
             />
+            <p id="delete-confirm-hint" className="sr-only">
+              Type the word DELETE in capital letters to enable the delete button.
+            </p>
           </div>
           {deleteError && (
             <p className="text-sm text-red-600 dark:text-red-400" role="alert">{deleteError}</p>
@@ -659,7 +684,7 @@ export default function ProfilePage() {
             </button>
             <button
               onClick={handleDeleteAccount}
-              disabled={deleteLoading || deleteConfirmText !== 'DELETE'}
+              disabled={deleteLoading || deleteConfirmText.trim().toUpperCase() !== 'DELETE'}
               className="flex-1 px-4 py-3 bg-red-600 dark:bg-red-500 text-white rounded-xl font-semibold hover:bg-red-700 dark:hover:bg-red-600 transition-colors disabled:opacity-50"
             >
               {deleteLoading ? 'Deleting...' : 'Delete Forever'}
