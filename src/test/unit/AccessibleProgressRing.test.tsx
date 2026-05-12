@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import AccessibleProgressRing from './AccessibleProgressRing';
+import AccessibleProgressRing from '../../components/accessible/AccessibleProgressRing';
 
 describe('AccessibleProgressRing', () => {
   it('should render with value and label', () => {

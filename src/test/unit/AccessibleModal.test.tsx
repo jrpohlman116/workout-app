@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import AccessibleModal from './AccessibleModal';
+import AccessibleModal from '../../components/accessible/AccessibleModal';
 
 describe('AccessibleModal', () => {
   it('should render when isOpen is true', () => {

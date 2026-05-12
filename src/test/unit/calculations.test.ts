@@ -11,7 +11,7 @@ import {
   calculateBackoffSets,
   buildWaveSchedule,
   calculateJuggernautSets,
-} from './calculations';
+} from '../../lib/calculations';
 
 describe('calculateOneRepMax', () => {
   it('should calculate 1RM using Epley formula', () => {
