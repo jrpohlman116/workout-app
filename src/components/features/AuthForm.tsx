@@ -66,7 +66,7 @@ export default function AuthForm() {
 
         <div className="mb-14">
           <h1 className="text-6xl font-black text-white leading-none tracking-tight">
-            Juggernaut
+            Ironform
           </h1>
           <p className="text-xs uppercase tracking-widest text-white/40 mt-3">
             Juggernaut Method
