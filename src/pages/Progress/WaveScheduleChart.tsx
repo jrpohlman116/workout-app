@@ -192,7 +192,7 @@ export default function WaveScheduleChart({ schedule, trainingMax, unit, session
             width={chartWidth}
             height={180}
             data={data}
-            margin={{ top: 16, right: 38, left: 0, bottom: 0 }}
+            margin={{ top: 16, right: 16, left: 0, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
             <XAxis
