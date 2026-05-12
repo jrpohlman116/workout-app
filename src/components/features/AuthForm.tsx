@@ -12,6 +12,7 @@ export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,6 +20,12 @@ export default function AuthForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!isLogin && password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -74,10 +81,10 @@ export default function AuthForm() {
         </div>
 
         <div className="flex border-b border-white/20 mb-8 gap-8">
-          <button type="button" onClick={() => setIsLogin(true)} className={tabClass(isLogin)}>
+          <button type="button" onClick={() => { setIsLogin(true); setConfirmPassword(''); setError(''); }} className={tabClass(isLogin)}>
             Log in
           </button>
-          <button type="button" onClick={() => setIsLogin(false)} className={tabClass(!isLogin)}>
+          <button type="button" onClick={() => { setIsLogin(false); setError(''); }} className={tabClass(!isLogin)}>
             Sign up
           </button>
         </div>
@@ -122,6 +129,31 @@ export default function AuthForm() {
               </button>
             </div>
           </div>
+
+          {!isLogin && (
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-white/70 mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className={`${inputClass} pr-12`}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="border border-red-400/30 bg-red-900/20 text-red-300 px-4 py-3 rounded-xl text-sm">
