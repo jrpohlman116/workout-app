@@ -416,10 +416,11 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   if (currentStep === 'summary') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
+      <div className="min-h-screen pb-24">
         <div className="bg-white dark:bg-gray-800">
           <WorkoutHeader {...headerProps} />
         </div>
+        <div className="animate-enter">
         {draftOffer && (
           <div className="max-w-md mx-auto px-4 pt-4">
             <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
@@ -457,6 +458,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           isSaving={templateSaving}
           saveError={templateError}
         />
+        </div>
       </div>
     );
   }
@@ -468,26 +470,28 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   if (currentStep === 'main') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
+      <div className="min-h-screen pb-24">
         <div className="bg-white dark:bg-gray-800">
           <WorkoutHeader {...headerProps} />
           <div className="max-w-md mx-auto px-4 pb-4">
             <AccessibleProgressIndicator current={1} total={totalSteps} label="Workout progress" variant="bar" />
           </div>
         </div>
-        <MainLiftView
-          liftName={liftNames[liftType] ?? liftType}
-          mainSets={mainSets}
-          mainReps={mainReps}
-          unitPreference={profile.unit_preference || 'lb'}
-          lastSetData={getLastSetData('main')}
-          phase={currentBlock?.phase}
-          onUpdateSet={updateMainSet}
-          onRpeChange={setRpe}
-          onWorkingWeightAdjust={handleWorkingWeightAdjust}
-          onNext={handleNext}
-          nextExerciseName={nextExercise}
-        />
+        <div className="animate-slide-right">
+          <MainLiftView
+            liftName={liftNames[liftType] ?? liftType}
+            mainSets={mainSets}
+            mainReps={mainReps}
+            unitPreference={profile.unit_preference || 'lb'}
+            lastSetData={getLastSetData('main')}
+            phase={currentBlock?.phase}
+            onUpdateSet={updateMainSet}
+            onRpeChange={setRpe}
+            onWorkingWeightAdjust={handleWorkingWeightAdjust}
+            onNext={handleNext}
+            nextExerciseName={nextExercise}
+          />
+        </div>
       </div>
     );
   }
@@ -499,7 +503,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const exerciseSets = accessoryData[exerciseIndex] || Array(currentExercise.sets).fill(null).map(() => ({ reps: '', weight: '' }));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
+    <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
         <WorkoutHeader {...headerProps} />
         <div className="max-w-md mx-auto px-4 pb-4">
@@ -522,20 +526,22 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         </div>
       )}
 
-      <AccessoryExerciseView
-        exercise={currentExercise}
-        exerciseSets={exerciseSets}
-        unitPreference={profile.unit_preference || 'lb'}
-        lastSetData={getLastSetData(currentExercise.name)}
-        onUpdateSet={(index, field, value) => updateAccessorySet(exerciseIndex, index, field, value)}
-        onAddSet={() => addAccessorySet(exerciseIndex)}
-        onRemoveSet={(index) => removeAccessorySet(exerciseIndex, index)}
-        onSubstitute={() => handleOpenSubstitution(exerciseIndex)}
-        onPrevious={handlePrevious}
-        onNext={handleNext}
-        nextExerciseName={nextExercise}
-        saving={saving}
-      />
+      <div className="animate-slide-right">
+        <AccessoryExerciseView
+          exercise={currentExercise}
+          exerciseSets={exerciseSets}
+          unitPreference={profile.unit_preference || 'lb'}
+          lastSetData={getLastSetData(currentExercise.name)}
+          onUpdateSet={(index, field, value) => updateAccessorySet(exerciseIndex, index, field, value)}
+          onAddSet={() => addAccessorySet(exerciseIndex)}
+          onRemoveSet={(index) => removeAccessorySet(exerciseIndex, index)}
+          onSubstitute={() => handleOpenSubstitution(exerciseIndex)}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          nextExerciseName={nextExercise}
+          saving={saving}
+        />
+      </div>
 
       {showSuccessModal && (
         <WorkoutSuccessModal

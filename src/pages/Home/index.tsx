@@ -149,7 +149,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   })();
 
   const currentBlock = getCurrentWeekBlock(profile.program_start_date, profile.meet_date);
-  const isDeload = currentBlock ? currentBlock.phase === 'deload' : profile.current_week === 4;
+
+  const CYCLE_TO_WAVE: Record<number, number> = { 1: 10, 2: 8, 3: 5, 4: 3 };
+  const WEEK_TO_PHASE: Record<number, string> = { 1: 'accumulation', 2: 'intensification', 3: 'realization', 4: 'deload' };
+  const displayWave = currentBlock ? currentBlock.wave : (CYCLE_TO_WAVE[profile.current_cycle] ?? 3);
+  const displayPhase = currentBlock ? currentBlock.phase : (WEEK_TO_PHASE[profile.current_week] ?? 'deload');
+
+  const isDeload = displayPhase === 'deload';
 
   const workouts = [
     { name: 'Squat', max: profile.squat_max, type: 'squat' },
@@ -193,9 +199,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const displayScores = hasProjectedData ? projectedScores : initialScores;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
+    <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
+          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Juggernaut</p>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 animate-slide-in-left">{getGreeting()}</h1>
         </div>
       </div>
@@ -209,37 +216,43 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Wave</p>
-            <p className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
-              {currentBlock ? currentBlock.wave : profile.current_week}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 truncate">
-              {currentBlock
-                ? `${currentBlock.wave}-rep · ${PHASE_LABELS[currentBlock.phase]}`
-                : `Cycle ${profile.current_cycle}`}
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-3">Wave</p>
+            <div className="mb-2">
+              <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
+                {displayWave}
+              </span>
+              <span className="text-sm font-semibold text-gray-400 dark:text-gray-500 ml-1">rep</span>
+            </div>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+              {PHASE_LABELS[displayPhase]}
             </p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
             {profile.meet_date ? (
               <>
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Meet</p>
-                <p className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
-                  {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)))}
-                  <span className="text-xl font-semibold text-gray-400 dark:text-gray-500 ml-0.5">w</span>
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 truncate">
-                  {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-3">Days Out</p>
+                <div className="mb-2">
+                  <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
+                    {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))}
+                  </span>
+                  <span className="text-xl font-semibold text-gray-400 dark:text-gray-500 ml-0.5">d</span>
+                </div>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  {PHASE_LABELS[displayPhase]}
                 </p>
               </>
             ) : (
               <>
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Phase</p>
-                <p className="text-2xl font-black leading-tight text-gray-900 dark:text-gray-100">
-                  {currentBlock ? PHASE_LABELS[currentBlock.phase] : (isDeload ? 'Deload' : 'Training')}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  {currentBlock ? `Wave ${currentBlock.wave}` : `Week ${profile.current_week}`}
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-3">Week</p>
+                <div className="mb-2">
+                  <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
+                    {currentBlock ? currentBlock.weekIndex + 1 : profile.current_week}
+                  </span>
+                  <span className="text-sm font-semibold text-gray-400 dark:text-gray-500 ml-1">of 4</span>
+                </div>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  {PHASE_LABELS[displayPhase]}
                 </p>
               </>
             )}
@@ -249,15 +262,15 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         {isMeetDay && (
           <button
             onClick={() => setShowOneRMTest(true)}
-            className="w-full bg-blue-700 dark:bg-blue-600 text-white rounded-2xl shadow-sm p-6 hover:bg-blue-800 dark:hover:bg-blue-700 transition-colors hover-lift"
+            className="w-full bg-white text-blue-700 rounded-2xl shadow-sm p-6 hover:bg-blue-50 transition-colors hover-lift focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
           >
             <div className="flex items-center gap-4">
-              <div className="bg-white bg-opacity-20 rounded-full p-3">
+              <div className="bg-blue-50 rounded-full p-3">
                 <Activity className="w-6 h-6" />
               </div>
               <div className="text-left flex-1">
                 <p className="font-bold text-lg mb-1">Meet Day — Log Attempts</p>
-                <p className="text-sm text-blue-100">Guided warm-up and attempt logging for your lifts</p>
+                <p className="text-sm text-blue-500">Guided warm-up and attempt logging for your lifts</p>
               </div>
               <ChevronRight className="w-6 h-6" />
             </div>
@@ -294,7 +307,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     createRipple(e);
                     onNavigate('workout', workout.type);
                   }}
-                  className={`w-full flex items-center gap-4 p-4 rounded-xl transition-colors hover-scale active-press ripple-container ${
+                  style={{ animationDelay: `${160 + index * 40}ms` }}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl transition-colors hover-scale active-press ripple-container animate-enter ${
                     isCompleted
                       ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
                       : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'

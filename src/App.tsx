@@ -1,4 +1,10 @@
 import { useState, useEffect } from 'react';
+
+const GRID_BG = {
+  backgroundImage:
+    'linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)',
+  backgroundSize: '32px 32px',
+};
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import AuthForm from './components/features/AuthForm';
@@ -106,10 +112,10 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" role="status" aria-live="polite">
+      <div className="min-h-screen bg-blue-700 dark:bg-blue-900 flex items-center justify-center" role="status" aria-live="polite" style={GRID_BG}>
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" aria-hidden="true"></div>
-          <p className="text-gray-600">Loading your workout data...</p>
+          <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" aria-hidden="true"></div>
+          <p className="text-white/60">Loading your workout data...</p>
         </div>
       </div>
     );
@@ -129,7 +135,7 @@ function AppContent() {
       <SkipLink targetId="navigation">Skip to navigation</SkipLink>
       <InstallPrompt />
 
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      <div className="min-h-screen bg-blue-700 dark:bg-blue-900 transition-colors" style={GRID_BG}>
         <main id="main-content" tabIndex={-1} className="focus:outline-none">
           {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
           {currentPage === 'calculator' && <CalculatorPage />}

@@ -24,7 +24,7 @@ export default function TabNavigation({ activeTab, onTabChange, onRipple }: TabN
               onRipple(e);
               onTabChange(tab.id);
             }}
-            className={`pb-3 font-semibold whitespace-nowrap transition-colors relative ${activeTab === tab.id
+            className={`pt-3 pb-3 font-semibold whitespace-nowrap transition-colors relative overflow-hidden ${activeTab === tab.id
                 ? 'text-gray-900 dark:text-gray-100'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}

@@ -15,11 +15,11 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 safe-bottom transition-colors"
+      className="fixed bottom-0 left-0 right-0 bg-blue-700 dark:bg-blue-900 border-t border-blue-600/50 dark:border-blue-800 safe-bottom transition-colors"
       aria-label="Main navigation"
       role="navigation"
     >
-      <div className="flex justify-around items-center h-16 max-w-md mx-auto">
+      <div className="flex items-stretch h-16 max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
@@ -30,17 +30,20 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
               onClick={() => onNavigate(item.id)}
               aria-label={`${item.label} - ${item.description}`}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 ${
-                isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'
+              className={`relative flex flex-col items-center justify-center flex-1 gap-1 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white/50 ${
+                isActive
+                  ? 'text-white'
+                  : 'text-white/40 hover:text-white/70'
               }`}
             >
-              <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}>
-                <Icon className="w-6 h-6" aria-hidden="true" />
-                {isActive && (
-                  <span className="sr-only">(current page)</span>
-                )}
-              </div>
-              <span className="text-xs mt-1 font-medium" aria-hidden="true">{item.label}</span>
+              {isActive && (
+                <span className="absolute top-0 left-6 right-6 h-0.5 bg-white rounded-full" aria-hidden="true" />
+              )}
+              <Icon className="w-5 h-5" aria-hidden="true" />
+              <span className="text-[10px] uppercase tracking-widest font-semibold" aria-hidden="true">
+                {item.label}
+              </span>
+              {isActive && <span className="sr-only">(current page)</span>}
             </button>
           );
         })}

@@ -207,7 +207,7 @@ export default function WorkoutSummaryView({
             <button
               type="button"
               onClick={handleEnterEditMode}
-              className="flex items-center gap-2 px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              className="flex items-center gap-2 px-3 py-2.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               aria-label="Edit accessory exercises. Press Enter or Space to activate."
             >
               <Edit2 className="w-4 h-4" aria-hidden="true" />
@@ -297,7 +297,7 @@ export default function WorkoutSummaryView({
       {!isEditMode && (
         <button
           onClick={onStartWorkout}
-          className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-50 dark:focus:ring-offset-gray-900"
+          className="w-full bg-white text-gray-900 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
         >
           Start Workout
         </button>

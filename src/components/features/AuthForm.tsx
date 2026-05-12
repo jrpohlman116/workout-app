@@ -55,7 +55,7 @@ export default function AuthForm() {
     }`;
 
   const inputClass =
-    'w-full bg-transparent border border-white/25 text-white placeholder:text-white/25 rounded-xl px-4 py-4 focus:border-white/60 focus:outline-none transition-colors';
+    'w-full bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-white/60 transition-colors';
 
   return (
     <div
@@ -84,7 +84,7 @@ export default function AuthForm() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-xs uppercase tracking-widest text-white/50 mb-2">
+            <label className="block text-xs uppercase tracking-widest text-white/70 mb-2">
               Email
             </label>
             <input
@@ -98,11 +98,11 @@ export default function AuthForm() {
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-widest text-white/50 mb-2">
+            <label className="block text-xs uppercase tracking-widest text-white/70 mb-2">
               Password
             </label>
             {!isLogin && (
-              <p className="text-xs text-white/35 mb-2">Minimum 6 characters</p>
+              <p className="text-xs text-white/60 mb-2">Minimum 6 characters</p>
             )}
             <div className="relative">
               <input
@@ -116,7 +116,7 @@ export default function AuthForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/35 hover:text-white/70 transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>

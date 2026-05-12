@@ -1,6 +1,6 @@
 /* Micro-Interactions and Animations */
 
-/* Respect user motion preferences */
+/* Respect user motion preferences — system setting */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -11,98 +11,119 @@
   }
 }
 
+/* Respect in-app animations toggle */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Easing tokens */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Page-level transition — wraps entire page on route change */
+@keyframes pageEnter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-page-enter {
+  animation: pageEnter 360ms var(--ease-out-expo) both;
+}
+
+/* Primary entrance — cards, sections, tab content */
+@keyframes enterUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-enter {
+  animation: enterUp 420ms var(--ease-out-expo) both;
+}
+
+/* Workout step forward transition */
+@keyframes slideFromRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-right {
+  animation: slideFromRight 380ms var(--ease-out-expo) both;
+}
+
+/* Modal panel entry */
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-modal-in {
+  animation: modalIn 340ms var(--ease-out-expo) both;
+}
+
 /* Fade In */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-in;
+  animation: fadeIn 320ms var(--ease-out-expo) both;
 }
 
 /* Slide Up */
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .animate-slide-up {
-  animation: slideUp 0.4s ease-out;
+  animation: slideUp 400ms var(--ease-out-expo) both;
 }
 
 /* Slide In From Left */
 @keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 .animate-slide-in-left {
-  animation: slideInLeft 0.3s ease-out;
+  animation: slideInLeft 450ms var(--ease-out-expo) both;
 }
 
 /* Slide In From Right */
 @keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 .animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out;
+  animation: slideInRight 400ms var(--ease-out-expo) both;
 }
 
 /* Scale In */
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .animate-scale-in {
-  animation: scaleIn 0.3s ease-out;
+  animation: scaleIn 380ms var(--ease-out-expo) both;
 }
 
 /* Pop In */
 @keyframes popIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.86); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .animate-bounce-in {
-  animation: popIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: popIn 380ms var(--ease-out-expo) both;
 }
 
 /* Check Mark Draw Animation */
@@ -281,7 +302,7 @@
 
 /* Hover Effects */
 .hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 280ms var(--ease-out-expo), box-shadow 280ms var(--ease-out-expo);
 }
 
 .hover-lift:hover {
@@ -290,7 +311,7 @@
 }
 
 .hover-scale {
-  transition: transform 0.2s ease;
+  transition: transform 220ms var(--ease-out-expo);
 }
 
 .hover-scale:hover {
@@ -298,7 +319,7 @@
 }
 
 .hover-glow {
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 200ms var(--ease-out-expo);
 }
 
 .hover-glow:hover {
@@ -306,6 +327,10 @@
 }
 
 /* Button Press Effect */
+.active-press {
+  transition: transform 100ms var(--ease-out-expo);
+}
+
 .active-press:active {
   transform: scale(0.95);
 }

@@ -60,7 +60,7 @@ export default function AccessibleModal({
 
       <FocusTrap active={isOpen} onEscape={preventClose ? undefined : onClose}>
         <div
-          className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg ${sizeClasses[size]} max-h-[90vh] overflow-y-auto transition-colors`}
+          className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg ${sizeClasses[size]} max-h-[90vh] overflow-y-auto transition-colors animate-modal-in`}
         >
           <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between transition-colors">
             <h2 id={titleId} className="text-xl font-bold text-gray-900 dark:text-gray-100">

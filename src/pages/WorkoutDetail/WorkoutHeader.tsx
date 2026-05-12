@@ -31,7 +31,7 @@ export default function WorkoutHeader({ liftName, wave, phase, week, cycle, onBa
       <button onClick={onBack} className="mb-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
         <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
       </button>
-      <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">{liftName} Day</h1>
+      <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1 animate-slide-in-left">{liftName} Day</h1>
       {subtitle && <p className="text-gray-600 dark:text-gray-300">{subtitle}</p>}
     </div>
   );

@@ -147,11 +147,11 @@ export default function CalculatorPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
+    <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
           <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Tools</p>
-          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">Calculator</h1>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100 animate-slide-in-left">Calculator</h1>
         </div>
 
         <div className="max-w-md mx-auto px-4">
@@ -178,7 +178,7 @@ export default function CalculatorPage() {
 
       <div className="max-w-md mx-auto px-4 py-6">
         {activeTab === '1rm' && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-4 animate-enter">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">1 Rep Max</h2>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
@@ -234,7 +234,7 @@ export default function CalculatorPage() {
             </div>
 
             {calculatedMax !== null && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter">
                 <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Estimated 1RM</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-black tabular-nums text-gray-900 dark:text-gray-100">{calculatedMax}</span>
@@ -246,7 +246,7 @@ export default function CalculatorPage() {
         )}
 
         {activeTab === 'wilks' && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-4 animate-enter">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Wilks Score</h2>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
@@ -354,7 +354,7 @@ export default function CalculatorPage() {
             </div>
 
             {calculatedWilks !== null && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter">
                 <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Wilks Score</p>
                 <p className="text-5xl font-black tabular-nums text-gray-900 dark:text-gray-100 mb-2">{calculatedWilks}</p>
                 <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-1">
@@ -375,7 +375,7 @@ export default function CalculatorPage() {
         )}
 
         {activeTab === 'plates' && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-4 animate-enter">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Plate Calculator</h2>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
@@ -467,7 +467,7 @@ export default function CalculatorPage() {
             </div>
 
             {calculatedPlates !== null && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-slide-up">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter">
                 <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-4">Load per side</p>
                 {calculatedPlates.length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">Just the bar — no plates needed</p>

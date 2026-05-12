@@ -4,22 +4,34 @@ export function useCountUp(end: number, duration: number = 1000, start: number =
   const [count, setCount] = useState(start);
 
   useEffect(() => {
+    const reduceMotion =
+      document.documentElement.classList.contains('reduce-motion') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduceMotion) {
+      setCount(end);
+      return;
+    }
+
+    const easeOutExpo = (t: number) => t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
+
     let startTimestamp: number | null = null;
+    let rafId: number;
+
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      const eased = easeOutExpo(progress);
 
-      const easeOutQuad = (t: number) => t * (2 - t);
-      const currentCount = Math.floor(progress * (end - start) + start);
-
-      setCount(easeOutQuad(progress) === 1 ? end : currentCount);
+      setCount(progress >= 1 ? end : Math.round(eased * (end - start) + start));
 
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        rafId = window.requestAnimationFrame(step);
       }
     };
 
-    window.requestAnimationFrame(step);
+    rafId = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(rafId);
   }, [end, duration, start]);
 
   return count;
@@ -56,13 +68,15 @@ export function useRipple() {
 
 export function useConfetti() {
   const celebrate = (count: number = 50) => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReducedMotion =
+      document.documentElement.classList.contains('reduce-motion') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (prefersReducedMotion) {
       return;
     }
 
-    const reducedCount = prefersReducedMotion ? Math.min(count, 10) : count;
+    const reducedCount = count;
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
     for (let i = 0; i < reducedCount; i++) {

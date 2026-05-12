@@ -18,6 +18,11 @@ const STICKING_POINT_DESCRIPTIONS: Record<StickingPoint, string> = {
   mid_range: 'Halfway up',
   lockout: 'Final inches',
 };
+const BOTTOM_POSITION_LABELS: Record<string, { label: string; description: string }> = {
+  squat: { label: 'In the Hole', description: 'Bottom position' },
+  bench: { label: 'Off the Chest', description: 'Bottom position' },
+  deadlift: { label: 'Off the Ground', description: 'Breaking the floor' },
+};
 
 const STICKING_POINTS: StickingPoint[] = ['in_the_hole', 'mid_range', 'lockout'];
 
@@ -259,18 +264,18 @@ export default function ProfilePage() {
   });
 
   const tabClass = (tab: typeof activeTab) =>
-    `pb-3 font-semibold whitespace-nowrap transition-colors relative ${
+    `pt-3 pb-3 font-semibold whitespace-nowrap transition-colors relative overflow-hidden ${
       activeTab === tab
         ? 'text-gray-900 dark:text-gray-100'
         : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
     }`;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
+    <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
           <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Settings</p>
-          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">Profile</h1>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100 animate-slide-in-left">Profile</h1>
         </div>
 
         <div className="max-w-md mx-auto px-4">
@@ -291,7 +296,7 @@ export default function ProfilePage() {
 
         {/* ── Body Stats ── */}
         {activeTab === 'body' && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Body Stats</h2>
             <form onSubmit={handleUpdateBodyweight} className="space-y-4">
               <div>
@@ -350,7 +355,7 @@ export default function ProfilePage() {
 
         {/* ── Tested Maxes ── */}
         {activeTab === 'maxes' && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tested Maxes</h2>
             <div className="space-y-4">
               {([
@@ -412,7 +417,7 @@ export default function ProfilePage() {
 
         {/* ── Training Settings ── */}
         {activeTab === 'training' && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 space-y-6 animate-enter">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
                 Training Settings
@@ -473,8 +478,12 @@ export default function ProfilePage() {
                                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                             }`}
                           >
-                            <span className="block text-sm font-medium">{STICKING_POINT_LABELS[point]}</span>
-                            <span className="block text-xs font-normal opacity-60 mt-0.5">{STICKING_POINT_DESCRIPTIONS[point]}</span>
+                            <span className="block text-sm font-medium">
+                              {point === 'in_the_hole' ? BOTTOM_POSITION_LABELS[lift].label : STICKING_POINT_LABELS[point]}
+                            </span>
+                            <span className="block text-xs font-normal opacity-60 mt-0.5">
+                              {point === 'in_the_hole' ? BOTTOM_POSITION_LABELS[lift].description : STICKING_POINT_DESCRIPTIONS[point]}
+                            </span>
                           </button>
                         );
                       })}
@@ -505,7 +514,7 @@ export default function ProfilePage() {
 
         {/* ── Settings / Security ── */}
         {activeTab === 'security' && (
-          <>
+          <div className="space-y-4 animate-enter">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Appearance</h2>
               <div className="space-y-4">
@@ -581,7 +590,7 @@ export default function ProfilePage() {
 
             <button
               onClick={() => setShowSignOutModal(true)}
-              className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-700 border-2 border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 py-4 rounded-2xl font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shadow-sm"
+              className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 py-4 rounded-2xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
             >
               <LogOut className="w-5 h-5" />
               Sign Out
@@ -589,16 +598,16 @@ export default function ProfilePage() {
 
             <button
               onClick={() => setShowDeleteAccountModal(true)}
-              className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-700 border-2 border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 py-4 rounded-2xl font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shadow-sm"
+              className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-red-500 dark:text-red-400 py-4 rounded-2xl font-semibold hover:bg-red-50 dark:hover:bg-gray-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
             >
               <Trash2 className="w-5 h-5" />
               Delete Account
             </button>
 
-            <p className="text-center text-sm text-gray-500 dark:text-gray-300">
+            <p className="text-center text-sm text-white/40">
               Last updated: {lastUpdated}
             </p>
-          </>
+          </div>
         )}
       </div>
 

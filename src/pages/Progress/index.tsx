@@ -139,11 +139,11 @@ export default function ProgressPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors">
+    <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
         <div className="max-w-md mx-auto px-4 pt-8 pb-6">
           <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Juggernaut</p>
-          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">Progress</h1>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100 animate-slide-in-left">Progress</h1>
         </div>
 
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} onRipple={createRipple} />
@@ -151,7 +151,7 @@ export default function ProgressPage() {
 
       <div className="max-w-md mx-auto px-4 py-6">
         {activeTab === 'overview' && (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-enter">
             {nonDeloadSessions.length === 0 && (
               <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                 <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">No data yet</p>
@@ -178,7 +178,7 @@ export default function ProgressPage() {
               <AccessibleChartTable chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
             )}
 
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Average Projected 1RM</p>
+            <p className="text-xs uppercase tracking-widest font-semibold text-white/70 mb-2">Average Projected 1RM</p>
             <div className="grid grid-cols-3 gap-3">
               {lifts.map((lift, index) => {
                 const averageMax = utils.getAverageOfLastThreeSessions(nonDeloadSessions, lift.type);
@@ -205,12 +205,12 @@ export default function ProgressPage() {
         )}
 
         {activeTab === 'weight' && (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-enter">
             {lifts.map((lift, index) => {
               const bestSession = utils.getBestWeightForLift(sessions, lift.type);
 
               return (
-                <div key={lift.type} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6" style={{ animationDelay: `${index * 0.05}s` }}>
+                <div key={lift.type} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter" style={{ animationDelay: `${index * 50}ms` }}>
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">{lift.displayName}</p>
                     {bestSession && <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(bestSession.completed_at)}</p>}
@@ -233,12 +233,12 @@ export default function ProgressPage() {
         )}
 
         {activeTab === 'volume' && (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-enter">
             {lifts.map((lift, index) => {
               const bestVolume = utils.getBestVolumeForLift(sessions, lift.type);
 
               return (
-                <div key={lift.type} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6" style={{ animationDelay: `${index * 0.05}s` }}>
+                <div key={lift.type} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter" style={{ animationDelay: `${index * 50}ms` }}>
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">{lift.displayName}</p>
                     {bestVolume && <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(bestVolume.session.completed_at)}</p>}
@@ -263,10 +263,10 @@ export default function ProgressPage() {
         )}
 
         {activeTab === 'log' && (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-enter">
             {groupSessionsByDate().map(group => (
               <div key={group.date}>
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-2 px-1">{formatDate(group.date + 'T00:00:00')}</p>
+                <p className="text-xs uppercase tracking-widest font-semibold text-white/70 mb-2 px-1">{formatDate(group.date + 'T00:00:00')}</p>
                 <div className="space-y-3">
                   {group.sessions.map(session => (
                     <WorkoutLogEntry
