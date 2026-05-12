@@ -71,7 +71,7 @@ export default function StrengthScoreCarousel({
   changePercents,
   hasProjectedData,
 }: StrengthScoreCarouselProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(1); // DOTS is recommended
   const [showInfo, setShowInfo] = useState(false);
 
   const currentConfig = scoreConfigs[currentIndex];

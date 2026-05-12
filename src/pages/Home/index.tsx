@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateWorkoutWeights, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
-import { ChevronRight, Check, Activity } from 'lucide-react';
+import { ChevronRight, Check, Activity, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
@@ -18,6 +18,13 @@ const PHASE_LABELS: Record<string, string> = {
   intensification: 'Intensification',
   realization: 'Realization',
   deload: 'Deload',
+};
+
+const PHASE_DESCRIPTIONS: Record<string, string> = {
+  accumulation: 'High volume, moderate intensity. Complete every rep — you\'re building your base.',
+  intensification: 'Less volume, heavier loads. Push the weights and keep technique solid.',
+  realization: 'Peak intensity. Your top set is max reps — stop 1 rep before failure.',
+  deload: 'Reduced load. Complete all sets without grinding. This is a recovery week.',
 };
 
 function getCurrentWeekBlock(programStartDate: string | undefined, meetDate: string | undefined): WeekBlock | null {
@@ -40,6 +47,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [showOneRMTest, setShowOneRMTest] = useState(false);
   const [showSkipWeekModal, setShowSkipWeekModal] = useState(false);
   const createRipple = useRipple();
+  const [showPhaseInfo, setShowPhaseInfo] = useState(false);
 
   useEffect(() => {
     if (user && profile) {
@@ -216,16 +224,30 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-3">Wave</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">Wave</p>
+              <button
+                onClick={() => setShowPhaseInfo(v => !v)}
+                aria-label="About this phase"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            </div>
             <div className="mb-2">
               <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
                 {displayWave}
               </span>
               <span className="text-sm font-semibold text-gray-400 dark:text-gray-500 ml-1">rep</span>
             </div>
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
               {PHASE_LABELS[displayPhase]}
             </p>
+            {showPhaseInfo && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                {PHASE_DESCRIPTIONS[displayPhase]}
+              </p>
+            )}
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">

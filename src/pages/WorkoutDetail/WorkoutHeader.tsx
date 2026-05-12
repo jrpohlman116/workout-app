@@ -9,6 +9,13 @@ const PHASE_LABELS: Record<string, string> = {
   deload: 'Deload',
 };
 
+const PHASE_DESCRIPTIONS: Record<string, string> = {
+  accumulation: 'High volume, moderate intensity. Complete every rep.',
+  intensification: 'Less volume, heavier loads. Push the weights.',
+  realization: 'Peak intensity. Your top set is max reps — stop 1 short of failure.',
+  deload: 'Reduced load. Complete all sets without grinding.',
+};
+
 interface WorkoutHeaderProps {
   liftName: string;
   wave?: RepWave;
@@ -33,6 +40,9 @@ export default function WorkoutHeader({ liftName, wave, phase, week, cycle, onBa
       </button>
       <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1 animate-slide-in-left">{liftName} Day</h1>
       {subtitle && <p className="text-gray-600 dark:text-gray-300">{subtitle}</p>}
+      {phase && PHASE_DESCRIPTIONS[phase] && (
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{PHASE_DESCRIPTIONS[phase]}</p>
+      )}
     </div>
   );
 }
