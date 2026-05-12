@@ -7,6 +7,7 @@ interface WorkoutSuccessModalProps {
   totalTonnage: number;
   unitPreference?: string;
   onClose: () => void;
+  onSetAsMax?: () => Promise<void>;
 }
 
 export default function WorkoutSuccessModal({
@@ -14,7 +15,8 @@ export default function WorkoutSuccessModal({
   estimated1RM,
   totalTonnage,
   unitPreference = 'lb',
-  onClose
+  onClose,
+  onSetAsMax,
 }: WorkoutSuccessModalProps) {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -54,12 +56,22 @@ export default function WorkoutSuccessModal({
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-            >
-              View Progress
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={onClose}
+                className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+              >
+                View Progress
+              </button>
+              {onSetAsMax && estimated1RM > 0 && (
+                <button
+                  onClick={async () => { await onSetAsMax(); onClose(); }}
+                  className="w-full py-3 text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                >
+                  Set {Math.round(estimated1RM)} {unitPreference} as new max
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </FocusTrap>

@@ -177,18 +177,14 @@ export default function AccessoryExerciseView({
         <button
           onClick={onPrevious}
           disabled={saving}
-          className="flex-1 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 py-4 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 py-4 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Previous
         </button>
         <button
           onClick={onNext}
           disabled={saving}
-          className={`flex-1 py-4 rounded-xl font-semibold transition-colors disabled:opacity-50 ${
-            nextExerciseName
-              ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-white'
-              : 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
-          }`}
+          className="flex-1 bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-500 dark:hover:bg-blue-400 active:bg-blue-700 dark:active:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {nextExerciseName ? `Next: ${nextExerciseName}` : saving ? 'Saving...' : 'Complete Workout'}
         </button>

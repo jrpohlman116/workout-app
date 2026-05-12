@@ -26,9 +26,11 @@ function getCurrentWeekBlock(programStartDate: string | undefined, meetDate: str
 
 const IS_UPPER_DAY = (liftType: string) => liftType === 'upper';
 
-export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgress }: WorkoutDetailPageProps) {
+export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgress, skipSummary }: WorkoutDetailPageProps) {
   const { profile, user, refreshProfile } = useAuth();
-  const [currentStep, setCurrentStep] = useState<WorkoutStep>('summary');
+  const [currentStep, setCurrentStep] = useState<WorkoutStep>(
+    skipSummary ? (liftType === 'upper' ? 0 : 'main') : 'summary'
+  );
   const [saving, setSaving] = useState(false);
   const celebrate = useConfetti();
 
@@ -165,6 +167,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         return;
       }
       setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, savedAt: parsed.savedAt });
+      if (skipSummary) setCurrentStep('summary');
     } catch {
       try { localStorage.removeItem(key); } catch {}
     }
@@ -391,6 +394,22 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     onNavigateToProgress();
   };
 
+  const handleSetAsMax = async () => {
+    if (!user || !profile) return;
+    const fieldMap: Record<string, string> = {
+      squat: 'squat_max',
+      bench: 'bench_max',
+      deadlift: 'deadlift_max',
+    };
+    const field = fieldMap[liftType];
+    if (!field) return;
+    await supabase
+      .from('user_profiles')
+      .update({ [field]: Math.round(workoutStats.estimated1RM), updated_at: new Date().toISOString() })
+      .eq('id', user.id);
+    await refreshProfile();
+  };
+
   const handleOpenSubstitution = (exerciseIndex: number) => {
     const currentExercise = currentExercises[exerciseIndex];
     setSubstitutionTarget({ exerciseIndex, exerciseName: currentExercise.name });
@@ -550,6 +569,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           totalTonnage={workoutStats.totalTonnage}
           unitPreference={profile?.unit_preference || 'lb'}
           onClose={handleSuccessClose}
+          onSetAsMax={!isUpperDay ? handleSetAsMax : undefined}
         />
       )}
       {showSubstitutionModal && substitutionTarget && (

@@ -4,6 +4,7 @@ export interface WorkoutDetailPageProps {
   liftType: string;
   onBack: () => void;
   onNavigateToProgress: () => void;
+  skipSummary?: boolean;
 }
 
 export type WorkoutStep = 'summary' | 'main' | number;

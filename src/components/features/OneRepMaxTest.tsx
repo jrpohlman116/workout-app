@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { calculateWarmupSets } from '../../lib/calculations';
+import { calculateWarmupSets, WarmupFeel } from '../../lib/calculations';
 import { Activity } from 'lucide-react';
 
 interface OneRepMaxTestProps {
@@ -24,7 +24,8 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
   const [step, setStep] = useState<Step>('select');
   const [selectedLift, setSelectedLift] = useState<LiftType | null>(null);
   const [plannedAttempt, setPlannedAttempt] = useState('');
-  const [warmupFeel, setWarmupFeel] = useState<'smooth' | 'tough' | null>(null);
+  const [warmupFeel, setWarmupFeel] = useState<WarmupFeel | null>(null);
+  const [approachFeel, setApproachFeel] = useState<WarmupFeel | null>(null);
   const [attemptResult, setAttemptResult] = useState<'success' | 'fail' | null>(null);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -43,12 +44,9 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
 
   const planned = parseFloat(plannedAttempt) || 0;
   const warmup = planned > 0 ? calculateWarmupSets(planned, unit) : null;
-  const approachWeight = warmup
-    ? warmupFeel === 'smooth'
-      ? warmup.approachWeights.smooth
-      : warmupFeel === 'tough'
-        ? warmup.approachWeights.tough
-        : null
+  const approachWeight = warmup && warmupFeel ? warmup.getApproachWeight(warmupFeel) : null;
+  const adjustedAttempt = warmup && warmupFeel && approachFeel
+    ? warmup.getAdjustedWorkingWeight(warmupFeel, approachFeel)
     : null;
 
   const handleSelectLift = (lift: LiftType) => {
@@ -97,6 +95,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
     const nextDefault = attemptResult === 'success' ? planned : currentMax;
     setPlannedAttempt(String(nextDefault));
     setWarmupFeel(null);
+    setApproachFeel(null);
     setAttemptResult(null);
     setNotes('');
     setStep('warmup');
@@ -107,6 +106,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
     setSelectedLift(null);
     setPlannedAttempt('');
     setWarmupFeel(null);
+    setApproachFeel(null);
     setAttemptResult(null);
     setNotes('');
     onClose();
@@ -227,33 +227,58 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">How did the 82% set feel?</p>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => setWarmupFeel('smooth')}
-                      className="flex-1 py-2 rounded-lg font-semibold text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 transition-colors"
-                    >
-                      Smooth
-                    </button>
-                    <button
-                      onClick={() => setWarmupFeel('tough')}
-                      className="flex-1 py-2 rounded-lg font-semibold text-sm bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 transition-colors"
-                    >
-                      Tough
-                    </button>
+                    {(['easy', 'good', 'bad'] as WarmupFeel[]).map(feel => (
+                      <button
+                        key={feel}
+                        onClick={() => setWarmupFeel(feel)}
+                        className="flex-1 py-2.5 rounded-lg font-semibold text-sm capitalize transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                      >
+                        {feel.charAt(0).toUpperCase() + feel.slice(1)}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
 
-              {approachWeight && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Suggested approach single</p>
-                  <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                    {approachWeight} {unit}
-                  </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-300 mt-2">
-                    {warmupFeel === 'smooth'
-                      ? 'You felt strong. Take this approach, then go for your planned attempt.'
-                      : 'That was tough. Take this conservative approach and reassess before attempting.'}
-                  </p>
+              {warmupFeel && approachWeight && (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
+                    <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+                      {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unit} × 1</span>
+                    </p>
+                  </div>
+
+                  {!approachFeel && (
+                    <>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">How did the approach feel?</p>
+                      <div className="flex gap-2">
+                        {(['easy', 'good', 'bad'] as WarmupFeel[]).map(feel => (
+                          <button
+                            key={feel}
+                            onClick={() => setApproachFeel(feel)}
+                            className="flex-1 py-2.5 rounded-lg font-semibold text-sm capitalize transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                          >
+                            {feel.charAt(0).toUpperCase() + feel.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {approachFeel && adjustedAttempt !== null && (
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                      <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Suggested Opener</p>
+                      <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+                        {adjustedAttempt} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unit}</span>
+                      </p>
+                      {adjustedAttempt !== planned && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                          {adjustedAttempt > planned ? '+' : ''}{adjustedAttempt - planned} {unit} from planned — adjust your opener if needed.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
