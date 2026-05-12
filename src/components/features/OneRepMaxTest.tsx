@@ -12,10 +12,15 @@ interface OneRepMaxTestProps {
 type LiftType = 'squat' | 'bench' | 'deadlift';
 type Step = 'select' | 'warmup' | 'attempt' | 'complete';
 
-const LIFTS: { name: string; type: LiftType; maxKey: 'squat_max' | 'bench_max' | 'deadlift_max' }[] = [
-  { name: 'Squat', type: 'squat', maxKey: 'squat_max' },
-  { name: 'Bench Press', type: 'bench', maxKey: 'bench_max' },
-  { name: 'Deadlift', type: 'deadlift', maxKey: 'deadlift_max' },
+const LIFTS: {
+  name: string;
+  type: LiftType;
+  maxKey: 'squat_max' | 'bench_max' | 'deadlift_max';
+  testedMaxKey: 'squat_tested_max' | 'bench_tested_max' | 'deadlift_tested_max';
+}[] = [
+  { name: 'Squat',       type: 'squat',    maxKey: 'squat_max',    testedMaxKey: 'squat_tested_max' },
+  { name: 'Bench Press', type: 'bench',    maxKey: 'bench_max',    testedMaxKey: 'bench_tested_max' },
+  { name: 'Deadlift',    type: 'deadlift', maxKey: 'deadlift_max', testedMaxKey: 'deadlift_tested_max' },
 ];
 
 export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProps) {
@@ -35,9 +40,14 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
   const unit = profile.unit_preference || 'lb';
   const roundTo = unit === 'kg' ? 2.5 : 5;
 
-  const currentMax = selectedLift
-    ? profile[LIFTS.find(l => l.type === selectedLift)!.maxKey]
+  const selectedLiftConfig = selectedLift ? LIFTS.find(l => l.type === selectedLift)! : null;
+  // Use the tested max (actual 1RM) as the base for opener suggestions when available,
+  // otherwise fall back to implied 1RM derived from the training max (TM / 0.9).
+  const currentTestedMax = selectedLiftConfig
+    ? (profile[selectedLiftConfig.testedMaxKey] ?? 0)
     : 0;
+  const currentTM = selectedLiftConfig ? profile[selectedLiftConfig.maxKey] : 0;
+  const currentMax = currentTestedMax > 0 ? currentTestedMax : Math.round((currentTM / 0.9) / roundTo) * roundTo;
 
   const suggestedOpening = Math.round((currentMax * 0.9) / roundTo) * roundTo;
   const suggestedSecond = Math.round((currentMax * 0.95) / roundTo) * roundTo;
@@ -51,8 +61,12 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
 
   const handleSelectLift = (lift: LiftType) => {
     setSelectedLift(lift);
-    const max = profile[LIFTS.find(l => l.type === lift)!.maxKey];
-    setPlannedAttempt(String(max));
+    const config = LIFTS.find(l => l.type === lift)!;
+    const tested = profile[config.testedMaxKey] ?? 0;
+    const tm = profile[config.maxKey];
+    // Pre-fill with suggested opener (90% of tested max, or 90% of implied 1RM)
+    const base = tested > 0 ? tested : Math.round((tm / 0.9) / roundTo) * roundTo;
+    setPlannedAttempt(String(Math.round((base * 0.9) / roundTo) * roundTo));
     setStep('warmup');
   };
 
@@ -74,11 +88,17 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
         completed_at: new Date().toISOString(),
       });
 
+      // On a successful PR: store the actual lift as the tested max and
+      // recalculate the training max (tested × 0.90), rounded to nearest plate increment.
       if (attemptResult === 'success' && planned > currentMax) {
-        const maxField = `${selectedLift}_max`;
+        const newTM = Math.round((planned * 0.9) / roundTo) * roundTo;
         await supabase
           .from('user_profiles')
-          .update({ [maxField]: planned, updated_at: new Date().toISOString() })
+          .update({
+            [`${selectedLift}_tested_max`]: planned,
+            [`${selectedLift}_max`]: newTM,
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', user.id);
         await refreshProfile();
       }
@@ -136,21 +156,31 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                 Select a lift to start your meet day attempt protocol.
               </p>
               <div className="space-y-3">
-                {LIFTS.map(lift => (
-                  <button
-                    key={lift.type}
-                    onClick={() => handleSelectLift(lift.type)}
-                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors text-left"
-                  >
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Current max: {profile[lift.maxKey]} {unit}
-                      </p>
-                    </div>
-                    <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">Select →</span>
-                  </button>
-                ))}
+                {LIFTS.map(lift => {
+                  const tested = profile[lift.testedMaxKey] ?? 0;
+                  const tm = profile[lift.maxKey];
+                  return (
+                    <button
+                      key={lift.type}
+                      onClick={() => handleSelectLift(lift.type)}
+                      className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors text-left"
+                    >
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</p>
+                        {tested > 0 ? (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Best: {tested} {unit} · TM: {tm} {unit}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            TM: {tm} {unit}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">Select →</span>
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
@@ -370,7 +400,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                 </p>
                 {attemptResult === 'success' && planned > currentMax && (
                   <p className="text-green-600 dark:text-green-400 font-semibold mt-2">
-                    New personal best! Training max updated.
+                    New personal best! TM updated to {Math.round((planned * 0.9) / roundTo) * roundTo} {unit}.
                   </p>
                 )}
               </div>

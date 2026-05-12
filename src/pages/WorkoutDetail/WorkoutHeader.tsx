@@ -7,6 +7,8 @@ const PHASE_LABELS: Record<string, string> = {
   intensification: 'Intensification',
   realization: 'Realization',
   deload: 'Deload',
+  peaking: 'Peaking',
+  meet_week: 'Meet Week',
 };
 
 const PHASE_DESCRIPTIONS: Record<string, string> = {
@@ -14,24 +16,31 @@ const PHASE_DESCRIPTIONS: Record<string, string> = {
   intensification: 'Less volume, heavier loads. Push the weights.',
   realization: 'Peak intensity. Your top set is max reps — stop 1 short of failure.',
   deload: 'Reduced load. Complete all sets without grinding.',
+  peaking: 'Work up to a heavy single. Stay sharp — no grinding, no misses.',
+  meet_week: 'Rest up. Keep any movement light and technical.',
 };
 
 interface WorkoutHeaderProps {
   liftName: string;
   wave?: RepWave;
   phase?: WavePhase;
+  peakWeek?: 1 | 2 | 3;
   // Legacy fallback
   week?: number;
   cycle?: number;
   onBack: () => void;
 }
 
-export default function WorkoutHeader({ liftName, wave, phase, week, cycle, onBack }: WorkoutHeaderProps) {
-  const subtitle = wave && phase
-    ? `${WAVE_LABELS[wave]} — ${PHASE_LABELS[phase]}`
-    : week !== undefined && cycle !== undefined
-      ? `Week ${week} — Cycle ${cycle}`
-      : '';
+export default function WorkoutHeader({ liftName, wave, phase, peakWeek, week, cycle, onBack }: WorkoutHeaderProps) {
+  const subtitle = phase === 'peaking'
+    ? `Peaking Block — Week ${peakWeek ?? 1} of 3`
+    : phase === 'meet_week'
+      ? 'Meet Week'
+      : wave && phase
+        ? `${WAVE_LABELS[wave]} — ${PHASE_LABELS[phase]}`
+        : week !== undefined && cycle !== undefined
+          ? `Week ${week} — Cycle ${cycle}`
+          : '';
 
   return (
     <div className="max-w-md mx-auto px-4 pt-8 pb-6">

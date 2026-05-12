@@ -1,4 +1,4 @@
-type Tab = 'overview' | 'records' | 'log';
+type Tab = 'overview' | 'records' | 'log' | 'meets';
 
 interface TabNavigationProps {
   activeTab: Tab;
@@ -11,6 +11,7 @@ export default function TabNavigation({ activeTab, onTabChange, onRipple }: TabN
     { id: 'overview', label: 'Overview' },
     { id: 'records', label: 'Records' },
     { id: 'log', label: 'Workout Log' },
+    { id: 'meets', label: 'Meets' },
   ];
 
   return (

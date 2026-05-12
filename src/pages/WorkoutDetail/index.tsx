@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateWorkoutWeights, calculateOneRepMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculateTrainingMax, getCycleProgression, JuggernautSetsConfig } from '../../lib/calculations';
+import { calculateOneRepMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, JuggernautSetsConfig } from '../../lib/calculations';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
@@ -16,9 +16,11 @@ import { liftNames, liftNamesShort, baseExercises, additionalExercises } from '.
 import { WorkoutDetailPageProps, WorkoutStep, SetInput } from './types';
 
 function getCurrentWeekBlock(programStartDate: string | undefined, meetDate: string | undefined): WeekBlock | null {
-  if (!programStartDate || !meetDate) return null;
-  const start = new Date(programStartDate);
+  if (!meetDate) return null;
   const meet = new Date(meetDate);
+  const start = programStartDate
+    ? new Date(programStartDate)
+    : new Date(meet.getTime() - 16 * 7 * 24 * 60 * 60 * 1000);
   const schedule = buildWaveSchedule(start, meet);
   const now = Date.now();
   return schedule.weeks.find(w => w.startDate.getTime() <= now && w.endDate.getTime() >= now) ?? null;
@@ -90,7 +92,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   );
 
   useEffect(() => {
-    if (!loading && profile && !initialMainSetsSet && !isUpperDay) {
+    if (!loading && profile && !initialMainSetsSet && !isUpperDay && currentBlock) {
       const lift1RM: Record<string, number> = {
         squat: profile.squat_max,
         bench: profile.bench_max,
@@ -98,31 +100,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       };
       const max = lift1RM[liftType] ?? 0;
       const unit = profile.unit_preference || 'lb';
-      const block = getCurrentWeekBlock(profile.program_start_date, profile.meet_date);
-
-      let numSets: number;
-      let reps: number;
-      let weight: number;
-      let isAmap = false;
-
-      if (block) {
-        const cfg = calculateJuggernautSets(block.wave, block.phase, calculateTrainingMax(max), unit);
-        numSets = cfg.numSets;
-        reps = cfg.reps;
-        weight = cfg.weight;
-        isAmap = cfg.isAmap;
-      } else {
-        const w = calculateWorkoutWeights(liftType, max, profile.current_cycle, profile.current_week, unit);
-        numSets = 3;
-        reps = profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : 1;
-        weight = w.set3;
-        isAmap = profile.current_week === 3;
-      }
+      const cfg = currentBlock.phase === 'peaking'
+        ? calculatePeakingSets(currentBlock.peakWeek ?? 1, max, unit)
+        : calculateJuggernautSets(currentBlock.wave, currentBlock.phase, max, unit);
 
       setMainSets(
-        Array.from({ length: numSets }, () => ({
-          reps: isAmap ? '' : String(reps),
-          weight: String(weight),
+        Array.from({ length: cfg.numSets }, () => ({
+          reps: cfg.isAmap ? '' : String(cfg.reps),
+          weight: String(cfg.weight),
         }))
       );
       setInitialMainSetsSet(true);
@@ -194,6 +179,55 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   if (!profile) return null;
 
+  if (!currentBlock) {
+    return (
+      <div className="min-h-screen pb-24">
+        <div className="bg-white dark:bg-gray-800">
+          <div className="max-w-md mx-auto px-4 pt-8 pb-6">
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Juggernaut</p>
+            <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">{liftNames[liftType] ?? liftType}</h1>
+          </div>
+        </div>
+        <div className="max-w-md mx-auto px-4 py-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Program not set up</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+              Add your program start date and meet date in Profile to get your Juggernaut schedule.
+            </p>
+            <button onClick={onBack} className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+              ← Go back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentBlock?.phase === 'meet_week') {
+    return (
+      <div className="min-h-screen pb-24">
+        <div className="bg-white dark:bg-gray-800">
+          <div className="max-w-md mx-auto px-4 pt-8 pb-6">
+            <button onClick={onBack} className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-4 block">← Back</button>
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Meet Week</p>
+            <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">{liftNames[liftType] ?? liftType}</h1>
+          </div>
+        </div>
+        <div className="max-w-md mx-auto px-4 py-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Rest Up</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+              This is meet week. Keep any movement light and technical — no heavy loading. Save everything for the platform.
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              When it's meet day, head back to the Home screen to log your attempts.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const maxes: Record<string, number> = {
     squat: profile.squat_max,
     bench: profile.bench_max,
@@ -203,21 +237,20 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const unit = profile.unit_preference || 'lb';
 
   const mainConfig: JuggernautSetsConfig | null = isUpperDay ? null : (() => {
-    const lift1RM = maxes[liftType] ?? 0;
+    const trainingMax = maxes[liftType] ?? 0;
     if (currentBlock) {
-      const trainingMax = calculateTrainingMax(lift1RM);
+      if (currentBlock.phase === 'peaking') {
+        return calculatePeakingSets(currentBlock.peakWeek ?? 1, trainingMax, unit);
+      }
+      if (currentBlock.phase === 'meet_week') return null;
       return calculateJuggernautSets(currentBlock.wave, currentBlock.phase, trainingMax, unit);
     }
-    const w = calculateWorkoutWeights(liftType, lift1RM, profile.current_cycle, profile.current_week, unit);
-    return {
-      numSets: 3,
-      reps: profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : 1,
-      weight: w.set3,
-      isAmap: profile.current_week === 3,
-    };
+    return null;
   })();
 
-  const mainReps = currentBlock ? currentBlock.wave : (profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5);
+  const mainReps = currentBlock
+    ? (currentBlock.phase === 'peaking' ? 1 : currentBlock.wave)
+    : (profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5);
 
   const currentExercises = templateExercises;
   const totalSteps = (isUpperDay ? 0 : 1) + currentExercises.length;
@@ -433,6 +466,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     liftName: liftNames[liftType] ?? liftType,
     wave: currentBlock?.wave,
     phase: currentBlock?.phase,
+    peakWeek: currentBlock?.peakWeek,
     week: currentBlock ? undefined : profile.current_week,
     cycle: currentBlock ? undefined : profile.current_cycle,
     onBack,

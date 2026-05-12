@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { supabase } from '../../lib/supabase';
-import { calculateOneRepMax, calculateWorkoutWeights } from '../../lib/calculations';
+import { calculateOneRepMax, calculateWorkoutWeights, calculateNewTrainingMax } from '../../lib/calculations';
 import {
   createTestUser,
   signOutTestUser,
@@ -202,24 +202,28 @@ describe('E2E Workout Flow Tests', () => {
       squat_max: 315,
     });
 
+    const weightLifted = 255;
+    const repsPerformed = 8;
+
     await createTestWorkoutSession(userId, {
       lift_type: 'squat',
       cycle: 1,
       week: 3,
-      weight_lifted: 255,
-      reps_performed: 5,
-      calculated_1rm: 297,
+      weight_lifted: weightLifted,
+      reps_performed: repsPerformed,
+      calculated_1rm: calculateOneRepMax(weightLifted, repsPerformed),
     });
 
-    const newMax = 325;
+    const newTrainingMax = calculateNewTrainingMax(weightLifted, repsPerformed);
+
     const { data: updatedProfile } = await supabase
       .from('user_profiles')
-      .update({ squat_max: newMax })
+      .update({ squat_max: newTrainingMax })
       .eq('id', userId)
       .select()
       .single();
 
-    expect(updatedProfile?.squat_max).toBe(newMax);
+    expect(updatedProfile?.squat_max).toBe(newTrainingMax);
   });
 
   it('should handle deload week correctly', async () => {
@@ -253,7 +257,6 @@ describe('E2E Workout Flow Tests', () => {
     const { data: accessory, error } = await supabase
       .from('accessory_exercises')
       .insert({
-        user_id: userId,
         workout_session_id: session.id,
         exercise_name: 'Leg Press',
         exercise_order: 1,
@@ -264,7 +267,7 @@ describe('E2E Workout Flow Tests', () => {
         ],
       })
       .select()
-      .single();
+      .maybeSingle();
 
     expect(error).toBeNull();
     expect(accessory?.exercise_name).toBe('Leg Press');
@@ -279,7 +282,6 @@ describe('E2E Workout Flow Tests', () => {
     });
 
     await supabase.from('accessory_exercises').insert({
-      user_id: userId,
       workout_session_id: session.id,
       exercise_name: 'Leg Press',
       exercise_order: 1,

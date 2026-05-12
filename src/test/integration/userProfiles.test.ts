@@ -16,7 +16,10 @@ describe('User Profiles Database Operations', () => {
   beforeEach(async () => {
     const testEmail = generateTestEmail();
     const result = await createTestUser(testEmail, testPassword);
-    userId = result.user!.id;
+    if (!result.user) {
+      throw new Error('User creation failed: result.user is null or undefined');
+    }
+    userId = result.user.id;
     await waitForAuth();
   });
 
@@ -174,6 +177,12 @@ describe('User Profiles Database Operations', () => {
         .from('user_profiles')
         .select('*')
         .eq('id', otherUserId);
+      // RLS may return an error or empty data array depending on policy
+      if (error) {
+        expect(data).toBeNull();
+      } else {
+        expect(data).toHaveLength(0);
+      }
 
       expect(error).toBeNull();
       expect(data).toHaveLength(0);

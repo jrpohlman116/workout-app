@@ -2,9 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   calculateOneRepMax,
   calculateTrainingMax,
-  getCycleProgression,
-  calculateWorkoutWeights,
-  getWeekSubtext,
   calculateWilksScore,
   getGreeting,
   calculateNewTrainingMax,
@@ -41,84 +38,6 @@ describe('calculateTrainingMax', () => {
   });
 });
 
-describe('getCycleProgression', () => {
-  it('should add 5 lbs per cycle for upper body lifts', () => {
-    expect(getCycleProgression(1, 'bench')).toBe(0);
-    expect(getCycleProgression(2, 'bench')).toBe(5);
-    expect(getCycleProgression(3, 'bench')).toBe(10);
-    expect(getCycleProgression(1, 'ohp')).toBe(0);
-    expect(getCycleProgression(2, 'ohp')).toBe(5);
-  });
-
-  it('should add 10 lbs per cycle for lower body lifts', () => {
-    expect(getCycleProgression(1, 'squat')).toBe(0);
-    expect(getCycleProgression(2, 'squat')).toBe(10);
-    expect(getCycleProgression(3, 'squat')).toBe(20);
-    expect(getCycleProgression(1, 'deadlift')).toBe(0);
-    expect(getCycleProgression(2, 'deadlift')).toBe(10);
-  });
-});
-
-describe('calculateWorkoutWeights', () => {
-  const oneRepMax = 300;
-
-  it('should calculate Week 1 weights (65%, 75%, 85%)', () => {
-    const weights = calculateWorkoutWeights('squat', oneRepMax, 1, 1);
-    expect(weights.set1).toBe(175);
-    expect(weights.set2).toBe(205);
-    expect(weights.set3).toBe(230);
-  });
-
-  it('should calculate Week 2 weights (70%, 80%, 90%)', () => {
-    const weights = calculateWorkoutWeights('squat', oneRepMax, 1, 2);
-    expect(weights.set1).toBe(190);
-    expect(weights.set2).toBe(215);
-    expect(weights.set3).toBe(245);
-  });
-
-  it('should calculate Week 3 weights (75%, 85%, 95%)', () => {
-    const weights = calculateWorkoutWeights('squat', oneRepMax, 1, 3);
-    expect(weights.set1).toBe(205);
-    expect(weights.set2).toBe(230);
-    expect(weights.set3).toBe(255);
-  });
-
-  it('should calculate Week 4 deload weights (40%, 50%, 60%)', () => {
-    const weights = calculateWorkoutWeights('squat', oneRepMax, 1, 4);
-    expect(weights.set1).toBe(110);
-    expect(weights.set2).toBe(135);
-    expect(weights.set3).toBe(160);
-  });
-
-  it('should round to nearest 5 lbs', () => {
-    const weights = calculateWorkoutWeights('bench', 227, 1, 1);
-    expect(weights.set1 % 5).toBe(0);
-    expect(weights.set2 % 5).toBe(0);
-    expect(weights.set3 % 5).toBe(0);
-  });
-
-  it('should add progression for subsequent cycles', () => {
-    const cycle1 = calculateWorkoutWeights('squat', oneRepMax, 1, 1);
-    const cycle2 = calculateWorkoutWeights('squat', oneRepMax, 2, 1);
-    expect(cycle2.set1).toBeGreaterThan(cycle1.set1);
-    expect(cycle2.set2).toBeGreaterThan(cycle1.set2);
-    expect(cycle2.set3).toBeGreaterThan(cycle1.set3);
-  });
-});
-
-describe('getWeekSubtext', () => {
-  it('should return correct subtext for each week', () => {
-    expect(getWeekSubtext(1)).toBe('5 reps');
-    expect(getWeekSubtext(2)).toBe('3 reps');
-    expect(getWeekSubtext(3)).toBe('5-3-1 reps');
-    expect(getWeekSubtext(4)).toBe('deload');
-  });
-
-  it('should return deload for weeks beyond 4', () => {
-    expect(getWeekSubtext(5)).toBe('deload');
-    expect(getWeekSubtext(0)).toBe('deload');
-  });
-});
 
 describe('calculateWilksScore', () => {
   it('should calculate Wilks score for male lifter', () => {
@@ -250,20 +169,26 @@ describe('buildWaveSchedule', () => {
 
   const start = monday(0);
 
-  it('16-week timeline: runs all 4 waves at standard length', () => {
-    const schedule = buildWaveSchedule(start, monday(16));
-    expect(schedule.totalWeeks).toBe(16);
+  // Note: buildWaveSchedule always reserves 4 weeks at the end (3 peaking + 1 meet week).
+  // A 20-week total timeline = 16 wave weeks + 4 reserved.
+
+  it('20-week timeline: runs all 4 waves at standard length (16 wave weeks + 4 peaking/meet)', () => {
+    const schedule = buildWaveSchedule(start, monday(20));
+    expect(schedule.totalWeeks).toBe(20);
     expect(schedule.skippedWaves).toHaveLength(0);
     expect(schedule.adjustments).toHaveLength(0);
 
-    const waves = [...new Set(schedule.weeks.map(w => w.wave))];
-    expect(waves).toEqual([10, 8, 5, 3]);
+    const trainingWaves = [...new Set(schedule.weeks.filter(w => w.phase !== 'peaking' && w.phase !== 'meet_week').map(w => w.wave))];
+    expect(trainingWaves).toEqual([10, 8, 5, 3]);
   });
 
-  it('each wave has all 4 phases in a standard schedule', () => {
-    const schedule = buildWaveSchedule(start, monday(16));
+  it('each training wave has all 4 standard phases', () => {
+    // 20-week total = 16 wave weeks = 4 waves × 4 weeks each
+    const schedule = buildWaveSchedule(start, monday(20));
     for (const wave of [10, 8, 5, 3] as const) {
-      const phases = schedule.weeks.filter(w => w.wave === wave).map(w => w.phase);
+      const phases = schedule.weeks
+        .filter(w => w.wave === wave && w.phase !== 'peaking' && w.phase !== 'meet_week')
+        .map(w => w.phase);
       expect(phases).toContain('accumulation');
       expect(phases).toContain('intensification');
       expect(phases).toContain('realization');
@@ -271,91 +196,107 @@ describe('buildWaveSchedule', () => {
     }
   });
 
-  it('deload is always present in every wave regardless of compression', () => {
-    const schedule = buildWaveSchedule(start, monday(13));
-    for (const wave of [...new Set(schedule.weeks.map(w => w.wave))]) {
-      const phases = schedule.weeks.filter(w => w.wave === wave).map(w => w.phase);
+  it('deload is always present in every training wave regardless of compression', () => {
+    // 17-week total = 13 wave weeks — enough for compressed 4 waves (3+3+3+4)
+    const schedule = buildWaveSchedule(start, monday(17));
+    const trainingWaves = [...new Set(
+      schedule.weeks
+        .filter(w => w.phase !== 'peaking' && w.phase !== 'meet_week')
+        .map(w => w.wave)
+    )];
+    for (const wave of trainingWaves) {
+      const phases = schedule.weeks
+        .filter(w => w.wave === wave && w.phase !== 'peaking' && w.phase !== 'meet_week')
+        .map(w => w.phase);
       expect(phases).toContain('deload');
     }
   });
 
-  it('12-week timeline: all 4 waves compressed to 3 weeks each', () => {
-    const schedule = buildWaveSchedule(start, monday(12));
-    expect(schedule.totalWeeks).toBe(12);
+  it('16-week timeline: all 4 waves compressed to 3 weeks each (12 wave + 4 peaking/meet)', () => {
+    const schedule = buildWaveSchedule(start, monday(16));
+    expect(schedule.totalWeeks).toBe(16);
     expect(schedule.skippedWaves).toHaveLength(0);
 
     for (const wave of [10, 8, 5, 3] as const) {
-      const waveWeeks = schedule.weeks.filter(w => w.wave === wave);
+      const waveWeeks = schedule.weeks.filter(w => w.wave === wave && w.phase !== 'peaking' && w.phase !== 'meet_week');
       expect(waveWeeks).toHaveLength(3);
       const phases = waveWeeks.map(w => w.phase);
       expect(phases).not.toContain('intensification');
     }
   });
 
-  it('9-week timeline: skips 10-rep wave, runs 8/5/3', () => {
-    const schedule = buildWaveSchedule(start, monday(9));
+  it('13-week timeline: skips 10-rep wave, runs 8/5/3', () => {
+    const schedule = buildWaveSchedule(start, monday(13));
     expect(schedule.skippedWaves).toContain(10);
-    const waves = [...new Set(schedule.weeks.map(w => w.wave))];
-    expect(waves).not.toContain(10);
-    expect(waves).toContain(8);
-    expect(waves).toContain(5);
-    expect(waves).toContain(3);
+    const trainingWaves = [...new Set(schedule.weeks.filter(w => w.phase !== 'peaking' && w.phase !== 'meet_week').map(w => w.wave))];
+    expect(trainingWaves).not.toContain(10);
+    expect(trainingWaves).toContain(8);
+    expect(trainingWaves).toContain(5);
+    expect(trainingWaves).toContain(3);
   });
 
-  it('6-week timeline: skips 10 and 8, runs 5/3', () => {
-    const schedule = buildWaveSchedule(start, monday(6));
+  it('10-week timeline: skips 10 and 8, runs 5/3', () => {
+    const schedule = buildWaveSchedule(start, monday(10));
     expect(schedule.skippedWaves).toContain(10);
     expect(schedule.skippedWaves).toContain(8);
-    const waves = [...new Set(schedule.weeks.map(w => w.wave))];
-    expect(waves).not.toContain(10);
-    expect(waves).not.toContain(8);
-    expect(waves).toContain(5);
-    expect(waves).toContain(3);
+    const trainingWaves = [...new Set(schedule.weeks.filter(w => w.phase !== 'peaking' && w.phase !== 'meet_week').map(w => w.wave))];
+    expect(trainingWaves).not.toContain(10);
+    expect(trainingWaves).not.toContain(8);
+    expect(trainingWaves).toContain(5);
+    expect(trainingWaves).toContain(3);
   });
 
-  it('3-week timeline: only 3-rep wave (compressed)', () => {
-    const schedule = buildWaveSchedule(start, monday(3));
-    const waves = [...new Set(schedule.weeks.map(w => w.wave))];
-    expect(waves).toEqual([3]);
-    expect(schedule.totalWeeks).toBe(3);
+  it('7-week timeline: only 3-rep wave (compressed) + 4 peaking/meet weeks', () => {
+    const schedule = buildWaveSchedule(start, monday(7));
+    const trainingWaves = [...new Set(schedule.weeks.filter(w => w.phase !== 'peaking' && w.phase !== 'meet_week').map(w => w.wave))];
+    expect(trainingWaves).toEqual([3]);
+    expect(schedule.totalWeeks).toBe(7);
   });
 
-  it('< 3-week timeline: returns empty schedule', () => {
-    const schedule = buildWaveSchedule(start, monday(2));
+  it('< 7-week timeline with no room for training waves: returns empty schedule', () => {
+    const schedule = buildWaveSchedule(start, monday(6));
     expect(schedule.weeks).toHaveLength(0);
     expect(schedule.totalWeeks).toBe(0);
     expect(schedule.peakWeekIndex).toBe(-1);
   });
 
-  it('20-week timeline: elongates early waves to 5 weeks', () => {
-    const schedule = buildWaveSchedule(start, monday(20));
-    expect(schedule.totalWeeks).toBe(20);
-    const tenWave = schedule.weeks.filter(w => w.wave === 10);
+  it('24-week timeline: elongates early waves to 5 weeks (20 wave + 4 peaking/meet)', () => {
+    const schedule = buildWaveSchedule(start, monday(24));
+    expect(schedule.totalWeeks).toBe(24);
+    const tenWave = schedule.weeks.filter(w => w.wave === 10 && w.phase !== 'peaking' && w.phase !== 'meet_week');
     expect(tenWave).toHaveLength(5);
   });
 
-  it('peak week is the 3-rep realization week', () => {
-    const schedule = buildWaveSchedule(start, monday(16));
-    const peakWeek = schedule.weeks[schedule.peakWeekIndex];
-    expect(peakWeek.wave).toBe(3);
-    expect(peakWeek.phase).toBe('realization');
+  it('peaking block starts right after training waves and has 3 weeks', () => {
+    const schedule = buildWaveSchedule(start, monday(20));
+    const peakingWeeks = schedule.weeks.filter(w => w.phase === 'peaking');
+    expect(peakingWeeks).toHaveLength(3);
+    expect(peakingWeeks[0].peakWeek).toBe(1);
+    expect(peakingWeeks[1].peakWeek).toBe(2);
+    expect(peakingWeeks[2].peakWeek).toBe(3);
   });
 
-  it('peak week is the last week before the deload in a standard schedule', () => {
-    const schedule = buildWaveSchedule(start, monday(16));
-    const peakWeek = schedule.weeks[schedule.peakWeekIndex];
-    const weekAfterPeak = schedule.weeks[schedule.peakWeekIndex + 1];
-    expect(weekAfterPeak.phase).toBe('deload');
+  it('peakWeekIndex points to the first peaking week', () => {
+    const schedule = buildWaveSchedule(start, monday(20));
+    const peakBlock = schedule.weeks[schedule.peakWeekIndex];
+    expect(peakBlock.phase).toBe('peaking');
+    expect(peakBlock.peakWeek).toBe(1);
+  });
+
+  it('meet week is the last week', () => {
+    const schedule = buildWaveSchedule(start, monday(20));
+    const last = schedule.weeks[schedule.weeks.length - 1];
+    expect(last.phase).toBe('meet_week');
   });
 
   it('records adjustments in plain English when waves are skipped or resized', () => {
-    const schedule = buildWaveSchedule(start, monday(9));
+    const schedule = buildWaveSchedule(start, monday(13));
     expect(schedule.adjustments.length).toBeGreaterThan(0);
     expect(typeof schedule.adjustments[0]).toBe('string');
   });
 
   it('week dates are sequential with no gaps', () => {
-    const schedule = buildWaveSchedule(start, monday(16));
+    const schedule = buildWaveSchedule(start, monday(20));
     for (let i = 1; i < schedule.weeks.length; i++) {
       const prev = schedule.weeks[i - 1].endDate.getTime();
       const curr = schedule.weeks[i].startDate.getTime();

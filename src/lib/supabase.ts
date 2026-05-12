@@ -28,6 +28,7 @@ export interface WeakPoints {
 
 export interface UserProfile {
   id: string;
+  // Training maxes — all Juggernaut percentages are calculated against these (= tested × 0.90)
   squat_max: number;
   bench_max: number;
   deadlift_max: number;

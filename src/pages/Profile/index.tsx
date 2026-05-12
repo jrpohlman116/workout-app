@@ -45,10 +45,14 @@ export default function ProfilePage() {
   const [bodyError, setBodyError] = useState('');
   const [bodySaved, setBodySaved] = useState(false);
 
-  // Maxes
+  // Maxes — Training Max (TM = tested × 0.90, used for all Juggernaut % calculations)
   const [squatMax, setSquatMax] = useState(profile?.squat_max?.toString() || '');
   const [benchMax, setBenchMax] = useState(profile?.bench_max?.toString() || '');
   const [deadliftMax, setDeadliftMax] = useState(profile?.deadlift_max?.toString() || '');
+  // Maxes — Tested / competition max (best actual 1RM performed)
+  const [squatTestedMax, setSquatTestedMax] = useState('');
+  const [benchTestedMax, setBenchTestedMax] = useState('');
+  const [deadliftTestedMax, setDeadliftTestedMax] = useState('');
   const [maxesLoading, setMaxesLoading] = useState(false);
   const [maxesError, setMaxesError] = useState('');
   const [maxesSaved, setMaxesSaved] = useState(false);
@@ -114,6 +118,13 @@ export default function ProfilePage() {
     }
   };
 
+  const maxesPayload = () => ({
+    squat_max: parseFloat(squatMax) || 0,
+    bench_max: parseFloat(benchMax) || 0,
+    deadlift_max: parseFloat(deadliftMax) || 0,
+    updated_at: new Date().toISOString(),
+  });
+
   const handleSaveMaxes = async () => {
     if (!user) return;
     setMaxesLoading(true);
@@ -122,12 +133,7 @@ export default function ProfilePage() {
     try {
       const { error } = await supabase
         .from('user_profiles')
-        .update({
-          squat_max: parseFloat(squatMax) || 0,
-          bench_max: parseFloat(benchMax) || 0,
-          deadlift_max: parseFloat(deadliftMax) || 0,
-          updated_at: new Date().toISOString(),
-        })
+        .update(maxesPayload())
         .eq('id', user.id);
       if (error) throw error;
       await refreshProfile();
@@ -149,13 +155,10 @@ export default function ProfilePage() {
       const { error } = await supabase
         .from('user_profiles')
         .update({
-          squat_max: parseFloat(squatMax) || 0,
-          bench_max: parseFloat(benchMax) || 0,
-          deadlift_max: parseFloat(deadliftMax) || 0,
+          ...maxesPayload(),
           current_cycle: 1,
           current_week: 1,
           program_start_date: new Date().toISOString().split('T')[0],
-          updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
       if (error) throw error;
@@ -287,7 +290,7 @@ export default function ProfilePage() {
           <div className="flex gap-6 overflow-x-auto border-b border-gray-200 dark:border-gray-700">
             {(['body', 'maxes', 'training', 'security'] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)} className={tabClass(tab)}>
-                {{ body: 'Body Stats', maxes: 'Tested Maxes', training: 'Training', security: 'Account' }[tab]}
+                {{ body: 'Body Stats', maxes: 'Maxes', training: 'Training', security: 'Account' }[tab]}
                 {activeTab === tab && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 dark:bg-gray-100" />
                 )}
@@ -358,44 +361,106 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* ── Tested Maxes ── */}
-        {activeTab === 'maxes' && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tested Maxes</h2>
-            <div className="space-y-4">
-              {([
-                ['Squat', squatMax, setSquatMax],
-                ['Bench Press', benchMax, setBenchMax],
-                ['Deadlift', deadliftMax, setDeadliftMax],
-              ] as const).map(([label, value, setter]) => (
-                <div key={label}>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    {label}
-                  </label>
-                  <div className="flex gap-3">
-                    <input
-                      type="number"
-                      value={value}
-                      onChange={e => setter(e.target.value)}
-                      placeholder="e.g. 315"
-                      min="0"
-                      step="0.5"
-                      className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-                    />
-                    <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                      {unitPreference}
+        {/* ── Maxes ── */}
+        {activeTab === 'maxes' && (() => {
+          const unit = unitPreference || 'lb';
+          const roundTo = unit === 'kg' ? 2.5 : 5;
+
+          const liftRows: {
+            label: string;
+            testedVal: string;
+            setTested: (v: string) => void;
+            tmVal: string;
+            setTm: (v: string) => void;
+          }[] = [
+            { label: 'Squat',       testedVal: squatTestedMax,    setTested: setSquatTestedMax,    tmVal: squatMax,    setTm: setSquatMax },
+            { label: 'Bench Press', testedVal: benchTestedMax,    setTested: setBenchTestedMax,    tmVal: benchMax,    setTm: setBenchMax },
+            { label: 'Deadlift',    testedVal: deadliftTestedMax, setTested: setDeadliftTestedMax, tmVal: deadliftMax, setTm: setDeadliftMax },
+          ];
+
+          const recalcTm = (testedVal: string, setTm: (v: string) => void) => {
+            const tested = parseFloat(testedVal);
+            if (!tested || tested <= 0) return;
+            const tm = Math.round((tested * 0.9) / roundTo) * roundTo;
+            setTm(String(tm));
+            setMaxesSaved(false);
+          };
+
+          return (
+            <div className="space-y-4 animate-enter">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  <span className="font-semibold text-gray-700 dark:text-gray-200">Tested max</span> is the best actual 1RM you've lifted. Your{' '}
+                  <span className="font-semibold text-gray-700 dark:text-gray-200">training max (TM)</span> is what the program builds percentages from — typically 90% of your tested max.
+                </p>
+              </div>
+
+              {liftRows.map(({ label, testedVal, setTested, tmVal, setTm }) => {
+                const tm = parseFloat(tmVal);
+                const impliedOneRM = tm > 0 ? Math.round((tm / 0.9) * 10) / 10 : null;
+
+                return (
+                  <div key={label} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 space-y-4">
+                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">{label}</p>
+
+                    {/* Tested max */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Tested max <span className="text-gray-400 dark:text-gray-500 font-normal">({unit})</span>
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          value={testedVal}
+                          onChange={e => { setTested(e.target.value); setMaxesSaved(false); }}
+                          placeholder="e.g. 315"
+                          min="0"
+                          step="0.5"
+                          className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => recalcTm(testedVal, setTm)}
+                          disabled={!testedVal || parseFloat(testedVal) <= 0}
+                          className="px-4 py-3 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-40 transition-colors whitespace-nowrap"
+                          title="Set training max to 90% of tested max"
+                        >
+                          → 90% TM
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Training max */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Training max <span className="text-gray-400 dark:text-gray-500 font-normal">({unit})</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={tmVal}
+                        onChange={e => { setTm(e.target.value); setMaxesSaved(false); }}
+                        placeholder="e.g. 285"
+                        min="0"
+                        step="0.5"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      {impliedOneRM && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
+                          Implied 1RM: <span className="font-semibold text-gray-600 dark:text-gray-300">{impliedOneRM} {unit}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
-              <div className="flex flex-row gap-3">
+              <div className="flex gap-3">
                 <button
                   onClick={handleSaveMaxes}
                   disabled={maxesLoading}
-                  className="w-1/3 bg-gray-600 dark:bg-gray-500 text-white py-4 rounded-xl font-semibold hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                  className="w-1/3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-4 rounded-xl font-semibold shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                 >
-                  {maxesLoading ? 'Saving...' : 'Save'}
+                  {maxesLoading ? 'Saving…' : 'Save'}
                 </button>
                 <button
                   onClick={() => setShowRestartModal(true)}
@@ -405,7 +470,7 @@ export default function ProfilePage() {
                   Save & Restart Program
                 </button>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-300 text-center">
+              <p className="text-xs font-medium text-white dark:text-white/70 text-center">
                 "Save & Restart Program" rebuilds your wave schedule from today
               </p>
               {maxesError && (
@@ -417,8 +482,8 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ── Training Settings ── */}
         {activeTab === 'training' && (

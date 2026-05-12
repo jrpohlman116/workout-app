@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateWorkoutWeights, calculateJuggernautSets, calculateTrainingMax, getGreeting, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
+import { calculateJuggernautSets, getGreeting, buildWaveSchedule } from '../../lib/calculations';
 import { ChevronRight, Check, Activity, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
@@ -17,6 +17,8 @@ const PHASE_LABELS: Record<string, string> = {
   intensification: 'Intensification',
   realization: 'Realization',
   deload: 'Deload',
+  peaking: 'Peaking',
+  meet_week: 'Meet Week',
 };
 
 const PHASE_DESCRIPTIONS: Record<string, string> = {
@@ -24,16 +26,10 @@ const PHASE_DESCRIPTIONS: Record<string, string> = {
   intensification: 'Less volume, heavier loads. Push the weights and keep technique solid.',
   realization: 'Peak intensity. Your top set is max reps — stop 1 rep before failure.',
   deload: 'Reduced load. Complete all sets without grinding. This is a recovery week.',
+  peaking: 'Competition prep. Work up to a heavy single — no grinding, no misses.',
+  meet_week: 'Rest up. Keep any movement light and technical. Save everything for the platform.',
 };
 
-function getCurrentWeekBlock(programStartDate: string | undefined, meetDate: string | undefined): WeekBlock | null {
-  if (!programStartDate || !meetDate) return null;
-  const start = new Date(programStartDate);
-  const meet = new Date(meetDate);
-  const schedule = buildWaveSchedule(start, meet);
-  const now = Date.now();
-  return schedule.weeks.find(w => w.startDate.getTime() <= now && w.endDate.getTime() >= now) ?? null;
-}
 
 export default function HomePage({ onNavigate }: HomePageProps) {
   const { profile, user, refreshProfile } = useAuth();
@@ -118,7 +114,16 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     return diffDays >= -1 && diffDays <= 1;
   })();
 
-  const currentBlock = getCurrentWeekBlock(profile.program_start_date, profile.meet_date);
+  const scheduleStart = profile.program_start_date
+    ? new Date(profile.program_start_date)
+    : profile.meet_date
+      ? new Date(new Date(profile.meet_date).getTime() - 16 * 7 * 24 * 60 * 60 * 1000)
+      : new Date();
+  const currentBlock = profile.meet_date
+    ? (buildWaveSchedule(scheduleStart, new Date(profile.meet_date)).weeks.find(
+        w => w.startDate.getTime() <= Date.now() && w.endDate.getTime() >= Date.now()
+      ) ?? null)
+    : null;
 
   const CYCLE_TO_WAVE: Record<number, number> = { 1: 10, 2: 8, 3: 5, 4: 3 };
   const WEEK_TO_PHASE: Record<number, string> = { 1: 'accumulation', 2: 'intensification', 3: 'realization', 4: 'deload' };
@@ -134,8 +139,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     { name: 'Bench', max: profile.bench_max, type: 'bench' },
   ];
 
-  const waveSchedule = (profile.program_start_date && profile.meet_date)
-    ? buildWaveSchedule(new Date(profile.program_start_date), new Date(profile.meet_date))
+  const waveSchedule = profile.meet_date
+    ? buildWaveSchedule(scheduleStart, new Date(profile.meet_date))
     : { weeks: [], adjustments: [], skippedWaves: [], totalWeeks: 0, peakWeekIndex: -1 };
 
   return (
@@ -151,7 +156,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm px-6 py-8">
           <WaveScheduleChart
             schedule={waveSchedule}
-            trainingMax={calculateTrainingMax(profile.squat_max)}
+            trainingMax={profile.squat_max}
             unit={profile.unit_preference || 'lb'}
             sessions={[]}
           />
@@ -249,11 +254,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               const projected1RM = sessionData?.calculated_1rm;
               const isUpperDayWorkout = workout.type === 'upper';
               const unit = profile.unit_preference || 'lb';
-              const topWeight = !isUpperDayWorkout ? (
-                currentBlock
-                  ? calculateJuggernautSets(currentBlock.wave, currentBlock.phase, calculateTrainingMax(workout.max), unit).weight
-                  : calculateWorkoutWeights(workout.type, workout.max, profile.current_cycle, profile.current_week, unit).set3
-              ) : null;
+              const roundTo = unit === 'kg' ? 2.5 : 5;
+              const baseWeight = (!isUpperDayWorkout && currentBlock && currentBlock.phase !== 'peaking' && currentBlock.phase !== 'meet_week')
+                ? calculateJuggernautSets(currentBlock.wave, currentBlock.phase, workout.max, unit).weight
+                : (!isUpperDayWorkout && currentBlock?.phase === 'peaking')
+                  ? Math.round(workout.max * [0.83, 0.87, 0.90][((currentBlock.peakWeek ?? 1) - 1)] / roundTo) * roundTo
+                  : null;
+              const weightLow = baseWeight !== null ? Math.round(baseWeight * 0.96 / roundTo) * roundTo : null;
+              const weightHigh = baseWeight !== null ? Math.round(baseWeight * 1.04 / roundTo) * roundTo : null;
 
               return (
                 <button
@@ -284,10 +292,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                       </p>
                     ) : isUpperDayWorkout ? (
                       <p className="text-sm text-gray-500 dark:text-gray-400">Accessory work</p>
-                    ) : (
+                    ) : weightLow !== null && weightHigh !== null ? (
                       <p className="text-xl font-black tabular-nums leading-tight text-gray-900 dark:text-gray-100">
-                        {topWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unit}</span>
+                        {weightLow}–{weightHigh} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unit}</span>
                       </p>
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">—</p>
                     )}
                   </div>
                   <div className="flex-shrink-0">

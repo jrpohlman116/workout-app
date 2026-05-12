@@ -1,64 +1,11 @@
 export function calculateOneRepMax(weight: number, reps: number): number {
-  return Math.round(weight * (1 + reps / 30));
+  return Math.round(weight * (1 + reps / 30)); // Epley formula
 }
 
 export function calculateTrainingMax(oneRepMax: number): number {
-  return Math.round(oneRepMax * 0.9);
+  return Math.round(oneRepMax * 0.9); // 90% of estimated 1RM
 }
 
-export function getCycleProgression(cycle: number, type: string, unit: string = 'lb'): number {
-  const isUpperBody = type === 'bench' || type === 'ohp';
-
-  if (unit === 'kg') {
-    return (cycle - 1) * (isUpperBody ? 2.5 : 5);
-  }
-
-  return (cycle - 1) * (isUpperBody ? 5 : 10);
-}
-
-export function calculateWorkoutWeights(
-  type: string,
-  oneRepMax: number,
-  cycle: number,
-  week: number,
-  unit: string = 'lb'
-): { set1: number; set2: number; set3: number } {
-  const trainingMax = calculateTrainingMax(oneRepMax) + getCycleProgression(cycle, type, unit);
-  const roundTo = unit === 'kg' ? 2.5 : 5;
-
-  if (week === 1) {
-    return {
-      set1: Math.round(trainingMax * 0.65 / roundTo) * roundTo,
-      set2: Math.round(trainingMax * 0.75 / roundTo) * roundTo,
-      set3: Math.round(trainingMax * 0.85 / roundTo) * roundTo,
-    };
-  } else if (week === 2) {
-    return {
-      set1: Math.round(trainingMax * 0.70 / roundTo) * roundTo,
-      set2: Math.round(trainingMax * 0.80 / roundTo) * roundTo,
-      set3: Math.round(trainingMax * 0.90 / roundTo) * roundTo,
-    };
-  } else if (week === 3) {
-    return {
-      set1: Math.round(trainingMax * 0.75 / roundTo) * roundTo,
-      set2: Math.round(trainingMax * 0.85 / roundTo) * roundTo,
-      set3: Math.round(trainingMax * 0.95 / roundTo) * roundTo,
-    };
-  } else {
-    return {
-      set1: Math.round(trainingMax * 0.40 / roundTo) * roundTo,
-      set2: Math.round(trainingMax * 0.50 / roundTo) * roundTo,
-      set3: Math.round(trainingMax * 0.60 / roundTo) * roundTo,
-    };
-  }
-}
-
-export function getWeekSubtext(week: number): string {
-  if (week === 1) return '5 reps';
-  if (week === 2) return '3 reps';
-  if (week === 3) return '5-3-1 reps';
-  return 'deload';
-}
 
 export function calculateWilksScore(
   squatMax: number,
@@ -211,7 +158,7 @@ export function getGreeting(): string {
 // ─── Juggernaut Method ────────────────────────────────────────────────────────
 
 export type RepWave = 10 | 8 | 5 | 3;
-export type WavePhase = 'accumulation' | 'intensification' | 'realization' | 'deload';
+export type WavePhase = 'accumulation' | 'intensification' | 'realization' | 'deload' | 'peaking' | 'meet_week';
 
 export interface WeekBlock {
   wave: RepWave;
@@ -219,6 +166,7 @@ export interface WeekBlock {
   weekIndex: number;
   startDate: Date;
   endDate: Date;
+  peakWeek?: 1 | 2 | 3;
 }
 
 export interface WaveSchedule {
@@ -331,6 +279,31 @@ export function calculateJuggernautSets(
   };
 }
 
+// Peaking block: heavy singles at increasing % of TM across 3 weeks
+const PEAKING_WEEK_PCT: Record<1 | 2 | 3, number> = {
+  1: 0.83,
+  2: 0.87,
+  3: 0.90,
+};
+
+/**
+ * Returns a single top-set config for peaking block weeks.
+ * Peaking weeks use heavy singles — no AMAP, no multi-set rep scheme.
+ */
+export function calculatePeakingSets(
+  peakWeek: 1 | 2 | 3,
+  trainingMax: number,
+  unit: string = 'lb'
+): JuggernautSetsConfig {
+  const roundTo = unit === 'kg' ? 2.5 : 5;
+  return {
+    numSets: 1,
+    reps: 1,
+    weight: Math.round(trainingMax * PEAKING_WEEK_PCT[peakWeek] / roundTo) * roundTo,
+    isAmap: false,
+  };
+}
+
 /**
  * Returns back-off weight, sets, and reps based on RPE of the top set.
  * RPE ≤7: 10% drop, 3×5
@@ -407,18 +380,24 @@ export function calculateWarmupSets(
  * - All adjustments are recorded in plain English for display to the user
  */
 export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule {
-  const availableWeeks = Math.floor(
+  const totalAvailableWeeks = Math.floor(
     (meetDate.getTime() - startDate.getTime()) / MS_PER_WEEK
   );
+
+  // Reserve 4 weeks at the end: 3 peaking weeks + 1 meet week
+  const PEAKING_WEEKS = 3;
+  const MEET_WEEK = 1;
+  const reservedWeeks = PEAKING_WEEKS + MEET_WEEK;
+  const availableWeeks = totalAvailableWeeks - reservedWeeks;
 
   const adjustments: string[] = [];
   const skippedWaves: RepWave[] = [];
 
   if (availableWeeks < 3) {
-    return { weeks: [], skippedWaves: [10, 8, 5, 3], adjustments: ['Not enough time to run any wave before your meet date.'], totalWeeks: 0, peakWeekIndex: -1 };
+    return { weeks: [], skippedWaves: [10, 8, 5, 3], adjustments: ['Not enough time to run any training waves before your peaking block. Consider starting earlier.'], totalWeeks: 0, peakWeekIndex: -1 };
   }
 
-  // Select waves — minimum 3 weeks per wave, so thresholds are multiples of 3
+  // Select waves — minimum 3 weeks per wave
   let selectedWaves: RepWave[];
 
   if (availableWeeks >= 12) {
@@ -427,19 +406,19 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
     selectedWaves = [8, 5, 3];
     skippedWaves.push(10);
     adjustments.push(
-      `Your timeline is ${availableWeeks} weeks. The 10-rep wave was skipped so there's enough time for full 8-rep, 5-rep, and 3-rep waves before your meet.`
+      `Your timeline is ${availableWeeks} weeks of training. The 10-rep wave was skipped so there's enough time for full 8-rep, 5-rep, and 3-rep waves before your peaking block.`
     );
   } else if (availableWeeks >= 6) {
     selectedWaves = [5, 3];
     skippedWaves.push(10, 8);
     adjustments.push(
-      `Your timeline is ${availableWeeks} weeks. The 10-rep and 8-rep waves were skipped so you can run a full 5-rep and 3-rep wave before your meet.`
+      `Your timeline is ${availableWeeks} weeks of training. The 10-rep and 8-rep waves were skipped so you can run a full 5-rep and 3-rep wave before your peaking block.`
     );
   } else {
     selectedWaves = [3];
     skippedWaves.push(10, 8, 5);
     adjustments.push(
-      `Your timeline is ${availableWeeks} weeks. Only the 3-rep wave fits before your meet.`
+      `Your timeline is ${availableWeeks} weeks of training. Only the 3-rep wave fits before your peaking block.`
     );
   }
 
@@ -449,7 +428,6 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
   const diff = availableWeeks - standardTotal;
 
   if (diff > 0) {
-    // Elongate waves (max 5 weeks each), prioritising earlier waves
     let extra = diff;
     for (const wave of selectedWaves) {
       if (extra <= 0) break;
@@ -462,7 +440,6 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
       }
     }
   } else if (diff < 0) {
-    // Compress waves (min 3 weeks each), prioritising earlier waves
     let shortage = Math.abs(diff);
     for (const wave of selectedWaves) {
       if (shortage <= 0) break;
@@ -476,7 +453,7 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
     }
   }
 
-  // Build week-by-week blocks with dates
+  // Build training wave blocks
   const weeks: WeekBlock[] = [];
   let weekIndex = 0;
 
@@ -490,40 +467,43 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
     for (const phase of phases) {
       const weekStart = new Date(startDate.getTime() + weekIndex * MS_PER_WEEK);
       const weekEnd = new Date(weekStart.getTime() + MS_PER_WEEK - 1);
-      weeks.push({ wave, phase, weekIndex, startDate: weekStart, endDate: weekEnd });
+      weeks.push({ wave: wave as RepWave, phase, weekIndex, startDate: weekStart, endDate: weekEnd });
       weekIndex++;
     }
   }
 
-  const peakWeekIndex = weeks.reduce(
-    (found, w, i) => w.wave === 3 && w.phase === 'realization' ? i : found,
-    -1
-  );
+  const peakWeekIndex = weeks.length; // peaking block starts right after the training waves
+
+  // Append 3 peaking weeks (wave: 3 — TM is locked from 3-rep Realization)
+  for (let pk = 1; pk <= PEAKING_WEEKS; pk++) {
+    const weekStart = new Date(startDate.getTime() + weekIndex * MS_PER_WEEK);
+    const weekEnd = new Date(weekStart.getTime() + MS_PER_WEEK - 1);
+    weeks.push({
+      wave: 3,
+      phase: 'peaking',
+      peakWeek: pk as 1 | 2 | 3,
+      weekIndex,
+      startDate: weekStart,
+      endDate: weekEnd,
+    });
+    weekIndex++;
+  }
+
+  // Append meet week
+  const meetWeekStart = new Date(startDate.getTime() + weekIndex * MS_PER_WEEK);
+  const meetWeekEnd = new Date(meetWeekStart.getTime() + MS_PER_WEEK - 1);
+  weeks.push({
+    wave: 3,
+    phase: 'meet_week',
+    weekIndex,
+    startDate: meetWeekStart,
+    endDate: meetWeekEnd,
+  });
+  weekIndex++;
 
   return { weeks, skippedWaves, adjustments, totalWeeks: weekIndex, peakWeekIndex };
 }
 
-export function calculateBBBSupplementalWeight(
-  type: string,
-  oneRepMax: number,
-  cycle: number,
-  unit: string = 'lb'
-): number {
-  const trainingMax = calculateTrainingMax(oneRepMax) + getCycleProgression(cycle, type, unit);
-  const roundTo = unit === 'kg' ? 2.5 : 5;
-  return Math.round(trainingMax * 0.50 / roundTo) * roundTo;
-}
-
-export function calculateBBSSupplementalWeight(
-  type: string,
-  oneRepMax: number,
-  cycle: number,
-  week: number,
-  unit: string = 'lb'
-): number {
-  const weights = calculateWorkoutWeights(type, oneRepMax, cycle, week, unit);
-  return weights.set1;
-}
 
 export function getSupplementalWorkConfig(
   variation: 'standard' | 'bbb' | 'bbs' | undefined

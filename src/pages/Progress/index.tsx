@@ -9,6 +9,7 @@ import LiftSummaryCard from './LiftSummaryCard';
 import TabNavigation from './TabNavigation';
 import WorkoutLogEntry from './WorkoutLogEntry';
 import StrengthScoreCarousel from '../../components/features/StrengthScoreCarousel';
+import PastMeetModal from './PastMeetModal';
 import * as utils from './utils';
 
 interface AccessoryExercise {
@@ -19,7 +20,16 @@ interface AccessoryExercise {
   workout_session_id: string;
 }
 
-type Tab = 'overview' | 'records' | 'log';
+type Tab = 'overview' | 'records' | 'log' | 'meets';
+
+interface MeetGroup {
+  date: string;
+  attemptsByLift: Record<string, WorkoutSession[]>;
+  bestSquat: WorkoutSession | null;
+  bestBench: WorkoutSession | null;
+  bestDeadlift: WorkoutSession | null;
+  total: number | null;
+}
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
@@ -27,6 +37,7 @@ export default function ProgressPage() {
   const [accessoryData, setAccessoryData] = useState<{ [sessionId: string]: AccessoryExercise[] }>({});
   const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [showPastMeetModal, setShowPastMeetModal] = useState(false);
   const visibleLifts = useStaggeredAnimation(3, 100);
   const createRipple = useRipple();
 
@@ -183,6 +194,44 @@ export default function ProgressPage() {
     });
   };
 
+  const groupMeetsByDate = (): MeetGroup[] => {
+    const meetSessions = sessions.filter(s => s.is_1rm_test);
+    const grouped: Record<string, WorkoutSession[]> = {};
+    meetSessions.forEach(s => {
+      const key = s.completed_at.split('T')[0];
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(s);
+    });
+
+    return Object.entries(grouped)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([date, daySessions]) => {
+        const liftOrder = ['squat', 'bench', 'deadlift'];
+        const attemptsByLift: Record<string, WorkoutSession[]> = {};
+        liftOrder.forEach(lift => {
+          attemptsByLift[lift] = daySessions
+            .filter(s => s.lift_type === lift)
+            .sort((a, b) => a.weight_lifted - b.weight_lifted);
+        });
+
+        const bestMade = (lift: string): WorkoutSession | null => {
+          const made = attemptsByLift[lift].filter(s => s.reps_performed > 0);
+          return made.length > 0 ? made[made.length - 1] : null;
+        };
+
+        const bestSquat = bestMade('squat');
+        const bestBench = bestMade('bench');
+        const bestDeadlift = bestMade('deadlift');
+
+        const total =
+          bestSquat && bestBench && bestDeadlift
+            ? bestSquat.weight_lifted + bestBench.weight_lifted + bestDeadlift.weight_lifted
+            : null;
+
+        return { date, attemptsByLift, bestSquat, bestBench, bestDeadlift, total };
+      });
+  };
+
   return (
     <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
@@ -305,26 +354,191 @@ export default function ProgressPage() {
 
         {activeTab === 'log' && (
           <div className="space-y-4 animate-enter">
-            {groupSessionsByDate().map(group => (
-              <div key={group.date}>
-                <p className="text-xs uppercase tracking-widest font-semibold text-white/70 mb-2 px-1">{formatDate(group.date + 'T00:00:00')}</p>
-                <div className="space-y-3">
-                  {group.sessions.map(session => (
-                    <WorkoutLogEntry
-                      key={session.id}
-                      session={session}
-                      accessories={accessoryData[session.id] || []}
-                      isExpanded={expandedSessions.has(session.id)}
-                      onToggle={() => toggleSessionExpansion(session.id)}
-                      unitPreference={profile.unit_preference || 'lb'}
-                    />
-                  ))}
+            {groupSessionsByDate()
+              .map(group => ({
+                ...group,
+                sessions: group.sessions.filter(s => !s.is_1rm_test),
+              }))
+              .filter(group => group.sessions.length > 0)
+              .map(group => (
+                <div key={group.date}>
+                  <p className="text-xs uppercase tracking-widest font-semibold text-white/70 mb-2 px-1">{formatDate(group.date + 'T00:00:00')}</p>
+                  <div className="space-y-3">
+                    {group.sessions.map(session => (
+                      <WorkoutLogEntry
+                        key={session.id}
+                        session={session}
+                        accessories={accessoryData[session.id] || []}
+                        isExpanded={expandedSessions.has(session.id)}
+                        onToggle={() => toggleSessionExpansion(session.id)}
+                        unitPreference={profile.unit_preference || 'lb'}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+          </div>
+        )}
+
+        {activeTab === 'meets' && (
+          <div className="space-y-4 animate-enter">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-widest font-semibold text-white/70">Meet History</p>
+              <button
+                onClick={() => setShowPastMeetModal(true)}
+                className="text-xs font-semibold bg-white/15 hover:bg-white/25 text-white px-3 py-1.5 rounded-lg transition-colors"
+              >
+                + Log Past Meet
+              </button>
+            </div>
+
+            {(() => {
+              const meetGroups = groupMeetsByDate();
+              const unit = profile.unit_preference || 'lb';
+              const liftLabels: Record<string, string> = {
+                squat: 'Squat',
+                bench: 'Bench',
+                deadlift: 'Deadlift',
+              };
+
+              if (meetGroups.length === 0) {
+                return (
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 text-center">
+                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">No meets yet</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      Use the Meet Day button on your home screen to log live attempts, or tap <span className="font-semibold">Log Past Meet</span> above to enter a previous competition.
+                    </p>
+                  </div>
+                );
+              }
+
+              return meetGroups.map(meet => {
+                const meetScores =
+                  meet.total && meet.bestSquat && meet.bestBench && meet.bestDeadlift
+                    ? {
+                        wilks: calculateWilksScore(
+                          lbToKg(meet.bestSquat.weight_lifted),
+                          lbToKg(meet.bestBench.weight_lifted),
+                          lbToKg(meet.bestDeadlift.weight_lifted),
+                          lbToKg(bw),
+                          gender
+                        ),
+                        dots: calculateDOTSScore(
+                          lbToKg(meet.bestSquat.weight_lifted),
+                          lbToKg(meet.bestBench.weight_lifted),
+                          lbToKg(meet.bestDeadlift.weight_lifted),
+                          lbToKg(bw),
+                          gender
+                        ),
+                        ipfgl: calculateIPFGLScore(
+                          lbToKg(meet.bestSquat.weight_lifted),
+                          lbToKg(meet.bestBench.weight_lifted),
+                          lbToKg(meet.bestDeadlift.weight_lifted),
+                          lbToKg(bw),
+                          gender
+                        ),
+                      }
+                    : null;
+
+                return (
+                  <div key={meet.date} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-5">
+                      <div>
+                        <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Meet</p>
+                        <p className="text-base font-bold text-gray-900 dark:text-gray-100">
+                          {formatDate(meet.date + 'T12:00:00')}
+                        </p>
+                      </div>
+                      {meet.total !== null && (
+                        <div className="text-right">
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Total</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+                              {meet.total.toLocaleString()}
+                            </span>
+                            <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{unit}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Attempts per lift */}
+                    <div className="grid grid-cols-3 gap-3 mb-5">
+                      {(['squat', 'bench', 'deadlift'] as const).map(lift => (
+                        <div key={lift}>
+                          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
+                            {liftLabels[lift]}
+                          </p>
+                          <div className="space-y-1.5">
+                            {meet.attemptsByLift[lift].length === 0 && (
+                              <p className="text-xs text-gray-300 dark:text-gray-600">—</p>
+                            )}
+                            {meet.attemptsByLift[lift].map(attempt => {
+                              const made = attempt.reps_performed > 0;
+                              return (
+                                <div key={attempt.id} className="flex items-center gap-1.5">
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                      made ? 'bg-emerald-500' : 'bg-red-400'
+                                    }`}
+                                  />
+                                  <span
+                                    className={`text-sm tabular-nums ${
+                                      made
+                                        ? 'font-bold text-gray-900 dark:text-gray-100'
+                                        : 'font-medium text-gray-400 dark:text-gray-500 line-through'
+                                    }`}
+                                  >
+                                    {attempt.weight_lifted}
+                                  </span>
+                                  <span className="text-xs text-gray-400 dark:text-gray-500">{unit}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Partial total note */}
+                    {meet.total === null && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+                        Partial meet — total requires at least one made attempt on each lift.
+                      </p>
+                    )}
+
+                    {/* Strength scores */}
+                    {meetScores && (
+                      <div className="border-t border-gray-100 dark:border-gray-700 pt-4 grid grid-cols-3 gap-3">
+                        {[
+                          { label: 'Wilks', value: meetScores.wilks },
+                          { label: 'DOTS', value: meetScores.dots },
+                          { label: 'IPF-GL', value: meetScores.ipfgl },
+                        ].map(score => (
+                          <div key={score.label} className="text-center">
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{score.label}</p>
+                            <p className="text-lg font-black tabular-nums text-gray-900 dark:text-gray-100">
+                              {score.value.toFixed(1)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
           </div>
         )}
       </div>
+
+      <PastMeetModal
+        isOpen={showPastMeetModal}
+        onClose={() => setShowPastMeetModal(false)}
+        onSaved={() => { loadSessions(); }}
+        unitPreference={profile.unit_preference || 'lb'}
+      />
     </div>
   );
 }

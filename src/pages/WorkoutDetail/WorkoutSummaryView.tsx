@@ -26,6 +26,8 @@ const PHASE_LABELS: Record<string, string> = {
   intensification: 'Intensification',
   realization: 'Realization — push the final set',
   deload: 'Deload — easy effort, no grinding',
+  peaking: 'Peaking — work up to a heavy single',
+  meet_week: 'Meet Week — rest up',
 };
 
 export default function WorkoutSummaryView({
