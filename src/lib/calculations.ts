@@ -289,10 +289,10 @@ const JUGGERNAUT_WAVE_PERCENTS: Record<RepWave, {
   realization: { pct: number };
   deload: { sets: number; pct: number };
 }> = {
-  10: { accumulation: { sets: 5, pct: 0.60 }, intensification: { sets: 3, pct: 0.65 }, realization: { pct: 0.70 }, deload: { sets: 3, pct: 0.45 } },
-  8:  { accumulation: { sets: 5, pct: 0.65 }, intensification: { sets: 4, pct: 0.70 }, realization: { pct: 0.75 }, deload: { sets: 3, pct: 0.50 } },
-  5:  { accumulation: { sets: 5, pct: 0.70 }, intensification: { sets: 4, pct: 0.75 }, realization: { pct: 0.80 }, deload: { sets: 3, pct: 0.50 } },
-  3:  { accumulation: { sets: 5, pct: 0.75 }, intensification: { sets: 4, pct: 0.80 }, realization: { pct: 0.85 }, deload: { sets: 3, pct: 0.55 } },
+  10: { accumulation: { sets: 5, pct: 0.60 }, intensification: { sets: 4, pct: 0.65 }, realization: { pct: 0.75 }, deload: { sets: 3, pct: 0.45 } },
+  8:  { accumulation: { sets: 5, pct: 0.65 }, intensification: { sets: 4, pct: 0.70 }, realization: { pct: 0.80 }, deload: { sets: 3, pct: 0.50 } },
+  5:  { accumulation: { sets: 6, pct: 0.70 }, intensification: { sets: 5, pct: 0.75 }, realization: { pct: 0.85 }, deload: { sets: 3, pct: 0.50 } },
+  3:  { accumulation: { sets: 6, pct: 0.75 }, intensification: { sets: 5, pct: 0.80 }, realization: { pct: 0.90 }, deload: { sets: 3, pct: 0.55 } },
 };
 
 export function calculateJuggernautSets(

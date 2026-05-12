@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateWorkoutWeights, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
+import { calculateWorkoutWeights, calculateJuggernautSets, calculateTrainingMax, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
 import { ChevronRight, Check, Activity, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
@@ -314,13 +314,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               const projected1RM = sessionData?.calculated_1rm;
               const isUpperDayWorkout = workout.type === 'upper';
               const unit = profile.unit_preference || 'lb';
-              const topWeight = !isUpperDayWorkout ? calculateWorkoutWeights(
-                workout.type,
-                workout.max,
-                profile.current_cycle,
-                profile.current_week,
-                unit
-              ).set3 : null;
+              const topWeight = !isUpperDayWorkout ? (
+                currentBlock
+                  ? calculateJuggernautSets(currentBlock.wave, currentBlock.phase, calculateTrainingMax(workout.max), unit).weight
+                  : calculateWorkoutWeights(workout.type, workout.max, profile.current_cycle, profile.current_week, unit).set3
+              ) : null;
 
               return (
                 <button

@@ -174,13 +174,18 @@ export default function ProfilePage() {
     setTrainingSaved(false);
     setTrainingError('');
     try {
+      const today = new Date().toISOString().split('T')[0];
+      const updatePayload: Record<string, unknown> = {
+        meet_date: meetDate || null,
+        weak_points: weakPoints,
+        updated_at: new Date().toISOString(),
+      };
+      if (meetDate && !profile?.program_start_date) {
+        updatePayload.program_start_date = today;
+      }
       const { error } = await supabase
         .from('user_profiles')
-        .update({
-          meet_date: meetDate || null,
-          weak_points: weakPoints,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq('id', user.id);
       if (error) throw error;
       await refreshProfile();

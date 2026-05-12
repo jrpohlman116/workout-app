@@ -106,8 +106,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       let isAmap = false;
 
       if (block) {
-        const trainingMax = calculateTrainingMax(max) + getCycleProgression(profile.current_cycle, liftType, unit);
-        const cfg = calculateJuggernautSets(block.wave, block.phase, trainingMax, unit);
+        const cfg = calculateJuggernautSets(block.wave, block.phase, calculateTrainingMax(max), unit);
         numSets = cfg.numSets;
         reps = cfg.reps;
         weight = cfg.weight;
@@ -206,7 +205,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const mainConfig: JuggernautSetsConfig | null = isUpperDay ? null : (() => {
     const lift1RM = maxes[liftType] ?? 0;
     if (currentBlock) {
-      const trainingMax = calculateTrainingMax(lift1RM) + getCycleProgression(profile.current_cycle, liftType, unit);
+      const trainingMax = calculateTrainingMax(lift1RM);
       return calculateJuggernautSets(currentBlock.wave, currentBlock.phase, trainingMax, unit);
     }
     const w = calculateWorkoutWeights(liftType, lift1RM, profile.current_cycle, profile.current_week, unit);
