@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { Info } from 'lucide-react';
 import {
   ComposedChart,
   Bar,
@@ -21,17 +23,17 @@ interface WaveScheduleChartProps {
 }
 
 const WAVE_COLORS: Record<number, string> = {
-  10: '#3b82f6',
-  8:  '#10b981',
-  5:  '#8b5cf6',
-  3:  '#f97316',
+  10: '#0ea5e9', // sky-500
+  8:  '#2563eb', // blue-600
+  5:  '#4f46e5', // indigo-600
+  3:  '#7c3aed', // violet-600
 };
 
 const WAVE_MUTED: Record<number, string> = {
-  10: '#93c5fd',
-  8:  '#6ee7b7',
-  5:  '#c4b5fd',
-  3:  '#fdba74',
+  10: '#bae6fd', // sky-200
+  8:  '#bfdbfe', // blue-200
+  5:  '#c7d2fe', // indigo-200
+  3:  '#ddd6fe', // violet-200
 };
 
 const PHASE_LABELS: Record<string, string> = {
@@ -63,6 +65,8 @@ interface BarDatum {
 }
 
 export default function WaveScheduleChart({ schedule, trainingMax, unit, sessions }: WaveScheduleChartProps) {
+  const [showInfo, setShowInfo] = useState(false);
+
   if (!schedule.weeks.length) {
     return (
       <div className="text-center py-12">
@@ -149,7 +153,7 @@ export default function WaveScheduleChart({ schedule, trainingMax, unit, session
   const wavesInSchedule = [...new Set(data.map(d => d.wave))].sort((a, b) => b - a);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Summary row */}
       <div className="flex items-center gap-4 text-xs flex-wrap">
         <span className="text-gray-500 dark:text-gray-400">
@@ -163,16 +167,32 @@ export default function WaveScheduleChart({ schedule, trainingMax, unit, session
         <span className="text-gray-500 dark:text-gray-400">
           <span className="font-bold text-gray-900 dark:text-gray-100">{remainingCount}</span> weeks left
         </span>
+        {schedule.adjustments.length > 0 && (
+          <button
+            onClick={() => setShowInfo(v => !v)}
+            aria-label="Schedule details"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            <Info className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
+      {showInfo && schedule.adjustments.length > 0 && (
+        <div className="space-y-1">
+          {schedule.adjustments.map((msg, i) => (
+            <p key={i} className="text-xs text-gray-400 dark:text-gray-500">{msg}</p>
+          ))}
+        </div>
+      )}
 
       {/* Chart — scrollable on narrow screens */}
-      <div className="overflow-x-auto -mx-1 px-1">
+      <div className="overflow-x-auto -mx-1 px-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
         <div style={{ width: chartWidth, minWidth: '100%' }}>
           <ComposedChart
             width={chartWidth}
-            height={256}
+            height={180}
             data={data}
-            margin={{ top: 8, right: 38, left: 0, bottom: 48 }}
+            margin={{ top: 16, right: 38, left: 0, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
             <XAxis
@@ -180,7 +200,7 @@ export default function WaveScheduleChart({ schedule, trainingMax, unit, session
               tick={{ fontSize: 9, fill: '#9ca3af' }}
               angle={-45}
               textAnchor="end"
-              height={52}
+              height={24}
               interval={0}
             />
             <YAxis
@@ -259,13 +279,6 @@ export default function WaveScheduleChart({ schedule, trainingMax, unit, session
         </div>
       </div>
 
-      {schedule.adjustments.length > 0 && (
-        <div className="space-y-1 pt-1">
-          {schedule.adjustments.map((msg, i) => (
-            <p key={i} className="text-xs text-gray-400 dark:text-gray-500">{msg}</p>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

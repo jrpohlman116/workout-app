@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateWorkoutWeights, calculateJuggernautSets, calculateTrainingMax, getGreeting, calculateWilksScore, calculateWilks2Score, calculateDOTSScore, calculateIPFGLScore, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
+import { calculateWorkoutWeights, calculateJuggernautSets, calculateTrainingMax, getGreeting, buildWaveSchedule, WeekBlock } from '../../lib/calculations';
 import { ChevronRight, Check, Activity, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
-import StrengthScoreCarousel from '../../components/features/StrengthScoreCarousel';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
-import { getAverageOfLastThreeSessions, getBestWeightForLift, getFirstRecordedMax } from '../Progress/utils';
+import WaveScheduleChart from '../Progress/WaveScheduleChart';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -40,9 +39,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const { profile, user, refreshProfile } = useAuth();
   const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
   const [workoutData, setWorkoutData] = useState<Map<string, { calculated_1rm: number }>>(new Map());
-  const [projectedMaxes, setProjectedMaxes] = useState<{ squat: number; bench: number; deadlift: number }>({ squat: 0, bench: 0, deadlift: 0 });
-  const [bestMaxes, setBestMaxes] = useState<{ squat: number; bench: number; deadlift: number }>({ squat: 0, bench: 0, deadlift: 0 });
-  const [initialMaxes, setInitialMaxes] = useState<{ squat: number; bench: number; deadlift: number }>({ squat: 0, bench: 0, deadlift: 0 });
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
   const [showSkipWeekModal, setShowSkipWeekModal] = useState(false);
@@ -52,7 +48,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   useEffect(() => {
     if (user && profile) {
       loadCompletedWorkouts();
-      loadProjectedMaxes();
     }
   }, [user, profile?.current_cycle, profile?.current_week]);
 
@@ -78,39 +73,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         dataMap.set(w.lift_type, { calculated_1rm: w.calculated_1rm });
       });
       setWorkoutData(dataMap);
-    }
-  };
-
-  const loadProjectedMaxes = async () => {
-    if (!user || !profile) return;
-
-    const { data } = await supabase
-      .from('workout_sessions')
-      .select('id, user_id, lift_type, cycle, week, weight_lifted, reps_performed, calculated_1rm, completed_at, created_at, is_1rm_test, notes')
-      .eq('user_id', user.id)
-      .order('completed_at', { ascending: true });
-
-    if (data) {
-      const projected = {
-        squat: getAverageOfLastThreeSessions(data, 'squat') || profile.squat_max,
-        bench: getAverageOfLastThreeSessions(data, 'bench') || profile.bench_max,
-        deadlift: getAverageOfLastThreeSessions(data, 'deadlift') || profile.deadlift_max,
-      };
-
-      const best = {
-        squat: getBestWeightForLift(data, 'squat')?.weight_lifted || profile.squat_max,
-        bench: getBestWeightForLift(data, 'bench')?.weight_lifted || profile.bench_max,
-        deadlift: getBestWeightForLift(data, 'deadlift')?.weight_lifted || profile.deadlift_max,
-      };
-
-      setProjectedMaxes(projected);
-      setBestMaxes(best);
-
-      setInitialMaxes({
-        squat: getFirstRecordedMax(data, 'squat') || profile.squat_max,
-        bench: getFirstRecordedMax(data, 'bench') || profile.bench_max,
-        deadlift: getFirstRecordedMax(data, 'deadlift') || profile.deadlift_max,
-      });
     }
   };
 
@@ -172,39 +134,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     { name: 'Bench', max: profile.bench_max, type: 'bench' },
   ];
 
-  const isLbs = profile.unit_preference === 'lb';
-  const lbToKg = (weight: number) => isLbs ? weight * 0.453592 : weight;
-
-  const initialScores = {
-    wilks: calculateWilksScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
-    wilks2: calculateWilks2Score(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
-    dots: calculateDOTSScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
-    ipfgl: calculateIPFGLScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
-  };
-
-  const effectiveMaxes = {
-    squat: Math.max(projectedMaxes.squat, bestMaxes.squat),
-    bench: Math.max(projectedMaxes.bench, bestMaxes.bench),
-    deadlift: Math.max(projectedMaxes.deadlift, bestMaxes.deadlift),
-  };
-
-  const projectedScores = {
-    wilks: calculateWilksScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
-    wilks2: calculateWilks2Score(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
-    dots: calculateDOTSScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
-    ipfgl: calculateIPFGLScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(profile.bodyweight || 0), profile.gender || 'male'),
-  };
-
-  const hasProjectedData = projectedMaxes.squat > 0 || projectedMaxes.bench > 0 || projectedMaxes.deadlift > 0;
-
-  const changePercents = {
-    wilks: initialScores.wilks > 0 ? (((projectedScores.wilks - initialScores.wilks) / initialScores.wilks) * 100).toFixed(1) : '0.0',
-    wilks2: initialScores.wilks2 > 0 ? (((projectedScores.wilks2 - initialScores.wilks2) / initialScores.wilks2) * 100).toFixed(1) : '0.0',
-    dots: initialScores.dots > 0 ? (((projectedScores.dots - initialScores.dots) / initialScores.dots) * 100).toFixed(1) : '0.0',
-    ipfgl: initialScores.ipfgl > 0 ? (((projectedScores.ipfgl - initialScores.ipfgl) / initialScores.ipfgl) * 100).toFixed(1) : '0.0',
-  };
-
-  const displayScores = hasProjectedData ? projectedScores : initialScores;
+  const waveSchedule = (profile.program_start_date && profile.meet_date)
+    ? buildWaveSchedule(new Date(profile.program_start_date), new Date(profile.meet_date))
+    : { weeks: [], adjustments: [], skippedWaves: [], totalWeeks: 0, peakWeekIndex: -1 };
 
   return (
     <div className="min-h-screen pb-24">
@@ -216,11 +148,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        <StrengthScoreCarousel
-          scores={displayScores}
-          changePercents={changePercents}
-          hasProjectedData={hasProjectedData}
-        />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm px-6 py-8">
+          <WaveScheduleChart
+            schedule={waveSchedule}
+            trainingMax={calculateTrainingMax(profile.squat_max)}
+            unit={profile.unit_preference || 'lb'}
+            sessions={[]}
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
@@ -384,7 +319,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           onComplete={() => {
             setShowOneRMTest(false);
             loadCompletedWorkouts();
-            loadProjectedMaxes();
           }}
         />
       )}

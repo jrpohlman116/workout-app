@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../../lib/supabase';
-import { buildWaveSchedule, calculateTrainingMax } from '../../lib/calculations';
+import { calculateWilksScore, calculateDOTSScore, calculateIPFGLScore } from '../../lib/calculations';
 import ProgressChart from './ProgressChart';
 import AccessibleChartTable from '../../components/accessible/AccessibleChartTable';
 import { useStaggeredAnimation, useRipple } from '../../hooks/useAnimations';
 import LiftSummaryCard from './LiftSummaryCard';
 import TabNavigation from './TabNavigation';
 import WorkoutLogEntry from './WorkoutLogEntry';
-import WaveScheduleChart from './WaveScheduleChart';
+import StrengthScoreCarousel from '../../components/features/StrengthScoreCarousel';
 import * as utils from './utils';
 
 interface AccessoryExercise {
@@ -19,7 +19,7 @@ interface AccessoryExercise {
   workout_session_id: string;
 }
 
-type Tab = 'overview' | 'weight' | 'volume' | 'log' | 'program';
+type Tab = 'overview' | 'weight' | 'volume' | 'log';
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
@@ -72,6 +72,49 @@ export default function ProgressPage() {
 
   // Filter deloads: use phase if available (new sessions), fall back to week 4 (legacy)
   const nonDeloadSessions = sessions.filter(s => s.phase !== 'deload' && s.week !== 4);
+
+  const isLbs = profile.unit_preference !== 'kg';
+  const lbToKg = (w: number) => isLbs ? w * 0.453592 : w;
+  const bw = profile.bodyweight || 0;
+  const gender = profile.gender || 'male';
+
+  const projectedMaxes = {
+    squat: utils.getAverageOfLastThreeSessions(nonDeloadSessions, 'squat') || profile.squat_max,
+    bench: utils.getAverageOfLastThreeSessions(nonDeloadSessions, 'bench') || profile.bench_max,
+    deadlift: utils.getAverageOfLastThreeSessions(nonDeloadSessions, 'deadlift') || profile.deadlift_max,
+  };
+  const bestMaxes = {
+    squat: utils.getBestWeightForLift(sessions, 'squat')?.weight_lifted || profile.squat_max,
+    bench: utils.getBestWeightForLift(sessions, 'bench')?.weight_lifted || profile.bench_max,
+    deadlift: utils.getBestWeightForLift(sessions, 'deadlift')?.weight_lifted || profile.deadlift_max,
+  };
+  const initialMaxes = {
+    squat: utils.getFirstRecordedMax(sessions, 'squat') || profile.squat_max,
+    bench: utils.getFirstRecordedMax(sessions, 'bench') || profile.bench_max,
+    deadlift: utils.getFirstRecordedMax(sessions, 'deadlift') || profile.deadlift_max,
+  };
+  const effectiveMaxes = {
+    squat: Math.max(projectedMaxes.squat, bestMaxes.squat),
+    bench: Math.max(projectedMaxes.bench, bestMaxes.bench),
+    deadlift: Math.max(projectedMaxes.deadlift, bestMaxes.deadlift),
+  };
+  const hasProjectedData = projectedMaxes.squat > 0 || projectedMaxes.bench > 0 || projectedMaxes.deadlift > 0;
+  const initialScores = {
+    wilks: calculateWilksScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(bw), gender),
+    dots: calculateDOTSScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(bw), gender),
+    ipfgl: calculateIPFGLScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(bw), gender),
+  };
+  const projectedScores = {
+    wilks: calculateWilksScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(bw), gender),
+    dots: calculateDOTSScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(bw), gender),
+    ipfgl: calculateIPFGLScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(bw), gender),
+  };
+  const displayScores = hasProjectedData ? projectedScores : initialScores;
+  const scoreChangePercents = {
+    wilks: initialScores.wilks > 0 ? (((projectedScores.wilks - initialScores.wilks) / initialScores.wilks) * 100).toFixed(1) : '0.0',
+    dots: initialScores.dots > 0 ? (((projectedScores.dots - initialScores.dots) / initialScores.dots) * 100).toFixed(1) : '0.0',
+    ipfgl: initialScores.ipfgl > 0 ? (((projectedScores.ipfgl - initialScores.ipfgl) / initialScores.ipfgl) * 100).toFixed(1) : '0.0',
+  };
 
   const lifts = [
     { name: '1RM Squat', displayName: 'Max Squat', type: 'squat', initial: profile.squat_max },
@@ -154,6 +197,12 @@ export default function ProgressPage() {
       <div className="max-w-md mx-auto px-4 py-6">
         {activeTab === 'overview' && (
           <div className="space-y-4 animate-enter">
+            <StrengthScoreCarousel
+              scores={displayScores}
+              changePercents={scoreChangePercents}
+              hasProjectedData={hasProjectedData}
+            />
+
             {nonDeloadSessions.length === 0 && (
               <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                 <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">No data yet</p>
@@ -263,27 +312,6 @@ export default function ProgressPage() {
             })}
           </div>
         )}
-
-        {activeTab === 'program' && (() => {
-          const schedule = (profile.program_start_date && profile.meet_date)
-            ? buildWaveSchedule(new Date(profile.program_start_date), new Date(profile.meet_date))
-            : { weeks: [], skippedWaves: [], adjustments: [], totalWeeks: 0, peakWeekIndex: -1 };
-          const trainingMax = calculateTrainingMax(profile.squat_max);
-          return (
-            <div className="animate-enter">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Wave Schedule</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Volume and intensity across your full program</p>
-                <WaveScheduleChart
-                  schedule={schedule}
-                  trainingMax={trainingMax}
-                  unit={profile.unit_preference || 'lb'}
-                  sessions={sessions}
-                />
-              </div>
-            </div>
-          );
-        })()}
 
         {activeTab === 'log' && (
           <div className="space-y-4 animate-enter">
