@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../../lib/supabase';
+import { buildWaveSchedule, calculateTrainingMax } from '../../lib/calculations';
 import ProgressChart from './ProgressChart';
 import AccessibleChartTable from '../../components/accessible/AccessibleChartTable';
 import { useStaggeredAnimation, useRipple } from '../../hooks/useAnimations';
 import LiftSummaryCard from './LiftSummaryCard';
 import TabNavigation from './TabNavigation';
 import WorkoutLogEntry from './WorkoutLogEntry';
+import WaveScheduleChart from './WaveScheduleChart';
 import * as utils from './utils';
 
 interface AccessoryExercise {
@@ -17,7 +19,7 @@ interface AccessoryExercise {
   workout_session_id: string;
 }
 
-type Tab = 'overview' | 'weight' | 'volume' | 'log';
+type Tab = 'overview' | 'weight' | 'volume' | 'log' | 'program';
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
@@ -261,6 +263,27 @@ export default function ProgressPage() {
             })}
           </div>
         )}
+
+        {activeTab === 'program' && (() => {
+          const schedule = (profile.program_start_date && profile.meet_date)
+            ? buildWaveSchedule(new Date(profile.program_start_date), new Date(profile.meet_date))
+            : { weeks: [], skippedWaves: [], adjustments: [], totalWeeks: 0, peakWeekIndex: -1 };
+          const trainingMax = calculateTrainingMax(profile.squat_max);
+          return (
+            <div className="animate-enter">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Wave Schedule</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Volume and intensity across your full program</p>
+                <WaveScheduleChart
+                  schedule={schedule}
+                  trainingMax={trainingMax}
+                  unit={profile.unit_preference || 'lb'}
+                  sessions={sessions}
+                />
+              </div>
+            </div>
+          );
+        })()}
 
         {activeTab === 'log' && (
           <div className="space-y-4 animate-enter">

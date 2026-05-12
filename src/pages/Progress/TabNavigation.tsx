@@ -1,4 +1,4 @@
-type Tab = 'overview' | 'weight' | 'volume' | 'log';
+type Tab = 'overview' | 'weight' | 'volume' | 'log' | 'program';
 
 interface TabNavigationProps {
   activeTab: Tab;
@@ -12,6 +12,7 @@ export default function TabNavigation({ activeTab, onTabChange, onRipple }: TabN
     { id: 'weight', label: 'Best Weight' },
     { id: 'volume', label: 'Best Volume' },
     { id: 'log', label: 'Workout Log' },
+    { id: 'program', label: 'Program' },
   ];
 
   return (
