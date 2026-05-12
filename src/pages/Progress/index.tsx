@@ -19,7 +19,7 @@ interface AccessoryExercise {
   workout_session_id: string;
 }
 
-type Tab = 'overview' | 'weight' | 'volume' | 'log';
+type Tab = 'overview' | 'records' | 'log';
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
@@ -255,58 +255,48 @@ export default function ProgressPage() {
           </div>
         )}
 
-        {activeTab === 'weight' && (
+        {activeTab === 'records' && (
           <div className="space-y-4 animate-enter">
             {lifts.map((lift, index) => {
               const bestSession = utils.getBestWeightForLift(sessions, lift.type);
-
-              return (
-                <div key={lift.type} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter" style={{ animationDelay: `${index * 50}ms` }}>
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">{lift.displayName}</p>
-                    {bestSession && <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(bestSession.completed_at)}</p>}
-                  </div>
-                  {bestSession ? (
-                    <>
-                      <div className="flex items-baseline gap-1.5 mb-1">
-                        <span className="text-4xl font-black tabular-nums text-gray-900 dark:text-gray-100">{bestSession.weight_lifted}</span>
-                        <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{profile.unit_preference || 'lb'} × {bestSession.reps_performed}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">Est. 1RM {Math.round(bestSession.calculated_1rm)} {profile.unit_preference || 'lb'}</p>
-                    </>
-                  ) : (
-                    <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {activeTab === 'volume' && (
-          <div className="space-y-4 animate-enter">
-            {lifts.map((lift, index) => {
               const bestVolume = utils.getBestVolumeForLift(sessions, lift.type);
+              const unit = profile.unit_preference || 'lb';
 
               return (
                 <div key={lift.type} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter" style={{ animationDelay: `${index * 50}ms` }}>
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">{lift.displayName}</p>
-                    {bestVolume && <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(bestVolume.session.completed_at)}</p>}
+                  <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-4">{lift.displayName}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Best Set</p>
+                      {bestSession ? (
+                        <>
+                          <div className="flex items-baseline gap-1 mb-0.5">
+                            <span className="text-3xl font-black tabular-nums text-gray-900 dark:text-gray-100">{bestSession.weight_lifted}</span>
+                            <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{unit} × {bestSession.reps_performed}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Est. 1RM {Math.round(bestSession.calculated_1rm)} {unit}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{formatDate(bestSession.completed_at)}</p>
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Best Volume</p>
+                      {bestVolume ? (
+                        <>
+                          <div className="flex items-baseline gap-1 mb-0.5">
+                            <span className="text-3xl font-black tabular-nums text-gray-900 dark:text-gray-100">{bestVolume.tonnage.toLocaleString()}</span>
+                            <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{unit}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{bestVolume.session.weight_lifted} × {bestVolume.session.reps_performed}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{formatDate(bestVolume.session.completed_at)}</p>
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
+                      )}
+                    </div>
                   </div>
-                  {bestVolume ? (
-                    <>
-                      <div className="flex items-baseline gap-1.5 mb-1">
-                        <span className="text-4xl font-black tabular-nums text-gray-900 dark:text-gray-100">{bestVolume.tonnage.toLocaleString()}</span>
-                        <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{profile.unit_preference || 'lb'}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
-                        {bestVolume.session.weight_lifted} × {bestVolume.session.reps_performed}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
-                  )}
                 </div>
               );
             })}
