@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateWorkoutWeights, calculateOneRepMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculateTrainingMax, getCycleProgression, JuggernautSetsConfig } from '../../lib/calculations';
 import { supabase } from '../../lib/supabase';
@@ -31,6 +31,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [currentStep, setCurrentStep] = useState<WorkoutStep>(
     skipSummary ? (liftType === 'upper' ? 0 : 'main') : 'summary'
   );
+
+  useLayoutEffect(() => {
+    if (skipSummary && currentStep === 'summary') {
+      setCurrentStep(liftType === 'upper' ? 0 : 'main');
+    }
+  }, []);
+
   const [saving, setSaving] = useState(false);
   const celebrate = useConfetti();
 
@@ -167,7 +174,6 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         return;
       }
       setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, savedAt: parsed.savedAt });
-      if (skipSummary) setCurrentStep('summary');
     } catch {
       try { localStorage.removeItem(key); } catch {}
     }
@@ -496,6 +502,30 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             <AccessibleProgressIndicator current={1} total={totalSteps} label="Workout progress" variant="bar" />
           </div>
         </div>
+        {draftOffer && (
+          <div className="max-w-md mx-auto px-4 pt-4">
+            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-0">
+              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Unsaved session found</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
+                Your last workout was interrupted. Restore your sets to try again.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDismissDraft}
+                  className="flex-1 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Start Fresh
+                </button>
+                <button
+                  onClick={handleRestoreDraft}
+                  className="flex-1 px-3 py-2 text-xs font-semibold bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
+                >
+                  Restore Sets
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="animate-slide-right">
           <MainLiftView
             liftName={liftNames[liftType] ?? liftType}
