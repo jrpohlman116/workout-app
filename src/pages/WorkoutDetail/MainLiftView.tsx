@@ -10,6 +10,7 @@ interface MainLiftViewProps {
   unitPreference: string;
   lastSetData: string;
   phase?: WavePhase;
+  baseWeight?: number;
   onUpdateSet: (index: number, field: 'reps' | 'weight', value: string) => void;
   onRpeChange?: (rpe: number | null) => void;
   onWorkingWeightAdjust?: (weight: number) => void;
@@ -34,6 +35,7 @@ export default function MainLiftView({
   unitPreference,
   lastSetData,
   phase,
+  baseWeight,
   onUpdateSet,
   onRpeChange,
   onWorkingWeightAdjust,
@@ -65,7 +67,8 @@ export default function MainLiftView({
       ? 'Complete all sets at reduced effort. No grinding.'
       : `Complete all ${mainSets.length} sets at the prescribed weight.`;
 
-  const warmup = topSetWeight > 0 ? calculateWarmupSets(topSetWeight, unitPreference) : null;
+  const warmupBase = baseWeight ?? topSetWeight;
+  const warmup = warmupBase > 0 ? calculateWarmupSets(warmupBase, unitPreference) : null;
   const approachWeight = set4Feel && warmup ? warmup.getApproachWeight(set4Feel) : null;
   const adjustedWeight = set4Feel && set5Feel && warmup ? warmup.getAdjustedWorkingWeight(set4Feel, set5Feel) : null;
 
@@ -143,9 +146,9 @@ export default function MainLiftView({
                   <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
                     {adjustedWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unitPreference}</span>
                   </p>
-                  {adjustedWeight !== topSetWeight && (
+                  {adjustedWeight !== warmupBase && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-                      {adjustedWeight > topSetWeight ? '+' : ''}{adjustedWeight - topSetWeight} {unitPreference} from planned — adjusted for today.
+                      {adjustedWeight > warmupBase ? '+' : ''}{adjustedWeight - warmupBase} {unitPreference} from planned — adjusted for today.
                     </p>
                   )}
                 </div>

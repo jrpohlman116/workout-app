@@ -567,6 +567,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             unitPreference={profile.unit_preference || 'lb'}
             lastSetData={getLastSetData('main')}
             phase={currentBlock?.phase}
+            baseWeight={mainConfig?.weight}
             onUpdateSet={updateMainSet}
             onRpeChange={setRpe}
             onWorkingWeightAdjust={handleWorkingWeightAdjust}
