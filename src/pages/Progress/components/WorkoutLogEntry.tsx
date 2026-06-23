@@ -1,11 +1,6 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
-
-interface AccessoryExercise {
-  id: string;
-  exercise_name: string;
-  exercise_order: number;
-  sets_data: { reps: string; weight: string }[];
-}
+import Card from '../../../components/ui/Card';
+import type { AccessoryExercise } from '../../../lib/types';
 
 interface WorkoutLogEntryProps {
   session: {
@@ -42,7 +37,7 @@ export default function WorkoutLogEntry({ session, accessories, isExpanded, onTo
   });
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+    <Card className="overflow-hidden">
       <button
         onClick={onToggle}
         className="w-full p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -115,6 +110,6 @@ export default function WorkoutLogEntry({ session, accessories, isExpanded, onTo
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

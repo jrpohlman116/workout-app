@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { useCountUp } from '../../hooks/useAnimations';
+import { getWilksLevel, getDotsLevel, getIpfglLevel } from '../../lib/calculations';
+import Card from '../ui/Card';
 
 interface StrengthScoreCarouselProps {
   scores: {
@@ -30,39 +32,21 @@ const scoreConfigs: ScoreConfig[] = [
     name: 'Wilks',
     description: 'Bodyweight-adjusted total, the oldest standard formula. 300+ is competitive club level; 400+ qualifies for most national events.',
     maxValue: 600,
-    getLevelFn: (score: number) => {
-      if (score < 200) return 'Beginner';
-      if (score < 238) return 'Novice';
-      if (score < 326) return 'Intermediate';
-      if (score < 414) return 'Advanced';
-      return 'Elite';
-    },
+    getLevelFn: getWilksLevel,
   },
   {
     id: 'dots',
     name: 'DOTS',
     description: 'Modern gender-neutral formula used by many federations. 400+ is advanced; 500+ is elite international level.',
     maxValue: 600,
-    getLevelFn: (score: number) => {
-      if (score < 300) return 'Beginner';
-      if (score < 350) return 'Novice';
-      if (score < 450) return 'Intermediate';
-      if (score < 550) return 'Advanced';
-      return 'Elite';
-    },
+    getLevelFn: getDotsLevel,
   },
   {
     id: 'ipfgl',
     name: 'IPF GL',
     description: 'Official IPF Goodlift points used in international competition. 80+ is world-class; 100+ is podium territory at World Championships.',
     maxValue: 120,
-    getLevelFn: (score: number) => {
-      if (score < 40) return 'Beginner';
-      if (score < 55) return 'Novice';
-      if (score < 70) return 'Intermediate';
-      if (score < 85) return 'Advanced';
-      return 'Elite';
-    },
+    getLevelFn: getIpfglLevel,
   },
 ];
 
@@ -91,7 +75,7 @@ export default function StrengthScoreCarousel({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+    <Card className="p-6">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
@@ -166,6 +150,6 @@ export default function StrengthScoreCarousel({
           />
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

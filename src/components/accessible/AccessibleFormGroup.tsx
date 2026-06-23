@@ -1,10 +1,6 @@
 import { ReactNode } from 'react';
 import { Trash2, Plus } from 'lucide-react';
-
-interface SetInput {
-  reps: string;
-  weight: string;
-}
+import type { SetInput } from '../../lib/types';
 
 interface AccessibleFormGroupProps {
   legend: string;

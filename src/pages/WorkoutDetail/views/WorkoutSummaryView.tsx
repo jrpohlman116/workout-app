@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Edit2, Save, X, RotateCcw, Plus } from 'lucide-react';
-import { Exercise } from './types';
-import { JuggernautSetsConfig } from '../../lib/calculations';
-import EditableExerciseList from '../../components/features/EditableExerciseList';
-import AddExerciseModal from '../../components/features/AddExerciseModal';
-import ExerciseSubstitutionModal from '../../components/features/ExerciseSubstitutionModal';
-import AccessibleModal from '../../components/accessible/AccessibleModal';
+import { Exercise } from '../../../lib/types';
+import { JuggernautSetsConfig } from '../../../lib/calculations';
+import { PHASE_DETAIL_LABELS, MAX_ACCESSORY_EXERCISES } from '../../../lib/constants';
+import EditableExerciseList from '../../../components/features/EditableExerciseList';
+import AddExerciseModal from '../../../components/features/AddExerciseModal';
+import ExerciseSubstitutionModal from '../../../components/features/ExerciseSubstitutionModal';
+import AccessibleModal from '../../../components/accessible/AccessibleModal';
+import Card from '../../../components/ui/Card';
 
 interface WorkoutSummaryViewProps {
   mainConfig: JuggernautSetsConfig | null;
@@ -21,14 +23,6 @@ interface WorkoutSummaryViewProps {
   saveError?: string | null;
 }
 
-const PHASE_LABELS: Record<string, string> = {
-  accumulation: 'Accumulation',
-  intensification: 'Intensification',
-  realization: 'Realization — push the final set',
-  deload: 'Deload — easy effort, no grinding',
-  peaking: 'Peaking — work up to a heavy single',
-  meet_week: 'Meet Week — rest up',
-};
 
 export default function WorkoutSummaryView({
   mainConfig,
@@ -102,14 +96,14 @@ export default function WorkoutSummaryView({
   };
 
   const handleAddExercise = (exercise: Exercise) => {
-    if (editedExercises.length >= 7) {
-      announce('Cannot add more exercises. Maximum of 7 accessories reached.');
+    if (editedExercises.length >= MAX_ACCESSORY_EXERCISES) {
+      announce(`Cannot add more exercises. Maximum of ${MAX_ACCESSORY_EXERCISES} accessories reached.`);
       return;
     }
 
     const newExercises = [...editedExercises, exercise];
     setEditedExercises(newExercises);
-    announce(`${exercise.name} added. ${newExercises.length} of 7 exercises.`);
+    announce(`${exercise.name} added. ${newExercises.length} of ${MAX_ACCESSORY_EXERCISES} exercises.`);
   };
 
   const handleSubstituteExercise = (index: number, exerciseName: string) => {
@@ -162,7 +156,7 @@ export default function WorkoutSummaryView({
       </div>
 
       {mainConfig && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">Main Sets</p>
             {wave && (
@@ -173,7 +167,7 @@ export default function WorkoutSummaryView({
           </div>
           {phase && (
             <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-4">
-              {PHASE_LABELS[phase] ?? phase}
+              {PHASE_DETAIL_LABELS[phase as keyof typeof PHASE_DETAIL_LABELS] ?? phase}
             </p>
           )}
           <div className="flex justify-between items-center py-4 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
@@ -199,10 +193,10 @@ export default function WorkoutSummaryView({
               </p>
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+      <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Accessory Exercises</h2>
           {canEdit && !isEditMode && (
@@ -234,15 +228,15 @@ export default function WorkoutSummaryView({
               exercises={editedExercises}
               onExercisesChange={setEditedExercises}
               onSubstituteExercise={handleSubstituteExercise}
-              maxExercises={7}
+              maxExercises={MAX_ACCESSORY_EXERCISES}
             />
 
-            {editedExercises.length < 7 && (
+            {editedExercises.length < MAX_ACCESSORY_EXERCISES && (
               <button
                 type="button"
                 onClick={() => setShowAddExerciseModal(true)}
                 className="w-full flex items-center justify-center gap-2 py-3 mt-4 text-blue-600 dark:text-blue-400 border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                aria-label={`Add exercise. ${editedExercises.length} of 7 slots used.`}
+                aria-label={`Add exercise. ${editedExercises.length} of ${MAX_ACCESSORY_EXERCISES} slots used.`}
               >
                 <Plus className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Add Exercise</span>
@@ -294,7 +288,7 @@ export default function WorkoutSummaryView({
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {!isEditMode && (
         <button
@@ -312,7 +306,7 @@ export default function WorkoutSummaryView({
           onAddExercise={handleAddExercise}
           existingExercises={editedExercises}
           availableExercises={availableExercises}
-          maxExercises={7}
+          maxExercises={MAX_ACCESSORY_EXERCISES}
         />
       )}
 

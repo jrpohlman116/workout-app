@@ -32,8 +32,6 @@ export interface UserProfile {
   squat_max: number;
   bench_max: number;
   deadlift_max: number;
-  /** @deprecated OHP is no longer a main lift. Kept until profile UI is updated. */
-  ohp_max: number;
   current_cycle: number;
   current_week: number;
   onboarding_completed: boolean;
@@ -99,19 +97,4 @@ export interface ExerciseSubstitution {
   difficulty: 'easier' | 'similar' | 'harder';
   muscle_groups: string[];
   created_at: string;
-}
-
-export interface WorkoutTemplate {
-  id: string;
-  user_id: string;
-  lift_type: 'squat' | 'bench' | 'deadlift' | 'ohp';
-  program_variation: 'standard' | 'bbb' | 'bbs';
-  exercises_data: {
-    name: string;
-    reps: string;
-    sets: number;
-    isBodyweight: boolean;
-  }[];
-  created_at: string;
-  updated_at: string;
 }

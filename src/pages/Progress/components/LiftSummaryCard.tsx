@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import Card from '../../../components/ui/Card';
 
 interface LiftSummaryCardProps {
   name: string;
@@ -15,11 +16,7 @@ export default function LiftSummaryCard({ name, displayName, current, initial, c
   const isPositive = change >= 0;
 
   return (
-    <div
-      className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 transition-all duration-300 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-      }`}
-    >
+    <Card className={`p-4 transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
       <div className="flex items-start justify-between mb-2">
         <h3 className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 leading-tight">{displayName}</h3>
         {change !== 0 && (
@@ -35,6 +32,6 @@ export default function LiftSummaryCard({ name, displayName, current, initial, c
       </div>
       <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100 mb-0.5 leading-none">{current} <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{unitPreference}</span></p>
       <p className="text-xs text-gray-400 dark:text-gray-600 tabular-nums">from {initial}</p>
-    </div>
+    </Card>
   );
 }

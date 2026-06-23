@@ -1,24 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
-import { WavePhase, RepWave } from '../../lib/calculations';
-
-const WAVE_LABELS: Record<number, string> = { 10: '10-Rep Wave', 8: '8-Rep Wave', 5: '5-Rep Wave', 3: '3-Rep Wave' };
-const PHASE_LABELS: Record<string, string> = {
-  accumulation: 'Accumulation',
-  intensification: 'Intensification',
-  realization: 'Realization',
-  deload: 'Deload',
-  peaking: 'Peaking',
-  meet_week: 'Meet Week',
-};
-
-const PHASE_DESCRIPTIONS: Record<string, string> = {
-  accumulation: 'High volume, moderate intensity. Complete every rep.',
-  intensification: 'Less volume, heavier loads. Push the weights.',
-  realization: 'Peak intensity. Your top set is max reps — stop 1 short of failure.',
-  deload: 'Reduced load. Complete all sets without grinding.',
-  peaking: 'Work up to a heavy single. Stay sharp — no grinding, no misses.',
-  meet_week: 'Rest up. Keep any movement light and technical.',
-};
+import { WavePhase, RepWave } from '../../../lib/calculations';
+import { WAVE_LABELS, PHASE_LABELS, PHASE_DESCRIPTIONS } from '../../../lib/constants';
 
 interface WorkoutHeaderProps {
   liftName: string;

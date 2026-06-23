@@ -11,9 +11,9 @@ import {
   ReferenceLine,
   Cell,
 } from 'recharts';
-import type { WaveSchedule, RepWave } from '../../lib/calculations';
-import { calculateJuggernautSets, calculatePeakingSets } from '../../lib/calculations';
-import type { WorkoutSession } from '../../lib/supabase';
+import type { WaveSchedule, RepWave, WavePhase } from '../../../lib/calculations';
+import { calculateJuggernautSets, calculatePeakingSets, getRoundingIncrement } from '../../../lib/calculations';
+import { PHASE_LABELS, PHASE_ABBR, MEET_WEEK_TM_PCT } from '../../../lib/constants';
 
 interface TrainingMaxes {
   squat: number;
@@ -25,7 +25,6 @@ interface WaveScheduleChartProps {
   schedule: WaveSchedule;
   trainingMaxes: TrainingMaxes;
   unit: string;
-  sessions: WorkoutSession[];
 }
 
 const WAVE_COLORS: Record<number, string> = {
@@ -46,28 +45,11 @@ const PEAKING_COLOR = '#f59e0b';      // amber-400
 const PEAKING_MUTED = '#fde68a';      // amber-200
 const MEET_WEEK_COLOR = '#10b981';    // emerald-500
 
-const PHASE_LABELS: Record<string, string> = {
-  accumulation:    'Accumulation',
-  intensification: 'Intensification',
-  realization:     'Realization',
-  deload:          'Deload',
-  peaking:         'Peaking',
-  meet_week:       'Meet Week',
-};
-
-const PHASE_ABBR: Record<string, string> = {
-  accumulation:    'A',
-  intensification: 'I',
-  realization:     'R',
-  deload:          'D',
-  peaking:         'P',
-  meet_week:       'M',
-};
 
 interface BarDatum {
   label: string;
   wave: number;
-  phase: string;
+  phase: WavePhase;
   peakWeek?: number;
   totalReps: number;
   intensityPct: number;
@@ -83,7 +65,7 @@ interface BarDatum {
   isMeetWeek: boolean;
 }
 
-export default function WaveScheduleChart({ schedule, trainingMaxes, unit, sessions: _sessions }: WaveScheduleChartProps) {
+export default function WaveScheduleChart({ schedule, trainingMaxes, unit }: WaveScheduleChartProps) {
   const [showInfo, setShowInfo] = useState(false);
 
   if (!schedule.weeks.length) {
@@ -101,9 +83,9 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, sessi
   const now = Date.now();
 
   const getWeightForMax = (tm: number, isPeaking: boolean, isMeetWeek: boolean, block: typeof schedule.weeks[0]) => {
-    const roundTo = unit === 'kg' ? 2.5 : 5;
+    const roundTo = getRoundingIncrement(unit);
     if (isPeaking) return calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, tm, unit).weight;
-    if (isMeetWeek) return Math.round(tm * 0.55 / roundTo) * roundTo;
+    if (isMeetWeek) return Math.round(tm * MEET_WEEK_TM_PCT / roundTo) * roundTo;
     return calculateJuggernautSets(block.wave as RepWave, block.phase, tm, unit).weight;
   };
 
@@ -117,8 +99,8 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, sessi
     if (isPeaking) {
       cfg = calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMaxes.squat, unit);
     } else if (isMeetWeek) {
-      const roundTo = unit === 'kg' ? 2.5 : 5;
-      cfg = { numSets: 1, reps: 1, weight: Math.round(trainingMaxes.squat * 0.55 / roundTo) * roundTo, isAmap: false };
+      const roundTo = getRoundingIncrement(unit);
+      cfg = { numSets: 1, reps: 1, weight: Math.round(trainingMaxes.squat * MEET_WEEK_TM_PCT / roundTo) * roundTo, isAmap: false };
     } else {
       cfg = calculateJuggernautSets(block.wave as RepWave, block.phase, trainingMaxes.squat, unit);
     }

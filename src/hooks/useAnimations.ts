@@ -76,10 +76,9 @@ export function useConfetti() {
       return;
     }
 
-    const reducedCount = count;
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-    for (let i = 0; i < reducedCount; i++) {
+    for (let i = 0; i < count; i++) {
       const confetti = document.createElement('div');
       confetti.classList.add('confetti');
       confetti.style.left = `${Math.random() * 100}%`;
@@ -96,28 +95,6 @@ export function useConfetti() {
   };
 
   return celebrate;
-}
-
-export function useSuccessAnimation() {
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  const triggerSuccess = () => {
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 1000);
-  };
-
-  return { showSuccess, triggerSuccess };
-}
-
-export function useShake() {
-  const [isShaking, setIsShaking] = useState(false);
-
-  const shake = () => {
-    setIsShaking(true);
-    setTimeout(() => setIsShaking(false), 500);
-  };
-
-  return { isShaking, shake };
 }
 
 export function useStaggeredAnimation(itemCount: number, delay: number = 100) {

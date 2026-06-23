@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-import { SetInput } from './types';
+import { supabase } from '../lib/supabase';
+import { SetInput } from '../lib/types';
 
 export function useWorkoutData(userId: string | undefined, liftType: string) {
   const [lastMainLift, setLastMainLift] = useState<{ weight: number; reps: number } | null>(null);

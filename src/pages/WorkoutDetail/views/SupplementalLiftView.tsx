@@ -1,5 +1,5 @@
-import AccessibleFormGroup from '../../components/accessible/AccessibleFormGroup';
-import { SetInput } from './types';
+import AccessibleFormGroup from '../../../components/accessible/AccessibleFormGroup';
+import { SetInput } from '../../../lib/types';
 
 interface SupplementalLiftViewProps {
   liftName: string;

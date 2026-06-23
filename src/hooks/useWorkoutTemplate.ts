@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase, WorkoutTemplate } from '../lib/supabase';
-import { Exercise } from '../pages/WorkoutDetail/types';
-import { StickingPoint, selectMixedAccessories } from '../pages/WorkoutDetail/weakPointExercises';
+import { Exercise } from '../lib/types';
+import { StickingPoint } from '../lib/supabase';
+import { selectMixedAccessories } from '../lib/exercises';
 
 interface UseWorkoutTemplateResult {
   template: WorkoutTemplate | null;

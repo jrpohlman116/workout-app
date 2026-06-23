@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import AccessibleFormGroup from '../../components/accessible/AccessibleFormGroup';
-import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets } from '../../lib/calculations';
-import { SetInput } from './types';
+import AccessibleFormGroup from '../../../components/accessible/AccessibleFormGroup';
+import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets } from '../../../lib/calculations';
+import { SetInput } from '../../../lib/types';
+import Card from '../../../components/ui/Card';
 
 interface MainLiftViewProps {
   liftName: string;
@@ -75,7 +76,7 @@ export default function MainLiftView({
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
       {warmup && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+        <Card className="p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Warm-up Progression</h3>
           <div className="space-y-3">
             {warmup.fixedSets.map((set, idx) => (
@@ -155,7 +156,7 @@ export default function MainLiftView({
               )}
             </div>
           )}
-        </div>
+        </Card>
       )}
 
       {isRealization && (
@@ -183,7 +184,7 @@ export default function MainLiftView({
       />
 
       {isRealization && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 space-y-4">
+        <Card className="p-6 space-y-4">
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">How hard was that top set?</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Rate of Perceived Exertion — used to calculate your back-off sets</p>
@@ -227,7 +228,7 @@ export default function MainLiftView({
               </p>
             </div>
           )}
-        </div>
+        </Card>
       )}
 
       <button

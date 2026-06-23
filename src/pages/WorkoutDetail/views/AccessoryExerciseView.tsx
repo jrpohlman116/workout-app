@@ -1,5 +1,6 @@
 import { RefreshCw, Plus, Trash2 } from 'lucide-react';
-import { Exercise, SetInput } from './types';
+import { Exercise, SetInput } from '../../../lib/types';
+import Card from '../../../components/ui/Card';
 
 interface AccessoryExerciseViewProps {
   exercise: Exercise;
@@ -34,7 +35,7 @@ export default function AccessoryExerciseView({
 }: AccessoryExerciseViewProps) {
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+      <Card className="p-6">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex-1 min-w-0">
             <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">
@@ -171,7 +172,7 @@ export default function AccessoryExerciseView({
             Max 10 sets
           </p>
         )}
-      </div>
+      </Card>
 
       <div className="flex gap-3">
         <button

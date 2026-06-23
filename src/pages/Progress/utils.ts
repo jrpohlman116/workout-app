@@ -1,4 +1,40 @@
 import { WorkoutSession } from '../../lib/supabase';
+import { calculateWilksScore, calculateDOTSScore, calculateIPFGLScore } from '../../lib/calculations';
+
+export function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+interface Maxes { squat: number; bench: number; deadlift: number }
+
+export function calculateStrengthScores(
+  initialMaxes: Maxes,
+  effectiveMaxes: Maxes,
+  bodyweight: number,
+  gender: string,
+  toKg: (w: number) => number
+) {
+  const calc = (m: Maxes) => ({
+    wilks: calculateWilksScore(toKg(m.squat), toKg(m.bench), toKg(m.deadlift), toKg(bodyweight), gender),
+    dots:  calculateDOTSScore(toKg(m.squat), toKg(m.bench), toKg(m.deadlift), toKg(bodyweight), gender),
+    ipfgl: calculateIPFGLScore(toKg(m.squat), toKg(m.bench), toKg(m.deadlift), toKg(bodyweight), gender),
+  });
+
+  const initial   = calc(initialMaxes);
+  const projected = calc(effectiveMaxes);
+  const changePercents = {
+    wilks: initial.wilks > 0 ? (((projected.wilks - initial.wilks) / initial.wilks) * 100).toFixed(1) : '0.0',
+    dots:  initial.dots  > 0 ? (((projected.dots  - initial.dots)  / initial.dots)  * 100).toFixed(1) : '0.0',
+    ipfgl: initial.ipfgl > 0 ? (((projected.ipfgl - initial.ipfgl) / initial.ipfgl) * 100).toFixed(1) : '0.0',
+  };
+
+  return { initial, projected, changePercents };
+}
 
 export function calculateTonnage(session: WorkoutSession): number {
   return session.weight_lifted * session.reps_performed;
@@ -22,12 +58,6 @@ export function getAverageOfLastThreeSessions(nonDeloadSessions: WorkoutSession[
   const lastThree = liftSessions.slice(-3);
   const sum = lastThree.reduce((total, session) => total + session.calculated_1rm, 0);
   return Math.round(sum / lastThree.length);
-}
-
-export function getLatestMaxForLift(nonDeloadSessions: WorkoutSession[], liftType: string): number {
-  const liftSessions = nonDeloadSessions.filter(s => s.lift_type === liftType);
-  if (liftSessions.length === 0) return 0;
-  return liftSessions[liftSessions.length - 1].calculated_1rm;
 }
 
 export function getMaxChangePercent(sessions: WorkoutSession[], nonDeloadSessions: WorkoutSession[], liftType: string): string {

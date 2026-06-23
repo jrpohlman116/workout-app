@@ -1,9 +1,47 @@
+import type { RepWave, WavePhase, WeekBlock, WaveSchedule, BackoffSet, WarmupSet, WarmupFeel, WarmupProgression, JuggernautSetsConfig } from './types';
+export type { RepWave, WavePhase, WeekBlock, WaveSchedule, BackoffSet, WarmupSet, WarmupFeel, WarmupProgression, JuggernautSetsConfig } from './types';
+
+// Conservative training max — 90% leaves room for PR attempts on meet day
+export const TRAINING_MAX_FACTOR = 0.9;
+
+// Used wherever date math needs a week in milliseconds
+export const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+// Bar loading increments differ by unit: 5 lb plates vs 2.5 kg plates
+export function getRoundingIncrement(unit: string): number {
+  return unit === 'kg' ? 2.5 : 5;
+}
+
+export function getWilksLevel(score: number): string {
+  if (score < 200) return 'Beginner';
+  if (score < 238) return 'Novice';
+  if (score < 326) return 'Intermediate';
+  if (score < 414) return 'Advanced';
+  return 'Elite';
+}
+
+export function getDotsLevel(score: number): string {
+  if (score < 300) return 'Beginner';
+  if (score < 350) return 'Novice';
+  if (score < 450) return 'Intermediate';
+  if (score < 550) return 'Advanced';
+  return 'Elite';
+}
+
+export function getIpfglLevel(score: number): string {
+  if (score < 40) return 'Beginner';
+  if (score < 55) return 'Novice';
+  if (score < 70) return 'Intermediate';
+  if (score < 85) return 'Advanced';
+  return 'Elite';
+}
+
 export function calculateOneRepMax(weight: number, reps: number): number {
   return Math.round(weight * (1 + reps / 30)); // Epley formula
 }
 
 export function calculateTrainingMax(oneRepMax: number): number {
-  return Math.round(oneRepMax * 0.9); // 90% of estimated 1RM
+  return Math.round(oneRepMax * TRAINING_MAX_FACTOR);
 }
 
 
@@ -43,44 +81,6 @@ export function calculateWilksScore(
   const wilksCoefficient = 500 / denominator;
 
   return Math.round((total * wilksCoefficient) * 100) / 100;
-}
-
-export function calculateWilks2Score(
-  squatMax: number,
-  benchMax: number,
-  deadliftMax: number,
-  bodyweight: number,
-  gender: string
-): number {
-  if (bodyweight <= 0) return 0;
-
-  const total = squatMax + benchMax + deadliftMax;
-
-  let a, b, c, d, e, f;
-
-  if (gender === 'female') {
-    a = -125.4255398;
-    b = 13.71219419;
-    c = -0.03307250631;
-    d = -0.001050400051;
-    e = 9.38773881462799e-6;
-    f = -2.3334613884954e-8;
-  } else {
-    a = 47.46178854;
-    b = 8.472061379;
-    c = 0.07369410346;
-    d = -0.001395833811;
-    e = 7.07665973070743e-6;
-    f = -1.20804336482315e-8;
-  }
-
-  const denominator = a + b * bodyweight + c * Math.pow(bodyweight, 2) +
-    d * Math.pow(bodyweight, 3) + e * Math.pow(bodyweight, 4) +
-    f * Math.pow(bodyweight, 5);
-
-  const wilks2Coefficient = 600 / denominator;
-
-  return Math.round((total * wilks2Coefficient) * 100) / 100;
 }
 
 export function calculateDOTSScore(
@@ -157,40 +157,6 @@ export function getGreeting(): string {
 
 // ─── Juggernaut Method ────────────────────────────────────────────────────────
 
-export type RepWave = 10 | 8 | 5 | 3;
-export type WavePhase = 'accumulation' | 'intensification' | 'realization' | 'deload' | 'peaking' | 'meet_week';
-
-export interface WeekBlock {
-  wave: RepWave;
-  phase: WavePhase;
-  weekIndex: number;
-  startDate: Date;
-  endDate: Date;
-  peakWeek?: number;
-  totalPeakWeeks?: number;
-}
-
-export interface WaveSchedule {
-  weeks: WeekBlock[];
-  skippedWaves: RepWave[];
-  adjustments: string[];
-  totalWeeks: number;
-  peakWeekIndex: number;
-}
-
-export interface BackoffSet {
-  weight: number;
-  sets: number;
-  reps: number;
-}
-
-export interface WarmupSet {
-  weight: number;
-  reps: number;
-  percentage?: number;
-}
-
-export type WarmupFeel = 'easy' | 'good' | 'bad';
 
 const APPROACH_PCT: Record<WarmupFeel, number> = {
   bad:  0.90,
@@ -204,14 +170,6 @@ const WORKING_SET_PCT: Record<WarmupFeel, Record<WarmupFeel, number>> = {
   easy: { bad: 1.00, good: 1.02, easy: 1.04 },
 };
 
-export interface WarmupProgression {
-  fixedSets: WarmupSet[];
-  getApproachWeight: (set4Feel: WarmupFeel) => number;
-  getAdjustedWorkingWeight: (set4Feel: WarmupFeel, set5Feel: WarmupFeel) => number;
-  approachWeights: { smooth: number; tough: number }; // legacy — used by meet day flow
-}
-
-const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 
 const STANDARD_PHASES: WavePhase[] = ['accumulation', 'intensification', 'realization', 'deload'];
 const COMPRESSED_PHASES: WavePhase[] = ['accumulation', 'realization', 'deload'];
@@ -224,12 +182,6 @@ export function calculateNewTrainingMax(amapWeight: number, amapReps: number): n
   return calculateTrainingMax(calculateOneRepMax(amapWeight, amapReps));
 }
 
-export interface JuggernautSetsConfig {
-  numSets: number;
-  reps: number;
-  weight: number;
-  isAmap: boolean;
-}
 
 const JUGGERNAUT_WAVE_PERCENTS: Record<RepWave, {
   accumulation: { sets: number; pct: number };
@@ -249,7 +201,7 @@ export function calculateJuggernautSets(
   trainingMax: number,
   unit: string = 'lb'
 ): JuggernautSetsConfig {
-  const roundTo = unit === 'kg' ? 2.5 : 5;
+  const roundTo = getRoundingIncrement(unit);
   const waveCfg = JUGGERNAUT_WAVE_PERCENTS[wave];
 
   if (phase === 'realization') {
@@ -297,7 +249,7 @@ export function calculatePeakingSets(
   trainingMax: number,
   unit: string = 'lb'
 ): JuggernautSetsConfig {
-  const roundTo = unit === 'kg' ? 2.5 : 5;
+  const roundTo = getRoundingIncrement(unit);
   const weeksFromMeet = totalPeakWeeks - peakWeek + 1;
   return {
     numSets: 1,
@@ -319,7 +271,7 @@ export function calculateBackoffSets(
   rpe: number,
   unit: string = 'lb'
 ): BackoffSet {
-  const roundTo = unit === 'kg' ? 2.5 : 5;
+  const roundTo = getRoundingIncrement(unit);
 
   let dropPct: number;
   let sets: number;
@@ -348,7 +300,7 @@ export function calculateWarmupSets(
   topSetWeight: number,
   unit: string = 'lb'
 ): WarmupProgression {
-  const roundTo = unit === 'kg' ? 2.5 : 5;
+  const roundTo = getRoundingIncrement(unit);
   const bar = unit === 'kg' ? 20 : 45;
 
   const fixedSets: WarmupSet[] = [
@@ -504,17 +456,4 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
   weekIndex++;
 
   return { weeks, skippedWaves, adjustments, totalWeeks: weekIndex, peakWeekIndex };
-}
-
-
-export function getSupplementalWorkConfig(
-  variation: 'standard' | 'bbb' | 'bbs' | undefined
-): { sets: number; reps: number } | null {
-  if (variation === 'bbb') {
-    return { sets: 5, reps: 10 };
-  }
-  if (variation === 'bbs') {
-    return { sets: 10, reps: 5 };
-  }
-  return null;
 }
