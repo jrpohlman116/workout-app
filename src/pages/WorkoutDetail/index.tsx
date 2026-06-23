@@ -1,26 +1,30 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateOneRepMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, JuggernautSetsConfig } from '../../lib/calculations';
+import { DEFAULT_PROGRAM_WEEKS } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
 import WorkoutSuccessModal from '../../components/features/WorkoutSuccessModal';
 import ExerciseSubstitutionModal from '../../components/features/ExerciseSubstitutionModal';
 import AccessibleProgressIndicator from '../../components/accessible/AccessibleProgressIndicator';
-import WorkoutHeader from './WorkoutHeader';
-import WorkoutSummaryView from './WorkoutSummaryView';
-import MainLiftView from './MainLiftView';
-import AccessoryExerciseView from './AccessoryExerciseView';
-import { useWorkoutData } from './useWorkoutData';
-import { liftNames, liftNamesShort, baseExercises, additionalExercises } from './constants';
-import { WorkoutDetailPageProps, WorkoutStep, SetInput } from './types';
+import WorkoutHeader from './views/WorkoutHeader';
+import WorkoutSummaryView from './views/WorkoutSummaryView';
+import MainLiftView from './views/MainLiftView';
+import AccessoryExerciseView from './views/AccessoryExerciseView';
+import { useWorkoutData } from '../../hooks/useWorkoutData';
+import { liftNames, liftNamesShort, baseExercises, additionalExercises } from '../../lib/exercises';
+import { WorkoutDetailPageProps, WorkoutStep, SetInput } from '../../lib/types';
+import Card from '../../components/ui/Card';
+import SectionLabel from '../../components/ui/SectionLabel';
+import PageHeader from '../../components/ui/PageHeader';
 
 function getCurrentWeekBlock(programStartDate: string | undefined, meetDate: string | undefined): WeekBlock | null {
   if (!meetDate) return null;
   const meet = new Date(meetDate);
   const start = programStartDate
     ? new Date(programStartDate)
-    : new Date(meet.getTime() - 16 * 7 * 24 * 60 * 60 * 1000);
+    : new Date(meet.getTime() - DEFAULT_PROGRAM_WEEKS * 7 * 24 * 60 * 60 * 1000);
   const schedule = buildWaveSchedule(start, meet);
   const now = Date.now();
   const current = schedule.weeks.find(w => w.startDate.getTime() <= now && w.endDate.getTime() >= now);
@@ -189,21 +193,18 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     return (
       <div className="min-h-screen pb-24">
         <div className="bg-white dark:bg-gray-800">
-          <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Juggernaut</p>
-            <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">{liftNames[liftType] ?? liftType}</h1>
-          </div>
+          <PageHeader eyebrow="Juggernaut" title={liftNames[liftType] ?? liftType} />
         </div>
         <div className="max-w-md mx-auto px-4 py-6">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Program not set up</p>
+          <Card className="p-6">
+            <SectionLabel className="mb-1">Program not set up</SectionLabel>
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
               Add your program start date and meet date in Profile to get your Juggernaut schedule.
             </p>
             <button onClick={onBack} className="text-sm font-semibold text-blue-600 dark:text-blue-400">
               ← Go back
             </button>
-          </div>
+          </Card>
         </div>
       </div>
     );
@@ -215,20 +216,20 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         <div className="bg-white dark:bg-gray-800">
           <div className="max-w-md mx-auto px-4 pt-8 pb-6">
             <button onClick={onBack} className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-4 block">← Back</button>
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Meet Week</p>
+            <SectionLabel tone="page" className="mb-1">Meet Week</SectionLabel>
             <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">{liftNames[liftType] ?? liftType}</h1>
           </div>
         </div>
         <div className="max-w-md mx-auto px-4 py-6">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Rest Up</p>
+          <Card className="p-6">
+            <SectionLabel className="mb-2">Rest Up</SectionLabel>
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
               This is meet week. Keep any movement light and technical — no heavy loading. Save everything for the platform.
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500">
               When it's meet day, head back to the Home screen to log your attempts.
             </p>
-          </div>
+          </Card>
         </div>
       </div>
     );
@@ -489,7 +490,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         {draftOffer && (
           <div className="max-w-md mx-auto px-4 pt-4">
             <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Unsaved session found</p>
+              <SectionLabel className="mb-1">Unsaved session found</SectionLabel>
               <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
                 Your last workout was interrupted. Restore your sets to try again.
               </p>
@@ -545,7 +546,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         {draftOffer && (
           <div className="max-w-md mx-auto px-4 pt-4">
             <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-0">
-              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Unsaved session found</p>
+              <SectionLabel className="mb-1">Unsaved session found</SectionLabel>
               <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
                 Your last workout was interrupted. Restore your sets to try again.
               </p>

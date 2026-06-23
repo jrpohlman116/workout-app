@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { calculateOneRepMax, calculateWilksScore } from '../../lib/calculations';
+import { calculateOneRepMax, calculateWilksScore, getWilksLevel } from '../../lib/calculations';
 import { Info } from 'lucide-react';
 import { useRipple } from '../../hooks/useAnimations';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-
-type Tab = '1rm' | 'wilks' | 'plates';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import PageHeader from '../../components/ui/PageHeader';
+import TabBar from '../../components/ui/TabBar';
+import SectionLabel from '../../components/ui/SectionLabel';
+import type { CalculatorTab as Tab } from '../../lib/types';
 
 export default function CalculatorPage() {
   const [activeTab, setActiveTab] = useState<Tab>('1rm');
@@ -149,37 +154,14 @@ export default function CalculatorPage() {
   return (
     <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
-        <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Tools</p>
-          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100 animate-slide-in-left">Calculator</h1>
-        </div>
-
-        <div className="max-w-md mx-auto px-4">
-          <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={(e) => {
-                  createRipple(e);
-                  setActiveTab(tab.id);
-                }}
-                className={`px-6 py-3 font-semibold transition-all ripple-container relative overflow-hidden ${
-                  activeTab === tab.id
-                    ? 'text-gray-900 dark:text-gray-100 border-b-2 border-gray-900 dark:border-gray-100 -mb-[2px]'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <PageHeader eyebrow="Tools" title="Calculator" />
+        <TabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} onRipple={createRipple} />
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
         {activeTab === '1rm' && (
           <div className="space-y-4 animate-enter">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+            <Card className="p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">1 Rep Max</h2>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
                 Calculate your one-rep max using the weight you lifted and the number of repetitions completed.
@@ -212,171 +194,88 @@ export default function CalculatorPage() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Repetitions
-                </label>
-                <input
+                <Input
+                  label="Repetitions"
                   type="number"
                   value={reps}
                   onChange={(e) => setReps(e.target.value)}
                   placeholder="e.g., 5, 8, 10"
                   min="0"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
 
-              <button
-                onClick={handleCalculate}
-                className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-              >
-                Calculate
-              </button>
-            </div>
+              <Button fullWidth onClick={handleCalculate}>Calculate</Button>
+            </Card>
 
             {calculatedMax !== null && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter">
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Estimated 1RM</p>
+              <Card className="p-6 animate-enter">
+                <SectionLabel className="mb-2">Estimated 1RM</SectionLabel>
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-black tabular-nums text-gray-900 dark:text-gray-100">{calculatedMax}</span>
                   <span className="text-lg font-medium text-gray-400 dark:text-gray-500">{unit}</span>
                 </div>
-              </div>
+              </Card>
             )}
           </div>
         )}
 
         {activeTab === 'wilks' && (
           <div className="space-y-4 animate-enter">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+            <Card className="p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Wilks Score</h2>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
                 Compare powerlifting strength across bodyweights. Wilks score is typically used in competitions.
               </p>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Squat Max
-                  </label>
-                  <input
-                    type="number"
-                    value={wilksSquat}
-                    onChange={(e) => setWilksSquat(e.target.value)}
-                    placeholder="e.g. 315"
-                    min="0"
-                    step="0.5"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Bench Press Max
-                  </label>
-                  <input
-                    type="number"
-                    value={wilksBench}
-                    onChange={(e) => setWilksBench(e.target.value)}
-                    placeholder="e.g. 225"
-                    min="0"
-                    step="0.5"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Deadlift Max
-                  </label>
-                  <input
-                    type="number"
-                    value={wilksDeadlift}
-                    onChange={(e) => setWilksDeadlift(e.target.value)}
-                    placeholder="e.g. 405"
-                    min="0"
-                    step="0.5"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Bodyweight
-                  </label>
-                  <input
-                    type="number"
-                    value={wilksBodyweight}
-                    onChange={(e) => setWilksBodyweight(e.target.value)}
-                    placeholder="e.g. 180"
-                    min="0"
-                    step="0.1"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  />
-                </div>
+                <Input label="Squat Max" type="number" value={wilksSquat} onChange={(e) => setWilksSquat(e.target.value)} placeholder="e.g. 315" min="0" step="0.5" />
+                <Input label="Bench Press Max" type="number" value={wilksBench} onChange={(e) => setWilksBench(e.target.value)} placeholder="e.g. 225" min="0" step="0.5" />
+                <Input label="Deadlift Max" type="number" value={wilksDeadlift} onChange={(e) => setWilksDeadlift(e.target.value)} placeholder="e.g. 405" min="0" step="0.5" />
+                <Input label="Bodyweight" type="number" value={wilksBodyweight} onChange={(e) => setWilksBodyweight(e.target.value)} placeholder="e.g. 180" min="0" step="0.1" />
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Gender
-                    </label>
-                    <select
-                      value={wilksGender}
-                      onChange={(e) => setWilksGender(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    >
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Gender</label>
+                    <select value={wilksGender} onChange={(e) => setWilksGender(e.target.value)} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                       <option value="male">Male</option>
                       <option value="female">Female</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Unit
-                    </label>
-                    <select
-                      value={wilksUnit}
-                      onChange={(e) => setWilksUnit(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    >
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Unit</label>
+                    <select value={wilksUnit} onChange={(e) => setWilksUnit(e.target.value)} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                       <option value="lb">lb</option>
                       <option value="kg">kg</option>
                     </select>
                   </div>
                 </div>
 
-                <button
-                  onClick={handleWilksCalculate}
-                  className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                >
-                  Calculate
-                </button>
+                <Button fullWidth onClick={handleWilksCalculate}>Calculate</Button>
               </div>
-            </div>
+            </Card>
 
             {calculatedWilks !== null && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter">
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">Wilks Score</p>
+              <Card className="p-6 animate-enter">
+                <SectionLabel className="mb-2">Wilks Score</SectionLabel>
                 <p className="text-5xl font-black tabular-nums text-gray-900 dark:text-gray-100 mb-2">{calculatedWilks}</p>
                 <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-1">
-                  {calculatedWilks < 250 && 'Beginner'}
-                  {calculatedWilks >= 250 && calculatedWilks < 350 && 'Intermediate'}
-                  {calculatedWilks >= 350 && calculatedWilks < 450 && 'Advanced'}
-                  {calculatedWilks >= 450 && 'Elite'}
+                  {getWilksLevel(calculatedWilks)}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {calculatedWilks < 250 && '300+ is competitive club level'}
-                  {calculatedWilks >= 250 && calculatedWilks < 350 && 'Solid development. 300+ is competitive club level.'}
-                  {calculatedWilks >= 350 && calculatedWilks < 450 && '400+ qualifies for most national events.'}
-                  {calculatedWilks >= 450 && 'Competition-level. 400+ qualifies for most national events.'}
+                  {calculatedWilks < 300
+                    ? '300+ is competitive club level'
+                    : calculatedWilks < 400
+                      ? 'Solid development. 300+ is competitive club level.'
+                      : '400+ qualifies for most national events.'}
                 </p>
-              </div>
+              </Card>
             )}
           </div>
         )}
 
         {activeTab === 'plates' && (
           <div className="space-y-4 animate-enter">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+            <Card className="p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Plate Calculator</h2>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
                 Calculate which plates to load on each side of the bar to reach your target weight.
@@ -428,47 +327,36 @@ export default function CalculatorPage() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Target Weight ({plateUnit})
-                </label>
-                <input
+                <Input
+                  label={`Target Weight (${plateUnit})`}
                   type="number"
                   value={targetWeight}
                   onChange={(e) => setTargetWeight(e.target.value)}
                   placeholder="e.g. 225, 315, 405"
                   min="0"
                   step="0.5"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Bar Weight ({plateUnit})
-                </label>
-                <input
+                <Input
+                  label={`Bar Weight (${plateUnit})`}
                   type="number"
                   value={barWeight}
                   onChange={(e) => setBarWeight(e.target.value)}
                   placeholder={plateUnit === 'lb' ? 'e.g. 45' : 'e.g. 20'}
                   min="0"
                   step="0.5"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  hint="Standard bar is 45 lb / 20 kg"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Standard bar is 45 lb / 20 kg</p>
               </div>
 
-              <button
-                onClick={handlePlateCalculate}
-                className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-              >
-                Calculate
-              </button>
-            </div>
+              <Button fullWidth onClick={handlePlateCalculate}>Calculate</Button>
+            </Card>
 
             {calculatedPlates !== null && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter">
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-4">Load per side</p>
+              <Card className="p-6 animate-enter">
+                <SectionLabel className="mb-4">Load per side</SectionLabel>
                 {calculatedPlates.length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">Just the bar — no plates needed</p>
                 ) : (
@@ -501,7 +389,7 @@ export default function CalculatorPage() {
                     </div>
                   </div>
                 )}
-              </div>
+              </Card>
             )}
           </div>
         )}

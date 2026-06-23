@@ -1,35 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../../lib/supabase';
-import { calculateWilksScore, calculateDOTSScore, calculateIPFGLScore } from '../../lib/calculations';
-import ProgressChart from './ProgressChart';
+import ProgressChart from './components/ProgressChart';
 import AccessibleChartTable from '../../components/accessible/AccessibleChartTable';
 import { useStaggeredAnimation, useRipple } from '../../hooks/useAnimations';
-import LiftSummaryCard from './LiftSummaryCard';
-import TabNavigation from './TabNavigation';
-import WorkoutLogEntry from './WorkoutLogEntry';
+import LiftSummaryCard from './components/LiftSummaryCard';
+import TabNavigation from './components/TabNavigation';
+import WorkoutLogEntry from './components/WorkoutLogEntry';
 import StrengthScoreCarousel from '../../components/features/StrengthScoreCarousel';
-import PastMeetModal from './PastMeetModal';
+import PastMeetModal from './components/PastMeetModal';
+import type { AccessoryExercise, ProgressTab as Tab, MeetGroup } from '../../lib/types';
 import * as utils from './utils';
+import { formatDate, calculateStrengthScores } from './utils';
+import Card from '../../components/ui/Card';
+import PageHeader from '../../components/ui/PageHeader';
+import SectionLabel from '../../components/ui/SectionLabel';
 
-interface AccessoryExercise {
-  id: string;
-  exercise_name: string;
-  exercise_order: number;
-  sets_data: { reps: string; weight: string }[];
-  workout_session_id: string;
-}
-
-type Tab = 'overview' | 'records' | 'log' | 'meets';
-
-interface MeetGroup {
-  date: string;
-  attemptsByLift: Record<string, WorkoutSession[]>;
-  bestSquat: WorkoutSession | null;
-  bestBench: WorkoutSession | null;
-  bestDeadlift: WorkoutSession | null;
-  total: number | null;
-}
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
@@ -84,8 +70,7 @@ export default function ProgressPage() {
   // Filter deloads: use phase if available (new sessions), fall back to week 4 (legacy)
   const nonDeloadSessions = sessions.filter(s => s.phase !== 'deload' && s.week !== 4);
 
-  const isLbs = profile.unit_preference !== 'kg';
-  const lbToKg = (w: number) => isLbs ? w * 0.453592 : w;
+  const toKg = (w: number) => profile.unit_preference !== 'kg' ? w * 0.453592 : w;
   const bw = profile.bodyweight || 0;
   const gender = profile.gender || 'male';
 
@@ -110,39 +95,23 @@ export default function ProgressPage() {
     deadlift: Math.max(projectedMaxes.deadlift, bestMaxes.deadlift),
   };
   const hasProjectedData = projectedMaxes.squat > 0 || projectedMaxes.bench > 0 || projectedMaxes.deadlift > 0;
-  const initialScores = {
-    wilks: calculateWilksScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(bw), gender),
-    dots: calculateDOTSScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(bw), gender),
-    ipfgl: calculateIPFGLScore(lbToKg(initialMaxes.squat), lbToKg(initialMaxes.bench), lbToKg(initialMaxes.deadlift), lbToKg(bw), gender),
-  };
-  const projectedScores = {
-    wilks: calculateWilksScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(bw), gender),
-    dots: calculateDOTSScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(bw), gender),
-    ipfgl: calculateIPFGLScore(lbToKg(effectiveMaxes.squat), lbToKg(effectiveMaxes.bench), lbToKg(effectiveMaxes.deadlift), lbToKg(bw), gender),
-  };
+
+  const { initial: initialScores, projected: projectedScores, changePercents: scoreChangePercents } =
+    calculateStrengthScores(initialMaxes, effectiveMaxes, bw, gender, toKg);
   const displayScores = hasProjectedData ? projectedScores : initialScores;
-  const scoreChangePercents = {
-    wilks: initialScores.wilks > 0 ? (((projectedScores.wilks - initialScores.wilks) / initialScores.wilks) * 100).toFixed(1) : '0.0',
-    dots: initialScores.dots > 0 ? (((projectedScores.dots - initialScores.dots) / initialScores.dots) * 100).toFixed(1) : '0.0',
-    ipfgl: initialScores.ipfgl > 0 ? (((projectedScores.ipfgl - initialScores.ipfgl) / initialScores.ipfgl) * 100).toFixed(1) : '0.0',
-  };
 
   const lifts = [
-    { name: '1RM Squat', displayName: 'Max Squat', type: 'squat', initial: profile.squat_max },
-    { name: '1RM Bench', displayName: 'Max Bench', type: 'bench', initial: profile.bench_max },
-    { name: '1RM Deadlift', displayName: 'Max Deadlift', type: 'deadlift', initial: profile.deadlift_max },
+    { name: '1RM Squat',    displayName: 'Max Squat',    type: 'squat',    initial: profile.squat_max,    chartName: 'Squat',    color: '#2563eb' },
+    { name: '1RM Bench',    displayName: 'Max Bench',    type: 'bench',    initial: profile.bench_max,    chartName: 'Bench',    color: '#059669' },
+    { name: '1RM Deadlift', displayName: 'Max Deadlift', type: 'deadlift', initial: profile.deadlift_max, chartName: 'Deadlift', color: '#4f46e5' },
   ];
 
-  const liftTypes = ['squat', 'bench', 'deadlift'];
-  const liftNames = ['Squat', 'Bench', 'Deadlift'];
-  const colors = ['#2563eb', '#059669', '#4f46e5'];
-
-  const chartData = liftTypes.map((type, idx) => {
-    const liftSessions = nonDeloadSessions.filter(s => s.lift_type === type);
+  const chartData = lifts.map(lift => {
+    const liftSessions = nonDeloadSessions.filter(s => s.lift_type === lift.type);
     return {
-      type,
-      name: liftNames[idx],
-      color: colors[idx],
+      type: lift.type,
+      name: lift.chartName,
+      color: lift.color,
       data: liftSessions.map(s => ({
         value: s.calculated_1rm,
         date: s.completed_at,
@@ -151,16 +120,6 @@ export default function ProgressPage() {
       })),
     };
   });
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
 
   const groupSessionsByDate = () => {
     const grouped: { [key: string]: WorkoutSession[] } = {};
@@ -235,10 +194,7 @@ export default function ProgressPage() {
   return (
     <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
-        <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Juggernaut</p>
-          <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100 animate-slide-in-left">Progress</h1>
-        </div>
+        <PageHeader eyebrow="Juggernaut" title="Progress" />
 
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} onRipple={createRipple} />
       </div>
@@ -254,13 +210,13 @@ export default function ProgressPage() {
 
             {nonDeloadSessions.length === 0 && (
               <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">No data yet</p>
+                <SectionLabel className="mb-1">No data yet</SectionLabel>
                 <p className="text-sm text-gray-700 dark:text-gray-300">Complete your first workout to see your progress here.</p>
               </div>
             )}
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Estimated 1RM Over Time</p>
+            <Card className="p-6">
+              <SectionLabel className="mb-1">Estimated 1RM Over Time</SectionLabel>
               <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">AMAP sets, realization weeks only</p>
               {nonDeloadSessions.length === 0 ? (
                 <div className="text-center py-12">
@@ -272,7 +228,7 @@ export default function ProgressPage() {
                   <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
                 </>
               )}
-            </div>
+            </Card>
 
             {nonDeloadSessions.length > 0 && (
               <AccessibleChartTable chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
@@ -312,8 +268,8 @@ export default function ProgressPage() {
               const unit = profile.unit_preference || 'lb';
 
               return (
-                <div key={lift.type} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-enter" style={{ animationDelay: `${index * 50}ms` }}>
-                  <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-4">{lift.displayName}</p>
+                <Card key={lift.type} className="p-6 animate-enter" style={{ animationDelay: `${index * 50}ms` }}>
+                  <SectionLabel className="mb-4">{lift.displayName}</SectionLabel>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Best Set</p>
@@ -346,7 +302,7 @@ export default function ProgressPage() {
                       )}
                     </div>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
@@ -403,12 +359,12 @@ export default function ProgressPage() {
 
               if (meetGroups.length === 0) {
                 return (
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 text-center">
-                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">No meets yet</p>
+                  <Card className="p-8 text-center">
+                    <SectionLabel className="mb-2">No meets yet</SectionLabel>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                       Use the Meet Day button on your home screen to log live attempts, or tap <span className="font-semibold">Log Past Meet</span> above to enter a previous competition.
                     </p>
-                  </div>
+                  </Card>
                 );
               }
 
@@ -417,35 +373,35 @@ export default function ProgressPage() {
                   meet.total && meet.bestSquat && meet.bestBench && meet.bestDeadlift
                     ? {
                         wilks: calculateWilksScore(
-                          lbToKg(meet.bestSquat.weight_lifted),
-                          lbToKg(meet.bestBench.weight_lifted),
-                          lbToKg(meet.bestDeadlift.weight_lifted),
-                          lbToKg(bw),
+                          toKg(meet.bestSquat.weight_lifted),
+                          toKg(meet.bestBench.weight_lifted),
+                          toKg(meet.bestDeadlift.weight_lifted),
+                          toKg(bw),
                           gender
                         ),
                         dots: calculateDOTSScore(
-                          lbToKg(meet.bestSquat.weight_lifted),
-                          lbToKg(meet.bestBench.weight_lifted),
-                          lbToKg(meet.bestDeadlift.weight_lifted),
-                          lbToKg(bw),
+                          toKg(meet.bestSquat.weight_lifted),
+                          toKg(meet.bestBench.weight_lifted),
+                          toKg(meet.bestDeadlift.weight_lifted),
+                          toKg(bw),
                           gender
                         ),
                         ipfgl: calculateIPFGLScore(
-                          lbToKg(meet.bestSquat.weight_lifted),
-                          lbToKg(meet.bestBench.weight_lifted),
-                          lbToKg(meet.bestDeadlift.weight_lifted),
-                          lbToKg(bw),
+                          toKg(meet.bestSquat.weight_lifted),
+                          toKg(meet.bestBench.weight_lifted),
+                          toKg(meet.bestDeadlift.weight_lifted),
+                          toKg(bw),
                           gender
                         ),
                       }
                     : null;
 
                 return (
-                  <div key={meet.date} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                  <Card key={meet.date} className="p-6">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-5">
                       <div>
-                        <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Meet</p>
+                        <SectionLabel className="mb-0.5">Meet</SectionLabel>
                         <p className="text-base font-bold text-gray-900 dark:text-gray-100">
                           {formatDate(meet.date + 'T12:00:00')}
                         </p>
@@ -525,7 +481,7 @@ export default function ProgressPage() {
                         ))}
                       </div>
                     )}
-                  </div>
+                  </Card>
                 );
               });
             })()}

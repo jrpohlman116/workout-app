@@ -1,34 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateJuggernautSets, calculatePeakingSets, getGreeting, buildWaveSchedule, RepWave, WavePhase } from '../../lib/calculations';
+import { calculateJuggernautSets, calculatePeakingSets, getGreeting, buildWaveSchedule, MS_PER_WEEK, RepWave, WavePhase } from '../../lib/calculations';
+import { DEFAULT_PROGRAM_WEEKS, PHASE_LABELS, PHASE_DESCRIPTIONS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
 import { ChevronLeft, ChevronRight, Check, Activity, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
-import WaveScheduleChart from '../Progress/WaveScheduleChart';
+import WaveScheduleChart from '../Progress/components/WaveScheduleChart';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import PageHeader from '../../components/ui/PageHeader';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
 }
-
-const PHASE_LABELS: Record<string, string> = {
-  accumulation: 'Accumulation',
-  intensification: 'Intensification',
-  realization: 'Realization',
-  deload: 'Deload',
-  peaking: 'Peaking',
-  meet_week: 'Meet Week',
-};
-
-const PHASE_DESCRIPTIONS: Record<string, string> = {
-  accumulation: 'High volume, moderate intensity. Complete every rep — you\'re building your base.',
-  intensification: 'Less volume, heavier loads. Push the weights and keep technique solid.',
-  realization: 'Peak intensity. Your top set is max reps — stop 1 rep before failure.',
-  deload: 'Reduced load. Complete all sets without grinding. This is a recovery week.',
-  peaking: 'Competition prep. Work up to a heavy single — no grinding, no misses.',
-  meet_week: 'Rest up. Keep any movement light and technical. Save everything for the platform.',
-};
 
 
 export default function HomePage({ onNavigate }: HomePageProps) {
@@ -111,7 +97,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     try {
       if (profile.meet_date && profile.program_start_date) {
         const newStart = new Date(
-          new Date(profile.program_start_date).getTime() - weekOffset * 7 * 24 * 60 * 60 * 1000
+          new Date(profile.program_start_date).getTime() - weekOffset * MS_PER_WEEK
         );
         await supabase.from('user_profiles')
           .update({ program_start_date: newStart.toISOString().split('T')[0], updated_at: new Date().toISOString() })
@@ -149,15 +135,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const scheduleStart = profile.program_start_date
     ? new Date(profile.program_start_date)
     : profile.meet_date
-      ? new Date(new Date(profile.meet_date).getTime() - 16 * 7 * 24 * 60 * 60 * 1000)
+      ? new Date(new Date(profile.meet_date).getTime() - DEFAULT_PROGRAM_WEEKS * MS_PER_WEEK)
       : new Date();
 
   const waveSchedule = profile.meet_date
     ? buildWaveSchedule(scheduleStart, new Date(profile.meet_date))
     : { weeks: [], adjustments: [], skippedWaves: [], totalWeeks: 0, peakWeekIndex: -1 };
-
-  const CYCLE_TO_WAVE: Record<number, RepWave> = { 1: 10, 2: 8, 3: 5, 4: 3 };
-  const WEEK_TO_PHASE: Record<number, WavePhase> = { 1: 'accumulation', 2: 'intensification', 3: 'realization', 4: 'deload' };
 
   // Index of the week that contains today
   const rawCurrentBlockIndex = waveSchedule.weeks.findIndex(
@@ -208,24 +191,20 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   return (
     <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
-        <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-1">Ironform</p>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 animate-slide-in-left">{getGreeting()}</h1>
-        </div>
+        <PageHeader eyebrow="Ironform" title={getGreeting()} titleClassName="font-bold" />
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm px-6 py-8">
+        <Card className="px-6 py-8">
           <WaveScheduleChart
             schedule={waveSchedule}
             trainingMaxes={{ squat: profile.squat_max, bench: profile.bench_max, deadlift: profile.deadlift_max }}
             unit={profile.unit_preference || 'lb'}
-            sessions={[]}
           />
-        </div>
+        </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
+          <Card className="p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">Wave</p>
               <button
@@ -250,9 +229,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 {PHASE_DESCRIPTIONS[displayPhase]}
               </p>
             )}
-          </div>
+          </Card>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
+          <Card className="p-5">
             {profile.meet_date ? (
               <>
                 <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-3">Days Out</p>
@@ -280,7 +259,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 </p>
               </>
             )}
-          </div>
+          </Card>
         </div>
 
         {isMeetDay && (
@@ -302,7 +281,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         )}
 
         {/* Week navigator */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
+        <Card className="px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setWeekOffset(o => o - 1)}
             disabled={!canGoBack}
@@ -331,9 +310,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           >
             <ChevronRight className="w-5 h-5" />
           </button>
-        </div>
+        </Card>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Workouts</h2>
             {isViewing && (
@@ -363,8 +342,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   : (!isUpperDayWorkout && !effectiveBlock && viewedManual && workout.max > 0)
                     ? calculateJuggernautSets(CYCLE_TO_WAVE[viewedManual.cycle] ?? 3, WEEK_TO_PHASE[viewedManual.week] ?? 'accumulation', workout.max, unit).weight
                     : null;
-              const weightLow = baseWeight !== null ? Math.round(baseWeight * 0.96 / roundTo) * roundTo : null;
-              const weightHigh = baseWeight !== null ? Math.round(baseWeight * 1.04 / roundTo) * roundTo : null;
+              const weightLow = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo : null;
+              const weightHigh = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo : null;
 
               return (
                 <button
@@ -418,27 +397,19 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             })}
           </div>
           {isViewing ? (
-            <button
-              onClick={handleJumpToWeek}
-              disabled={jumping}
-              className="w-full mt-4 bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50"
-            >
+            <Button fullWidth className="mt-4" onClick={handleJumpToWeek} disabled={jumping}>
               {jumping
                 ? 'Updating program…'
                 : weekOffset > 0
                   ? `Skip ${weekOffset} week${weekOffset !== 1 ? 's' : ''} ahead`
                   : `Go back ${Math.abs(weekOffset)} week${Math.abs(weekOffset) !== 1 ? 's' : ''}`}
-            </button>
+            </Button>
           ) : completedWorkouts.size === 4 ? (
-            <button
-              onClick={() => setShowSkipWeekModal(true)}
-              disabled={skipping}
-              className="w-full mt-4 bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50"
-            >
+            <Button fullWidth className="mt-4" onClick={() => setShowSkipWeekModal(true)} disabled={skipping}>
               {skipping ? 'Advancing your program...' : `Start Week ${profile.current_week === 4 ? 1 : profile.current_week + 1}`}
-            </button>
+            </Button>
           ) : null}
-        </div>
+        </Card>
       </div>
 
       {showOneRMTest && (
@@ -464,18 +435,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             : "You haven't completed all workouts yet. Are you sure you want to skip ahead?"}
         </p>
         <div className="flex gap-3">
-          <button
-            onClick={() => setShowSkipWeekModal(false)}
-            className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
+          <Button variant="secondary" size="md" className="flex-1" onClick={() => setShowSkipWeekModal(false)}>
             Cancel
-          </button>
-          <button
-            onClick={handleSkipWeek}
-            className="flex-1 px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-          >
+          </Button>
+          <Button size="md" className="flex-1" onClick={handleSkipWeek}>
             Advance Week
-          </button>
+          </Button>
         </div>
       </AccessibleModal>
     </div>

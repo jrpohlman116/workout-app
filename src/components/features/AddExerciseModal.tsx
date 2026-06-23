@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Plus, X } from 'lucide-react';
 import AccessibleModal from '../accessible/AccessibleModal';
+import Button from '../ui/Button';
 import { Exercise } from '../../pages/WorkoutDetail/types';
 
 interface AddExerciseModalProps {
