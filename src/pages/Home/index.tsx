@@ -166,7 +166,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const viewedManual = !profile.meet_date ? (() => {
     const base = (profile.current_cycle - 1) * 4 + (profile.current_week - 1);
     const total = Math.max(0, base + weekOffset);
-    return { week: (total % 4) + 1 as 1|2|3|4, cycle: Math.floor(total / 4) + 1 };
+    return { week: (total % 4) + 1 as 1 | 2 | 3 | 4, cycle: Math.floor(total / 4) + 1 };
   })() : null;
 
   const canGoBack = currentBlockIndex >= 0
@@ -236,7 +236,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <Card className="p-5">
             {profile.meet_date ? (
               <>
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-3">Days Out</p>
+                <div style={{'height': '26px'}} className="flex items-center justify-between mb-3">
+                  <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">Days Out</p>
+                </div>
                 <div className="mb-2">
                   <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
                     {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))}
@@ -357,13 +359,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     onNavigate('workout', workout.type);
                   }}
                   style={{ animationDelay: `${160 + index * 40}ms` }}
-                  className={`animate-enter ${
-                    isViewing
+                  className={`animate-enter ${isViewing
                       ? 'bg-gray-50 dark:bg-gray-700 cursor-default'
                       : isCompleted
                         ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 hover-scale active-press ripple-container'
                         : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 hover-scale active-press ripple-container'
-                  }`}
+                    }`}
                   leading={
                     <span className="w-7 text-center font-mono text-sm font-bold text-gray-300 dark:text-gray-300 select-none">
                       {String(index + 1).padStart(2, '0')}
@@ -371,9 +372,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   }
                   trailing={trailing}
                 >
-                  <p className={`text-xs uppercase tracking-widest font-semibold mb-0.5 ${
-                    !isViewing && isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'
-                  }`}>
+                  <p className={`text-xs uppercase tracking-widest font-semibold mb-0.5 ${!isViewing && isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'
+                    }`}>
                     {workout.name}
                   </p>
                   {!isViewing && isCompleted ? (
