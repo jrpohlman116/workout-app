@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
+import Button from '../ui/Button';
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -54,26 +55,24 @@ export default function InstallPrompt() {
               Install 531 Tracker on your home screen for quick access and offline use!
             </p>
             <div className="flex gap-2">
-              <button
+              <Button
+                size="sm"
                 onClick={handleInstall}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
               >
                 Install
-              </button>
-              <button
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={handleDismiss}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors"
               >
                 Not now
-              </button>
+              </Button>
             </div>
           </div>
-          <button
-            onClick={handleDismiss}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-          >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-300" />
-          </button>
+          <IconButton label="Dismiss" onClick={handleDismiss} className="flex-shrink-0">
+            <X className="w-5 h-5" />
+          </IconButton>
         </div>
       </div>
     </div>

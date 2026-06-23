@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { useCountUp } from '../../hooks/useAnimations';
 import { getWilksLevel, getDotsLevel, getIpfglLevel } from '../../lib/calculations';
 import Card from '../ui/Card';
+import IconButton from '../ui/IconButton';
 
 interface StrengthScoreCarouselProps {
   scores: {
@@ -82,13 +83,13 @@ export default function StrengthScoreCarousel({
             <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">
               {currentConfig.name}
             </p>
-            <button
+            <IconButton
+              size="sm"
+              label={`About ${currentConfig.name}`}
               onClick={() => setShowInfo(v => !v)}
-              aria-label={`About ${currentConfig.name}`}
-              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex-shrink-0"
             >
               <Info className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
+            </IconButton>
           </div>
           {showInfo && (
             <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed pr-4">
@@ -110,13 +111,13 @@ export default function StrengthScoreCarousel({
       </div>
 
       <div className="flex items-center justify-center mb-4 gap-4">
-        <button
+        <IconButton
+          label="Previous score type"
           onClick={handlePrevious}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          aria-label="Previous score type"
+          className="rounded-full"
         >
-          <ChevronLeft className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-        </button>
+          <ChevronLeft className="w-6 h-6" aria-hidden="true" />
+        </IconButton>
 
         <div className="text-center flex-1 py-4">
           <p className="text-6xl font-black text-gray-900 dark:text-gray-100 tabular-nums leading-none mb-3">
@@ -127,13 +128,13 @@ export default function StrengthScoreCarousel({
           </p>
         </div>
 
-        <button
+        <IconButton
+          label="Next score type"
           onClick={handleNext}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          aria-label="Next score type"
+          className="rounded-full"
         >
-          <ChevronRight className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-        </button>
+          <ChevronRight className="w-6 h-6" aria-hidden="true" />
+        </IconButton>
       </div>
 
       <div className="flex justify-center gap-2">

@@ -3,7 +3,9 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateOneRepMax } from '../../lib/calculations';
 import { StickingPoint, WeakPoints } from '../../lib/supabase';
-import AccessibleNativeSelect from '../accessible/AccessibleNativeSelect';
+import Select from '../ui/Select';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
 import { Calculator } from 'lucide-react';
 
 type MainLift = 'squat' | 'bench' | 'deadlift';
@@ -220,7 +222,7 @@ export default function Onboarding() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-2">
+          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-400 mb-2">
             Juggernaut Method
           </p>
           <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2">
@@ -237,10 +239,10 @@ export default function Onboarding() {
 
         <div className="mb-6" role="group" aria-label="Progress indicator">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500">
+            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-400">
               Step {currentStep} of {TOTAL_STEPS}
             </span>
-            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500">
+            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-400">
               {getStepTitle(currentStep)}
             </span>
           </div>
@@ -267,23 +269,17 @@ export default function Onboarding() {
               <legend className="sr-only">Basic Information</legend>
               <div className="space-y-6">
                 <div>
-                  <label htmlFor="bodyweight" className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                    Your bodyweight <span className="text-red-600" aria-label="required">*</span>
-                  </label>
-                  <p id="bodyweight-description" className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                    Used to calculate strength standards and track progress
-                  </p>
-                  <input
+                  <Input
                     id="bodyweight"
+                    label="Your bodyweight"
                     type="number"
                     step="0.1"
                     min="0"
                     value={bodyweight}
                     onChange={(e) => setBodyweight(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    hint="Used to calculate strength standards and track progress"
                     placeholder="e.g., 180"
                     required
-                    aria-describedby="bodyweight-description"
                     aria-required="true"
                   />
                 </div>
@@ -318,7 +314,7 @@ export default function Onboarding() {
                   </div>
                 </fieldset>
 
-                <AccessibleNativeSelect
+                <Select
                   id="gender-select"
                   label="Gender"
                   value={gender}
@@ -326,7 +322,7 @@ export default function Onboarding() {
                     { value: 'male', label: 'Male' },
                     { value: 'female', label: 'Female' },
                   ]}
-                  onChange={setGender}
+                  onChange={(val) => setGender(val as string)}
                   description="Used to calculate accurate strength scores"
                   required
                 />
@@ -356,33 +352,31 @@ export default function Onboarding() {
 
                       <div className="space-y-4">
                         <div>
-                          <label htmlFor={`${lift}-max`} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            1 Rep Max ({unitPreference})
-                          </label>
-                          <input
+                          <Input
                             id={`${lift}-max`}
+                            label={`1 Rep Max (${unitPreference})`}
                             type="number"
                             step="0.5"
                             min="0"
                             value={info.value}
                             onChange={(e) => info.setter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder={`e.g., ${info.placeholder}`}
                             disabled={isCalculatorActive}
                             aria-label={`${info.name} one rep max in ${unitPreference}`}
                           />
                         </div>
 
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="sm"
+                          icon={<Calculator className="w-4 h-4" aria-hidden="true" />}
                           onClick={() => setActiveCalculator(isCalculatorActive ? null : lift)}
-                          className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                           aria-expanded={isCalculatorActive}
                           aria-controls={`${lift}-calculator`}
                         >
-                          <Calculator className="w-4 h-4" aria-hidden="true" />
                           {isCalculatorActive ? 'Close Calculator' : 'Use Calculator'}
-                        </button>
+                        </Button>
 
                         {isCalculatorActive && (
                           <div id={`${lift}-calculator`} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-4" role="region" aria-label={`Calculator for ${info.name}`}>
@@ -402,7 +396,7 @@ export default function Onboarding() {
                                     min="0"
                                     value={calc.weight}
                                     onChange={(e) => setCalculators({ ...calculators, [lift]: { ...calc, weight: e.target.value } })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                                     placeholder="e.g., 275"
                                   />
                                 </div>
@@ -416,19 +410,21 @@ export default function Onboarding() {
                                     min="1"
                                     value={calc.reps}
                                     onChange={(e) => setCalculators({ ...calculators, [lift]: { ...calc, reps: e.target.value } })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                                     placeholder="e.g., 5"
                                   />
                                 </div>
                               </div>
-                              <button
+                              <Button
                                 type="button"
+                                fullWidth
+                                size="sm"
                                 onClick={() => handleCalculate(lift)}
                                 disabled={!calc.weight || !calc.reps}
-                                className="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                                className="mt-3"
                               >
                                 Calculate
-                              </button>
+                              </Button>
                             </fieldset>
 
                             {calc.calculatedMax !== null && (
@@ -436,13 +432,14 @@ export default function Onboarding() {
                                 <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
                                   Estimated 1RM: <span className="font-semibold">{calc.calculatedMax} {unitPreference}</span>
                                 </p>
-                                <button
+                                <Button
                                   type="button"
+                                  fullWidth
+                                  size="sm"
                                   onClick={() => handleUseCalculatedValue(lift)}
-                                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors focus:ring-2 focus:ring-green-500"
                                 >
                                   Use This Value
-                                </button>
+                                </Button>
                               </div>
                             )}
                           </div>
@@ -473,16 +470,13 @@ export default function Onboarding() {
 
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="meet-date" className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                    Target date
-                  </label>
-                  <input
+                  <Input
                     id="meet-date"
+                    label="Target date"
                     type="date"
                     value={meetDate}
                     min={new Date().toISOString().split('T')[0]}
                     onChange={(e) => setMeetDate(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {weeksAway !== null && weeksAway > 0 && (
                     <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-2 tabular-nums">
@@ -541,7 +535,7 @@ export default function Onboarding() {
                             className={`flex-1 py-2.5 px-3 rounded-xl border-2 transition-colors text-left ${
                               active
                                 ? 'bg-gray-900 dark:bg-gray-100 border-gray-900 dark:border-gray-100 text-white dark:text-gray-900'
-                                : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500'
+                                : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-500 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500'
                             }`}
                           >
                             <span className="block text-sm font-semibold">{STICKING_POINT_LABELS[point]}</span>
@@ -559,38 +553,42 @@ export default function Onboarding() {
           {/* ── Navigation ── */}
           <div className="flex gap-3 pt-4">
             {currentStep > 1 && (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="lg"
+                className="flex-1"
                 onClick={handlePreviousStep}
-                className="flex-1 px-6 py-4 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-gray-400"
               >
                 Back
-              </button>
+              </Button>
             )}
 
             {currentStep < TOTAL_STEPS && (
-              <button
+              <Button
                 type="button"
+                size="lg"
+                className="flex-1"
                 onClick={handleNextStep}
                 disabled={
                   (currentStep === 1 && !canProceedFromStep1) ||
                   (currentStep === 2 && !hasAtLeastOneLift)
                 }
-                className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500"
               >
                 {currentStep === 3 || currentStep === 4 ? (meetDate || Object.values(weakPoints).some(a => a.length > 0) ? 'Next' : 'Skip') : 'Next'}
-              </button>
+              </Button>
             )}
 
             {currentStep === TOTAL_STEPS && (
-              <button
+              <Button
                 type="submit"
+                size="lg"
+                className="flex-1"
                 disabled={loading || !hasAtLeastOneLift}
-                className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500"
                 aria-busy={loading}
               >
                 {loading ? 'Setting up your program...' : 'Start Training'}
-              </button>
+              </Button>
             )}
           </div>
 

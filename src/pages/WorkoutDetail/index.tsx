@@ -18,6 +18,7 @@ import { WorkoutDetailPageProps, WorkoutStep, SetInput } from '../../lib/types';
 import Card from '../../components/ui/Card';
 import SectionLabel from '../../components/ui/SectionLabel';
 import PageHeader from '../../components/ui/PageHeader';
+import Button from '../../components/ui/Button';
 
 function getCurrentWeekBlock(programStartDate: string | undefined, meetDate: string | undefined): WeekBlock | null {
   if (!meetDate) return null;
@@ -201,9 +202,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
               Add your program start date and meet date in Profile to get your Juggernaut schedule.
             </p>
-            <button onClick={onBack} className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-              ← Go back
-            </button>
+            <Button variant="ghost" size="sm" onClick={onBack}>← Go back</Button>
           </Card>
         </div>
       </div>
@@ -215,7 +214,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       <div className="min-h-screen pb-24">
         <div className="bg-white dark:bg-gray-800">
           <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-            <button onClick={onBack} className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-4 block">← Back</button>
+            <Button variant="ghost" size="sm" onClick={onBack} className="mb-4">← Back</Button>
             <SectionLabel tone="page" className="mb-1">Meet Week</SectionLabel>
             <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">{liftNames[liftType] ?? liftType}</h1>
           </div>
@@ -226,7 +225,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
               This is meet week. Keep any movement light and technical — no heavy loading. Save everything for the platform.
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">
+            <p className="text-xs text-gray-400 dark:text-gray-400">
               When it's meet day, head back to the Home screen to log your attempts.
             </p>
           </Card>
@@ -495,18 +494,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
                 Your last workout was interrupted. Restore your sets to try again.
               </p>
               <div className="flex gap-2">
-                <button
-                  onClick={handleDismissDraft}
-                  className="flex-1 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
+                <Button variant="secondary" size="sm" className="flex-1" onClick={handleDismissDraft}>
                   Start Fresh
-                </button>
-                <button
-                  onClick={handleRestoreDraft}
-                  className="flex-1 px-3 py-2 text-xs font-semibold bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                >
+                </Button>
+                <Button size="sm" className="flex-1" onClick={handleRestoreDraft}>
                   Restore Sets
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -551,18 +544,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
                 Your last workout was interrupted. Restore your sets to try again.
               </p>
               <div className="flex gap-2">
-                <button
-                  onClick={handleDismissDraft}
-                  className="flex-1 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
+                <Button variant="secondary" size="sm" className="flex-1" onClick={handleDismissDraft}>
                   Start Fresh
-                </button>
-                <button
-                  onClick={handleRestoreDraft}
-                  className="flex-1 px-3 py-2 text-xs font-semibold bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
-                >
+                </Button>
+                <Button size="sm" className="flex-1" onClick={handleRestoreDraft}>
                   Restore Sets
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -606,13 +593,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         <div className="max-w-md mx-auto px-4 pt-4" role="alert">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-4">
             <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-3">{workoutSaveError}</p>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleComplete}
               disabled={saving}
-              className="text-sm font-semibold text-red-700 dark:text-red-300 underline underline-offset-2 disabled:opacity-50"
             >
               {saving ? 'Retrying...' : 'Try again'}
-            </button>
+            </Button>
           </div>
         </div>
       )}

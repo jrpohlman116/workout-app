@@ -3,6 +3,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { calculateWarmupSets, WarmupFeel } from '../../lib/calculations';
 import { Activity } from 'lucide-react';
+import Button from '../ui/Button';
+import IconButton from '../ui/IconButton';
+import Input from '../ui/Input';
+import Tile from '../ui/Tile';
 
 interface OneRepMaxTestProps {
   onClose: () => void;
@@ -140,13 +144,9 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
             <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Meet Day — 1RM Attempts</h2>
           </div>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl leading-none"
-            aria-label="Close"
-          >
+          <IconButton label="Close" onClick={handleClose}>
             &times;
-          </button>
+          </IconButton>
         </div>
 
         <div className="p-6 space-y-6">
@@ -160,25 +160,14 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                   const tested = profile[lift.testedMaxKey] ?? 0;
                   const tm = profile[lift.maxKey];
                   return (
-                    <button
+                    <Tile
                       key={lift.type}
                       onClick={() => handleSelectLift(lift.type)}
-                      className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors text-left"
-                    >
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</p>
-                        {tested > 0 ? (
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Best: {tested} {unit} · TM: {tm} {unit}
-                          </p>
-                        ) : (
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            TM: {tm} {unit}
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">Select →</span>
-                    </button>
+                      title={lift.name}
+                      description={tested > 0 ? `Best: ${tested} ${unit} · TM: ${tm} ${unit}` : `TM: ${tm} ${unit}`}
+                      trailing={<span className="text-blue-600 dark:text-blue-400 font-semibold text-sm flex-shrink-0">Select →</span>}
+                      className="bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-gray-600"
+                    />
                   );
                 })}
               </div>
@@ -192,9 +181,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     {LIFTS.find(l => l.type === selectedLift)!.name}
                   </p>
-                  <button onClick={() => setStep('select')} className="text-xs text-blue-600 dark:text-blue-400">
-                    Change lift
-                  </button>
+                  <Button variant="ghost" size="sm" onClick={() => setStep('select')}>← Back</Button>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <button
@@ -202,7 +189,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                     className={`p-3 rounded-xl border-2 text-left transition-colors ${
                       plannedAttempt === String(suggestedOpening)
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
+                        : 'border-gray-200 dark:border-gray-500 hover:border-blue-300'
                     }`}
                   >
                     <p className="text-xs text-gray-500 dark:text-gray-400">Opening (90%)</p>
@@ -215,7 +202,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                     className={`p-3 rounded-xl border-2 text-left transition-colors ${
                       plannedAttempt === String(suggestedSecond)
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
-                        : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
+                        : 'border-gray-200 dark:border-gray-500 hover:border-blue-300'
                     }`}
                   >
                     <p className="text-xs text-gray-500 dark:text-gray-400">Second (95%)</p>
@@ -224,19 +211,16 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                     </p>
                   </button>
                 </div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Planned attempt ({unit})
-                </label>
-                <input
+                <Input
+                  label={`Planned attempt (${unit})`}
                   type="number"
                   value={plannedAttempt}
                   onChange={e => setPlannedAttempt(e.target.value)}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               {warmup && (
-                <div className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 p-4 space-y-2">
+                <div className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-500 p-4 space-y-2">
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-3">
                     Warm-up to {planned} {unit}
                   </h3>
@@ -258,13 +242,15 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                   <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">How did the 82% set feel?</p>
                   <div className="flex gap-2">
                     {(['easy', 'good', 'bad'] as WarmupFeel[]).map(feel => (
-                      <button
+                      <Button
                         key={feel}
+                        variant="tertiary"
+                        size="sm"
                         onClick={() => setWarmupFeel(feel)}
-                        className="flex-1 py-2.5 rounded-lg font-semibold text-sm capitalize transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        className="flex-1 py-2.5 capitalize"
                       >
                         {feel.charAt(0).toUpperCase() + feel.slice(1)}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -275,7 +261,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
                     <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
                     <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
-                      {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unit} × 1</span>
+                      {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unit} × 1</span>
                     </p>
                   </div>
 
@@ -284,13 +270,15 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                       <p className="text-sm text-gray-600 dark:text-gray-300">How did the approach feel?</p>
                       <div className="flex gap-2">
                         {(['easy', 'good', 'bad'] as WarmupFeel[]).map(feel => (
-                          <button
+                          <Button
                             key={feel}
+                            variant="tertiary"
+                            size="sm"
                             onClick={() => setApproachFeel(feel)}
-                            className="flex-1 py-2.5 rounded-lg font-semibold text-sm capitalize transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                            className="flex-1 py-2.5 capitalize"
                           >
                             {feel.charAt(0).toUpperCase() + feel.slice(1)}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </>
@@ -300,7 +288,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
                       <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Suggested Opener</p>
                       <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
-                        {adjustedAttempt} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unit}</span>
+                        {adjustedAttempt} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unit}</span>
                       </p>
                       {adjustedAttempt !== planned && (
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
@@ -312,13 +300,13 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                 </div>
               )}
 
-              <button
+              <Button
+                fullWidth
                 onClick={() => setStep('attempt')}
                 disabled={!plannedAttempt || planned <= 0}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 Ready to attempt {planned > 0 ? `${planned} ${unit}` : ''}
-              </button>
+              </Button>
             </>
           )}
 
@@ -335,26 +323,28 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <button
+                <Button
+                  size="md"
                   onClick={() => setAttemptResult('success')}
-                  className={`py-5 rounded-xl font-bold text-lg transition-colors ${
+                  className={`flex-1 py-5 text-lg ${
                     attemptResult === 'success'
                       ? 'bg-green-600 text-white'
-                      : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200'
+                      : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 hover:bg-green-200'
                   }`}
                 >
                   Made it
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="md"
                   onClick={() => setAttemptResult('fail')}
-                  className={`py-5 rounded-xl font-bold text-lg transition-colors ${
+                  className={`flex-1 py-5 text-lg ${
                     attemptResult === 'fail'
                       ? 'bg-red-600 text-white'
-                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200'
+                      : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 hover:bg-red-200'
                   }`}
                 >
                   Missed
-                </button>
+                </Button>
               </div>
 
               <div>
@@ -366,24 +356,27 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
                   onChange={e => setNotes(e.target.value)}
                   rows={2}
                   placeholder="How did it feel? What broke down?"
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-500 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
                 />
               </div>
 
               <div className="flex gap-3">
-                <button
+                <Button
+                  variant="secondary"
+                  size="md"
+                  className="flex-1"
                   onClick={() => setStep('warmup')}
-                  className="flex-1 py-3 rounded-xl font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Back
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="md"
+                  className="flex-1"
                   onClick={handleSave}
                   disabled={!attemptResult || saving}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
                   {saving ? 'Saving...' : 'Save attempt'}
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -406,18 +399,19 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
               </div>
 
               <div className="flex flex-col gap-3">
-                <button
+                <Button
+                  fullWidth
                   onClick={handleLogAnother}
-                  className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
                 >
                   Log another attempt
-                </button>
-                <button
+                </Button>
+                <Button
+                  fullWidth
+                  variant="secondary"
                   onClick={() => { onComplete(); handleClose(); }}
-                  className="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
                 >
                   Done for today
-                </button>
+                </Button>
               </div>
             </div>
           )}

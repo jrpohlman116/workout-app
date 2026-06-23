@@ -4,6 +4,8 @@ import AccessibleModal from '../accessible/AccessibleModal';
 import { supabase } from '../../lib/supabase';
 import { ExerciseSubstitution } from '../../lib/supabase';
 import { Exercise } from '../../pages/WorkoutDetail/types';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
 
 interface ExerciseSubstitutionModalProps {
   isOpen: boolean;
@@ -81,11 +83,11 @@ export default function ExerciseSubstitutionModal({
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easier':
-        return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30';
+        return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
       case 'harder':
-        return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
+        return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
       default:
-        return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30';
+        return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20';
     }
   };
 
@@ -122,23 +124,21 @@ export default function ExerciseSubstitutionModal({
     >
       <div className="space-y-4">
         <div className="relative">
-          <label htmlFor="exercise-search" className="sr-only">
-            Search exercises
-          </label>
           <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5"
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-400 w-5 h-5 pointer-events-none"
             aria-hidden="true"
           />
-          <input
+          <Input
             ref={searchInputRef}
             id="exercise-search"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search for an exercise..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+            className="pl-10 pr-4"
             role="searchbox"
             aria-autocomplete="list"
+            aria-label="Search exercises"
           />
         </div>
 
@@ -209,7 +209,7 @@ export default function ExerciseSubstitutionModal({
                             <p className="text-sm text-gray-600 dark:text-gray-300">
                               {exercise.sets} sets × {exercise.reps} reps
                               {exercise.isBodyweight && (
-                                <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
+                                <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
                                   Bodyweight
                                 </span>
                               )}
@@ -289,7 +289,7 @@ export default function ExerciseSubstitutionModal({
             <p className="text-gray-600 dark:text-gray-400">
               No recommended substitutions available.
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
               Use the search above to find an exercise.
             </p>
           </div>
@@ -297,21 +297,24 @@ export default function ExerciseSubstitutionModal({
         </div>
 
         <div className="flex gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="md"
+            className="flex-1"
             onClick={handleCancel}
-            className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            size="md"
+            className="flex-1"
             onClick={handleConfirm}
             disabled={!selectedSubstitution}
-            className="flex-1 px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           >
             Confirm Substitution
-          </button>
+          </Button>
         </div>
       </div>
     </AccessibleModal>

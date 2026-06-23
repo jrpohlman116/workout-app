@@ -13,6 +13,8 @@ import type { AccessoryExercise, ProgressTab as Tab, MeetGroup } from '../../lib
 import * as utils from './utils';
 import { formatDate, calculateStrengthScores } from './utils';
 import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import { Plus } from 'lucide-react';
 import PageHeader from '../../components/ui/PageHeader';
 import SectionLabel from '../../components/ui/SectionLabel';
 
@@ -217,7 +219,7 @@ export default function ProgressPage() {
 
             <Card className="p-6">
               <SectionLabel className="mb-1">Estimated 1RM Over Time</SectionLabel>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">AMAP sets, realization weeks only</p>
+              <p className="text-xs text-gray-400 dark:text-gray-400 mb-4">AMAP sets, realization weeks only</p>
               {nonDeloadSessions.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-600 dark:text-gray-300 mb-2">Complete your first workout to see progress</p>
@@ -272,33 +274,33 @@ export default function ProgressPage() {
                   <SectionLabel className="mb-4">{lift.displayName}</SectionLabel>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Best Set</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-400 mb-2">Best Set</p>
                       {bestSession ? (
                         <>
                           <div className="flex items-baseline gap-1 mb-0.5">
                             <span className="text-3xl font-black tabular-nums text-gray-900 dark:text-gray-100">{bestSession.weight_lifted}</span>
-                            <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{unit} × {bestSession.reps_performed}</span>
+                            <span className="text-xs font-medium text-gray-400 dark:text-gray-400">{unit} × {bestSession.reps_performed}</span>
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">Est. 1RM {Math.round(bestSession.calculated_1rm)} {unit}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{formatDate(bestSession.completed_at)}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-400 mt-1">{formatDate(bestSession.completed_at)}</p>
                         </>
                       ) : (
-                        <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-400">No data yet</p>
                       )}
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Best Volume</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-400 mb-2">Best Volume</p>
                       {bestVolume ? (
                         <>
                           <div className="flex items-baseline gap-1 mb-0.5">
                             <span className="text-3xl font-black tabular-nums text-gray-900 dark:text-gray-100">{bestVolume.tonnage.toLocaleString()}</span>
-                            <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{unit}</span>
+                            <span className="text-xs font-medium text-gray-400 dark:text-gray-400">{unit}</span>
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{bestVolume.session.weight_lifted} × {bestVolume.session.reps_performed}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{formatDate(bestVolume.session.completed_at)}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-400 mt-1">{formatDate(bestVolume.session.completed_at)}</p>
                         </>
                       ) : (
-                        <p className="text-sm text-gray-400 dark:text-gray-500">No data yet</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-400">No data yet</p>
                       )}
                     </div>
                   </div>
@@ -340,12 +342,14 @@ export default function ProgressPage() {
           <div className="space-y-4 animate-enter">
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-widest font-semibold text-white/70">Meet History</p>
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Plus className="w-3.5 h-3.5" />}
                 onClick={() => setShowPastMeetModal(true)}
-                className="text-xs font-semibold bg-white/15 hover:bg-white/25 text-white px-3 py-1.5 rounded-lg transition-colors"
               >
-                + Log Past Meet
-              </button>
+                Log Past Meet
+              </Button>
             </div>
 
             {(() => {
@@ -408,12 +412,12 @@ export default function ProgressPage() {
                       </div>
                       {meet.total !== null && (
                         <div className="text-right">
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Total</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-400 mb-0.5">Total</p>
                           <div className="flex items-baseline gap-1">
                             <span className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
                               {meet.total.toLocaleString()}
                             </span>
-                            <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{unit}</span>
+                            <span className="text-xs font-medium text-gray-400 dark:text-gray-400">{unit}</span>
                           </div>
                         </div>
                       )}
@@ -423,12 +427,12 @@ export default function ProgressPage() {
                     <div className="grid grid-cols-3 gap-3 mb-5">
                       {(['squat', 'bench', 'deadlift'] as const).map(lift => (
                         <div key={lift}>
-                          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
+                          <p className="text-xs font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-2">
                             {liftLabels[lift]}
                           </p>
                           <div className="space-y-1.5">
                             {meet.attemptsByLift[lift].length === 0 && (
-                              <p className="text-xs text-gray-300 dark:text-gray-600">—</p>
+                              <p className="text-xs text-gray-300 dark:text-gray-400">—</p>
                             )}
                             {meet.attemptsByLift[lift].map(attempt => {
                               const made = attempt.reps_performed > 0;
@@ -443,12 +447,12 @@ export default function ProgressPage() {
                                     className={`text-sm tabular-nums ${
                                       made
                                         ? 'font-bold text-gray-900 dark:text-gray-100'
-                                        : 'font-medium text-gray-400 dark:text-gray-500 line-through'
+                                        : 'font-medium text-gray-400 dark:text-gray-400 line-through'
                                     }`}
                                   >
                                     {attempt.weight_lifted}
                                   </span>
-                                  <span className="text-xs text-gray-400 dark:text-gray-500">{unit}</span>
+                                  <span className="text-xs text-gray-400 dark:text-gray-400">{unit}</span>
                                 </div>
                               );
                             })}
@@ -459,7 +463,7 @@ export default function ProgressPage() {
 
                     {/* Partial total note */}
                     {meet.total === null && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+                      <p className="text-xs text-gray-400 dark:text-gray-400 mb-4">
                         Partial meet — total requires at least one made attempt on each lift.
                       </p>
                     )}
@@ -473,7 +477,7 @@ export default function ProgressPage() {
                           { label: 'IPF-GL', value: meetScores.ipfgl },
                         ].map(score => (
                           <div key={score.label} className="text-center">
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{score.label}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-400 mb-0.5">{score.label}</p>
                             <p className="text-lg font-black tabular-nums text-gray-900 dark:text-gray-100">
                               {score.value.toFixed(1)}
                             </p>

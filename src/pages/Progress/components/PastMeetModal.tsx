@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
 import AccessibleModal from '../../../components/accessible/AccessibleModal';
+import Button from '../../../components/ui/Button';
+import Input from '../../../components/ui/Input';
+import IconButton from '../../../components/ui/IconButton';
 
 interface AttemptRow {
   weight: string;
@@ -154,18 +157,15 @@ export default function PastMeetModal({ isOpen, onClose, onSaved, unitPreference
         {/* Date + unit toggle */}
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Meet date
-            </label>
-            <input
+            <Input
+              label="Meet date"
               type="date"
               value={meetDate}
               onChange={e => setMeetDate(e.target.value)}
               max={new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <div className="flex rounded-xl border border-gray-300 dark:border-gray-600 overflow-hidden flex-shrink-0">
+          <div className="flex rounded-xl border border-gray-300 dark:border-gray-500 overflow-hidden flex-shrink-0">
             {(['lb', 'kg'] as const).map(u => (
               <button
                 key={u}
@@ -174,7 +174,7 @@ export default function PastMeetModal({ isOpen, onClose, onSaved, unitPreference
                 className={`px-4 py-3 text-sm font-semibold transition-colors ${
                   unit === u
                     ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-                    : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                 }`}
               >
                 {u}
@@ -193,7 +193,7 @@ export default function PastMeetModal({ isOpen, onClose, onSaved, unitPreference
               {attempts[key].map((attempt, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   {/* Attempt number */}
-                  <span className="text-xs text-gray-400 dark:text-gray-500 w-4 text-right flex-shrink-0">
+                  <span className="text-xs text-gray-400 dark:text-gray-400 w-4 text-right flex-shrink-0">
                     {idx + 1}
                   </span>
 
@@ -206,49 +206,53 @@ export default function PastMeetModal({ isOpen, onClose, onSaved, unitPreference
                       placeholder="Weight"
                       min="0"
                       step="0.5"
-                      className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-500 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500 pointer-events-none">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-400 pointer-events-none">
                       {unit}
                     </span>
                   </div>
 
                   {/* Made / Missed toggle */}
-                  <button
+                  <Button
                     type="button"
+                    size="sm"
                     onClick={() => updateAttempt(key, idx, 'made', !attempt.made)}
-                    className={`flex-shrink-0 px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors ${
+                    className={`flex-shrink-0 px-3 py-2.5 text-xs ${
                       attempt.made
-                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                        : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                        ? 'bg-emerald-500 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                        : 'bg-red-500 dark:bg-red-900/20 text-red-600 dark:text-red-400'
                     }`}
                   >
                     {attempt.made ? 'Made' : 'Miss'}
-                  </button>
+                  </Button>
 
                   {/* Remove row (only if more than 1 row) */}
                   {attempts[key].length > 1 && (
-                    <button
+                    <IconButton
+                      label="Remove attempt"
+                      variant="danger"
+                      size="sm"
                       type="button"
                       onClick={() => removeAttempt(key, idx)}
-                      className="flex-shrink-0 text-gray-300 dark:text-gray-600 hover:text-red-400 dark:hover:text-red-400 transition-colors text-lg leading-none"
-                      aria-label="Remove attempt"
                     >
                       ×
-                    </button>
+                    </IconButton>
                   )}
                 </div>
               ))}
             </div>
 
             {attempts[key].length < MAX_ATTEMPTS && (
-              <button
+              <Button
                 type="button"
+                variant="tertiary"
+                size="sm"
                 onClick={() => addAttempt(key)}
-                className="mt-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                className="mt-2 text-xs text-blue-600 dark:text-blue-400"
               >
                 + Add attempt
-              </button>
+              </Button>
             )}
           </div>
         ))}
@@ -258,20 +262,23 @@ export default function PastMeetModal({ isOpen, onClose, onSaved, unitPreference
         )}
 
         <div className="flex gap-3 pt-1">
-          <button
+          <Button
+            variant="secondary"
+            size="md"
+            className="flex-1"
             onClick={handleClose}
             disabled={saving}
-            className="flex-1 py-3 rounded-xl font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            size="md"
+            className="flex-1"
             onClick={handleSave}
             disabled={saving || !meetDate}
-            className="flex-1 py-3 rounded-xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save Meet'}
-          </button>
+          </Button>
         </div>
       </div>
     </AccessibleModal>

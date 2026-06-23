@@ -7,6 +7,8 @@ import { AnimationControls } from '../../../components/accessible/ReducedMotionW
 import Card from '../../../components/ui/Card';
 import AccessibleModal from '../../../components/accessible/AccessibleModal';
 import Button from '../../../components/ui/Button';
+import Input from '../../../components/ui/Input';
+import IconButton from '../../../components/ui/IconButton';
 
 export default function SecurityTab() {
   const { profile, user } = useAuth();
@@ -101,10 +103,13 @@ export default function SecurityTab() {
     <div className="space-y-4 animate-enter">
       <Card className="p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Appearance</h2>
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="md"
+          fullWidth
           onClick={toggleDarkMode}
-          className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="flex items-center justify-between border border-gray-300 dark:border-gray-500"
         >
           <div className="flex items-center gap-3">
             {isDarkMode
@@ -118,7 +123,7 @@ export default function SecurityTab() {
           <span className="text-sm text-gray-500 dark:text-gray-300">
             {isDarkMode ? 'On' : 'Off'}
           </span>
-        </button>
+        </Button>
       </Card>
 
       <AnimationControls
@@ -132,24 +137,22 @@ export default function SecurityTab() {
             ['Password', password, setPassword, showPassword, setShowPassword],
             ['Confirm Password', confirmPassword, setConfirmPassword, showConfirmPassword, setShowConfirmPassword],
           ] as const).map(([label, value, setter, show, setShow]) => (
-            <div key={label}>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                {label}
-              </label>
-              <div className="relative">
-                <input
-                  type={show ? 'text' : 'password'}
-                  value={value}
-                  onChange={e => setter(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-                />
-                <button
+            <div key={label} className="relative">
+              <Input
+                label={label}
+                type={show ? 'text' : 'password'}
+                value={value}
+                onChange={e => setter(e.target.value)}
+                className="pr-12"
+              />
+              <div className="absolute right-2 bottom-1">
+                <IconButton
+                  label={show ? 'Hide password' : 'Show password'}
                   type="button"
                   onClick={() => setShow(!show)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   {show ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+                </IconButton>
               </div>
             </div>
           ))}
@@ -165,21 +168,25 @@ export default function SecurityTab() {
         </form>
       </Card>
 
-      <button
+      <Button
+        variant="secondary"
+        size="lg"
+        fullWidth
+        icon={<LogOut className="w-5 h-5" />}
         onClick={() => setShowSignOutModal(true)}
-        className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 py-4 rounded-2xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
       >
-        <LogOut className="w-5 h-5" />
         Sign Out
-      </button>
+      </Button>
 
-      <button
+      <Button
+        variant="danger"
+        size="lg"
+        fullWidth
+        icon={<Trash2 className="w-5 h-5" />}
         onClick={() => setShowDeleteModal(true)}
-        className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-red-500 dark:text-red-400 py-4 rounded-2xl font-semibold hover:bg-red-50 dark:hover:bg-gray-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
       >
-        <Trash2 className="w-5 h-5" />
         Delete Account
-      </button>
+      </Button>
 
       <p className="text-center text-sm text-white/40">Last updated: {lastUpdated}</p>
 
@@ -240,7 +247,7 @@ export default function SecurityTab() {
               spellCheck={false}
               maxLength={10}
               aria-describedby="delete-confirm-hint"
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono"
             />
             <p id="delete-confirm-hint" className="sr-only">
               Type the word DELETE in capital letters to enable the delete button.

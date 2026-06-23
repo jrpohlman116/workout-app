@@ -41,14 +41,14 @@ export default function WorkoutSuccessModal({
               <div className="text-left">
                 <SectionLabel tone="page" className="mb-2">Estimated Max</SectionLabel>
                 <p className="text-7xl font-black text-gray-900 dark:text-gray-100 leading-none tabular-nums">
-                  {Math.round(estimated1RM)}<span className="text-2xl font-semibold text-gray-400 dark:text-gray-500 ml-2">{unitPreference}</span>
+                  {Math.round(estimated1RM)}<span className="text-2xl font-semibold text-gray-400 dark:text-gray-400 ml-2">{unitPreference}</span>
                 </p>
               </div>
 
               <div className="text-left pt-4 border-t border-gray-100 dark:border-gray-700">
                 <SectionLabel tone="page" className="mb-1">Tonnage</SectionLabel>
                 <p className="text-3xl font-bold text-gray-700 dark:text-gray-300 tabular-nums">
-                  {totalTonnage.toLocaleString()}<span className="text-base font-medium text-gray-400 dark:text-gray-500 ml-2">{unitPreference}</span>
+                  {totalTonnage.toLocaleString()}<span className="text-base font-medium text-gray-400 dark:text-gray-400 ml-2">{unitPreference}</span>
                 </p>
               </div>
             </div>
@@ -56,12 +56,14 @@ export default function WorkoutSuccessModal({
             <div className="space-y-3">
               <Button fullWidth onClick={onClose}>View Progress</Button>
               {onSetAsMax && estimated1RM > 0 && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="md"
+                  fullWidth
                   onClick={async () => { await onSetAsMax(); onClose(); }}
-                  className="w-full py-3 text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 >
                   Set {Math.round(estimated1RM)} {unitPreference} as new max
-                </button>
+                </Button>
               )}
             </div>
           </div>

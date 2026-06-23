@@ -1,6 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { WavePhase, RepWave } from '../../../lib/calculations';
 import { WAVE_LABELS, PHASE_LABELS, PHASE_DESCRIPTIONS } from '../../../lib/constants';
+import IconButton from '../../../components/ui/IconButton';
 
 interface WorkoutHeaderProps {
   liftName: string;
@@ -27,13 +28,13 @@ export default function WorkoutHeader({ liftName, wave, phase, peakWeek, totalPe
 
   return (
     <div className="max-w-md mx-auto px-4 pt-8 pb-6">
-      <button onClick={onBack} className="mb-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-        <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-      </button>
+      <IconButton label="Go back" onClick={onBack} className="mb-4">
+        <ArrowLeft className="w-6 h-6" aria-hidden="true" />
+      </IconButton>
       <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1 animate-slide-in-left">{liftName} Day</h1>
       {subtitle && <p className="text-gray-600 dark:text-gray-300">{subtitle}</p>}
       {phase && PHASE_DESCRIPTIONS[phase] && (
-        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{PHASE_DESCRIPTIONS[phase]}</p>
+        <p className="text-sm text-gray-400 dark:text-gray-400 mt-1">{PHASE_DESCRIPTIONS[phase]}</p>
       )}
     </div>
   );

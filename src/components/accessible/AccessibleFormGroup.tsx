@@ -1,4 +1,6 @@
 import { ReactNode } from 'react';
+import Button from '../../components/ui/Button';
+import IconButton from '../../components/ui/IconButton';
 import { Trash2, Plus } from 'lucide-react';
 import type { SetInput } from '../../lib/types';
 
@@ -97,7 +99,7 @@ export default function AccessibleFormGroup({
               <span id={`${setId}-label`} className="sr-only">Set {setNumber} of {sets.length}</span>
               <span
                 aria-hidden="true"
-                className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400 flex-shrink-0 tabular-nums select-none"
+                className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-300 flex-shrink-0 tabular-nums select-none"
               >
                 {setNumber}
               </span>
@@ -109,7 +111,7 @@ export default function AccessibleFormGroup({
                   value={set.reps}
                   onChange={(e) => onUpdateSet(index, 'reps', e.target.value)}
                   placeholder={repsPlaceholder}
-                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
                   aria-label={`Set ${setNumber}: ${repsLabel}`}
                   min="0"
                 />
@@ -121,7 +123,7 @@ export default function AccessibleFormGroup({
                     value={set.reps}
                     onChange={(e) => onUpdateSet(index, 'reps', e.target.value)}
                     placeholder={repsPlaceholder}
-                    className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+                    className="px-4 py-3 border border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
                     aria-label={`Set ${setNumber}: ${repsLabel}`}
                     min="0"
                   />
@@ -132,7 +134,7 @@ export default function AccessibleFormGroup({
                     value={set.weight}
                     onChange={(e) => onUpdateSet(index, 'weight', e.target.value)}
                     placeholder={weightPlaceholder}
-                    className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+                    className="px-4 py-3 border border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
                     aria-label={`Set ${setNumber}: ${weightLabel} in ${weightUnit}`}
                     min="0"
                   />
@@ -140,14 +142,14 @@ export default function AccessibleFormGroup({
               )}
 
               {canRemoveSet && (
-                <button
-                  type="button"
+                <IconButton
+                  label={`Remove set ${setNumber}`}
+                  variant="danger"
+                  className="p-3"
                   onClick={() => onRemoveSet(index)}
-                  className="p-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400"
-                  aria-label={`Remove set ${setNumber}`}
                 >
-                  <Trash2 className="w-5 h-5" aria-hidden="true" />
-                </button>
+                  <Trash2 className="w-5 h-5" />
+                </IconButton>
               )}
             </div>
           );
@@ -155,16 +157,18 @@ export default function AccessibleFormGroup({
       </div>
 
       {canAddSet && (
-        <button
+        <Button
           type="button"
+          variant="dashed"
+          size="md"
+          fullWidth
+          icon={<Plus className="w-5 h-5" />}
           onClick={onAddSet}
           disabled={!canAddSet}
-          className="w-full flex items-center justify-center gap-2 py-3 text-blue-600 dark:text-blue-400 border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           aria-label={`Add another set (${sets.length} of ${maxSets} sets used)`}
         >
-          <Plus className="w-5 h-5" aria-hidden="true" />
-          <span className="font-medium">Add Set</span>
-        </button>
+          Add Set
+        </Button>
       )}
 
       {!canAddSet && (

@@ -8,6 +8,7 @@ import AddExerciseModal from '../../../components/features/AddExerciseModal';
 import ExerciseSubstitutionModal from '../../../components/features/ExerciseSubstitutionModal';
 import AccessibleModal from '../../../components/accessible/AccessibleModal';
 import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
 
 interface WorkoutSummaryViewProps {
   mainConfig: JuggernautSetsConfig | null;
@@ -166,7 +167,7 @@ export default function WorkoutSummaryView({
             )}
           </div>
           {phase && (
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-500 mb-4">
+            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-400 mb-4">
               {PHASE_DETAIL_LABELS[phase as keyof typeof PHASE_DETAIL_LABELS] ?? phase}
             </p>
           )}
@@ -178,17 +179,17 @@ export default function WorkoutSummaryView({
                   : `${mainConfig.numSets} sets × ${mainConfig.reps}`}
               </p>
               {mainConfig.isAmap && (
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Push for max reps after warm-ups</p>
+                <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">Push for max reps after warm-ups</p>
               )}
               {phase === 'deload' && (
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Easy effort, no grinding</p>
+                <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">Easy effort, no grinding</p>
               )}
             </div>
             <div className="text-right">
               <p className="text-3xl font-black tabular-nums text-gray-900 dark:text-gray-100 leading-none">
                 {mainConfig.weight}
               </p>
-              <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-1">
+              <p className="text-xs font-medium text-gray-400 dark:text-gray-400 mt-1">
                 {unitPreference}{mainConfig.isAmap ? ` × ${mainConfig.reps}+` : ''}
               </p>
             </div>
@@ -200,15 +201,17 @@ export default function WorkoutSummaryView({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Accessory Exercises</h2>
           {canEdit && !isEditMode && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2 px-3 py-2.5"
               onClick={handleEnterEditMode}
-              className="flex items-center gap-2 px-3 py-2.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               aria-label="Edit accessory exercises. Press Enter or Space to activate."
             >
               <Edit2 className="w-4 h-4" aria-hidden="true" />
               <span className="text-sm font-medium">Edit</span>
-            </button>
+            </Button>
           )}
         </div>
 
@@ -232,50 +235,57 @@ export default function WorkoutSummaryView({
             />
 
             {editedExercises.length < MAX_ACCESSORY_EXERCISES && (
-              <button
+              <Button
                 type="button"
+                variant="dashed"
+                size="md"
+                fullWidth
+                icon={<Plus className="w-5 h-5" />}
                 onClick={() => setShowAddExerciseModal(true)}
-                className="w-full flex items-center justify-center gap-2 py-3 mt-4 text-blue-600 dark:text-blue-400 border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 aria-label={`Add exercise. ${editedExercises.length} of ${MAX_ACCESSORY_EXERCISES} slots used.`}
+                className="mt-4"
               >
-                <Plus className="w-5 h-5" aria-hidden="true" />
-                <span className="font-medium">Add Exercise</span>
-              </button>
+                Add Exercise
+              </Button>
             )}
 
             <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="md"
                 onClick={handleResetToDefault}
                 disabled={isSaving}
-                className="flex items-center gap-2 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400"
                 aria-label="Reset to default exercises"
               >
-                <RotateCcw className="w-4 h-4" aria-hidden="true" />
-                <span className="text-sm font-medium">Reset</span>
-              </button>
+                <RotateCcw className="w-4 h-4 inline mr-2" aria-hidden="true" />
+                Reset
+              </Button>
 
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="md"
+                className="flex-1"
                 onClick={handleCancelEdit}
                 disabled={isSaving}
-                className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400"
                 aria-label="Cancel editing. Press Escape as shortcut."
               >
                 <X className="w-4 h-4 inline mr-2" aria-hidden="true" />
                 Cancel
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
+                size="md"
+                className="flex-1"
                 onClick={handleSaveChanges}
                 disabled={isSaving || editedExercises.length === 0}
-                className="flex-1 px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 aria-label="Save changes. Press Ctrl+S or Cmd+S as shortcut."
               >
                 <Save className="w-4 h-4 inline mr-2" aria-hidden="true" />
                 {isSaving ? 'Saving...' : 'Save'}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -291,12 +301,14 @@ export default function WorkoutSummaryView({
       </Card>
 
       {!isEditMode && (
-        <button
+        <Button
+          variant="secondary"
+          fullWidth
           onClick={onStartWorkout}
-          className="w-full bg-white text-gray-900 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
+          className="focus:ring-white focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
         >
           Start Workout
-        </button>
+        </Button>
       )}
 
       {showAddExerciseModal && (
@@ -331,20 +343,23 @@ export default function WorkoutSummaryView({
           This replaces your customized exercise list with the default template. This cannot be undone.
         </p>
         <div className="flex gap-3">
-          <button
+          <Button
+            variant="secondary"
+            size="md"
+            className="flex-1"
             onClick={() => setShowResetModal(false)}
             disabled={isSaving}
-            className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            size="md"
+            className="flex-1"
             onClick={handleConfirmReset}
             disabled={isSaving}
-            className="flex-1 px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50"
           >
             Reset to Default
-          </button>
+          </Button>
         </div>
       </AccessibleModal>
     </div>

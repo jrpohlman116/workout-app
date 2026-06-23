@@ -3,6 +3,7 @@ import AccessibleFormGroup from '../../../components/accessible/AccessibleFormGr
 import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets } from '../../../lib/calculations';
 import { SetInput } from '../../../lib/types';
 import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
 
 interface MainLiftViewProps {
   liftName: string;
@@ -96,13 +97,15 @@ export default function MainLiftView({
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">How did the 82% set feel?</p>
               <div className="flex gap-2">
                 {(['easy', 'good', 'bad'] as WarmupFeel[]).map(feel => (
-                  <button
+                  <Button
                     key={feel}
+                    variant="tertiary"
+                    size="sm"
                     onClick={() => setSet4Feel(feel)}
-                    className="flex-1 py-2.5 rounded-lg font-semibold text-sm capitalize transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    className="flex-1 py-2.5 capitalize"
                   >
                     {feel.charAt(0).toUpperCase() + feel.slice(1)}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -114,7 +117,7 @@ export default function MainLiftView({
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
                 <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
                 <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
-                  {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unitPreference} × 1</span>
+                  {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference} × 1</span>
                 </p>
               </div>
 
@@ -123,18 +126,20 @@ export default function MainLiftView({
                   <p className="text-sm text-gray-600 dark:text-gray-300">How did the approach feel?</p>
                   <div className="flex gap-2">
                     {(['easy', 'good', 'bad'] as WarmupFeel[]).map(feel => (
-                      <button
+                      <Button
                         key={feel}
+                        variant="tertiary"
+                        size="sm"
                         onClick={() => {
                           setSet5Feel(feel);
                           if (warmup) {
                             onWorkingWeightAdjust?.(warmup.getAdjustedWorkingWeight(set4Feel, feel));
                           }
                         }}
-                        className="flex-1 py-2.5 rounded-lg font-semibold text-sm capitalize transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        className="flex-1 py-2.5 capitalize"
                       >
                         {feel.charAt(0).toUpperCase() + feel.slice(1)}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </>
@@ -145,7 +150,7 @@ export default function MainLiftView({
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
                   <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Your Working Weight</p>
                   <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
-                    {adjustedWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unitPreference}</span>
+                    {adjustedWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span>
                   </p>
                   {adjustedWeight !== warmupBase && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
@@ -206,7 +211,7 @@ export default function MainLiftView({
             ))}
           </div>
 
-          <div className="text-xs text-gray-400 dark:text-gray-500 flex justify-between px-1">
+          <div className="text-xs text-gray-400 dark:text-gray-400 flex justify-between px-1">
             {selectedRpe !== null ? (
               <span className="tabular-nums">RPE {selectedRpe} — {RPE_DESCRIPTIONS[selectedRpe]}</span>
             ) : (
@@ -221,7 +226,7 @@ export default function MainLiftView({
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
               <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Back-off Sets</p>
               <p className="text-xl font-black tabular-nums text-gray-900 dark:text-gray-100">
-                {backoff.sets} × {backoff.reps} @ {backoff.weight} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unitPreference}</span>
+                {backoff.sets} × {backoff.reps} @ {backoff.weight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span>
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 RPE {selectedRpe} · {Math.round((1 - backoff.weight / topSetWeight) * 100)}% drop from top set
@@ -231,12 +236,12 @@ export default function MainLiftView({
         </Card>
       )}
 
-      <button
+      <Button
+        fullWidth
         onClick={onNext}
-        className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-500 dark:hover:bg-blue-400 active:bg-blue-700 dark:active:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
       >
         Next: {nextExerciseName}
-      </button>
+      </Button>
     </div>
   );
 }

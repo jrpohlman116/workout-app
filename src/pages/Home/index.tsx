@@ -11,6 +11,8 @@ import WaveScheduleChart from '../Progress/components/WaveScheduleChart';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import PageHeader from '../../components/ui/PageHeader';
+import IconButton from '../../components/ui/IconButton';
+import Tile from '../../components/ui/Tile';
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -207,19 +209,19 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <Card className="p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">Wave</p>
-              <button
+              <IconButton
+                size="sm"
+                label="About this phase"
                 onClick={() => setShowPhaseInfo(v => !v)}
-                aria-label="About this phase"
-                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
-                <Info className="w-3.5 h-3.5" />
-              </button>
+                <Info className="w-3.5 h-3.5" aria-hidden="true" />
+              </IconButton>
             </div>
             <div className="mb-2">
               <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
                 {displayWave}
               </span>
-              <span className="text-sm font-semibold text-gray-400 dark:text-gray-500 ml-1">rep</span>
+              <span className="text-sm font-semibold text-gray-400 dark:text-gray-400 ml-1">rep</span>
             </div>
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
               {PHASE_LABELS[displayPhase]}
@@ -239,7 +241,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
                     {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))}
                   </span>
-                  <span className="text-xl font-semibold text-gray-400 dark:text-gray-500 ml-0.5">d</span>
+                  <span className="text-xl font-semibold text-gray-400 dark:text-gray-400 ml-0.5">d</span>
                 </div>
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                   {PHASE_LABELS[displayPhase]}
@@ -252,7 +254,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
                     {currentBlock ? currentBlock.weekIndex + 1 : profile.current_week}
                   </span>
-                  <span className="text-sm font-semibold text-gray-400 dark:text-gray-500 ml-1">of 4</span>
+                  <span className="text-sm font-semibold text-gray-400 dark:text-gray-400 ml-1">of 4</span>
                 </div>
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                   {PHASE_LABELS[displayPhase]}
@@ -263,38 +265,34 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </div>
 
         {isMeetDay && (
-          <button
+          <Tile
             onClick={() => setShowOneRMTest(true)}
-            className="w-full bg-white text-blue-700 rounded-2xl shadow-sm p-6 hover:bg-blue-50 transition-colors hover-lift focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
-          >
-            <div className="flex items-center gap-4">
+            title="Meet Day — Log Attempts"
+            description="Guided warm-up and attempt logging for your lifts"
+            leading={
               <div className="bg-blue-50 rounded-full p-3">
-                <Activity className="w-6 h-6" />
+                <Activity className="w-6 h-6 text-blue-700" />
               </div>
-              <div className="text-left flex-1">
-                <p className="font-bold text-lg mb-1">Meet Day — Log Attempts</p>
-                <p className="text-sm text-blue-500">Guided warm-up and attempt logging for your lifts</p>
-              </div>
-              <ChevronRight className="w-6 h-6" />
-            </div>
-          </button>
+            }
+            trailing={<ChevronRight className="w-6 h-6 flex-shrink-0" />}
+            className="bg-white text-blue-700 rounded-2xl shadow-sm p-6 hover:bg-blue-50 hover-lift focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
+          />
         )}
 
         {/* Week navigator */}
         <Card className="px-4 py-3 flex items-center justify-between">
-          <button
+          <IconButton
+            label="Previous week"
             onClick={() => setWeekOffset(o => o - 1)}
             disabled={!canGoBack}
-            aria-label="Previous week"
-            className="p-2 rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
           >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+            <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+          </IconButton>
           <div className="text-center">
             <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
               {displayWave}-Rep {PHASE_LABELS[displayPhase]}
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
               {isViewing
                 ? weekOffset > 0
                   ? `${weekOffset} week${weekOffset !== 1 ? 's' : ''} ahead`
@@ -302,21 +300,20 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 : 'Current week'}
             </p>
           </div>
-          <button
+          <IconButton
+            label="Next week"
             onClick={() => setWeekOffset(o => o + 1)}
             disabled={!canGoForward}
-            aria-label="Next week"
-            className="p-2 rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
           >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+            <ChevronRight className="w-5 h-5" aria-hidden="true" />
+          </IconButton>
         </Card>
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Workouts</h2>
             {isViewing && (
-              <span className="text-xs font-semibold text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-full">
+              <span className="text-xs font-semibold text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full">
                 Preview
               </span>
             )}
@@ -345,8 +342,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               const weightLow = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo : null;
               const weightHigh = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo : null;
 
+              const trailing = !isViewing && isCompleted
+                ? <Check className="w-5 h-5 text-green-500 dark:text-green-400 flex-shrink-0" />
+                : !isViewing
+                  ? <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-300 flex-shrink-0" />
+                  : null;
+
               return (
-                <button
+                <Tile
                   key={workout.type}
                   onClick={(e) => {
                     if (isViewing) return;
@@ -354,45 +357,39 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     onNavigate('workout', workout.type);
                   }}
                   style={{ animationDelay: `${160 + index * 40}ms` }}
-                  className={`w-full flex items-center gap-4 p-4 rounded-xl transition-colors animate-enter ${
+                  className={`animate-enter ${
                     isViewing
                       ? 'bg-gray-50 dark:bg-gray-700 cursor-default'
                       : isCompleted
                         ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 hover-scale active-press ripple-container'
                         : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 hover-scale active-press ripple-container'
                   }`}
+                  leading={
+                    <span className="w-7 text-center font-mono text-sm font-bold text-gray-300 dark:text-gray-300 select-none">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  }
+                  trailing={trailing}
                 >
-                  <span className="w-7 text-center font-mono text-sm font-bold text-gray-300 dark:text-gray-600 flex-shrink-0 select-none">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className={`text-xs uppercase tracking-widest font-semibold mb-0.5 ${
-                      !isViewing && isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
-                    }`}>
-                      {workout.name}
+                  <p className={`text-xs uppercase tracking-widest font-semibold mb-0.5 ${
+                    !isViewing && isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'
+                  }`}>
+                    {workout.name}
+                  </p>
+                  {!isViewing && isCompleted ? (
+                    <p className="text-sm font-semibold text-green-700 dark:text-green-300 tabular-nums">
+                      {projected1RM ? `${Math.round(projected1RM)} ${unit} proj.` : 'Done'}
                     </p>
-                    {!isViewing && isCompleted ? (
-                      <p className="text-sm font-semibold text-green-700 dark:text-green-300 tabular-nums">
-                        {projected1RM ? `${Math.round(projected1RM)} ${unit} proj.` : 'Done'}
-                      </p>
-                    ) : isUpperDayWorkout ? (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Accessory work</p>
-                    ) : weightLow !== null && weightHigh !== null ? (
-                      <p className="text-xl font-black tabular-nums leading-tight text-gray-900 dark:text-gray-100">
-                        {weightLow}–{weightHigh} <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unit}</span>
-                      </p>
-                    ) : (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">—</p>
-                    )}
-                  </div>
-                  <div className="flex-shrink-0">
-                    {!isViewing && isCompleted ? (
-                      <Check className="w-5 h-5 text-green-500 dark:text-green-400" />
-                    ) : !isViewing ? (
-                      <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />
-                    ) : null}
-                  </div>
-                </button>
+                  ) : isUpperDayWorkout ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-300">Accessory work</p>
+                  ) : weightLow !== null && weightHigh !== null ? (
+                    <p className="text-xl font-black tabular-nums leading-tight text-gray-900 dark:text-gray-100">
+                      {weightLow}–{weightHigh} <span className="text-sm font-medium text-gray-400 dark:text-gray-300">{unit}</span>
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-300">—</p>
+                  )}
+                </Tile>
               );
             })}
           </div>

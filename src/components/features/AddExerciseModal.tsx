@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, Plus, X } from 'lucide-react';
 import AccessibleModal from '../accessible/AccessibleModal';
 import Button from '../ui/Button';
+import Input from '../ui/Input';
 import { Exercise } from '../../pages/WorkoutDetail/types';
 
 interface AddExerciseModalProps {
@@ -85,24 +86,22 @@ export default function AddExerciseModal({
     >
       <div className="space-y-4">
         <div className="relative">
-          <label htmlFor="exercise-search" className="sr-only">
-            Search exercises
-          </label>
           <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5"
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-400 w-5 h-5 pointer-events-none"
             aria-hidden="true"
           />
-          <input
+          <Input
             ref={searchInputRef}
             id="exercise-search"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search for an exercise..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+            className="pl-10 pr-4"
             role="searchbox"
             aria-autocomplete="list"
             aria-controls="exercise-list"
+            aria-label="Search exercises"
           />
         </div>
 
@@ -138,7 +137,7 @@ export default function AddExerciseModal({
                       <p className="text-sm text-gray-600 dark:text-gray-300">
                         {exercise.sets} sets × {exercise.reps} reps
                         {exercise.isBodyweight && (
-                          <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
+                          <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
                             Bodyweight
                           </span>
                         )}
@@ -195,7 +194,7 @@ export default function AddExerciseModal({
                   value={customExercise.name}
                   onChange={(e) => setCustomExercise({ ...customExercise, name: e.target.value })}
                   placeholder="Enter exercise name"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                   required
                   aria-required="true"
                 />
@@ -212,7 +211,7 @@ export default function AddExerciseModal({
                     value={customExercise.reps}
                     onChange={(e) => setCustomExercise({ ...customExercise, reps: e.target.value })}
                     placeholder="8-12"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                   />
                 </div>
 
@@ -227,7 +226,7 @@ export default function AddExerciseModal({
                     max="10"
                     value={customExercise.sets}
                     onChange={(e) => setCustomExercise({ ...customExercise, sets: parseInt(e.target.value) || 3 })}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -238,33 +237,36 @@ export default function AddExerciseModal({
                   type="checkbox"
                   checked={customExercise.isBodyweight}
                   onChange={(e) => setCustomExercise({ ...customExercise, isBodyweight: e.target.checked })}
-                  className="w-5 h-5 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  className="w-5 h-5 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-500 rounded focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 />
                 <label htmlFor="custom-exercise-bodyweight" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Bodyweight exercise
                 </label>
               </div>
 
-              <button
+              <Button
                 type="button"
+                fullWidth
+                size="md"
                 onClick={handleAddCustomExercise}
                 disabled={!customExercise.name.trim() || existingExercises.length >= maxExercises}
-                className="w-full px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
               >
                 Add Custom Exercise
-              </button>
+              </Button>
             </div>
           )}
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="md"
+            className="flex-1"
             onClick={onClose}
-            className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
           >
             Cancel
-          </button>
+          </Button>
         </div>
       </div>
     </AccessibleModal>

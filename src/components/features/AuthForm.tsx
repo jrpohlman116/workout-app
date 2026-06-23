@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
+import Input from '../ui/Input';
 
 const GRID_BG = {
   backgroundImage:
@@ -61,9 +62,6 @@ export default function AuthForm() {
         : 'text-white/40 hover:text-white/60'
     }`;
 
-  const inputClass =
-    'w-full bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-white/60 transition-colors';
-
   return (
     <div
       className="min-h-screen bg-blue-700 dark:bg-blue-900 flex flex-col justify-center px-8 py-12"
@@ -94,12 +92,12 @@ export default function AuthForm() {
             <label className="block text-xs uppercase tracking-widest text-white/70 mb-2">
               Email
             </label>
-            <input
+            <Input
+              variant="onDark"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className={inputClass}
               placeholder="you@example.com"
             />
           </div>
@@ -112,12 +110,13 @@ export default function AuthForm() {
               <p className="text-xs text-white/60 mb-2">Minimum 6 characters</p>
             )}
             <div className="relative">
-              <input
+              <Input
+                variant="onDark"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className={`${inputClass} pr-12`}
+                className="pr-12"
                 placeholder="••••••••"
               />
               <button
@@ -136,12 +135,13 @@ export default function AuthForm() {
                 Confirm Password
               </label>
               <div className="relative">
-                <input
+                <Input
+                  variant="onDark"
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className={`${inputClass} pr-12`}
+                  className="pr-12"
                   placeholder="••••••••"
                 />
                 <button

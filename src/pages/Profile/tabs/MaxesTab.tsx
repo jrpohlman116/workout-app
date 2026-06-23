@@ -84,45 +84,41 @@ export default function MaxesTab() {
           <Card key={label} className="p-5 space-y-4">
             <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">{label}</p>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Tested max <span className="text-gray-400 dark:text-gray-500 font-normal">({unit})</span>
-              </label>
-              <div className="flex gap-2">
-                <input
+              <div className="flex gap-2 items-end">
+                <Input
+                  label={`Tested max (${unit})`}
                   type="number"
                   value={testedVal}
                   onChange={e => { setTested(e.target.value); markUnsaved(); }}
                   placeholder="e.g. 315"
                   min="0"
                   step="0.5"
-                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1"
                 />
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="md"
                   onClick={() => recalcTm(testedVal, setTm)}
                   disabled={!testedVal || parseFloat(testedVal) <= 0}
-                  className="px-4 py-3 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-40 transition-colors whitespace-nowrap"
                   title="Set training max to 90% of tested max"
                 >
                   → 90% TM
-                </button>
+                </Button>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Training max <span className="text-gray-400 dark:text-gray-500 font-normal">({unit})</span>
-              </label>
-              <input
+              <Input
+                label={`Training max (${unit})`}
                 type="number"
                 value={tmVal}
                 onChange={e => { setTm(e.target.value); markUnsaved(); }}
                 placeholder="e.g. 285"
                 min="0"
                 step="0.5"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {impliedOneRM && (
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
+                <p className="text-xs text-gray-400 dark:text-gray-400 mt-1.5">
                   Implied 1RM: <span className="font-semibold text-gray-600 dark:text-gray-300">{impliedOneRM} {unit}</span>
                 </p>
               )}
@@ -132,13 +128,14 @@ export default function MaxesTab() {
       })}
 
       <div className="flex gap-3">
-        <button
+        <Button
+          variant="secondary"
+          className="w-1/3"
           onClick={() => save()}
           disabled={loading}
-          className="w-1/3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-4 rounded-xl font-semibold shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
         >
           {loading ? 'Saving…' : 'Save'}
-        </button>
+        </Button>
         <Button onClick={() => setShowRestartModal(true)} disabled={loading} className="w-2/3">
           Save & Restart Program
         </Button>

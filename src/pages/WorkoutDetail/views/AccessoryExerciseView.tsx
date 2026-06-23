@@ -1,6 +1,8 @@
 import { RefreshCw, Plus, Trash2 } from 'lucide-react';
 import { Exercise, SetInput } from '../../../lib/types';
 import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import IconButton from '../../../components/ui/IconButton';
 
 interface AccessoryExerciseViewProps {
   exercise: Exercise;
@@ -43,17 +45,19 @@ export default function AccessoryExerciseView({
             </p>
             <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100 leading-tight">{exercise.name}</h2>
             {substitutedFrom && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">from {substitutedFrom}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">from {substitutedFrom}</p>
             )}
           </div>
-          <button
+          <Button
+            variant="tertiary"
+            size="sm"
+            className="flex items-center gap-1.5 px-3 py-2 flex-shrink-0"
             onClick={onSubstitute}
-            className="flex items-center gap-1.5 px-3 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
             aria-label="Substitute exercise"
           >
             <RefreshCw className="w-4 h-4" />
             <span className="text-xs font-medium">Sub</span>
-          </button>
+          </Button>
         </div>
 
         {lastSetData && (
@@ -96,7 +100,7 @@ export default function AccessoryExerciseView({
               >
                 <span
                   id={`${setId}-label`}
-                  className="w-8 text-center font-mono text-sm font-bold text-gray-300 dark:text-gray-600 flex-shrink-0 select-none"
+                  className="w-8 text-center font-mono text-sm font-bold text-gray-300 dark:text-gray-400 flex-shrink-0 select-none"
                   aria-hidden="true"
                 >
                   {String(setNumber).padStart(2, '0')}
@@ -141,14 +145,14 @@ export default function AccessoryExerciseView({
                 )}
 
                 {exerciseSets.length > 1 && (
-                  <button
-                    type="button"
+                  <IconButton
+                    variant="danger"
+                    label={`Remove set ${setNumber}`}
                     onClick={() => onRemoveSet(index)}
-                    className="p-3 text-gray-400 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-                    aria-label={`Remove set ${setNumber}`}
+                    className="p-3"
                   >
                     <Trash2 className="w-4 h-4" aria-hidden="true" />
-                  </button>
+                  </IconButton>
                 )}
               </div>
             );
@@ -156,39 +160,43 @@ export default function AccessoryExerciseView({
         </div>
 
         {exerciseSets.length < 10 && (
-          <button
+          <Button
             type="button"
+            variant="dashed"
+            size="md"
+            fullWidth
+            icon={<Plus className="w-4 h-4" />}
             onClick={onAddSet}
-            className="w-full flex items-center justify-center gap-2 py-3 mt-4 text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-700 dark:hover:text-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
             aria-label={`Add another set (${exerciseSets.length} of 10 sets used)`}
+            className="mt-4"
           >
-            <Plus className="w-4 h-4" aria-hidden="true" />
-            <span className="text-sm font-medium">Add Set</span>
-          </button>
+            Add Set
+          </Button>
         )}
 
         {exerciseSets.length >= 10 && (
-          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-600 text-center mt-4">
+          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-400 text-center mt-4">
             Max 10 sets
           </p>
         )}
       </Card>
 
       <div className="flex gap-3">
-        <button
+        <Button
+          variant="secondary"
+          className="flex-1"
           onClick={onPrevious}
           disabled={saving}
-          className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 py-4 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Previous
-        </button>
-        <button
+        </Button>
+        <Button
+          className="flex-1"
           onClick={onNext}
           disabled={saving}
-          className="flex-1 bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-500 dark:hover:bg-blue-400 active:bg-blue-700 dark:active:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {nextExerciseName ? `Next: ${nextExerciseName}` : saving ? 'Saving...' : 'Complete Workout'}
-        </button>
+        </Button>
       </div>
     </div>
   );

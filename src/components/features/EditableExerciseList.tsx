@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronUp, ChevronDown, Trash2, RefreshCw } from 'lucide-react';
 import { Exercise } from '../../pages/WorkoutDetail/types';
+import IconButton from '../ui/IconButton';
 
 interface EditableExerciseListProps {
   exercises: Exercise[];
@@ -151,7 +152,7 @@ export default function EditableExerciseList({
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300">
                     #{index + 1}
                   </span>
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
@@ -161,7 +162,7 @@ export default function EditableExerciseList({
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   {exercise.sets} sets of {exercise.reps} reps
                   {exercise.isBodyweight && (
-                    <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
+                    <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
                       Bodyweight
                     </span>
                   )}
@@ -169,48 +170,38 @@ export default function EditableExerciseList({
               </div>
 
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  type="button"
+                <IconButton
+                  label={`Move ${exercise.name} up`}
                   onClick={() => moveExercise(index, 'up')}
                   disabled={index === 0}
-                  className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  aria-label={`Move ${exercise.name} up`}
-                  title="Move up (Alt+↑)"
                 >
                   <ChevronUp className="w-4 h-4" aria-hidden="true" />
-                </button>
+                </IconButton>
 
-                <button
-                  type="button"
+                <IconButton
+                  label={`Move ${exercise.name} down`}
                   onClick={() => moveExercise(index, 'down')}
                   disabled={index === exercises.length - 1}
-                  className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  aria-label={`Move ${exercise.name} down`}
-                  title="Move down (Alt+↓)"
                 >
                   <ChevronDown className="w-4 h-4" aria-hidden="true" />
-                </button>
+                </IconButton>
 
-                <button
-                  type="button"
+                <IconButton
+                  variant="primary"
+                  label={`Substitute ${exercise.name}`}
                   onClick={() => onSubstituteExercise(index, exercise.name)}
-                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  aria-label={`Substitute ${exercise.name}`}
-                  title="Substitute exercise"
                 >
                   <RefreshCw className="w-4 h-4" aria-hidden="true" />
-                </button>
+                </IconButton>
 
-                <button
-                  type="button"
+                <IconButton
+                  variant="danger"
+                  label={`Remove ${exercise.name}`}
                   onClick={() => removeExercise(index)}
                   disabled={exercises.length <= 1}
-                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400"
-                  aria-label={`Remove ${exercise.name}`}
-                  title="Remove exercise (Shift+Delete)"
                 >
                   <Trash2 className="w-4 h-4" aria-hidden="true" />
-                </button>
+                </IconButton>
               </div>
             </div>
           </div>

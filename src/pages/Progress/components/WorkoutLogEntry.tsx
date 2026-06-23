@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
 import type { AccessoryExercise } from '../../../lib/types';
 
 interface WorkoutLogEntryProps {
@@ -38,9 +39,11 @@ export default function WorkoutLogEntry({ session, accessories, isExpanded, onTo
 
   return (
     <Card className="overflow-hidden">
-      <button
+      <Button
+        variant="ghost"
+        size="md"
         onClick={onToggle}
-        className="w-full p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        className="w-full p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -52,7 +55,7 @@ export default function WorkoutLogEntry({ session, accessories, isExpanded, onTo
               <span className="text-3xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
                 {session.weight_lifted}
               </span>
-              <span className="text-sm font-medium text-gray-400 dark:text-gray-500">{unitPreference}</span>
+              <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span>
               <span className="text-xl font-bold tabular-nums text-gray-700 dark:text-gray-300">
                 × {session.reps_performed}
               </span>
@@ -67,13 +70,13 @@ export default function WorkoutLogEntry({ session, accessories, isExpanded, onTo
           </div>
           <div className="flex-shrink-0 pt-1">
             {isExpanded ? (
-              <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-600" />
+              <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-400" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-600" />
+              <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-400" />
             )}
           </div>
         </div>
-      </button>
+      </Button>
 
       {isExpanded && (
         <div className="px-6 pb-6 border-t border-gray-100 dark:border-gray-700 pt-4 space-y-4">

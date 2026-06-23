@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { calculateOneRepMax, calculateWilksScore, getWilksLevel } from '../../lib/calculations';
-import { Info } from 'lucide-react';
 import { useRipple } from '../../hooks/useAnimations';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -10,6 +9,7 @@ import Input from '../../components/ui/Input';
 import PageHeader from '../../components/ui/PageHeader';
 import TabBar from '../../components/ui/TabBar';
 import SectionLabel from '../../components/ui/SectionLabel';
+import Select from '../../components/ui/Select';
 import type { CalculatorTab as Tab } from '../../lib/types';
 
 export default function CalculatorPage() {
@@ -168,29 +168,24 @@ export default function CalculatorPage() {
                 This 1 rep max is calculated using the Epley formula: Weight x (1 + (Reps / 30))
               </p>
 
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Weight
-                </label>
-                <div className="flex gap-3">
-                  <input
-                    type="number"
-                    value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
-                    placeholder="e.g. 125, 80, 45"
-                    min="0"
-                    step="0.5"
-                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  />
-                  <select
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  >
-                    <option value="lb">lb</option>
-                    <option value="kg">kg</option>
-                  </select>
-                </div>
+              <div className="mb-6 flex gap-3 items-end">
+                <Input
+                  label="Weight"
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  placeholder="e.g. 125, 80, 45"
+                  min="0"
+                  step="0.5"
+                  className="flex-1"
+                />
+                <Select
+                  id="oneRM-unit"
+                  label="Unit"
+                  value={unit}
+                  options={[{ value: 'lb', label: 'lb' }, { value: 'kg', label: 'kg' }]}
+                  onChange={(val) => setUnit(val as string)}
+                />
               </div>
 
               <div className="mb-6">
@@ -212,7 +207,7 @@ export default function CalculatorPage() {
                 <SectionLabel className="mb-2">Estimated 1RM</SectionLabel>
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-black tabular-nums text-gray-900 dark:text-gray-100">{calculatedMax}</span>
-                  <span className="text-lg font-medium text-gray-400 dark:text-gray-500">{unit}</span>
+                  <span className="text-lg font-medium text-gray-400 dark:text-gray-400">{unit}</span>
                 </div>
               </Card>
             )}
@@ -234,20 +229,20 @@ export default function CalculatorPage() {
                 <Input label="Bodyweight" type="number" value={wilksBodyweight} onChange={(e) => setWilksBodyweight(e.target.value)} placeholder="e.g. 180" min="0" step="0.1" />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Gender</label>
-                    <select value={wilksGender} onChange={(e) => setWilksGender(e.target.value)} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Unit</label>
-                    <select value={wilksUnit} onChange={(e) => setWilksUnit(e.target.value)} className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                      <option value="lb">lb</option>
-                      <option value="kg">kg</option>
-                    </select>
-                  </div>
+                  <Select
+                    id="wilks-gender"
+                    label="Gender"
+                    value={wilksGender}
+                    options={[{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }]}
+                    onChange={(val) => setWilksGender(val as string)}
+                  />
+                  <Select
+                    id="wilks-unit"
+                    label="Unit"
+                    value={wilksUnit}
+                    options={[{ value: 'lb', label: 'lb' }, { value: 'kg', label: 'kg' }]}
+                    onChange={(val) => setWilksUnit(val as string)}
+                  />
                 </div>
 
                 <Button fullWidth onClick={handleWilksCalculate}>Calculate</Button>
@@ -282,17 +277,13 @@ export default function CalculatorPage() {
               </p>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Unit
-                </label>
-                <select
+                <Select
+                  id="plate-unit"
+                  label="Unit"
                   value={plateUnit}
-                  onChange={(e) => setPlateUnit(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                >
-                  <option value="lb">lb</option>
-                  <option value="kg">kg</option>
-                </select>
+                  options={[{ value: 'lb', label: 'lb' }, { value: 'kg', label: 'kg' }]}
+                  onChange={(val) => setPlateUnit(val as string)}
+                />
               </div>
 
               <div className="mb-6">
