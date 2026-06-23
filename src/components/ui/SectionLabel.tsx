@@ -7,7 +7,7 @@ interface SectionLabelProps extends HTMLAttributes<HTMLParagraphElement> {
 }
 
 const tones: Record<Tone, string> = {
-  page: 'text-gray-400 dark:text-gray-500',
+  page: 'text-gray-400 dark:text-gray-200',
   card: 'text-gray-500 dark:text-gray-400',
 };
 

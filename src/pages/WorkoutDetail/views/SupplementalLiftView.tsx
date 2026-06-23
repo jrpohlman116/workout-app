@@ -1,5 +1,6 @@
 import AccessibleFormGroup from '../../../components/accessible/AccessibleFormGroup';
 import { SetInput } from '../../../lib/types';
+import Button from '../../../components/ui/Button';
 
 interface SupplementalLiftViewProps {
   liftName: string;
@@ -60,12 +61,12 @@ export default function SupplementalLiftView({
         maxSets={supplementalSets.length}
       />
 
-      <button
+      <Button
+        fullWidth
         onClick={onNext}
-        className="w-full bg-blue-600 dark:bg-blue-500 text-white py-4 rounded-xl font-semibold hover:bg-blue-500 dark:hover:bg-blue-400 active:bg-blue-700 dark:active:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
       >
         Next: {nextExerciseName}
-      </button>
+      </Button>
     </div>
   );
 }

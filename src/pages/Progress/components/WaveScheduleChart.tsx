@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Info } from 'lucide-react';
+import IconButton from '../../../components/ui/IconButton';
 import {
   ComposedChart,
   Bar,
@@ -212,19 +213,19 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit }: Wav
           <span className="font-bold text-gray-900 dark:text-gray-100">{remainingCount}</span> weeks left
         </span>
         {schedule.adjustments.length > 0 && (
-          <button
+          <IconButton
+            size="sm"
+            label="Schedule details"
             onClick={() => setShowInfo(v => !v)}
-            aria-label="Schedule details"
-            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
-            <Info className="w-3.5 h-3.5" />
-          </button>
+            <Info className="w-3.5 h-3.5" aria-hidden="true" />
+          </IconButton>
         )}
       </div>
       {showInfo && schedule.adjustments.length > 0 && (
         <div className="space-y-1">
           {schedule.adjustments.map((msg, i) => (
-            <p key={i} className="text-xs text-gray-400 dark:text-gray-500">{msg}</p>
+            <p key={i} className="text-xs text-gray-400 dark:text-gray-400">{msg}</p>
           ))}
         </div>
       )}
@@ -330,7 +331,7 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit }: Wav
           </div>
         )}
         <div className="flex items-center gap-1.5">
-          <div className="w-5 h-0 border-t-2 border-dashed border-gray-300 dark:border-gray-600" />
+          <div className="w-5 h-0 border-t-2 border-dashed border-gray-300 dark:border-gray-500" />
           <span className="text-xs text-gray-500 dark:text-gray-400">% TM</span>
         </div>
       </div>

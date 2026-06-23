@@ -30,8 +30,8 @@ export default function LiftSummaryCard({ name, displayName, current, initial, c
           </span>
         )}
       </div>
-      <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100 mb-0.5 leading-none">{current} <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{unitPreference}</span></p>
-      <p className="text-xs text-gray-400 dark:text-gray-600 tabular-nums">from {initial}</p>
+      <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100 mb-0.5 leading-none">{current} <span className="text-xs font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span></p>
+      <p className="text-xs text-gray-400 dark:text-gray-400 tabular-nums">from {initial}</p>
     </Card>
   );
 }

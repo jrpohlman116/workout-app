@@ -13,7 +13,7 @@ interface TabBarProps<T extends string> {
 export default function TabBar<T extends string>({ tabs, activeTab, onChange, onRipple }: TabBarProps<T>) {
   return (
     <div className="max-w-md mx-auto px-4">
-      <div className="flex gap-6 overflow-x-auto border-b border-gray-200 dark:border-gray-700">
+      <div className="flex gap-6 overflow-x-auto border-b border-gray-200 dark:border-white/20">
         {tabs.map(tab => (
           <button
             key={tab.id}

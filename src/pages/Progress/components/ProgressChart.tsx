@@ -1,4 +1,5 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 interface ChartDataPoint {
   value: number;
@@ -19,18 +20,35 @@ interface ProgressChartProps {
   unitPreference: string;
 }
 
+function CustomLegend({ payload }: any) {
+  if (!payload) return null;
+  return (
+    <div className="flex justify-center gap-6 pt-2">
+      {payload.map((entry: any) => (
+        <div key={entry.value} className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ProgressChart({ chartData, unitPreference }: ProgressChartProps) {
+  const { isDarkMode } = useTheme();
+
+  const textColor = isDarkMode ? '#d1d5db' : '#6b7280';
+  const gridColor = isDarkMode ? '#374151' : '#e5e7eb';
+
   let formattedData = chartData[0]?.data.map((_, index) => {
-    // Create a point for each date
     const point: any = {
       displayDate: (new Date(chartData[0].data[index].date)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      cycle: chartData[0].data[index].cycle, 
+      cycle: chartData[0].data[index].cycle,
       week: chartData[0].data[index].week
     };
 
-    // Add each lift's value and date to the point
     chartData.forEach(lift => {
-      for ( let i = 0; i < lift.data.length; i++) {
+      for (let i = 0; i < lift.data.length; i++) {
         if (lift.data[i].cycle == point.cycle && lift.data[i].week == point.week) {
           point[lift.type] = lift.data[i].value ?? null;
           point[`${lift.type}_date`] = lift.data[i].date ?? null;
@@ -40,7 +58,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
     return point;
   }) || [];
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const cycle = payload[0].payload.cycle;
       const week = payload[0].payload.week;
@@ -53,10 +71,7 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
             const formattedDate = liftDate ? new Date(liftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
             return (
               <div key={index} className="flex items-center gap-2">
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: entry.color }}
-                />
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
                 <span>{entry.name}: {Math.round(entry.value)} {unitPreference}</span>
                 {formattedDate && <span className="text-xs text-gray-400">({formattedDate})</span>}
               </div>
@@ -75,24 +90,21 @@ export default function ProgressChart({ chartData, unitPreference }: ProgressCha
           data={formattedData}
           margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
           <XAxis
             dataKey="displayDate"
-            label={{ value: 'Date', position: 'insideBottom', offset: -5, style: { fontSize: 12, fill: '#6b7280', fontWeight: 500 } }}
-            tick={{ fontSize: 11, fill: '#9ca3af' }}
+            label={{ value: 'Date', position: 'insideBottom', offset: -5, style: { fontSize: 12, fill: textColor, fontWeight: 500 } }}
+            tick={{ fontSize: 11, fill: textColor }}
             angle={-45}
             textAnchor="end"
             height={60}
           />
           <YAxis
-            label={{ value: `1RM (${unitPreference})`, angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6b7280', fontWeight: 500 } }}
-            tick={{ fontSize: 11, fill: '#6b7280' }}
+            label={{ value: `1RM (${unitPreference})`, angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: textColor, fontWeight: 500 } }}
+            tick={{ fontSize: 11, fill: textColor }}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend
-            wrapperStyle={{ fontSize: 14, paddingTop: 10 }}
-            iconType="circle"
-          />
+          <Legend content={<CustomLegend />} />
           {chartData.map((lift) => (
             <Line
               key={lift.type}

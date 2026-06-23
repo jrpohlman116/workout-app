@@ -33,7 +33,7 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
               className={`relative flex flex-col items-center justify-center flex-1 gap-1 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white/50 ${
                 isActive
                   ? 'text-white'
-                  : 'text-white/40 hover:text-white/70'
+                  : 'text-white/60 hover:text-white/80'
               }`}
             >
               {isActive && (
