@@ -24,16 +24,17 @@ interface WorkoutHeaderProps {
   liftName: string;
   wave?: RepWave;
   phase?: WavePhase;
-  peakWeek?: 1 | 2 | 3;
+  peakWeek?: number;
+  totalPeakWeeks?: number;
   // Legacy fallback
   week?: number;
   cycle?: number;
   onBack: () => void;
 }
 
-export default function WorkoutHeader({ liftName, wave, phase, peakWeek, week, cycle, onBack }: WorkoutHeaderProps) {
+export default function WorkoutHeader({ liftName, wave, phase, peakWeek, totalPeakWeeks, week, cycle, onBack }: WorkoutHeaderProps) {
   const subtitle = phase === 'peaking'
-    ? `Peaking Block — Week ${peakWeek ?? 1} of 3`
+    ? `Peaking Block — Week ${peakWeek ?? 1} of ${totalPeakWeeks ?? 3}`
     : phase === 'meet_week'
       ? 'Meet Week'
       : wave && phase

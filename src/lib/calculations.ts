@@ -166,7 +166,8 @@ export interface WeekBlock {
   weekIndex: number;
   startDate: Date;
   endDate: Date;
-  peakWeek?: 1 | 2 | 3;
+  peakWeek?: number;
+  totalPeakWeeks?: number;
 }
 
 export interface WaveSchedule {
@@ -214,7 +215,6 @@ const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 
 const STANDARD_PHASES: WavePhase[] = ['accumulation', 'intensification', 'realization', 'deload'];
 const COMPRESSED_PHASES: WavePhase[] = ['accumulation', 'realization', 'deload'];
-const ELONGATED_PHASES: WavePhase[] = ['accumulation', 'accumulation', 'intensification', 'realization', 'deload'];
 
 /**
  * Calculates the new training max after a Realization week AMAP set.
@@ -279,27 +279,30 @@ export function calculateJuggernautSets(
   };
 }
 
-// Peaking block: heavy singles at increasing % of TM across 3 weeks
-const PEAKING_WEEK_PCT: Record<1 | 2 | 3, number> = {
-  1: 0.83,
-  2: 0.87,
-  3: 0.90,
-};
+// Peaking percentages count back from meet: 1 week out = 90%, 2 = 87%, etc.
+function getPeakingPct(weeksFromMeet: number): number {
+  const pcts: Record<number, number> = {
+    1: 0.90, 2: 0.87, 3: 0.83, 4: 0.80, 5: 0.77, 6: 0.75,
+  };
+  return pcts[Math.max(1, Math.min(6, weeksFromMeet))] ?? 0.75;
+}
 
 /**
- * Returns a single top-set config for peaking block weeks.
- * Peaking weeks use heavy singles — no AMAP, no multi-set rep scheme.
+ * Returns a single top-set config for a peaking week.
+ * Percentage is derived from how many weeks remain until the meet.
  */
 export function calculatePeakingSets(
-  peakWeek: 1 | 2 | 3,
+  peakWeek: number,
+  totalPeakWeeks: number,
   trainingMax: number,
   unit: string = 'lb'
 ): JuggernautSetsConfig {
   const roundTo = unit === 'kg' ? 2.5 : 5;
+  const weeksFromMeet = totalPeakWeeks - peakWeek + 1;
   return {
     numSets: 1,
     reps: 1,
-    weight: Math.round(trainingMax * PEAKING_WEEK_PCT[peakWeek] / roundTo) * roundTo,
+    weight: Math.round(trainingMax * getPeakingPct(weeksFromMeet) / roundTo) * roundTo,
     isAmap: false,
   };
 }
@@ -384,11 +387,12 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
     (meetDate.getTime() - startDate.getTime()) / MS_PER_WEEK
   );
 
-  // Reserve 4 weeks at the end: 3 peaking weeks + 1 meet week
-  const PEAKING_WEEKS = 3;
+  // Wave selection uses the same available-weeks budget as before.
+  // Peak weeks are no longer fixed — surplus training time extends the peak block (2–6 weeks).
+  const STANDARD_PEAK_WEEKS = 3;
+  const MAX_PEAK_WEEKS = 6;
   const MEET_WEEK = 1;
-  const reservedWeeks = PEAKING_WEEKS + MEET_WEEK;
-  const availableWeeks = totalAvailableWeeks - reservedWeeks;
+  const availableWeeks = totalAvailableWeeks - STANDARD_PEAK_WEEKS - MEET_WEEK;
 
   const adjustments: string[] = [];
   const skippedWaves: RepWave[] = [];
@@ -422,24 +426,12 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
     );
   }
 
-  // Fit wave lengths to available time
+  // Compress waves when time is tight; surplus goes to peaking (not wave extension).
   const waveLengths = new Map<RepWave, number>(selectedWaves.map(w => [w, 4]));
   const standardTotal = selectedWaves.length * 4;
   const diff = availableWeeks - standardTotal;
 
-  if (diff > 0) {
-    let extra = diff;
-    for (const wave of selectedWaves) {
-      if (extra <= 0) break;
-      if (waveLengths.get(wave)! < 5) {
-        waveLengths.set(wave, 5);
-        extra--;
-        adjustments.push(
-          `The ${wave}-rep wave was extended to 5 weeks (an extra accumulation week was added) to fill your timeline.`
-        );
-      }
-    }
-  } else if (diff < 0) {
+  if (diff < 0) {
     let shortage = Math.abs(diff);
     for (const wave of selectedWaves) {
       if (shortage <= 0) break;
@@ -453,16 +445,25 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
     }
   }
 
+  // Surplus weeks (diff > 0) extend the peak block instead of the training waves.
+  const peakingWeeks = Math.min(MAX_PEAK_WEEKS, STANDARD_PEAK_WEEKS + Math.max(0, diff));
+  if (peakingWeeks > STANDARD_PEAK_WEEKS) {
+    adjustments.push(`Peak block extended to ${peakingWeeks} weeks to fit your timeline.`);
+  }
+
+  // If peakingWeeks was capped (very long timeline), start the schedule later so
+  // the dates still land correctly relative to meet day.
+  const actualTrainWeeks = [...waveLengths.values()].reduce((a, b) => a + b, 0);
+  const scheduledWeeks = actualTrainWeeks + peakingWeeks + MEET_WEEK;
+  const startOffset = totalAvailableWeeks - scheduledWeeks;
+
   // Build training wave blocks
   const weeks: WeekBlock[] = [];
-  let weekIndex = 0;
+  let weekIndex = startOffset;
 
   for (const wave of selectedWaves) {
     const length = waveLengths.get(wave)!;
-    const phases =
-      length === 3 ? COMPRESSED_PHASES :
-      length === 5 ? ELONGATED_PHASES :
-      STANDARD_PHASES;
+    const phases = length === 3 ? COMPRESSED_PHASES : STANDARD_PHASES;
 
     for (const phase of phases) {
       const weekStart = new Date(startDate.getTime() + weekIndex * MS_PER_WEEK);
@@ -474,14 +475,15 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
 
   const peakWeekIndex = weeks.length; // peaking block starts right after the training waves
 
-  // Append 3 peaking weeks (wave: 3 — TM is locked from 3-rep Realization)
-  for (let pk = 1; pk <= PEAKING_WEEKS; pk++) {
+  // Append peaking weeks (2–6, based on available time)
+  for (let pk = 1; pk <= peakingWeeks; pk++) {
     const weekStart = new Date(startDate.getTime() + weekIndex * MS_PER_WEEK);
     const weekEnd = new Date(weekStart.getTime() + MS_PER_WEEK - 1);
     weeks.push({
       wave: 3,
       phase: 'peaking',
-      peakWeek: pk as 1 | 2 | 3,
+      peakWeek: pk,
+      totalPeakWeeks: peakingWeeks,
       weekIndex,
       startDate: weekStart,
       endDate: weekEnd,

@@ -12,7 +12,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storage: window.localStorage,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   },
 });
 
@@ -44,6 +44,10 @@ export interface UserProfile {
   program_variation?: 'standard' | 'bbb' | 'bbs';
   available_plates_lb?: number[];
   available_plates_kg?: number[];
+  // Tested / competition maxes — best actual 1RM lifted (= training max / 0.90 approx.)
+  squat_tested_max?: number;
+  bench_tested_max?: number;
+  deadlift_tested_max?: number;
   // Juggernaut fields
   meet_date?: string;           // ISO date (YYYY-MM-DD) — drives wave schedule
   program_start_date?: string;  // ISO date — combined with meet_date to reconstruct schedule

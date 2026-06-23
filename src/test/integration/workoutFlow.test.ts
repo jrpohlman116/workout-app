@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { supabase } from '../../lib/supabase';
-import { calculateOneRepMax, calculateWorkoutWeights, calculateNewTrainingMax } from '../../lib/calculations';
+import { calculateOneRepMax, calculateJuggernautSets, calculateNewTrainingMax } from '../../lib/calculations';
 import {
   createTestUser,
   signOutTestUser,
@@ -63,15 +63,15 @@ describe('E2E Workout Flow Tests', () => {
       current_week: 1,
     });
 
-    const weights = calculateWorkoutWeights('squat', 315, 1, 1);
+    const weights = calculateJuggernautSets(10, 'accumulation', 315);
 
     const session = await createTestWorkoutSession(userId, {
       lift_type: 'squat',
       cycle: 1,
       week: 1,
-      weight_lifted: weights.set3,
+      weight_lifted: weights.weight,
       reps_performed: 5,
-      calculated_1rm: calculateOneRepMax(weights.set3, 5),
+      calculated_1rm: calculateOneRepMax(weights.weight, 5),
     });
 
     expect(session).toBeDefined();
@@ -231,19 +231,19 @@ describe('E2E Workout Flow Tests', () => {
       squat_max: 315,
     });
 
-    const weights = calculateWorkoutWeights('squat', 315, 1, 4);
+    const weights = calculateJuggernautSets(10, 'deload', 315);
 
     const session = await createTestWorkoutSession(userId, {
       lift_type: 'squat',
       cycle: 1,
       week: 4,
-      weight_lifted: weights.set3,
+      weight_lifted: weights.weight,
       reps_performed: 5,
     });
 
     expect(session.week).toBe(4);
     expect(session.weight_lifted).toBeLessThan(
-      calculateWorkoutWeights('squat', 315, 1, 3).set3
+      calculateJuggernautSets(10, 'realization', 315).weight
     );
   });
 

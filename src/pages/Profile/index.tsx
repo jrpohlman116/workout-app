@@ -50,9 +50,9 @@ export default function ProfilePage() {
   const [benchMax, setBenchMax] = useState(profile?.bench_max?.toString() || '');
   const [deadliftMax, setDeadliftMax] = useState(profile?.deadlift_max?.toString() || '');
   // Maxes — Tested / competition max (best actual 1RM performed)
-  const [squatTestedMax, setSquatTestedMax] = useState('');
-  const [benchTestedMax, setBenchTestedMax] = useState('');
-  const [deadliftTestedMax, setDeadliftTestedMax] = useState('');
+  const [squatTestedMax, setSquatTestedMax] = useState(profile?.squat_tested_max?.toString() || '');
+  const [benchTestedMax, setBenchTestedMax] = useState(profile?.bench_tested_max?.toString() || '');
+  const [deadliftTestedMax, setDeadliftTestedMax] = useState(profile?.deadlift_tested_max?.toString() || '');
   const [maxesLoading, setMaxesLoading] = useState(false);
   const [maxesError, setMaxesError] = useState('');
   const [maxesSaved, setMaxesSaved] = useState(false);
@@ -122,6 +122,9 @@ export default function ProfilePage() {
     squat_max: parseFloat(squatMax) || 0,
     bench_max: parseFloat(benchMax) || 0,
     deadlift_max: parseFloat(deadliftMax) || 0,
+    squat_tested_max: parseFloat(squatTestedMax) || null,
+    bench_tested_max: parseFloat(benchTestedMax) || null,
+    deadlift_tested_max: parseFloat(deadliftTestedMax) || null,
     updated_at: new Date().toISOString(),
   });
 

@@ -23,7 +23,13 @@ function getCurrentWeekBlock(programStartDate: string | undefined, meetDate: str
     : new Date(meet.getTime() - 16 * 7 * 24 * 60 * 60 * 1000);
   const schedule = buildWaveSchedule(start, meet);
   const now = Date.now();
-  return schedule.weeks.find(w => w.startDate.getTime() <= now && w.endDate.getTime() >= now) ?? null;
+  const current = schedule.weeks.find(w => w.startDate.getTime() <= now && w.endDate.getTime() >= now);
+  if (current) return current;
+  // Pre-program gap (startOffset > 0): use the first upcoming week
+  if (schedule.weeks.length > 0 && schedule.weeks[0].startDate.getTime() > now) {
+    return schedule.weeks[0];
+  }
+  return null;
 }
 
 const IS_UPPER_DAY = (liftType: string) => liftType === 'upper';
@@ -101,7 +107,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       const max = lift1RM[liftType] ?? 0;
       const unit = profile.unit_preference || 'lb';
       const cfg = currentBlock.phase === 'peaking'
-        ? calculatePeakingSets(currentBlock.peakWeek ?? 1, max, unit)
+        ? calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, max, unit)
         : calculateJuggernautSets(currentBlock.wave, currentBlock.phase, max, unit);
 
       setMainSets(
@@ -240,7 +246,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     const trainingMax = maxes[liftType] ?? 0;
     if (currentBlock) {
       if (currentBlock.phase === 'peaking') {
-        return calculatePeakingSets(currentBlock.peakWeek ?? 1, trainingMax, unit);
+        return calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, trainingMax, unit);
       }
       if (currentBlock.phase === 'meet_week') return null;
       return calculateJuggernautSets(currentBlock.wave, currentBlock.phase, trainingMax, unit);
@@ -467,6 +473,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     wave: currentBlock?.wave,
     phase: currentBlock?.phase,
     peakWeek: currentBlock?.peakWeek,
+    totalPeakWeeks: currentBlock?.totalPeakWeeks,
     week: currentBlock ? undefined : profile.current_week,
     cycle: currentBlock ? undefined : profile.current_cycle,
     onBack,

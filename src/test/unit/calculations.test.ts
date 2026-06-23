@@ -260,20 +260,43 @@ describe('buildWaveSchedule', () => {
     expect(schedule.peakWeekIndex).toBe(-1);
   });
 
-  it('24-week timeline: elongates early waves to 5 weeks (20 wave + 4 peaking/meet)', () => {
+  it('24-week timeline: surplus weeks extend peak block (not waves); 6 peak weeks + 1 off-program week', () => {
     const schedule = buildWaveSchedule(start, monday(24));
     expect(schedule.totalWeeks).toBe(24);
+
+    // Training waves stay at standard 4-week length
     const tenWave = schedule.weeks.filter(w => w.wave === 10 && w.phase !== 'peaking' && w.phase !== 'meet_week');
-    expect(tenWave).toHaveLength(5);
+    expect(tenWave).toHaveLength(4);
+
+    // Peak block is extended to 6 weeks (the maximum)
+    const peaking = schedule.weeks.filter(w => w.phase === 'peaking');
+    expect(peaking).toHaveLength(6);
+    expect(peaking[0].totalPeakWeeks).toBe(6);
   });
 
-  it('peaking block starts right after training waves and has 3 weeks', () => {
+  it('22-week timeline: extends peak to 5 weeks', () => {
+    const schedule = buildWaveSchedule(start, monday(22));
+    const peaking = schedule.weeks.filter(w => w.phase === 'peaking');
+    expect(peaking).toHaveLength(5);
+    expect(peaking[0].totalPeakWeeks).toBe(5);
+    expect(schedule.adjustments.some(a => a.includes('5 weeks'))).toBe(true);
+  });
+
+  it('23-week timeline: extends peak to 6 weeks', () => {
+    const schedule = buildWaveSchedule(start, monday(23));
+    const peaking = schedule.weeks.filter(w => w.phase === 'peaking');
+    expect(peaking).toHaveLength(6);
+    expect(peaking[0].totalPeakWeeks).toBe(6);
+  });
+
+  it('peaking block starts right after training waves and has 3 weeks on a 20-week timeline', () => {
     const schedule = buildWaveSchedule(start, monday(20));
     const peakingWeeks = schedule.weeks.filter(w => w.phase === 'peaking');
     expect(peakingWeeks).toHaveLength(3);
     expect(peakingWeeks[0].peakWeek).toBe(1);
     expect(peakingWeeks[1].peakWeek).toBe(2);
     expect(peakingWeeks[2].peakWeek).toBe(3);
+    expect(peakingWeeks[0].totalPeakWeeks).toBe(3);
   });
 
   it('peakWeekIndex points to the first peaking week', () => {

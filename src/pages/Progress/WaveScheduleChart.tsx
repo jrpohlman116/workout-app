@@ -15,9 +15,15 @@ import type { WaveSchedule, RepWave } from '../../lib/calculations';
 import { calculateJuggernautSets, calculatePeakingSets } from '../../lib/calculations';
 import type { WorkoutSession } from '../../lib/supabase';
 
+interface TrainingMaxes {
+  squat: number;
+  bench: number;
+  deadlift: number;
+}
+
 interface WaveScheduleChartProps {
   schedule: WaveSchedule;
-  trainingMax: number;
+  trainingMaxes: TrainingMaxes;
   unit: string;
   sessions: WorkoutSession[];
 }
@@ -62,10 +68,12 @@ interface BarDatum {
   label: string;
   wave: number;
   phase: string;
-  peakWeek?: 1 | 2 | 3;
+  peakWeek?: number;
   totalReps: number;
   intensityPct: number;
-  weight: number;
+  squatWeight: number;
+  benchWeight: number;
+  deadliftWeight: number;
   numSets: number;
   reps: number;
   isAmap: boolean;
@@ -75,20 +83,29 @@ interface BarDatum {
   isMeetWeek: boolean;
 }
 
-export default function WaveScheduleChart({ schedule, trainingMax, unit, sessions }: WaveScheduleChartProps) {
+export default function WaveScheduleChart({ schedule, trainingMaxes, unit, sessions: _sessions }: WaveScheduleChartProps) {
   const [showInfo, setShowInfo] = useState(false);
 
   if (!schedule.weeks.length) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12 space-y-2">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Set a meet date in your profile to see your program schedule.
+          {schedule.adjustments.length
+            ? schedule.adjustments[0]
+            : 'Set a meet date in your profile to see your program schedule.'}
         </p>
       </div>
     );
   }
 
   const now = Date.now();
+
+  const getWeightForMax = (tm: number, isPeaking: boolean, isMeetWeek: boolean, block: typeof schedule.weeks[0]) => {
+    const roundTo = unit === 'kg' ? 2.5 : 5;
+    if (isPeaking) return calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, tm, unit).weight;
+    if (isMeetWeek) return Math.round(tm * 0.55 / roundTo) * roundTo;
+    return calculateJuggernautSets(block.wave as RepWave, block.phase, tm, unit).weight;
+  };
 
   const data: BarDatum[] = schedule.weeks.map(block => {
     const isPeaking = block.phase === 'peaking';
@@ -98,17 +115,16 @@ export default function WaveScheduleChart({ schedule, trainingMax, unit, session
 
     let cfg;
     if (isPeaking) {
-      cfg = calculatePeakingSets(block.peakWeek ?? 1, trainingMax, unit);
+      cfg = calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMaxes.squat, unit);
     } else if (isMeetWeek) {
       const roundTo = unit === 'kg' ? 2.5 : 5;
-      cfg = { numSets: 1, reps: 1, weight: Math.round(trainingMax * 0.55 / roundTo) * roundTo, isAmap: false };
+      cfg = { numSets: 1, reps: 1, weight: Math.round(trainingMaxes.squat * 0.55 / roundTo) * roundTo, isAmap: false };
     } else {
-      cfg = calculateJuggernautSets(block.wave as RepWave, block.phase, trainingMax, unit);
+      cfg = calculateJuggernautSets(block.wave as RepWave, block.phase, trainingMaxes.squat, unit);
     }
 
     const totalReps = cfg.numSets * cfg.reps;
-    const intensityPct = trainingMax > 0 ? Math.round((cfg.weight / trainingMax) * 100) : 0;
-
+    const intensityPct = trainingMaxes.squat > 0 ? Math.round((cfg.weight / trainingMaxes.squat) * 100) : 0;
     const abbr = isPeaking ? `P${block.peakWeek ?? ''}` : isMeetWeek ? 'M' : `${block.wave}${PHASE_ABBR[block.phase] ?? '?'}`;
 
     return {
@@ -118,7 +134,9 @@ export default function WaveScheduleChart({ schedule, trainingMax, unit, session
       peakWeek: block.peakWeek,
       totalReps,
       intensityPct,
-      weight: cfg.weight,
+      squatWeight: getWeightForMax(trainingMaxes.squat, isPeaking, isMeetWeek, block),
+      benchWeight: getWeightForMax(trainingMaxes.bench, isPeaking, isMeetWeek, block),
+      deadliftWeight: getWeightForMax(trainingMaxes.deadlift, isPeaking, isMeetWeek, block),
       numSets: cfg.numSets,
       reps: cfg.reps,
       isAmap: cfg.isAmap,
@@ -162,19 +180,20 @@ export default function WaveScheduleChart({ schedule, trainingMax, unit, session
           {d.isMeetWeek ? (
             <p className="text-xs text-gray-400">Rest — save it for the platform</p>
           ) : d.isAmap ? (
-            <p className="text-xs">
+            <p className="text-xs mb-1.5">
               1 set × {d.reps}+ reps <span className="text-gray-400">(AMAP)</span>
             </p>
           ) : (
-            <p className="text-xs">
+            <p className="text-xs mb-1.5">
               {d.numSets} × {d.reps} = <span className="font-semibold">{d.totalReps} reps</span>
             </p>
           )}
           {!d.isMeetWeek && (
-            <p className="text-xs">
-              {d.weight} {unit}{' '}
-              <span className="text-gray-400">({d.intensityPct}% TM)</span>
-            </p>
+            <div className="space-y-0.5">
+              <p className="text-xs"><span className="text-gray-400 w-14 inline-block">Squat</span><span className="font-semibold">{d.squatWeight} {unit}</span></p>
+              <p className="text-xs"><span className="text-gray-400 w-14 inline-block">Bench</span><span className="font-semibold">{d.benchWeight} {unit}</span></p>
+              <p className="text-xs"><span className="text-gray-400 w-14 inline-block">Deadlift</span><span className="font-semibold">{d.deadliftWeight} {unit}</span></p>
+            </div>
           )}
         </div>
         {d.isCurrentWeek && (
