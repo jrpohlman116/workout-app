@@ -1,18 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
-import { convertWeightUnit, getRoundingIncrement } from '../../../lib/calculations';
+import { convertWeightUnit } from '../../../lib/calculations';
 import { useFormState } from '../../../hooks/useFormState';
 import Select from '../../../components/ui/Select';
 import Card from '../../../components/ui/Card';
 import SaveFeedback from '../../../components/ui/SaveFeedback';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
-
-const MAX_FIELDS = [
-  'squat_max', 'bench_max', 'deadlift_max',
-  'squat_tested_max', 'bench_tested_max', 'deadlift_tested_max',
-] as const;
 
 export default function BodyStatsTab() {
   const { profile, user, refreshProfile } = useAuth();
@@ -34,32 +29,26 @@ export default function BodyStatsTab() {
     e.preventDefault();
     if (!user || !profile) return;
     await run(async () => {
-      const fromUnit = profile.unit_preference || 'lb';
-      const unitChanged = unitPreference !== fromUnit;
+      const unitChanged = unitPreference !== (profile.unit_preference || 'lb');
 
-      const updates: Record<string, unknown> = {
-        bodyweight: parseFloat(bodyweight) || 0,
-        gender,
-        unit_preference: unitPreference,
-        updated_at: new Date().toISOString(),
-      };
-
-      // Training/tested maxes live in a different tab's local state, so they
-      // can't be converted live — convert the persisted values directly so
-      // the Maxes tab shows correct numbers next time it's opened.
+      // Training/tested maxes, workout history, and accessory set weights all
+      // convert atomically server-side — workout_sessions/accessory_exercises
+      // have no client-writable update policy, and a half-converted result
+      // would leave weights in mixed units, so this must succeed as a whole
+      // before we touch anything else.
       if (unitChanged) {
-        const roundTo = getRoundingIncrement(unitPreference);
-        MAX_FIELDS.forEach(field => {
-          const current = profile[field];
-          if (current) {
-            updates[field] = Math.round(convertWeightUnit(current, fromUnit, unitPreference) / roundTo) * roundTo;
-          }
-        });
+        const { error: convertError } = await supabase.rpc('convert_user_units', { p_new_unit: unitPreference });
+        if (convertError) throw convertError;
       }
 
       const { error } = await supabase
         .from('user_profiles')
-        .update(updates)
+        .update({
+          bodyweight: parseFloat(bodyweight) || 0,
+          gender,
+          unit_preference: unitPreference,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', user.id);
       if (error) throw error;
       await refreshProfile();
@@ -94,7 +83,7 @@ export default function BodyStatsTab() {
         </div>
         {unitPreference !== (profile?.unit_preference || 'lb') && (
           <p className="text-xs text-gray-400 dark:text-gray-400 -mt-2">
-            Your training and tested maxes will be converted to {unitPreference} when you save.
+            Your training maxes and workout history will be converted to {unitPreference} when you save.
           </p>
         )}
         <Select
