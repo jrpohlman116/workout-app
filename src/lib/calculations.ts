@@ -12,6 +12,16 @@ export function getRoundingIncrement(unit: string): number {
   return unit === 'kg' ? 2.5 : 5;
 }
 
+export const LB_PER_KG = 2.20462;
+
+// Converts a raw weight between lb/kg. Returns the value unrounded — callers
+// round to whatever precision fits their context (plate increment for maxes,
+// 0.1 for bodyweight, etc.) via getRoundingIncrement or their own convention.
+export function convertWeightUnit(value: number, fromUnit: string, toUnit: string): number {
+  if (fromUnit === toUnit) return value;
+  return fromUnit === 'kg' ? value * LB_PER_KG : value / LB_PER_KG;
+}
+
 export function getWilksLevel(score: number): string {
   if (score < 200) return 'Beginner';
   if (score < 238) return 'Novice';
