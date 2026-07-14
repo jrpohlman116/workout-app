@@ -198,8 +198,11 @@ describe('E2E Workout Flow Tests', () => {
   });
 
   it('should update training max after successful cycle', async () => {
+    const currentTrainingMax = 315;
+    const standardReps = 5; // realization AMAP target for the 5-rep wave
+
     await createTestProfile(userId, {
-      squat_max: 315,
+      squat_max: currentTrainingMax,
     });
 
     const weightLifted = 255;
@@ -214,7 +217,7 @@ describe('E2E Workout Flow Tests', () => {
       calculated_1rm: calculateOneRepMax(weightLifted, repsPerformed),
     });
 
-    const newTrainingMax = calculateNewTrainingMax(weightLifted, repsPerformed);
+    const newTrainingMax = calculateNewTrainingMax(currentTrainingMax, standardReps, repsPerformed, 'lb');
 
     const { data: updatedProfile } = await supabase
       .from('user_profiles')

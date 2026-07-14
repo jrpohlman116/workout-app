@@ -93,22 +93,44 @@ describe('getGreeting', () => {
 // ─── Juggernaut Method ────────────────────────────────────────────────────────
 
 describe('calculateNewTrainingMax', () => {
-  it('should equal calculateTrainingMax(calculateOneRepMax(weight, reps))', () => {
-    expect(calculateNewTrainingMax(315, 5)).toBe(
-      calculateTrainingMax(calculateOneRepMax(315, 5))
-    );
+  it('keeps TM unchanged when actual reps equal the standard target', () => {
+    expect(calculateNewTrainingMax(270, 10, 10, 'lb')).toBe(270);
+  });
+
+  it('adds 5 lb per rep over the standard target', () => {
+    expect(calculateNewTrainingMax(270, 10, 15, 'lb')).toBe(295);
+  });
+
+  it('subtracts 5 lb per rep under the standard target', () => {
+    expect(calculateNewTrainingMax(270, 10, 8, 'lb')).toBe(260);
+  });
+
+  it('adds 2.5 kg per rep over the standard target in kg', () => {
+    expect(calculateNewTrainingMax(120, 10, 13, 'kg')).toBe(127.5);
+  });
+
+  it('rounds up to the nearest plate increment', () => {
+    expect(calculateNewTrainingMax(272, 10, 10, 'lb')).toBe(275);
   });
 
   it('should produce a higher TM when more reps are hit', () => {
-    const tm8 = calculateNewTrainingMax(225, 8);
-    const tm12 = calculateNewTrainingMax(225, 12);
+    const tm8 = calculateNewTrainingMax(225, 10, 8, 'lb');
+    const tm12 = calculateNewTrainingMax(225, 10, 12, 'lb');
     expect(tm12).toBeGreaterThan(tm8);
   });
 
-  it('should produce a higher TM when heavier weight is used', () => {
-    const tmLight = calculateNewTrainingMax(200, 5);
-    const tmHeavy = calculateNewTrainingMax(250, 5);
-    expect(tmHeavy).toBeGreaterThan(tmLight);
+  it('defaults to lb increments when no unit is given', () => {
+    expect(calculateNewTrainingMax(270, 10, 12)).toBe(280);
+  });
+
+  it('uses half the per-rep bump for bench, rounded up to the nearest 5 lb', () => {
+    // 145 TM, 8-rep target, 15 actual reps → 145 + 7×2.5 = 162.5 → ceil to 165
+    expect(calculateNewTrainingMax(145, 8, 15, 'lb', 'bench')).toBe(165);
+  });
+
+  it('squat and deadlift use the full per-rep bump, not the bench rate', () => {
+    expect(calculateNewTrainingMax(145, 8, 15, 'lb', 'squat')).toBe(180);
+    expect(calculateNewTrainingMax(145, 8, 15, 'lb', 'deadlift')).toBe(180);
   });
 });
 
@@ -371,8 +393,8 @@ describe('calculateJuggernautSets', () => {
     });
   });
 
-  describe('8-rep wave (TM = 270 after 10-rep realization with 15 reps)', () => {
-    const TM_270 = calculateNewTrainingMax(200, 15); // 270
+  describe('8-rep wave (TM = 270, an arbitrary post-realization value)', () => {
+    const TM_270 = 270;
 
     it('accumulation: 5 sets × 8 reps @ 65% TM', () => {
       const cfg = calculateJuggernautSets(8, 'accumulation', TM_270);
@@ -434,15 +456,17 @@ describe('calculateJuggernautSets', () => {
 
 // ─── Juggernaut integration: full program cycle ───────────────────────────────
 //
-// Simulates a lifter completing all 4 waves with realistic AMAP performance.
-// After each realization week the TM is recalculated and fed into the next wave.
+// Simulates a lifter completing all 4 waves, beating each realization week's
+// AMAP target (= the wave number) by 2 reps every time. After each realization
+// week the TM is recalculated (+5 lb per rep over target) and fed into the
+// next wave.
 //
-// Starting squat 1RM: 295 lb
-// AMAP reps hit: 10-rep=15, 8-rep=14, 5-rep=14, 3-rep=8
+// Starting squat 1RM: 295 lb → TM 266
+// AMAP reps hit: 10-rep=12, 8-rep=10, 5-rep=7, 3-rep=5 (standard + 2 each wave)
 
 describe('Juggernaut integration: full 4-wave program cycle', () => {
   const STARTING_1RM = 295;
-  const AMAP_REPS: Record<number, number> = { 10: 15, 8: 14, 5: 14, 3: 8 };
+  const AMAP_REPS: Record<number, number> = { 10: 12, 8: 10, 5: 7, 3: 5 };
 
   function runFullCycle() {
     let tm = calculateTrainingMax(STARTING_1RM);
@@ -450,7 +474,7 @@ describe('Juggernaut integration: full 4-wave program cycle', () => {
 
     for (const wave of [10, 8, 5, 3] as const) {
       const real = calculateJuggernautSets(wave, 'realization', tm);
-      const newTm = calculateNewTrainingMax(real.weight, AMAP_REPS[wave]);
+      const newTm = calculateNewTrainingMax(tm, wave, AMAP_REPS[wave], 'lb');
       history.push({ wave, tm, realization: real.weight, newTm });
       tm = newTm;
     }
@@ -481,42 +505,41 @@ describe('Juggernaut integration: full 4-wave program cycle', () => {
       const real = calculateJuggernautSets(wave, 'realization', tm);
       expect(int.weight).toBeGreaterThan(acc.weight);
       expect(real.weight).toBeGreaterThan(int.weight);
-      tm = calculateNewTrainingMax(real.weight, AMAP_REPS[wave]);
+      tm = calculateNewTrainingMax(tm, wave, AMAP_REPS[wave], 'lb');
     }
   });
 
   it('hitting minimum reps improves TM less than beating them significantly', () => {
-    const tm = calculateTrainingMax(STARTING_1RM);
-    const real = calculateJuggernautSets(10, 'realization', tm); // 200 lb
-    const tmBarely = calculateNewTrainingMax(real.weight, 10);   // exactly 10
-    const tmStrong = calculateNewTrainingMax(real.weight, 20);   // 10 extra reps
+    const tm = calculateTrainingMax(STARTING_1RM); // 266
+    const tmBarely = calculateNewTrainingMax(tm, 10, 10, 'lb'); // exactly standard
+    const tmStrong = calculateNewTrainingMax(tm, 10, 20, 'lb'); // 10 extra reps
     expect(tmStrong).toBeGreaterThan(tmBarely);
   });
 
-  it('full cycle: squat TM grows from 266 to 325 with good AMAP performance', () => {
-    // 10-rep: 200 lb × 15 → TM 270
-    const tm1 = calculateNewTrainingMax(200, 15);
-    expect(tm1).toBe(270);
+  it('full cycle: squat TM grows from 266 to 310 with good AMAP performance', () => {
+    // 10-rep: TM 266, beat standard (10) by 2 reps → TM 280
+    const tm1 = calculateNewTrainingMax(266, 10, 12, 'lb');
+    expect(tm1).toBe(280);
 
-    // 8-rep: 215 lb × 14 → TM 284
+    // 8-rep: TM 280, beat standard (8) by 2 reps → TM 290
     const real8 = calculateJuggernautSets(8, 'realization', tm1);
-    const tm2 = calculateNewTrainingMax(real8.weight, 14);
-    expect(real8.weight).toBe(215);
-    expect(tm2).toBe(284);
+    const tm2 = calculateNewTrainingMax(tm1, 8, 10, 'lb');
+    expect(real8.weight).toBe(225);
+    expect(tm2).toBe(290);
 
-    // 5-rep: 240 lb × 14 → TM 317
+    // 5-rep: TM 290, beat standard (5) by 2 reps → TM 300
     const real5 = calculateJuggernautSets(5, 'realization', tm2);
-    const tm3 = calculateNewTrainingMax(real5.weight, 14);
-    expect(real5.weight).toBe(240);
-    expect(tm3).toBe(317);
+    const tm3 = calculateNewTrainingMax(tm2, 5, 7, 'lb');
+    expect(real5.weight).toBe(245);
+    expect(tm3).toBe(300);
 
-    // 3-rep: 285 lb × 8 → TM 325
+    // 3-rep: TM 300, beat standard (3) by 2 reps → TM 310
     const real3 = calculateJuggernautSets(3, 'realization', tm3);
-    const tm4 = calculateNewTrainingMax(real3.weight, 8);
-    expect(real3.weight).toBe(285);
-    expect(tm4).toBe(325);
+    const tm4 = calculateNewTrainingMax(tm3, 3, 5, 'lb');
+    expect(real3.weight).toBe(270);
+    expect(tm4).toBe(310);
 
-    // End TM (325) is 22% higher than start TM (266)
+    // End TM (310) is higher than start TM (266)
     expect(tm4).toBeGreaterThan(calculateTrainingMax(STARTING_1RM));
   });
 });

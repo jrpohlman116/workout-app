@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, JuggernautSetsConfig } from '../../lib/calculations';
+import { calculateOneRepMax, calculateNewTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, JuggernautSetsConfig } from '../../lib/calculations';
 import { DEFAULT_PROGRAM_WEEKS } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
@@ -64,7 +64,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: SetInput[] }>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [workoutStats, setWorkoutStats] = useState({ estimated1RM: 0, totalTonnage: 0 });
+  const [workoutStats, setWorkoutStats] = useState({ estimated1RM: 0, totalTonnage: 0, topReps: 0 });
   const savedSessionIdRef = useRef<string | null>(null);
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
   const [substitutionTarget, setSubstitutionTarget] = useState<{ exerciseIndex: number; exerciseName: string } | null>(null);
@@ -258,6 +258,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     ? (currentBlock.phase === 'peaking' ? 1 : currentBlock.wave)
     : (profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5);
 
+  // Only realization-week AMAP sets have a meaningful "standard vs actual reps"
+  // comparison to progress the training max from.
+  const newTrainingMax = mainConfig?.isAmap && currentBlock
+    ? calculateNewTrainingMax(maxes[liftType] ?? 0, currentBlock.wave, workoutStats.topReps, unit, liftType)
+    : undefined;
+
   const currentExercises = templateExercises;
   const totalSteps = (isUpperDay ? 0 : 1) + currentExercises.length;
 
@@ -397,7 +403,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
         sessionId = sessionData.id;
         savedSessionIdRef.current = sessionId;
-        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage });
+        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage, topReps: topReps || 0 });
       }
 
       const accessoryInserts = Object.entries(accessoryData)
@@ -439,7 +445,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   };
 
   const handleSetAsMax = async () => {
-    if (!user || !profile) return;
+    if (!user || !profile || newTrainingMax == null) return;
     const fieldMap: Record<string, string> = {
       squat: 'squat_max',
       bench: 'bench_max',
@@ -447,9 +453,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     };
     const field = fieldMap[liftType];
     if (!field) return;
+    const newMax = newTrainingMax;
     await supabase
       .from('user_profiles')
-      .update({ [field]: Math.round(workoutStats.estimated1RM), updated_at: new Date().toISOString() })
+      .update({ [field]: newMax, updated_at: new Date().toISOString() })
       .eq('id', user.id);
     await refreshProfile();
   };
@@ -629,7 +636,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           totalTonnage={workoutStats.totalTonnage}
           unitPreference={profile?.unit_preference || 'lb'}
           onClose={handleSuccessClose}
-          onSetAsMax={!isUpperDay ? handleSetAsMax : undefined}
+          onSetAsMax={!isUpperDay && newTrainingMax != null ? handleSetAsMax : undefined}
+          newTrainingMax={newTrainingMax}
         />
       )}
       {showSubstitutionModal && substitutionTarget && (

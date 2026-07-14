@@ -176,10 +176,22 @@ const COMPRESSED_PHASES: WavePhase[] = ['accumulation', 'realization', 'deload']
 
 /**
  * Calculates the new training max after a Realization week AMAP set.
- * Uses Epley formula to estimate 1RM, then takes 90%.
+ * Each rep above (or below) the wave's standard AMAP target shifts the
+ * training max by one plate increment (5 lb / 2.5 kg per rep over/under) —
+ * half that for bench, which responds to rep swings with smaller jumps than
+ * squat/deadlift — then rounds up to the nearest full plate increment.
  */
-export function calculateNewTrainingMax(amapWeight: number, amapReps: number): number {
-  return calculateTrainingMax(calculateOneRepMax(amapWeight, amapReps));
+export function calculateNewTrainingMax(
+  currentTrainingMax: number,
+  standardReps: number,
+  actualReps: number,
+  unit: string = 'lb',
+  liftType?: string
+): number {
+  const roundTo = getRoundingIncrement(unit);
+  const perRep = liftType === 'bench' ? roundTo / 2 : roundTo;
+  const raw = currentTrainingMax + (actualReps - standardReps) * perRep;
+  return Math.ceil(raw / roundTo) * roundTo;
 }
 
 
