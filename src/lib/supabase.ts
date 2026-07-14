@@ -49,6 +49,7 @@ export interface UserProfile {
   // Juggernaut fields
   meet_date?: string;           // ISO date (YYYY-MM-DD) — drives wave schedule
   program_start_date?: string;  // ISO date — combined with meet_date to reconstruct schedule
+  current_week_index?: number;  // explicit pointer into the wave schedule; null = derive from today's date
   weak_points?: WeakPoints;     // sticking points per lift
   created_at: string;
   updated_at: string;

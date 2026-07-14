@@ -20,18 +20,31 @@ import SectionLabel from '../../components/ui/SectionLabel';
 import PageHeader from '../../components/ui/PageHeader';
 import Button from '../../components/ui/Button';
 
-function getCurrentWeekBlock(programStartDate: string | undefined, meetDate: string | undefined): WeekBlock | null {
+function getCurrentWeekBlock(
+  programStartDate: string | undefined,
+  meetDate: string | undefined,
+  currentWeekIndex: number | undefined
+): WeekBlock | null {
   if (!meetDate) return null;
   const meet = new Date(meetDate);
   const start = programStartDate
     ? new Date(programStartDate)
     : new Date(meet.getTime() - DEFAULT_PROGRAM_WEEKS * 7 * 24 * 60 * 60 * 1000);
   const schedule = buildWaveSchedule(start, meet);
+  if (schedule.weeks.length === 0) return null;
+
+  // current_week_index is the source of truth once set — it advances only
+  // when the user finishes/skips a week, not on its own with the calendar.
+  if (currentWeekIndex != null) {
+    const clamped = Math.max(0, Math.min(schedule.weeks.length - 1, currentWeekIndex));
+    return schedule.weeks[clamped];
+  }
+
   const now = Date.now();
   const current = schedule.weeks.find(w => w.startDate.getTime() <= now && w.endDate.getTime() >= now);
   if (current) return current;
   // Pre-program gap (startOffset > 0): use the first upcoming week
-  if (schedule.weeks.length > 0 && schedule.weeks[0].startDate.getTime() > now) {
+  if (schedule.weeks[0].startDate.getTime() > now) {
     return schedule.weeks[0];
   }
   return null;
@@ -78,7 +91,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const { lastAccessoryData, loading, getLastSetData } = useWorkoutData(user?.id, liftType);
 
   const isUpperDay = IS_UPPER_DAY(liftType);
-  const currentBlock = getCurrentWeekBlock(profile?.program_start_date, profile?.meet_date);
+  const currentBlock = getCurrentWeekBlock(profile?.program_start_date, profile?.meet_date, profile?.current_week_index);
 
   const defaultExercises = baseExercises[liftType as keyof typeof baseExercises] ?? baseExercises.upper;
 
