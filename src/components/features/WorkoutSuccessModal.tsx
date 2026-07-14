@@ -10,6 +10,7 @@ interface WorkoutSuccessModalProps {
   unitPreference?: string;
   onClose: () => void;
   onSetAsMax?: () => Promise<void>;
+  newTrainingMax?: number;
 }
 
 export default function WorkoutSuccessModal({
@@ -19,6 +20,7 @@ export default function WorkoutSuccessModal({
   unitPreference = 'lb',
   onClose,
   onSetAsMax,
+  newTrainingMax,
 }: WorkoutSuccessModalProps) {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -55,14 +57,14 @@ export default function WorkoutSuccessModal({
 
             <div className="space-y-3">
               <Button fullWidth onClick={onClose}>View Progress</Button>
-              {onSetAsMax && estimated1RM > 0 && (
+              {onSetAsMax && newTrainingMax != null && (
                 <Button
                   variant="ghost"
                   size="md"
                   fullWidth
                   onClick={async () => { await onSetAsMax(); onClose(); }}
                 >
-                  Set {Math.round(estimated1RM)} {unitPreference} as new max
+                  Set {newTrainingMax} {unitPreference} as new training max
                 </Button>
               )}
             </div>

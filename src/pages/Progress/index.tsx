@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../../lib/supabase';
+import { calculateWilksScore, calculateDOTSScore, calculateIPFGLScore } from '../../lib/calculations';
 import ProgressChart from './components/ProgressChart';
 import AccessibleChartTable from '../../components/accessible/AccessibleChartTable';
 import { useStaggeredAnimation, useRipple } from '../../hooks/useAnimations';
@@ -69,8 +70,10 @@ export default function ProgressPage() {
 
   if (!profile) return null;
 
-  // Filter deloads: use phase if available (new sessions), fall back to week 4 (legacy)
-  const nonDeloadSessions = sessions.filter(s => s.phase !== 'deload' && s.week !== 4);
+  // Filter deloads: use phase if available (new sessions), fall back to week 4 (legacy).
+  // Meet/1RM-test attempts are excluded too — they're actual competition singles, not
+  // AMAP training projections, and get their own markers on the chart via `meets` below.
+  const nonDeloadSessions = sessions.filter(s => s.phase !== 'deload' && s.week !== 4 && !s.is_1rm_test);
 
   const toKg = (w: number) => profile.unit_preference !== 'kg' ? w * 0.453592 : w;
   const bw = profile.bodyweight || 0;
@@ -193,6 +196,8 @@ export default function ProgressPage() {
       });
   };
 
+  const meetGroups = groupMeetsByDate();
+
   return (
     <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
@@ -227,7 +232,7 @@ export default function ProgressPage() {
                 </div>
               ) : (
                 <>
-                  <ProgressChart chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
+                  <ProgressChart chartData={chartData} meets={meetGroups} unitPreference={profile.unit_preference || 'lb'} />
                 </>
               )}
             </Card>
@@ -348,12 +353,11 @@ export default function ProgressPage() {
                 icon={<Plus className="w-3.5 h-3.5" />}
                 onClick={() => setShowPastMeetModal(true)}
               >
-                Log Past Meet
+                Log Meet
               </Button>
             </div>
 
             {(() => {
-              const meetGroups = groupMeetsByDate();
               const unit = profile.unit_preference || 'lb';
               const liftLabels: Record<string, string> = {
                 squat: 'Squat',

@@ -148,7 +148,7 @@ export default function PastMeetModal({ isOpen, onClose, onSaved, unitPreference
     <AccessibleModal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Log Past Meet"
+      title="Log Meet"
       description="Enter your attempts for each lift"
       size="sm"
       preventClose={saving}

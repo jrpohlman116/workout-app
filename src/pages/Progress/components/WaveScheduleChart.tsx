@@ -26,6 +26,8 @@ interface WaveScheduleChartProps {
   schedule: WaveSchedule;
   trainingMaxes: TrainingMaxes;
   unit: string;
+  /** Index into schedule.weeks marking "you are here". Falls back to today's date if omitted. */
+  currentWeekIndex?: number;
 }
 
 const WAVE_COLORS: Record<number, string> = {
@@ -66,7 +68,7 @@ interface BarDatum {
   isMeetWeek: boolean;
 }
 
-export default function WaveScheduleChart({ schedule, trainingMaxes, unit }: WaveScheduleChartProps) {
+export default function WaveScheduleChart({ schedule, trainingMaxes, unit, currentWeekIndex }: WaveScheduleChartProps) {
   const [showInfo, setShowInfo] = useState(false);
 
   if (!schedule.weeks.length) {
@@ -90,11 +92,15 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit }: Wav
     return calculateJuggernautSets(block.wave as RepWave, block.phase, tm, unit).weight;
   };
 
-  const data: BarDatum[] = schedule.weeks.map(block => {
+  const data: BarDatum[] = schedule.weeks.map((block, index) => {
     const isPeaking = block.phase === 'peaking';
     const isMeetWeek = block.phase === 'meet_week';
-    const isCurrentWeek = block.startDate.getTime() <= now && block.endDate.getTime() >= now;
-    const isPast = block.endDate.getTime() < now;
+    const isCurrentWeek = currentWeekIndex != null
+      ? index === currentWeekIndex
+      : block.startDate.getTime() <= now && block.endDate.getTime() >= now;
+    const isPast = currentWeekIndex != null
+      ? index < currentWeekIndex
+      : block.endDate.getTime() < now;
 
     let cfg;
     if (isPeaking) {

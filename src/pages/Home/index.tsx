@@ -40,17 +40,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const loadCompletedWorkouts = async () => {
     if (!user || !profile) return;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayISO = today.toISOString();
-
     const { data } = await supabase
       .from('workout_sessions')
       .select('lift_type, calculated_1rm')
       .eq('user_id', user.id)
       .eq('cycle', profile.current_cycle)
-      .eq('week', profile.current_week)
-      .gte('completed_at', todayISO);
+      .eq('week', profile.current_week);
 
     if (data) {
       setCompletedWorkouts(new Set(data.map(w => w.lift_type)));
@@ -76,13 +71,22 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         nextCycle += 1;
       }
 
+      const updates: Record<string, unknown> = {
+        current_week: nextWeek,
+        current_cycle: nextCycle,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Meet-date programs track position explicitly via current_week_index —
+      // advancing is driven by finishing the week, not by wall-clock date.
+      const weeksCount = waveSchedule.weeks.length;
+      if (profile.meet_date && weeksCount > 0 && currentBlockIndex >= 0) {
+        updates.current_week_index = Math.min(currentBlockIndex + 1, weeksCount - 1);
+      }
+
       await supabase
         .from('user_profiles')
-        .update({
-          current_week: nextWeek,
-          current_cycle: nextCycle,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updates)
         .eq('id', user.id);
 
       await refreshProfile();
@@ -97,24 +101,21 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     if (!user || !profile || weekOffset === 0) return;
     setJumping(true);
     try {
-      if (profile.meet_date && profile.program_start_date) {
-        const newStart = new Date(
-          new Date(profile.program_start_date).getTime() - weekOffset * MS_PER_WEEK
-        );
-        await supabase.from('user_profiles')
-          .update({ program_start_date: newStart.toISOString().split('T')[0], updated_at: new Date().toISOString() })
-          .eq('id', user.id);
-      } else {
-        const base = (profile.current_cycle - 1) * 4 + (profile.current_week - 1);
-        const newTotal = Math.max(0, base + weekOffset);
-        await supabase.from('user_profiles')
-          .update({
-            current_week: (newTotal % 4) + 1,
-            current_cycle: Math.floor(newTotal / 4) + 1,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', user.id);
+      const base = (profile.current_cycle - 1) * 4 + (profile.current_week - 1);
+      const newTotal = Math.max(0, base + weekOffset);
+
+      const updates: Record<string, unknown> = {
+        current_week: (newTotal % 4) + 1,
+        current_cycle: Math.floor(newTotal / 4) + 1,
+        updated_at: new Date().toISOString(),
+      };
+
+      const weeksCount = waveSchedule.weeks.length;
+      if (profile.meet_date && weeksCount > 0 && currentBlockIndex >= 0) {
+        updates.current_week_index = Math.max(0, Math.min(weeksCount - 1, currentBlockIndex + weekOffset));
       }
+
+      await supabase.from('user_profiles').update(updates).eq('id', user.id);
       await refreshProfile();
       setWeekOffset(0);
     } catch (err) {
@@ -144,16 +145,25 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     ? buildWaveSchedule(scheduleStart, new Date(profile.meet_date))
     : { weeks: [], adjustments: [], skippedWaves: [], totalWeeks: 0, peakWeekIndex: -1 };
 
-  // Index of the week that contains today
-  const rawCurrentBlockIndex = waveSchedule.weeks.findIndex(
+  // Index of the week that contains today — only used as the initial position
+  // before the user has ever advanced/jumped a week.
+  const rawDateIndex = waveSchedule.weeks.findIndex(
     w => w.startDate.getTime() <= Date.now() && w.endDate.getTime() >= Date.now()
   );
   // If today falls in the pre-program gap (startOffset > 0), use the first upcoming week
-  const currentBlockIndex = rawCurrentBlockIndex >= 0
-    ? rawCurrentBlockIndex
+  const dateFallbackIndex = rawDateIndex >= 0
+    ? rawDateIndex
     : (waveSchedule.weeks.length > 0 && waveSchedule.weeks[0].startDate.getTime() > Date.now())
       ? 0
       : -1;
+
+  // Once set, current_week_index is the source of truth: progress moves when
+  // the user finishes/skips a week, not on its own with the calendar.
+  const currentBlockIndex = waveSchedule.weeks.length === 0
+    ? -1
+    : profile.current_week_index != null
+      ? Math.max(0, Math.min(waveSchedule.weeks.length - 1, profile.current_week_index))
+      : dateFallbackIndex;
   const currentBlock = currentBlockIndex >= 0 ? waveSchedule.weeks[currentBlockIndex] : null;
 
   // Viewed block — clamped to valid range
@@ -183,6 +193,18 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const isDeload = displayPhase === 'deload';
   const isViewing = weekOffset !== 0;
 
+  // What "Advance Week" will move you to, for the confirmation button/modal.
+  const nextAdvanceBlock = profile.meet_date && waveSchedule.weeks.length > 0 && currentBlockIndex >= 0
+    ? waveSchedule.weeks[Math.min(currentBlockIndex + 1, waveSchedule.weeks.length - 1)]
+    : null;
+  const nextAdvanceLabel = nextAdvanceBlock
+    ? nextAdvanceBlock.phase === 'meet_week'
+      ? 'Meet Week'
+      : nextAdvanceBlock.phase === 'peaking'
+        ? `Peaking Week ${nextAdvanceBlock.peakWeek}`
+        : `${nextAdvanceBlock.wave}-Rep ${PHASE_LABELS[nextAdvanceBlock.phase]}`
+    : `Week ${profile.current_week === 4 ? 1 : profile.current_week + 1}`;
+
   const workouts = [
     { name: 'Squat', max: profile.squat_max, type: 'squat' },
     { name: 'Upper', max: 0, type: 'upper' },
@@ -202,6 +224,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             schedule={waveSchedule}
             trainingMaxes={{ squat: profile.squat_max, bench: profile.bench_max, deadlift: profile.deadlift_max }}
             unit={profile.unit_preference || 'lb'}
+            currentWeekIndex={currentBlockIndex}
           />
         </Card>
 
@@ -403,7 +426,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             </Button>
           ) : completedWorkouts.size === 4 ? (
             <Button fullWidth className="mt-4" onClick={() => setShowSkipWeekModal(true)} disabled={skipping}>
-              {skipping ? 'Advancing your program...' : `Start Week ${profile.current_week === 4 ? 1 : profile.current_week + 1}`}
+              {skipping ? 'Advancing your program...' : `Start ${nextAdvanceLabel}`}
             </Button>
           ) : null}
         </Card>
@@ -423,7 +446,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         isOpen={showSkipWeekModal}
         onClose={() => setShowSkipWeekModal(false)}
         title="Move to Next Week"
-        description={`Skip to Week ${profile.current_week === 4 ? 1 : profile.current_week + 1}${profile.current_week === 4 ? ` of Cycle ${profile.current_cycle + 1}` : ''}`}
+        description={`Skip to ${nextAdvanceLabel}`}
         size="sm"
       >
         <p className="text-gray-600 dark:text-gray-300 mb-6">
