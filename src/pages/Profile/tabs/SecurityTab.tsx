@@ -72,28 +72,17 @@ export default function SecurityTab() {
     if (!user) return;
     setDeleteLoading(true);
     setDeleteError('');
-    let partialDeletionOccurred = false;
     try {
-      const { error: e1 } = await supabase.from('workout_sessions').delete().eq('user_id', user.id);
-      if (e1) throw e1;
-      partialDeletionOccurred = true;
-      const { error: e2 } = await supabase.from('accessory_exercises').delete().eq('user_id', user.id);
-      if (e2) throw e2;
-      const { error: e3 } = await supabase.from('exercise_substitutions').delete().eq('user_id', user.id);
-      if (e3) throw e3;
-      const { error: e4 } = await supabase.from('one_rm_test_sessions').delete().eq('user_id', user.id);
-      if (e4) throw e4;
-      const { error: e5 } = await supabase.from('user_profiles').delete().eq('id', user.id);
-      if (e5) throw e5;
+      // Every user-owned table (user_profiles, workout_sessions, accessory_exercises,
+      // workout_templates, fatigue_indicators, workout_perceptions, progress_predictions)
+      // cascades from auth.users via ON DELETE CASCADE, so deleting the auth user is
+      // the single source of truth — no manual per-table cleanup needed or wanted.
       const { error } = await supabase.rpc('delete_user');
       if (error) throw error;
       await supabase.auth.signOut();
-    } catch {
-      setDeleteError(
-        partialDeletionOccurred
-          ? 'Some data was deleted but account removal failed. Your account still exists. Contact support to complete the deletion.'
-          : 'Failed to delete account. Please try again.'
-      );
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      setDeleteError('Failed to delete account. Please try again.');
     } finally {
       setDeleteLoading(false);
     }
