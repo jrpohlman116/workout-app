@@ -15,6 +15,7 @@ import AccessoryExerciseView from './views/AccessoryExerciseView';
 import { useWorkoutData } from '../../hooks/useWorkoutData';
 import { liftNames, liftNamesShort, baseExercises, additionalExercises } from '../../lib/exercises';
 import { WorkoutDetailPageProps, WorkoutStep, SetInput } from '../../lib/types';
+import type { StickingPoint } from '../../lib/supabase';
 import Card from '../../components/ui/Card';
 import SectionLabel from '../../components/ui/SectionLabel';
 import PageHeader from '../../components/ui/PageHeader';
@@ -97,7 +98,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const liftTypeKey = liftType as 'squat' | 'bench' | 'deadlift' | 'ohp' | 'upper';
   const userWeakPoints = (liftTypeKey in (profile?.weak_points || {}))
-    ? (profile?.weak_points?.[liftTypeKey as keyof typeof profile.weak_points] as string[] | undefined)
+    ? (profile?.weak_points?.[liftTypeKey as keyof typeof profile.weak_points] as StickingPoint[] | undefined)
     : undefined;
 
   const {
@@ -111,7 +112,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     liftTypeKey,
     'standard',
     defaultExercises,
-    userWeakPoints as any
+    userWeakPoints
   );
 
   useEffect(() => {
@@ -182,7 +183,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       }
       setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, savedAt: parsed.savedAt });
     } catch {
-      try { localStorage.removeItem(key); } catch {}
+      try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
     }
   }, [user?.id, liftType, profile?.current_cycle, profile?.current_week]);
 
@@ -190,13 +191,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     if (!draftOffer || !user) return;
     setMainSets(draftOffer.mainSets);
     setAccessoryData(draftOffer.accessoryData);
-    try { localStorage.removeItem(`jt_draft_${user.id}_${liftType}`); } catch {}
+    try { localStorage.removeItem(`jt_draft_${user.id}_${liftType}`); } catch { /* storage unavailable */ }
     setDraftOffer(null);
   };
 
   const handleDismissDraft = () => {
     if (!user) return;
-    try { localStorage.removeItem(`jt_draft_${user.id}_${liftType}`); } catch {}
+    try { localStorage.removeItem(`jt_draft_${user.id}_${liftType}`); } catch { /* storage unavailable */ }
     setDraftOffer(null);
   };
 
@@ -411,7 +412,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       }
 
       const accessoryInserts = Object.entries(accessoryData)
-        .filter(([_, sets]) => sets.some(set => set.reps || set.weight))
+        .filter(([, sets]) => sets.some(set => set.reps || set.weight))
         .map(([exerciseIndex, sets]) => ({
           workout_session_id: sessionId,
           exercise_name: currentExercises[parseInt(exerciseIndex)].name,
@@ -428,7 +429,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         if (accessoryError) throw accessoryError;
       }
 
-      try { localStorage.removeItem(draftKey); } catch {}
+      try { localStorage.removeItem(draftKey); } catch { /* storage unavailable */ }
       celebrate(40);
       setShowSuccessModal(true);
     } catch {

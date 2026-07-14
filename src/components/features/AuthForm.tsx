@@ -37,8 +37,8 @@ export default function AuthForm() {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
       }
-    } catch (err: any) {
-      const msg = err.message || '';
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
       if (msg.includes('Invalid login credentials')) {
         setError("We couldn't find an account with those credentials. Please try again.");
       } else if (msg.includes('User already registered')) {
