@@ -96,7 +96,7 @@ export default function Onboarding() {
     }
   };
 
-  const canProceedFromStep1 = bodyweight !== '' && unitPreference !== '';
+  const canProceedFromStep1 = bodyweight !== '';
   const hasAtLeastOneLift = squatMax !== '' || benchMax !== '' || deadliftMax !== '';
 
   // Weeks away helper for meet date display

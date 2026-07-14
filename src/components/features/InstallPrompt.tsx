@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import Button from '../ui/Button';
+import IconButton from '../ui/IconButton';
+
+// Not part of TS's DOM lib — this event is a non-standard PWA install API.
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
 
 export default function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
 
       const hasDeclined = localStorage.getItem('pwa-install-declined');
       if (!hasDeclined) {

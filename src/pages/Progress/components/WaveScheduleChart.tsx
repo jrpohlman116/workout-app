@@ -153,7 +153,7 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
     return 0.8;
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: BarDatum }[] }) => {
     if (!active || !payload?.length) return null;
     const d: BarDatum = payload[0].payload;
     const title = d.isMeetWeek

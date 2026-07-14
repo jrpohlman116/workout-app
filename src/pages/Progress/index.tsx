@@ -253,7 +253,6 @@ export default function ProgressPage() {
                 return (
                   <LiftSummaryCard
                     key={lift.type}
-                    name={lift.name}
                     displayName={lift.displayName}
                     current={displayMax}
                     initial={firstRecorded > 0 ? firstRecorded : lift.initial}

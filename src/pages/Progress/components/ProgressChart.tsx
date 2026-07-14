@@ -25,6 +25,38 @@ interface ProgressChartProps {
 const LIFT_TYPES = ['squat', 'bench', 'deadlift'] as const;
 const BEST_KEYS = { squat: 'bestSquat', bench: 'bestBench', deadlift: 'bestDeadlift' } as const;
 
+// One row per x-axis point. Lift-keyed fields (e.g. "squat", "squat_date",
+// "squatMeet") are added dynamically per chartData entry, hence the index
+// signature — the fixed fields above are always present.
+interface ChartRow {
+  dateKey: string;
+  date: string;
+  displayDate?: string;
+  cycle?: number;
+  week?: number;
+  isMeet?: boolean;
+  [key: string]: string | number | boolean | undefined;
+}
+
+interface DotRenderProps {
+  cx?: number;
+  cy?: number;
+  value?: number;
+}
+
+interface LegendPayloadEntry {
+  value: string;
+  color: string;
+}
+
+interface TooltipPayloadEntry {
+  dataKey: string;
+  value: number;
+  name: string;
+  color: string;
+  payload: ChartRow;
+}
+
 // 5-point star outline, used both for the meet-day dot marker and the legend swatch.
 function starPoints(cx: number, cy: number, outerR: number, innerR: number) {
   return Array.from({ length: 10 }, (_, i) => {
@@ -35,18 +67,18 @@ function starPoints(cx: number, cy: number, outerR: number, innerR: number) {
 }
 
 function makeMeetDot(color: string) {
-  return (props: any) => {
+  return (props: DotRenderProps) => {
     const { cx, cy, value } = props;
     if (cx == null || cy == null || value == null) return null;
     return <polygon points={starPoints(cx, cy, 7, 3)} fill={color} stroke="white" strokeWidth={1.5} />;
   };
 }
 
-function CustomLegend({ payload }: any) {
+function CustomLegend({ payload }: { payload?: LegendPayloadEntry[] }) {
   if (!payload) return null;
   return (
     <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-1.5 pt-2">
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <div key={entry.value} className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
           <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{entry.value}</span>
@@ -69,9 +101,9 @@ export default function ProgressChart({ chartData, meets, unitPreference }: Prog
   const gridColor = isDarkMode ? '#374151' : '#e5e7eb';
 
   // Training rows: one per (cycle, week), same as before — squat's sessions set the pace.
-  const trainingRows: any[] = chartData[0]?.data.map((_, index) => {
+  const trainingRows: ChartRow[] = chartData[0]?.data.map((_, index) => {
     const source = chartData[0].data[index];
-    const point: any = {
+    const point: ChartRow = {
       dateKey: source.date.split('T')[0],
       date: source.date,
       cycle: source.cycle,
@@ -81,23 +113,23 @@ export default function ProgressChart({ chartData, meets, unitPreference }: Prog
     chartData.forEach(lift => {
       for (let i = 0; i < lift.data.length; i++) {
         if (lift.data[i].cycle == point.cycle && lift.data[i].week == point.week) {
-          point[lift.type] = lift.data[i].value ?? null;
-          point[`${lift.type}_date`] = lift.data[i].date ?? null;
+          point[lift.type] = lift.data[i].value ?? undefined;
+          point[`${lift.type}_date`] = lift.data[i].date ?? undefined;
         }
       }
     });
     return point;
   }) || [];
 
-  const rowsByDateKey = new Map<string, any>(trainingRows.map(r => [r.dateKey, r]));
+  const rowsByDateKey = new Map<string, ChartRow>(trainingRows.map(r => [r.dateKey, r]));
 
   // Meets are keyed by their real date, not by cycle/week — they slot into the
   // existing weekly rows if they land on the same day, otherwise get their own
   // point. Only successful (made) attempts are plotted.
   meets.forEach(meet => {
-    const bests = LIFT_TYPES.reduce<Record<string, number | null>>((acc, type) => {
+    const bests = LIFT_TYPES.reduce<Record<string, number | undefined>>((acc, type) => {
       const best = meet[BEST_KEYS[type]];
-      acc[type] = best ? best.weight_lifted : null;
+      acc[type] = best ? best.weight_lifted : undefined;
       return acc;
     }, {});
 
@@ -118,11 +150,11 @@ export default function ProgressChart({ chartData, meets, unitPreference }: Prog
       displayDate: new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     }));
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipPayloadEntry[] }) => {
     if (!active || !payload || !payload.length) return null;
     const row = payload[0].payload;
-    const trainingEntries = payload.filter((e: any) => !String(e.dataKey).endsWith('Meet') && e.value != null);
-    const meetEntries = payload.filter((e: any) => String(e.dataKey).endsWith('Meet') && e.value != null);
+    const trainingEntries = payload.filter((e) => !e.dataKey.endsWith('Meet') && e.value != null);
+    const meetEntries = payload.filter((e) => e.dataKey.endsWith('Meet') && e.value != null);
     if (trainingEntries.length === 0 && meetEntries.length === 0) return null;
 
     return (
@@ -131,8 +163,8 @@ export default function ProgressChart({ chartData, meets, unitPreference }: Prog
         {row.cycle != null && (
           <p className="text-xs text-gray-400 mb-2">Cycle {row.cycle}, Week {row.week}</p>
         )}
-        {trainingEntries.map((entry: any, index: number) => {
-          const liftDate = entry.payload[`${entry.dataKey}_date`];
+        {trainingEntries.map((entry, index) => {
+          const liftDate = entry.payload[`${entry.dataKey}_date`] as string | undefined;
           const formattedDate = liftDate ? new Date(liftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
           return (
             <div key={index} className="flex items-center gap-2">
@@ -144,7 +176,7 @@ export default function ProgressChart({ chartData, meets, unitPreference }: Prog
         })}
         {meetEntries.length > 0 && (
           <div className={trainingEntries.length > 0 ? 'mt-1.5 pt-1.5 border-t border-gray-700 space-y-0.5' : 'space-y-0.5'}>
-            {meetEntries.map((entry: any, index: number) => (
+            {meetEntries.map((entry, index) => (
               <div key={index} className="flex items-center gap-2">
                 <span aria-hidden="true">★</span>
                 <span>{entry.name}: {Math.round(entry.value)} {unitPreference}</span>

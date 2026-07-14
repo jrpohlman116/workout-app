@@ -25,7 +25,11 @@ const BOTTOM_POSITION_LABELS: Record<string, { label: string; description: strin
   deadlift: { label: 'Off the Ground', description: 'Breaking the floor' },
 };
 const STICKING_POINTS: StickingPoint[] = ['in_the_hole', 'mid_range', 'lockout'];
-const LIFT_LABELS: Record<keyof WeakPoints, string> = {
+
+// This tab only sets sticking points for the three barbell lifts — `upper`
+// (accessory/upper-body day) has no sticking-point concept in this UI.
+type MainLiftKey = 'squat' | 'bench' | 'deadlift';
+const LIFT_LABELS: Record<MainLiftKey, string> = {
   squat: 'Squat',
   bench: 'Bench Press',
   deadlift: 'Deadlift',
@@ -39,7 +43,7 @@ export default function TrainingTab() {
   );
   const { loading, error, saved, run, markUnsaved } = useFormState();
 
-  const toggleWeakPoint = (lift: keyof WeakPoints, point: StickingPoint) => {
+  const toggleWeakPoint = (lift: MainLiftKey, point: StickingPoint) => {
     setWeakPoints(prev => {
       const current = prev[lift];
       const updated = current.includes(point)
@@ -103,7 +107,7 @@ export default function TrainingTab() {
           Select where each lift breaks down. Your accessories will target these zones.
         </p>
         <div className="space-y-4">
-          {(Object.keys(LIFT_LABELS) as (keyof WeakPoints)[]).map(lift => (
+          {(Object.keys(LIFT_LABELS) as MainLiftKey[]).map(lift => (
             <div key={lift}>
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{LIFT_LABELS[lift]}</p>
               <div className="flex gap-2 flex-wrap">
