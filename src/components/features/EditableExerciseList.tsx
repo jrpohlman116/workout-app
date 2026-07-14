@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronUp, ChevronDown, Trash2, RefreshCw } from 'lucide-react';
-import { Exercise } from '../../pages/WorkoutDetail/types';
+import { Exercise } from '../../lib/types';
 import IconButton from '../ui/IconButton';
 
 interface EditableExerciseListProps {

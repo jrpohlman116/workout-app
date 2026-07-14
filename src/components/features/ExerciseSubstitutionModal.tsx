@@ -3,7 +3,7 @@ import { Check, Search } from 'lucide-react';
 import AccessibleModal from '../accessible/AccessibleModal';
 import { supabase } from '../../lib/supabase';
 import { ExerciseSubstitution } from '../../lib/supabase';
-import { Exercise } from '../../pages/WorkoutDetail/types';
+import { Exercise } from '../../lib/types';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 
@@ -108,9 +108,6 @@ export default function ExerciseSubstitutionModal({
   );
 
   const recommendedExerciseNames = new Set(substitutions.map(s => s.substitute_exercise));
-  const otherExercises = filteredAvailableExercises.filter(
-    ex => !recommendedExerciseNames.has(ex.name)
-  );
 
   const isSearching = searchQuery.trim().length > 0;
 

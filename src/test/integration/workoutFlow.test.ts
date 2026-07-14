@@ -127,7 +127,7 @@ describe('E2E Workout Flow Tests', () => {
   });
 
   it('should progress to next cycle after completing 4 weeks', async () => {
-    const profile = await createTestProfile(userId, {
+    await createTestProfile(userId, {
       squat_max: 315,
       current_cycle: 1,
       current_week: 4,

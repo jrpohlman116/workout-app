@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import Button from '../../components/ui/Button';
 import IconButton from '../../components/ui/IconButton';
 import { Trash2, Plus } from 'lucide-react';

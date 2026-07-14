@@ -2,7 +2,6 @@ import { TrendingUp, TrendingDown } from 'lucide-react';
 import Card from '../../../components/ui/Card';
 
 interface LiftSummaryCardProps {
-  name: string;
   displayName: string;
   current: number;
   initial: number;
@@ -11,7 +10,7 @@ interface LiftSummaryCardProps {
   unitPreference?: string;
 }
 
-export default function LiftSummaryCard({ name, displayName, current, initial, changePercent, isVisible, unitPreference = 'lb' }: LiftSummaryCardProps) {
+export default function LiftSummaryCard({ displayName, current, initial, changePercent, isVisible, unitPreference = 'lb' }: LiftSummaryCardProps) {
   const change = parseFloat(changePercent);
   const isPositive = change >= 0;
 

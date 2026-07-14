@@ -21,8 +21,9 @@ interface MainLiftViewProps {
 }
 
 const RPE_OPTIONS = [6, 7, 8, 9, 10] as const;
+type RpeValue = typeof RPE_OPTIONS[number];
 
-const RPE_DESCRIPTIONS: Record<typeof RPE_OPTIONS[number], string> = {
+const RPE_DESCRIPTIONS: Record<RpeValue, string> = {
   6: '4+ reps left',
   7: '3 reps left',
   8: '2 reps left',
@@ -44,7 +45,7 @@ export default function MainLiftView({
   onNext,
   nextExerciseName,
 }: MainLiftViewProps) {
-  const [selectedRpe, setSelectedRpe] = useState<number | null>(null);
+  const [selectedRpe, setSelectedRpe] = useState<RpeValue | null>(null);
   const [set4Feel, setSet4Feel] = useState<WarmupFeel | null>(null);
   const [set5Feel, setSet5Feel] = useState<WarmupFeel | null>(null);
 
@@ -57,7 +58,7 @@ export default function MainLiftView({
     ? calculateBackoffSets(topSetWeight, selectedRpe, unitPreference)
     : null;
 
-  const handleRpeSelect = (rpe: number) => {
+  const handleRpeSelect = (rpe: RpeValue) => {
     const next = selectedRpe === rpe ? null : rpe;
     setSelectedRpe(next);
     onRpeChange?.(next);

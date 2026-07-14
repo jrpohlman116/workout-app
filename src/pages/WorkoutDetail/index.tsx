@@ -102,7 +102,6 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const {
     exercises: templateExercises,
-    loading: templateLoading,
     saving: templateSaving,
     error: templateError,
     saveTemplate,
@@ -261,7 +260,6 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       if (currentBlock.phase === 'peaking') {
         return calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, trainingMax, unit);
       }
-      if (currentBlock.phase === 'meet_week') return null;
       return calculateJuggernautSets(currentBlock.wave, currentBlock.phase, trainingMax, unit);
     }
     return null;
@@ -279,13 +277,6 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const currentExercises = templateExercises;
   const totalSteps = (isUpperDay ? 0 : 1) + currentExercises.length;
-
-  const getProgressPercentage = () => {
-    if (currentStep === 'summary') return 0;
-    if (currentStep === 'main') return (1 / totalSteps) * 100;
-    const offset = isUpperDay ? 1 : 2;
-    return (((currentStep as number) + offset) / totalSteps) * 100;
-  };
 
   const getCurrentExercise = () => {
     if (typeof currentStep === 'number') {

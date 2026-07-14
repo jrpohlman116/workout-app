@@ -38,6 +38,7 @@ export interface UserProfile {
   bodyweight?: number;
   gender?: string;
   unit_preference?: string;
+  dark_mode?: boolean;
   /** @deprecated Replaced by weak_points system. Kept until profile UI is updated. */
   program_variation?: 'standard' | 'bbb' | 'bbs';
   available_plates_lb?: number[];

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import Button from '../ui/Button';
+import IconButton from '../ui/IconButton';
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);

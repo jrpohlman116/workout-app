@@ -208,7 +208,7 @@ describe('User Profiles Database Operations', () => {
       await waitForAuth();
       await createTestProfile(newUserId);
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('user_profiles')
         .update({ bodyweight: 200 })
         .eq('id', otherUserId)
