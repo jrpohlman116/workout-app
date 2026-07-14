@@ -353,7 +353,7 @@ export default function ProgressPage() {
                 icon={<Plus className="w-3.5 h-3.5" />}
                 onClick={() => setShowPastMeetModal(true)}
               >
-                Log Past Meet
+                Log Meet
               </Button>
             </div>
 
