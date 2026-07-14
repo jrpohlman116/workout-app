@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../../lib/supabase';
+import { calculateWilksScore, calculateDOTSScore, calculateIPFGLScore } from '../../lib/calculations';
 import ProgressChart from './components/ProgressChart';
 import AccessibleChartTable from '../../components/accessible/AccessibleChartTable';
 import { useStaggeredAnimation, useRipple } from '../../hooks/useAnimations';
