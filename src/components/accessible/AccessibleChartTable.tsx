@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import type { MeetGroup } from '../../lib/types';
 
 interface ChartDataPoint {
   value: number;
   date: string;
-  cycle: number;
-  week: number;
+  cycle?: number;
+  week?: number;
+  isMeet?: boolean;
 }
 
 interface LiftData {
@@ -17,11 +19,15 @@ interface LiftData {
 
 interface AccessibleChartTableProps {
   chartData: LiftData[];
+  meets: MeetGroup[];
   unitPreference: string;
 }
 
+const BEST_KEYS = { squat: 'bestSquat', bench: 'bestBench', deadlift: 'bestDeadlift' } as const;
+
 export default function AccessibleChartTable({
   chartData,
+  meets,
   unitPreference
 }: AccessibleChartTableProps) {
   const [expandedLift, setExpandedLift] = useState<string | null>(null);
@@ -55,6 +61,26 @@ export default function AccessibleChartTable({
     });
   };
 
+  // Meets aren't part of chartData (they're competition singles, not AMAP
+  // training projections — see Progress/index.tsx), so merge each lift's best
+  // successful meet attempt in here, sorted chronologically alongside training
+  // sessions so "Starting"/"Current" stats stay accurate.
+  const getMergedData = (lift: LiftData): ChartDataPoint[] => {
+    const bestKey = BEST_KEYS[lift.type as keyof typeof BEST_KEYS];
+    const meetEntries: ChartDataPoint[] = bestKey
+      ? meets
+        .map((meet): ChartDataPoint | null => {
+          const best = meet[bestKey];
+          return best ? { value: best.weight_lifted, date: `${meet.date}T12:00:00.000Z`, isMeet: true } : null;
+        })
+        .filter((entry): entry is ChartDataPoint => entry !== null)
+      : [];
+
+    return [...lift.data, ...meetEntries].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  };
+
   const getSummaryStats = (data: ChartDataPoint[]) => {
     if (data.length === 0) return null;
 
@@ -81,8 +107,10 @@ export default function AccessibleChartTable({
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         {chartData.map((lift) => {
           const isExpanded = expandedLift === lift.type;
-          const stats = getSummaryStats(lift.data);
-          const sortedData = getSortedData(lift.data);
+          const mergedData = getMergedData(lift);
+          const meetCount = mergedData.filter(d => d.isMeet).length;
+          const stats = getSummaryStats(mergedData);
+          const sortedData = getSortedData(mergedData);
 
           return (
             <div key={lift.type} className="border-b border-gray-100 dark:border-gray-700 last:border-0">
@@ -103,7 +131,8 @@ export default function AccessibleChartTable({
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</h4>
                       {stats && (
                         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                          {lift.data.length} sessions
+                          {lift.data.length} session{lift.data.length !== 1 ? 's' : ''}
+                          {meetCount > 0 && ` · ${meetCount} meet${meetCount !== 1 ? 's' : ''}`}
                         </p>
                       )}
                     </div>
@@ -141,7 +170,7 @@ export default function AccessibleChartTable({
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <caption className="sr-only">
-                        {lift.name} progress data showing date, cycle, week, and estimated 1RM
+                        {lift.name} progress data showing date, cycle, week, and 1RM, including meet attempts
                       </caption>
                       <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
@@ -171,7 +200,7 @@ export default function AccessibleChartTable({
                               className="font-semibold text-gray-700 hover:text-gray-900 flex items-center gap-1 ml-auto focus:outline-none focus:underline"
                               aria-sort={sortColumn === 'value' ? sortDirection === 'asc' ? 'ascending' : 'descending' : 'none'}
                             >
-                              Est. 1RM ({unitPreference})
+                              1RM ({unitPreference})
                               {sortColumn === 'value' && (
                                 <span aria-hidden="true">
                                   {sortDirection === 'asc' ? '↑' : '↓'}
@@ -188,14 +217,21 @@ export default function AccessibleChartTable({
                             className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           >
                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                              {new Date(dataPoint.date).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric'
-                              })}
+                              <span>
+                                {new Date(dataPoint.date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                              {dataPoint.isMeet && (
+                                <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                                  Meet
+                                </span>
+                              )}
                             </td>
-                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{dataPoint.cycle}</td>
-                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{dataPoint.week}</td>
+                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{dataPoint.cycle ?? '—'}</td>
+                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{dataPoint.week ?? '—'}</td>
                             <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
                               {Math.round(dataPoint.value)}
                             </td>

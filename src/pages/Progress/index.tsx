@@ -238,11 +238,11 @@ export default function ProgressPage() {
             </Card>
 
             {nonDeloadSessions.length > 0 && (
-              <AccessibleChartTable chartData={chartData} unitPreference={profile.unit_preference || 'lb'} />
+              <AccessibleChartTable chartData={chartData} meets={meetGroups} unitPreference={profile.unit_preference || 'lb'} />
             )}
 
             <p className="text-xs uppercase tracking-widest font-semibold text-white/70 mb-2">Average Projected 1RM</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-rows-3 gap-3">
               {lifts.map((lift, index) => {
                 const averageMax = utils.getAverageOfLastThreeSessions(nonDeloadSessions, lift.type);
                 const displayMax = averageMax > 0 ? averageMax : lift.initial;
