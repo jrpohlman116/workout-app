@@ -59,7 +59,7 @@ export default function InstallPrompt() {
           <div className="flex-1">
             <h3 className="font-semibold text-gray-900 mb-1">Install App</h3>
             <p className="text-sm text-gray-600 mb-3">
-              Install 531 Tracker on your home screen for quick access and offline use!
+              Install Ironform on your home screen for quick access and offline use!
             </p>
             <div className="flex gap-2">
               <Button
