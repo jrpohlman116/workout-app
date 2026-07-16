@@ -41,14 +41,31 @@ export function calculateTonnage(session: WorkoutSession): number {
 }
 
 export function getFirstRecordedMax(sessions: WorkoutSession[], liftType: string): number {
-  const liftSessions = sessions.filter(s => s.lift_type === liftType);
+  // Deload-week sets are logged light with whatever reps the user actually
+  // did — if that's more than prescribed, Epley extrapolates an inflated,
+  // meaningless 1RM from it. Excluding deloads matches the filter already
+  // used everywhere else "earliest recorded" is shown (chart, data table).
+  // Meets are exempt from this check: their `week` is just whatever the
+  // profile's cycle counter happened to read when logged (unrelated to
+  // deload status), so a meet can land on week 4 by pure coincidence.
+  // Missed attempts (calculated_1rm 0) are excluded outright — they were
+  // never a recorded max, and every attempt on a given meet day shares one
+  // timestamp, so without this a missed attempt could win the date sort by
+  // sheer luck of row order.
+  const liftSessions = sessions.filter(s =>
+    s.lift_type === liftType &&
+    s.calculated_1rm > 0 &&
+    (s.is_1rm_test || (s.phase !== 'deload' && s.week !== 4))
+  );
   if (liftSessions.length === 0) return 0;
 
   const sortedByDate = [...liftSessions].sort((a, b) =>
     new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime()
   );
+  const earliestDay = sortedByDate[0].completed_at.split('T')[0];
+  const onEarliestDay = sortedByDate.filter(s => s.completed_at.split('T')[0] === earliestDay);
 
-  return sortedByDate[0].calculated_1rm;
+  return Math.max(...onEarliestDay.map(s => s.calculated_1rm));
 }
 
 export function getAverageOfLastThreeSessions(nonDeloadSessions: WorkoutSession[], liftType: string): number {
