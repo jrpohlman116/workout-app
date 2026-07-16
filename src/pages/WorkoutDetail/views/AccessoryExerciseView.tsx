@@ -9,6 +9,7 @@ interface AccessoryExerciseViewProps {
   exerciseSets: SetInput[];
   unitPreference: string;
   lastSetData: string;
+  suggestedWeight?: { low: number; high: number } | null;
   substitutedFrom?: string;
   onUpdateSet: (index: number, field: 'reps' | 'weight', value: string) => void;
   onAddSet: () => void;
@@ -25,6 +26,7 @@ export default function AccessoryExerciseView({
   exerciseSets,
   unitPreference,
   lastSetData,
+  suggestedWeight,
   substitutedFrom,
   onUpdateSet,
   onAddSet,
@@ -136,7 +138,7 @@ export default function AccessoryExerciseView({
                       step="0.5"
                       value={set.weight}
                       onChange={(e) => onUpdateSet(index, 'weight', e.target.value)}
-                      placeholder="0"
+                      placeholder={suggestedWeight ? `${suggestedWeight.low}-${suggestedWeight.high}` : '0'}
                       className="px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
                       aria-label={`Set ${setNumber}: Weight in ${unitPreference}`}
                       min="0"

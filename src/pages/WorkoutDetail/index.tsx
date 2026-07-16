@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateNewTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, JuggernautSetsConfig } from '../../lib/calculations';
-import { DEFAULT_PROGRAM_WEEKS } from '../../lib/constants';
+import { calculateOneRepMax, calculateNewTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, JuggernautSetsConfig, getRoundingIncrement } from '../../lib/calculations';
+import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
@@ -13,7 +13,7 @@ import WorkoutSummaryView from './views/WorkoutSummaryView';
 import MainLiftView from './views/MainLiftView';
 import AccessoryExerciseView from './views/AccessoryExerciseView';
 import { useWorkoutData } from '../../hooks/useWorkoutData';
-import { liftNames, liftNamesShort, baseExercises, additionalExercises } from '../../lib/exercises';
+import { liftNames, liftNamesShort, baseExercises, additionalExercises, ACCESSORY_PCT_OF_TM } from '../../lib/exercises';
 import { WorkoutDetailPageProps, WorkoutStep, SetInput } from '../../lib/types';
 import type { StickingPoint } from '../../lib/supabase';
 import Card from '../../components/ui/Card';
@@ -254,6 +254,22 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   };
 
   const unit = profile.unit_preference || 'lb';
+
+  // Suggested weight range for accessories that are barbell variations of a
+  // main lift (pause squats, board press, rack pulls, etc.) — the rest of
+  // the accessory pool has no %TM basis and gets no suggestion.
+  const getAccessorySuggestion = (exerciseName: string): { low: number; high: number } | null => {
+    const mapping = ACCESSORY_PCT_OF_TM[exerciseName];
+    if (!mapping) return null;
+    const trainingMax = maxes[mapping.baseLift] ?? 0;
+    if (trainingMax <= 0) return null;
+    const roundTo = getRoundingIncrement(unit);
+    const base = trainingMax * mapping.pct;
+    return {
+      low: Math.round((base * WEIGHT_DISPLAY_RANGE_LOW) / roundTo) * roundTo,
+      high: Math.round((base * WEIGHT_DISPLAY_RANGE_HIGH) / roundTo) * roundTo,
+    };
+  };
 
   const mainConfig: JuggernautSetsConfig | null = isUpperDay ? null : (() => {
     const trainingMax = maxes[liftType] ?? 0;
@@ -623,6 +639,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           exerciseSets={exerciseSets}
           unitPreference={profile.unit_preference || 'lb'}
           lastSetData={getLastSetData(currentExercise.name)}
+          suggestedWeight={getAccessorySuggestion(currentExercise.name)}
           onUpdateSet={(index, field, value) => updateAccessorySet(exerciseIndex, index, field, value)}
           onAddSet={() => addAccessorySet(exerciseIndex)}
           onRemoveSet={(index) => removeAccessorySet(exerciseIndex, index)}

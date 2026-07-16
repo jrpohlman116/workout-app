@@ -126,6 +126,31 @@ export const additionalExercises = [
   { name: 'Rear Delt Flyes', reps: '12-15', sets: 3, isBodyweight: false },
 ];
 
+// Barbell variations of a main lift, scaled as a % of that lift's training
+// max — the rest of the accessory pool (leg press, cable flyes, etc.) has no
+// natural %TM basis and isn't included. These are starting-point estimates,
+// not prescriptions; a lifter should still adjust based on how the pause/
+// range-of-motion/leverage change actually feels.
+export const ACCESSORY_PCT_OF_TM: Record<string, { baseLift: 'squat' | 'bench' | 'deadlift'; pct: number }> = {
+  'Box Squats': { baseLift: 'squat', pct: 0.70 },
+  'Pause Squats': { baseLift: 'squat', pct: 0.75 },
+  'Front Squats': { baseLift: 'squat', pct: 0.65 },
+  'Anderson Squats': { baseLift: 'squat', pct: 0.65 },
+  'Safety Bar Box Squats': { baseLift: 'squat', pct: 0.70 },
+  'Tempo Squats': { baseLift: 'squat', pct: 0.60 },
+  'Pin Squats': { baseLift: 'squat', pct: 0.70 },
+  'Zercher Squats': { baseLift: 'squat', pct: 0.60 },
+  'Safety Bar Squats': { baseLift: 'squat', pct: 0.80 },
+  'High Bar Squats': { baseLift: 'squat', pct: 0.80 },
+  'Spoto Press': { baseLift: 'bench', pct: 0.70 },
+  'Pin Press': { baseLift: 'bench', pct: 0.70 },
+  'Board Press': { baseLift: 'bench', pct: 0.85 },
+  'Pause Bench': { baseLift: 'bench', pct: 0.80 },
+  'Close-Grip Bench': { baseLift: 'bench', pct: 0.80 },
+  'JM Press': { baseLift: 'bench', pct: 0.55 },
+  'Rack Pulls': { baseLift: 'deadlift', pct: 0.90 },
+};
+
 export const weakPointExercisesMap: Record<string, Record<StickingPoint, string[]>> = {
   squat: {
     in_the_hole: ['Box Squats', 'Anderson Squats', 'Pin Squats', 'Pause Squats', 'Bulgarian Split Squats'],
@@ -133,7 +158,7 @@ export const weakPointExercisesMap: Record<string, Record<StickingPoint, string[
     lockout:     ['Walking Lunges', 'Single-Leg Squats', 'Safety Bar Box Squats', 'Leg Extensions', 'Hip Thrusts'],
   },
   bench: {
-    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Paused Bench'],
+    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench'],
     mid_range:   ['Close-Grip Bench', 'Pin Press', 'Pause Bench', 'Incline Bench', 'Floor Press'],
     lockout:     ['Floor Press', 'Board Press', 'Close-Grip Bench', 'Tricep Pressdowns', 'JM Press'],
   },
@@ -143,7 +168,7 @@ export const weakPointExercisesMap: Record<string, Record<StickingPoint, string[
     lockout:     ['Rack Pulls', 'Pin Pulls', 'Partial Deadlifts', 'B Stance RDLs', 'Shrugs'],
   },
   upper: {
-    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Paused Bench'],
+    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench'],
     mid_range:   ['Close-Grip Bench', 'Pin Press', 'Pause Bench', 'JM Press', 'Floor Press'],
     lockout:     ['Floor Press', 'Board Press', 'Close-Grip Bench', 'Tricep Pressdowns', 'Lockout Bench'],
   },

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase, WorkoutTemplate } from '../lib/supabase';
 import { Exercise } from '../lib/types';
 import { StickingPoint } from '../lib/supabase';
-import { selectMixedAccessories } from '../lib/exercises';
+import { selectMixedAccessories, additionalExercises } from '../lib/exercises';
 
 interface UseWorkoutTemplateResult {
   template: WorkoutTemplate | null;
@@ -61,10 +61,14 @@ export function useWorkoutTemplate(
         // If weak points are defined, generate weak-point-based exercises
         if (weakPoints && weakPoints.length > 0) {
           const selectedNames = selectMixedAccessories(liftType, weakPoints);
-          // Map exercise names to default exercises or create placeholders
+          // Weak-point picks (e.g. "Pause Squats") live in the full accessory
+          // pool, not the 4-item baseExercises set for this lift day — check
+          // both so they resolve to their real reps/sets instead of a
+          // generic placeholder.
           const selectedExercises = selectedNames
             .map(name => {
-              const found = defaultExercises.find(e => e.name === name);
+              const found = defaultExercises.find(e => e.name === name)
+                ?? additionalExercises.find(e => e.name === name);
               return found || { name, reps: '8-12', sets: 3, isBodyweight: false };
             })
             .slice(0, 4);
