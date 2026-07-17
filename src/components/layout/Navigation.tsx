@@ -40,7 +40,7 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
                 <span className="absolute top-0 left-6 right-6 h-0.5 bg-white rounded-full" aria-hidden="true" />
               )}
               <Icon className="w-5 h-5" aria-hidden="true" />
-              <span className="text-[10px] uppercase tracking-widest font-semibold" aria-hidden="true">
+              <span className="text-[10px] tracking-wide font-semibold" aria-hidden="true">
                 {item.label}
               </span>
               {isActive && <span className="sr-only">(current page)</span>}

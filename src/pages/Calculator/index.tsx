@@ -354,7 +354,7 @@ export default function CalculatorPage() {
                   <div className="space-y-2">
                     {calculatedPlates.map((plate, index) => (
                       <div key={index} className="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                        <span className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">
+                        <span className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">
                           {plate.weight} {plateUnit}
                         </span>
                         <span className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">

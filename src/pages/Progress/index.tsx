@@ -241,7 +241,7 @@ export default function ProgressPage() {
               <AccessibleChartTable chartData={chartData} meets={meetGroups} unitPreference={profile.unit_preference || 'lb'} />
             )}
 
-            <p className="text-xs uppercase tracking-widest font-semibold text-white/70 mb-2">Average Projected 1RM</p>
+            <p className="text-xs tracking-wide font-semibold text-white/70 mb-2">Average Projected 1RM</p>
             <div className="grid grid-rows-3 gap-3">
               {lifts.map((lift, index) => {
                 const averageMax = utils.getAverageOfLastThreeSessions(nonDeloadSessions, lift.type);
@@ -324,7 +324,7 @@ export default function ProgressPage() {
               .filter(group => group.sessions.length > 0)
               .map(group => (
                 <div key={group.date}>
-                  <p className="text-xs uppercase tracking-widest font-semibold text-white/70 mb-2 px-1">{formatDate(group.date + 'T00:00:00')}</p>
+                  <p className="text-xs tracking-wide font-semibold text-white/70 mb-2 px-1">{formatDate(group.date + 'T00:00:00')}</p>
                   <div className="space-y-3">
                     {group.sessions.map(session => (
                       <WorkoutLogEntry
@@ -345,7 +345,7 @@ export default function ProgressPage() {
         {activeTab === 'meets' && (
           <div className="space-y-4 animate-enter">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-widest font-semibold text-white/70">Meet History</p>
+              <p className="text-xs tracking-wide font-semibold text-white/70">Meet History</p>
               <Button
                 variant="secondary"
                 size="sm"
@@ -430,7 +430,7 @@ export default function ProgressPage() {
                     <div className="grid grid-cols-3 gap-3 mb-5">
                       {(['squat', 'bench', 'deadlift'] as const).map(lift => (
                         <div key={lift}>
-                          <p className="text-xs font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-2">
+                          <p className="text-xs font-semibold text-gray-400 dark:text-gray-400 tracking-wide mb-2">
                             {liftLabels[lift]}
                           </p>
                           <div className="space-y-1.5">

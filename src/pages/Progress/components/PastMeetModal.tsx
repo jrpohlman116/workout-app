@@ -186,7 +186,7 @@ export default function PastMeetModal({ isOpen, onClose, onSaved, unitPreference
         {/* Per-lift attempt entry */}
         {LIFTS.map(({ key, label }) => (
           <div key={key}>
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">
+            <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2">
               {label}
             </p>
             <div className="space-y-2">

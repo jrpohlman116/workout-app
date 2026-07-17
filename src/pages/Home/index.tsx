@@ -231,7 +231,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         <div className="grid grid-cols-2 gap-4">
           <Card className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">Wave</p>
+              <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">Wave</p>
               <IconButton
                 size="sm"
                 label="About this phase"
@@ -260,7 +260,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             {profile.meet_date ? (
               <>
                 <div style={{'height': '26px'}} className="flex items-center justify-between mb-3">
-                  <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">Days Out</p>
+                  <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">Days Out</p>
                 </div>
                 <div className="mb-2">
                   <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
@@ -274,7 +274,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               </>
             ) : (
               <>
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-3">Week</p>
+                <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-3">Week</p>
                 <div className="mb-2">
                   <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
                     {currentBlock ? currentBlock.weekIndex + 1 : profile.current_week}
@@ -395,7 +395,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   }
                   trailing={trailing}
                 >
-                  <p className={`text-xs uppercase tracking-widest font-semibold mb-0.5 ${!isViewing && isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'
+                  <p className={`text-xs tracking-wide font-semibold mb-0.5 ${!isViewing && isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'
                     }`}>
                     {workout.name}
                   </p>

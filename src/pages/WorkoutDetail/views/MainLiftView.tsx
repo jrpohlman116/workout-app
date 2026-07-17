@@ -116,7 +116,7 @@ export default function MainLiftView({
           {set4Feel && approachWeight && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
+                <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
                 <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
                   {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference} × 1</span>
                 </p>
@@ -149,7 +149,7 @@ export default function MainLiftView({
               {/* Stage 3: adjusted working weight */}
               {set5Feel && adjustedWeight !== null && (
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                  <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Your Working Weight</p>
+                  <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Your Working Weight</p>
                   <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
                     {adjustedWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span>
                   </p>
@@ -225,7 +225,7 @@ export default function MainLiftView({
 
           {backoff && (
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Back-off Sets</p>
+              <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Back-off Sets</p>
               <p className="text-xl font-black tabular-nums text-gray-900 dark:text-gray-100">
                 {backoff.sets} × {backoff.reps} @ {backoff.weight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span>
               </p>

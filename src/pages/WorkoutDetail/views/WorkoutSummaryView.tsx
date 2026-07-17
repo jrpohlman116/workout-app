@@ -159,7 +159,7 @@ export default function WorkoutSummaryView({
       {mainConfig && (
         <Card className="p-6">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">Main Sets</p>
+            <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">Main Sets</p>
             {wave && (
               <span className="text-xs font-semibold px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full tabular-nums">
                 {wave}-Rep Wave
@@ -167,13 +167,13 @@ export default function WorkoutSummaryView({
             )}
           </div>
           {phase && (
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-400 mb-4">
+            <p className="text-xs tracking-wide font-semibold text-gray-400 dark:text-gray-400 mb-4">
               {PHASE_DETAIL_LABELS[phase as keyof typeof PHASE_DETAIL_LABELS] ?? phase}
             </p>
           )}
           <div className="flex justify-between items-center py-4 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
             <div>
-              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">
+              <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">
                 {mainConfig.isAmap
                   ? 'AMAP Set'
                   : `${mainConfig.numSets} sets × ${mainConfig.reps}`}

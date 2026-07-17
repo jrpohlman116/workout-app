@@ -80,7 +80,7 @@ export default function StrengthScoreCarousel({
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">
+            <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">
               {currentConfig.name}
             </p>
             <IconButton

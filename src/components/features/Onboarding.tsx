@@ -222,7 +222,7 @@ export default function Onboarding() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-400 mb-2">
+          <p className="text-xs tracking-wide font-semibold text-gray-400 dark:text-gray-400 mb-2">
             Juggernaut Method
           </p>
           <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2">
@@ -239,10 +239,10 @@ export default function Onboarding() {
 
         <div className="mb-6" role="group" aria-label="Progress indicator">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-400">
+            <span className="text-xs tracking-wide font-semibold text-gray-400 dark:text-gray-400">
               Step {currentStep} of {TOTAL_STEPS}
             </span>
-            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-400">
+            <span className="text-xs tracking-wide font-semibold text-gray-400 dark:text-gray-400">
               {getStepTitle(currentStep)}
             </span>
           </div>
@@ -492,7 +492,7 @@ export default function Onboarding() {
 
                 {meetDate && weeksAway !== null && weeksAway > 0 && (
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Program Structure</p>
+                    <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Program Structure</p>
                     <p className="text-sm text-gray-700 dark:text-gray-300">
                       {weeksAway >= 12
                         ? `Full program: 10-rep → 8-rep → 5-rep → 3-rep waves`

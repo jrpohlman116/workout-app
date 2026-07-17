@@ -47,7 +47,7 @@ export default function WorkoutLogEntry({ session, accessories, isExpanded, onTo
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">
+            <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1">
               {liftTypeNames[session.lift_type] ?? session.lift_type}
               {session.is_1rm_test && ' · 1RM Test'}
             </p>
@@ -82,14 +82,14 @@ export default function WorkoutLogEntry({ session, accessories, isExpanded, onTo
         <div className="px-6 pb-6 border-t border-gray-100 dark:border-gray-700 pt-4 space-y-4">
           {session.notes && (
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Notes</p>
+              <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Notes</p>
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{session.notes}</p>
             </div>
           )}
 
           {accessories.length > 0 && (
             <div>
-              <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-3">Accessories</p>
+              <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-3">Accessories</p>
               <div className="space-y-3">
                 {accessories.map(acc => (
                   <div key={acc.id} className="flex items-start gap-3">

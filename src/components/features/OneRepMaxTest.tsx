@@ -259,7 +259,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
               {warmupFeel && approachWeight && (
                 <div className="space-y-4">
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                    <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
+                    <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
                     <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
                       {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unit} × 1</span>
                     </p>
@@ -286,7 +286,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
 
                   {approachFeel && adjustedAttempt !== null && (
                     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                      <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Suggested Opener</p>
+                      <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Suggested Opener</p>
                       <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
                         {adjustedAttempt} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unit}</span>
                       </p>

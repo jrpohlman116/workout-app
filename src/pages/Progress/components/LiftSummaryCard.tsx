@@ -17,7 +17,7 @@ export default function LiftSummaryCard({ displayName, current, initial, changeP
   return (
     <Card className={`p-4 transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
       <div className="flex items-start justify-between mb-2">
-        <h3 className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 leading-tight">{displayName}</h3>
+        <h3 className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 leading-tight">{displayName}</h3>
         {change !== 0 && (
           <span
             className={`flex items-center text-xs font-semibold flex-shrink-0 ml-1 ${

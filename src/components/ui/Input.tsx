@@ -18,7 +18,7 @@ const variantStyles: Record<InputVariant, string> = {
 
 const labelStyles: Record<InputVariant, string> = {
   default: 'block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2',
-  onDark:  'block text-xs uppercase tracking-widest text-white/70 mb-2',
+  onDark:  'block text-xs tracking-wide text-white/70 mb-2',
 };
 
 const Input = forwardRef<HTMLInputElement, InputProps>(function Input(

@@ -73,7 +73,7 @@ export default function AuthForm() {
           <h1 className="text-6xl font-black text-white leading-none tracking-tight">
             Ironform
           </h1>
-          <p className="text-xs uppercase tracking-widest text-white/40 mt-3">
+          <p className="text-xs tracking-wide text-white/40 mt-3">
             Juggernaut Method
           </p>
         </div>
@@ -89,7 +89,7 @@ export default function AuthForm() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-xs uppercase tracking-widest text-white/70 mb-2">
+            <label className="block text-xs tracking-wide text-white/70 mb-2">
               Email
             </label>
             <Input
@@ -103,7 +103,7 @@ export default function AuthForm() {
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-widest text-white/70 mb-2">
+            <label className="block text-xs tracking-wide text-white/70 mb-2">
               Password
             </label>
             {!isLogin && (
@@ -131,7 +131,7 @@ export default function AuthForm() {
 
           {!isLogin && (
             <div>
-              <label className="block text-xs uppercase tracking-widest text-white/70 mb-2">
+              <label className="block text-xs tracking-wide text-white/70 mb-2">
                 Confirm Password
               </label>
               <div className="relative">

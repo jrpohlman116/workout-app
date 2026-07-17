@@ -82,7 +82,7 @@ export default function MaxesTab() {
         const impliedOneRM = tm > 0 ? Math.round((tm / TRAINING_MAX_FACTOR) * 10) / 10 : null;
         return (
           <Card key={label} className="p-5 space-y-4">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400">{label}</p>
+            <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">{label}</p>
             <div>
               <div className="flex gap-2 items-end">
                 <Input

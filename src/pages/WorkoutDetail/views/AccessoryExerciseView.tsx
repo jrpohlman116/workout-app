@@ -42,7 +42,7 @@ export default function AccessoryExerciseView({
       <Card className="p-6">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex-1 min-w-0">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">
+            <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1">
               {exercise.sets}×{exercise.reps}
             </p>
             <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100 leading-tight">{exercise.name}</h2>
@@ -64,7 +64,7 @@ export default function AccessoryExerciseView({
 
         {lastSetData && (
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-3 mb-4">
-            <p className="text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-1">Last Session</p>
+            <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1">Last Session</p>
             <p className="text-sm text-gray-700 dark:text-gray-300 tabular-nums">{lastSetData}</p>
           </div>
         )}
@@ -72,10 +72,10 @@ export default function AccessoryExerciseView({
         <div className="space-y-3">
           {!exercise.isBodyweight && (
             <div className="grid grid-cols-2 gap-3 pl-10">
-              <span className="block text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">
+              <span className="block text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2">
                 Reps
               </span>
-              <span className="block text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">
+              <span className="block text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2">
                 Weight ({unitPreference})
               </span>
             </div>
@@ -83,7 +83,7 @@ export default function AccessoryExerciseView({
 
           {exercise.isBodyweight && (
             <div className="pl-10">
-              <span className="block text-xs uppercase tracking-widest font-semibold text-gray-500 dark:text-gray-400 mb-2">
+              <span className="block text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2">
                 Duration / Reps
               </span>
             </div>
@@ -177,7 +177,7 @@ export default function AccessoryExerciseView({
         )}
 
         {exerciseSets.length >= 10 && (
-          <p className="text-xs uppercase tracking-widest font-semibold text-gray-400 dark:text-gray-400 text-center mt-4">
+          <p className="text-xs tracking-wide font-semibold text-gray-400 dark:text-gray-400 text-center mt-4">
             Max 10 sets
           </p>
         )}
