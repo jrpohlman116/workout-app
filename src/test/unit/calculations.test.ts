@@ -8,6 +8,7 @@ import {
   calculateBackoffSets,
   buildWaveSchedule,
   calculateJuggernautSets,
+  calculatePeakingSets,
 } from '../../lib/calculations';
 
 describe('calculateOneRepMax', () => {
@@ -541,5 +542,62 @@ describe('Juggernaut integration: full 4-wave program cycle', () => {
 
     // End TM (310) is higher than start TM (266)
     expect(tm4).toBeGreaterThan(calculateTrainingMax(STARTING_1RM));
+  });
+});
+
+describe('calculatePeakingSets', () => {
+  const TM = 300;
+
+  it('follows the weeks-from-meet percentage ramp for squat/deadlift (6-week peak)', () => {
+    // peakWeek counts forward, weeksFromMeet = total - peakWeek + 1
+    expect(calculatePeakingSets(1, 6, TM).weight).toBe(255); // 6 out: 85%
+    expect(calculatePeakingSets(2, 6, TM).weight).toBe(265); // 5 out: 89% -> 267 -> 265
+    expect(calculatePeakingSets(3, 6, TM).weight).toBe(280); // 4 out: 93% -> 279 -> 280
+    expect(calculatePeakingSets(4, 6, TM).weight).toBe(290); // 3 out: 97% -> 291 -> 290
+    expect(calculatePeakingSets(5, 6, TM).weight).toBe(305); // 2 out: 102% -> 306 -> 305
+    expect(calculatePeakingSets(6, 6, TM).weight).toBe(255); // 1 out: opener-weight 85%
+  });
+
+  it('always prescribes a single top set', () => {
+    for (let week = 1; week <= 6; week++) {
+      const cfg = calculatePeakingSets(week, 6, TM);
+      expect(cfg.numSets).toBe(1);
+      expect(cfg.reps).toBe(1);
+      expect(cfg.isAmap).toBe(false);
+    }
+  });
+
+  it('peaks squat/deadlift at 2 weeks out and bench at 1 week out', () => {
+    // 2 weeks out: squat above TM, bench at TM
+    expect(calculatePeakingSets(5, 6, TM, 'lb', 'squat').weight).toBe(305);
+    expect(calculatePeakingSets(5, 6, TM, 'lb', 'deadlift').weight).toBe(305);
+    expect(calculatePeakingSets(5, 6, TM, 'lb', 'bench').weight).toBe(300);
+    // 1 week out: squat drops to opener weight, bench takes its last heavy single
+    expect(calculatePeakingSets(6, 6, TM, 'lb', 'squat').weight).toBe(255);
+    expect(calculatePeakingSets(6, 6, TM, 'lb', 'bench').weight).toBe(290); // 97%
+  });
+
+  it('includes down sets 6-3 weeks out and strips them the final 2 weeks', () => {
+    expect(calculatePeakingSets(1, 6, TM).downSets).toEqual({ weight: 240, sets: 3, reps: 3 }); // 80%
+    expect(calculatePeakingSets(2, 6, TM).downSets).toEqual({ weight: 245, sets: 3, reps: 3 }); // 82%
+    expect(calculatePeakingSets(3, 6, TM).downSets).toEqual({ weight: 250, sets: 2, reps: 3 }); // 84% -> 252 -> 250
+    expect(calculatePeakingSets(4, 6, TM).downSets).toEqual({ weight: 255, sets: 2, reps: 2 }); // 85%
+    expect(calculatePeakingSets(5, 6, TM).downSets).toBeUndefined();
+    expect(calculatePeakingSets(6, 6, TM).downSets).toBeUndefined();
+  });
+
+  it('maps a standard 3-week peak onto the last 3 weeks of the taper', () => {
+    expect(calculatePeakingSets(1, 3, TM).weight).toBe(290);  // 3 out: 97%
+    expect(calculatePeakingSets(1, 3, TM).downSets).toBeDefined();
+    expect(calculatePeakingSets(2, 3, TM).weight).toBe(305);  // 2 out: peak single
+    expect(calculatePeakingSets(3, 3, TM).weight).toBe(255);  // 1 out: opener weight
+    expect(calculatePeakingSets(3, 3, TM).downSets).toBeUndefined();
+  });
+
+  it('rounds to 2.5 kg increments in kg mode', () => {
+    // 2 weeks out, TM 200 kg: 204 -> 205
+    expect(calculatePeakingSets(2, 3, 200, 'kg', 'squat').weight).toBe(205);
+    // 6 weeks out down sets: 160 exactly
+    expect(calculatePeakingSets(1, 6, 200, 'kg').downSets?.weight).toBe(160);
   });
 });

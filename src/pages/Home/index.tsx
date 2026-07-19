@@ -361,7 +361,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               const baseWeight = (!isUpperDayWorkout && effectiveBlock && effectiveBlock.phase !== 'peaking' && effectiveBlock.phase !== 'meet_week')
                 ? calculateJuggernautSets(effectiveBlock.wave, effectiveBlock.phase, workout.max, unit).weight
                 : (!isUpperDayWorkout && effectiveBlock?.phase === 'peaking')
-                  ? calculatePeakingSets(effectiveBlock.peakWeek ?? 1, effectiveBlock.totalPeakWeeks ?? 3, workout.max, unit).weight
+                  ? calculatePeakingSets(effectiveBlock.peakWeek ?? 1, effectiveBlock.totalPeakWeeks ?? 3, workout.max, unit, workout.type).weight
                   : (!isUpperDayWorkout && !effectiveBlock && viewedManual && workout.max > 0)
                     ? calculateJuggernautSets(CYCLE_TO_WAVE[viewedManual.cycle] ?? 3, WEEK_TO_PHASE[viewedManual.week] ?? 'accumulation', workout.max, unit).weight
                     : null;

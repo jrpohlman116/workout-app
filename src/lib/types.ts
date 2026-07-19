@@ -54,6 +54,7 @@ export interface JuggernautSetsConfig {
   reps: number;
   weight: number;
   isAmap: boolean;
+  downSets?: BackoffSet;
 }
 
 export interface WorkoutDetailPageProps {

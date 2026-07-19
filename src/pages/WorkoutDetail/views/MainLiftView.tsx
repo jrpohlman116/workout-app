@@ -51,6 +51,7 @@ export default function MainLiftView({
 
   const isRealization = phase === 'realization';
   const isDeload = phase === 'deload';
+  const isPeaking = phase === 'peaking';
 
   const topSet = mainSets[mainSets.length - 1];
   const topSetWeight = parseFloat(topSet?.weight || '0');
@@ -68,7 +69,11 @@ export default function MainLiftView({
     ? 'After warm-ups, push for max reps on your top set.'
     : isDeload
       ? 'Complete all sets at reduced effort. No grinding.'
-      : `Complete all ${mainSets.length} sets at the prescribed weight.`;
+      : isPeaking
+        ? (mainSets.length > 1
+            ? 'Work up to your single, then complete the down sets.'
+            : 'One heavy single after warm-ups. Crisp and fast — nothing else today.')
+        : `Complete all ${mainSets.length} sets at the prescribed weight.`;
 
   const warmupBase = baseWeight ?? topSetWeight;
   const warmup = warmupBase > 0 ? calculateWarmupSets(warmupBase, unitPreference) : null;

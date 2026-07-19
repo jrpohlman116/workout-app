@@ -1,6 +1,6 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateNewTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, JuggernautSetsConfig, getRoundingIncrement } from '../../lib/calculations';
+import { calculateOneRepMax, calculateNewTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement } from '../../lib/calculations';
 import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
@@ -13,7 +13,7 @@ import WorkoutSummaryView from './views/WorkoutSummaryView';
 import MainLiftView from './views/MainLiftView';
 import AccessoryExerciseView from './views/AccessoryExerciseView';
 import { useWorkoutData } from '../../hooks/useWorkoutData';
-import { liftNames, liftNamesShort, baseExercises, additionalExercises, ACCESSORY_PCT_OF_TM } from '../../lib/exercises';
+import { liftNames, liftNamesShort, baseExercises, additionalExercises, ACCESSORY_PCT_OF_TM, ACCESSORY_WEAK_POINT_SOURCE, applyPhaseToAccessories } from '../../lib/exercises';
 import { WorkoutDetailPageProps, WorkoutStep, SetInput } from '../../lib/types';
 import type { StickingPoint } from '../../lib/supabase';
 import Card from '../../components/ui/Card';
@@ -97,8 +97,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const defaultExercises = baseExercises[liftType as keyof typeof baseExercises] ?? baseExercises.upper;
 
   const liftTypeKey = liftType as 'squat' | 'bench' | 'deadlift' | 'ohp' | 'upper';
-  const userWeakPoints = (liftTypeKey in (profile?.weak_points || {}))
-    ? (profile?.weak_points?.[liftTypeKey as keyof typeof profile.weak_points] as StickingPoint[] | undefined)
+  // Cross-day targeting: each day trains the opposite lift's weak points
+  // (squat day → deadlift, deadlift day → squat, upper day → bench, bench
+  // day → general support only). See ACCESSORY_WEAK_POINT_SOURCE.
+  const weakPointSource = ACCESSORY_WEAK_POINT_SOURCE[liftTypeKey] ?? null;
+  const userWeakPoints = weakPointSource
+    ? (profile?.weak_points?.[weakPointSource.profileLift] as StickingPoint[] | undefined)
     : undefined;
 
   const {
@@ -115,6 +119,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     userWeakPoints
   );
 
+  // Phase-adjusted view of the template: identity comes from the saved
+  // template, set counts and peaking filters from the phase plan. Render-time
+  // only — the raw template is what Edit mode sees and saves.
+  const { exercises: currentExercises, note: phaseNote } = useMemo(
+    () => applyPhaseToAccessories(templateExercises, currentBlock?.phase, liftType),
+    [templateExercises, currentBlock?.phase, liftType]
+  );
+
   useEffect(() => {
     if (!loading && profile && !initialMainSetsSet && !isUpperDay && currentBlock) {
       const lift1RM: Record<string, number> = {
@@ -125,22 +137,25 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       const max = lift1RM[liftType] ?? 0;
       const unit = profile.unit_preference || 'lb';
       const cfg = currentBlock.phase === 'peaking'
-        ? calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, max, unit)
+        ? calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, max, unit, liftType)
         : calculateJuggernautSets(currentBlock.wave, currentBlock.phase, max, unit);
 
-      setMainSets(
-        Array.from({ length: cfg.numSets }, () => ({
-          reps: cfg.isAmap ? '' : String(cfg.reps),
-          weight: String(cfg.weight),
-        }))
-      );
+      const sets: SetInput[] = Array.from({ length: cfg.numSets }, () => ({
+        reps: cfg.isAmap ? '' : String(cfg.reps),
+        weight: String(cfg.weight),
+      }));
+      if (cfg.downSets) {
+        for (let i = 0; i < cfg.downSets.sets; i++) {
+          sets.push({ reps: String(cfg.downSets.reps), weight: String(cfg.downSets.weight) });
+        }
+      }
+      setMainSets(sets);
       setInitialMainSetsSet(true);
     }
   }, [loading, profile, initialMainSetsSet, liftType, isUpperDay]);
 
   useEffect(() => {
     if (!loading && Object.keys(lastAccessoryData).length > 0 && profile) {
-      const currentExercises = templateExercises;
       const initialAccessoryData: { [key: number]: SetInput[] } = {};
       currentExercises.forEach((exercise, index) => {
         const lastData = lastAccessoryData[exercise.name];
@@ -163,7 +178,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         });
       }
     }
-  }, [loading, lastAccessoryData, liftType, profile, templateExercises]);
+  }, [loading, lastAccessoryData, liftType, profile, currentExercises]);
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -275,7 +290,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     const trainingMax = maxes[liftType] ?? 0;
     if (currentBlock) {
       if (currentBlock.phase === 'peaking') {
-        return calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, trainingMax, unit);
+        return calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, trainingMax, unit, liftType);
       }
       return calculateJuggernautSets(currentBlock.wave, currentBlock.phase, trainingMax, unit);
     }
@@ -292,7 +307,6 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     ? calculateNewTrainingMax(maxes[liftType] ?? 0, currentBlock.wave, workoutStats.topReps, unit, liftType)
     : undefined;
 
-  const currentExercises = templateExercises;
   const totalSteps = (isUpperDay ? 0 : 1) + currentExercises.length;
 
   const getCurrentExercise = () => {
@@ -340,23 +354,32 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   };
 
   const handleWorkingWeightAdjust = (weight: number) => {
-    setMainSets(prev => prev.map(set => ({ ...set, weight: String(weight) })));
+    // In peaking weeks with down sets, only the top single takes the warm-up
+    // adjustment — down-set weights are prescribed independently of feel.
+    if (mainConfig?.downSets) {
+      setMainSets(prev => prev.map((set, i) => (i === 0 ? { ...set, weight: String(weight) } : set)));
+    } else {
+      setMainSets(prev => prev.map(set => ({ ...set, weight: String(weight) })));
+    }
   };
 
+  const emptyAccessorySets = (exerciseIndex: number) =>
+    Array(currentExercises[exerciseIndex]?.sets ?? 3).fill(null).map(() => ({ reps: '', weight: '' }));
+
   const updateAccessorySet = (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: string) => {
-    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill(null).map(() => ({ reps: '', weight: '' }));
+    const exerciseSets = accessoryData[exerciseIndex] || emptyAccessorySets(exerciseIndex);
     const newSets = [...exerciseSets];
     newSets[setIndex] = { ...newSets[setIndex], [field]: value };
     setAccessoryData({ ...accessoryData, [exerciseIndex]: newSets });
   };
 
   const addAccessorySet = (exerciseIndex: number) => {
-    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill(null).map(() => ({ reps: '', weight: '' }));
+    const exerciseSets = accessoryData[exerciseIndex] || emptyAccessorySets(exerciseIndex);
     setAccessoryData({ ...accessoryData, [exerciseIndex]: [...exerciseSets, { reps: '', weight: '' }] });
   };
 
   const removeAccessorySet = (exerciseIndex: number, setIndex: number) => {
-    const exerciseSets = accessoryData[exerciseIndex] || Array(3).fill(null).map(() => ({ reps: '', weight: '' }));
+    const exerciseSets = accessoryData[exerciseIndex] || emptyAccessorySets(exerciseIndex);
     if (exerciseSets.length <= 1) return;
     setAccessoryData({ ...accessoryData, [exerciseIndex]: exerciseSets.filter((_, idx) => idx !== setIndex) });
   };
@@ -390,7 +413,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       let sessionId = savedSessionIdRef.current;
 
       if (!sessionId) {
-        const topSet = mainSets[mainSets.length - 1];
+        // Heaviest set, not last — peaking weeks put the top single first
+        // with lighter down sets after it. Ties keep the last occurrence,
+        // matching the old last-element behavior in uniform phases.
+        const topSet = mainSets.reduce(
+          (best, set) => ((parseFloat(set.weight) || 0) >= (parseFloat(best.weight) || 0) ? set : best),
+          mainSets[0]
+        );
         const topWeight = parseFloat(topSet.weight);
         const topReps = parseInt(topSet.reps);
         const totalTonnage = calculateTotalTonnage();
@@ -502,6 +531,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     phase: currentBlock?.phase,
     peakWeek: currentBlock?.peakWeek,
     totalPeakWeeks: currentBlock?.totalPeakWeeks,
+    peakingNote: currentBlock?.phase === 'peaking'
+      ? getPeakingWeekNote(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, liftType)
+      : undefined,
     week: currentBlock ? undefined : profile.current_week,
     cycle: currentBlock ? undefined : profile.current_cycle,
     onBack,
@@ -535,6 +567,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         <WorkoutSummaryView
           mainConfig={mainConfig}
           exercises={currentExercises}
+          editExercises={templateExercises}
+          phaseNote={phaseNote}
           onStartWorkout={handleNext}
           unitPreference={profile.unit_preference || 'lb'}
           wave={currentBlock?.wave}

@@ -9,13 +9,14 @@ interface WorkoutHeaderProps {
   phase?: WavePhase;
   peakWeek?: number;
   totalPeakWeeks?: number;
+  peakingNote?: string;
   // Legacy fallback
   week?: number;
   cycle?: number;
   onBack: () => void;
 }
 
-export default function WorkoutHeader({ liftName, wave, phase, peakWeek, totalPeakWeeks, week, cycle, onBack }: WorkoutHeaderProps) {
+export default function WorkoutHeader({ liftName, wave, phase, peakWeek, totalPeakWeeks, peakingNote, week, cycle, onBack }: WorkoutHeaderProps) {
   const subtitle = phase === 'peaking'
     ? `Peaking Block — Week ${peakWeek ?? 1} of ${totalPeakWeeks ?? 3}`
     : phase === 'meet_week'
@@ -33,8 +34,12 @@ export default function WorkoutHeader({ liftName, wave, phase, peakWeek, totalPe
       </IconButton>
       <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1 animate-slide-in-left">{liftName} Day</h1>
       {subtitle && <p className="text-gray-600 dark:text-gray-300">{subtitle}</p>}
-      {phase && PHASE_DESCRIPTIONS[phase] && (
-        <p className="text-sm text-gray-400 dark:text-gray-400 mt-1">{PHASE_DESCRIPTIONS[phase]}</p>
+      {peakingNote ? (
+        <p className="text-sm text-gray-400 dark:text-gray-400 mt-1">{peakingNote}</p>
+      ) : (
+        phase && PHASE_DESCRIPTIONS[phase] && (
+          <p className="text-sm text-gray-400 dark:text-gray-400 mt-1">{PHASE_DESCRIPTIONS[phase]}</p>
+        )
       )}
     </div>
   );

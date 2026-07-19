@@ -32,7 +32,7 @@ export const PHASE_DESCRIPTIONS: Record<WavePhase, string> = {
   intensification: 'Less volume, heavier loads. Push the weights and keep technique solid.',
   realization:     'Peak intensity. Your top set is max reps — stop 1 rep before failure.',
   deload:          'Reduced load. Complete all sets without grinding. This is a recovery week.',
-  peaking:         'Competition prep. Work up to a heavy single — no grinding, no misses.',
+  peaking:         'Competition prep. A heavy single, plus down sets early on — the final 2 weeks strip to singles only.',
   meet_week:       'Rest up. Keep any movement light and technical. Save everything for the platform.',
 };
 
@@ -53,7 +53,7 @@ export const PHASE_DETAIL_LABELS: Record<WavePhase, string> = {
   intensification: 'Intensification',
   realization:     'Realization — push the final set',
   deload:          'Deload — easy effort, no grinding',
-  peaking:         'Peaking — work up to a heavy single',
+  peaking:         'Peaking — heavy single, then down sets',
   meet_week:       'Meet Week — rest up',
 };
 

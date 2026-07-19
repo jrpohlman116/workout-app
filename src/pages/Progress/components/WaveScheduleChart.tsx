@@ -85,9 +85,9 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
 
   const now = Date.now();
 
-  const getWeightForMax = (tm: number, isPeaking: boolean, isMeetWeek: boolean, block: typeof schedule.weeks[0]) => {
+  const getWeightForMax = (tm: number, isPeaking: boolean, isMeetWeek: boolean, block: typeof schedule.weeks[0], liftType: string) => {
     const roundTo = getRoundingIncrement(unit);
-    if (isPeaking) return calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, tm, unit).weight;
+    if (isPeaking) return calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, tm, unit, liftType).weight;
     if (isMeetWeek) return Math.round(tm * MEET_WEEK_TM_PCT / roundTo) * roundTo;
     return calculateJuggernautSets(block.wave as RepWave, block.phase, tm, unit).weight;
   };
@@ -104,7 +104,7 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
 
     let cfg;
     if (isPeaking) {
-      cfg = calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMaxes.squat, unit);
+      cfg = calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMaxes.squat, unit, 'squat');
     } else if (isMeetWeek) {
       const roundTo = getRoundingIncrement(unit);
       cfg = { numSets: 1, reps: 1, weight: Math.round(trainingMaxes.squat * MEET_WEEK_TM_PCT / roundTo) * roundTo, isAmap: false };
@@ -123,9 +123,9 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
       peakWeek: block.peakWeek,
       totalReps,
       intensityPct,
-      squatWeight: getWeightForMax(trainingMaxes.squat, isPeaking, isMeetWeek, block),
-      benchWeight: getWeightForMax(trainingMaxes.bench, isPeaking, isMeetWeek, block),
-      deadliftWeight: getWeightForMax(trainingMaxes.deadlift, isPeaking, isMeetWeek, block),
+      squatWeight: getWeightForMax(trainingMaxes.squat, isPeaking, isMeetWeek, block, 'squat'),
+      benchWeight: getWeightForMax(trainingMaxes.bench, isPeaking, isMeetWeek, block, 'bench'),
+      deadliftWeight: getWeightForMax(trainingMaxes.deadlift, isPeaking, isMeetWeek, block, 'deadlift'),
       numSets: cfg.numSets,
       reps: cfg.reps,
       isAmap: cfg.isAmap,

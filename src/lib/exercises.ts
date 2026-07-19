@@ -1,4 +1,5 @@
 import type { StickingPoint } from './supabase';
+import type { Exercise, WavePhase } from './types';
 
 export const liftNames: Record<string, string> = {
   squat: 'Squat',
@@ -68,6 +69,7 @@ export const additionalExercises = [
   { name: 'Safety Bar Box Squats', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Tempo Squats', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Pin Squats', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: 'Single-Leg Squats', reps: '6-10', sets: 3, isBodyweight: true },
   { name: 'Single-Leg Calf Raises', reps: '12-15', sets: 3, isBodyweight: true },
   { name: 'Donkey Calf Raises', reps: '15-20', sets: 3, isBodyweight: false },
   { name: 'Jump Rope', reps: '60-120 sec', sets: 3, isBodyweight: true },
@@ -113,6 +115,11 @@ export const additionalExercises = [
   { name: 'High-to-Low Cable Flyes', reps: '10-15', sets: 3, isBodyweight: false },
   { name: 'Overhead Shrugs', reps: '10-15', sets: 3, isBodyweight: false },
   { name: 'Rack Pulls', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: 'Pin Pulls', reps: '3-5', sets: 3, isBodyweight: false },
+  { name: 'Partial Deadlifts', reps: '3-5', sets: 3, isBodyweight: false },
+  { name: 'Deadlift from Deficit', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: 'Tempo Deadlifts', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: 'Paused Deadlifts', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Suitcase Carry', reps: '30-60 sec', sets: 3, isBodyweight: false },
   { name: 'Overhead Carry', reps: '30-60 sec', sets: 3, isBodyweight: false },
   { name: 'Rack Position Carry', reps: '30-60 sec', sets: 3, isBodyweight: false },
@@ -120,7 +127,12 @@ export const additionalExercises = [
   { name: 'Pin Press', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Board Press', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Pause Bench', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: 'Incline Bench', reps: '6-10', sets: 3, isBodyweight: false },
+  { name: 'Floor Press', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: 'Lockout Bench', reps: '3-5', sets: 3, isBodyweight: false },
   { name: 'JM Press', reps: '8-12', sets: 3, isBodyweight: false },
+  { name: 'Dips', reps: '6-10', sets: 3, isBodyweight: true },
+  { name: 'Back Extensions', reps: '10-15', sets: 3, isBodyweight: true },
   { name: 'Skull Crushers', reps: '8-12', sets: 3, isBodyweight: false },
   { name: 'Overhead Tricep Extension', reps: '10-15', sets: 3, isBodyweight: false },
   { name: 'Rear Delt Flyes', reps: '12-15', sets: 3, isBodyweight: false },
@@ -147,8 +159,16 @@ export const ACCESSORY_PCT_OF_TM: Record<string, { baseLift: 'squat' | 'bench' |
   'Board Press': { baseLift: 'bench', pct: 0.85 },
   'Pause Bench': { baseLift: 'bench', pct: 0.80 },
   'Close-Grip Bench': { baseLift: 'bench', pct: 0.80 },
+  'Incline Bench': { baseLift: 'bench', pct: 0.70 },
+  'Floor Press': { baseLift: 'bench', pct: 0.75 },
+  'Lockout Bench': { baseLift: 'bench', pct: 0.90 },
   'JM Press': { baseLift: 'bench', pct: 0.55 },
   'Rack Pulls': { baseLift: 'deadlift', pct: 0.90 },
+  'Pin Pulls': { baseLift: 'deadlift', pct: 0.85 },
+  'Partial Deadlifts': { baseLift: 'deadlift', pct: 0.90 },
+  'Deadlift from Deficit': { baseLift: 'deadlift', pct: 0.75 },
+  'Tempo Deadlifts': { baseLift: 'deadlift', pct: 0.65 },
+  'Paused Deadlifts': { baseLift: 'deadlift', pct: 0.70 },
 };
 
 export const weakPointExercisesMap: Record<string, Record<StickingPoint, string[]>> = {
@@ -163,9 +183,9 @@ export const weakPointExercisesMap: Record<string, Record<StickingPoint, string[
     lockout:     ['Floor Press', 'Board Press', 'Close-Grip Bench', 'Tricep Pressdowns', 'JM Press'],
   },
   deadlift: {
-    in_the_hole: ['Box Squats', 'Anderson Squats', 'Pin Squats', 'Pin Pulls', 'Deadlift from Deficit'],
+    in_the_hole: ['Deadlift from Deficit', 'Paused Deadlifts', 'Front Squats', 'Pause Squats', 'Step-Ups'],
     mid_range:   ['Tempo Deadlifts', 'Paused Deadlifts', 'Pin Pulls', 'Partial Deadlifts', 'Rack Pulls'],
-    lockout:     ['Rack Pulls', 'Pin Pulls', 'Partial Deadlifts', 'B Stance RDLs', 'Shrugs'],
+    lockout:     ['Rack Pulls', 'Pin Pulls', 'Partial Deadlifts', 'Shrugs', 'B Stance RDLs'],
   },
   upper: {
     in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench'],
@@ -174,11 +194,100 @@ export const weakPointExercisesMap: Record<string, Record<StickingPoint, string[
   },
 };
 
+// General-support fill follows the same cross-day principle as baseExercises:
+// squat day fills with posterior-chain (deadlift-supporting) work, deadlift
+// day with quad/core (squat-supporting) work. Lists are ordered — fill takes
+// from the front — so the two days must not share leading exercises, or every
+// user ends up with identical accessories on both days.
 export const generalSupportExercises: Record<string, string[]> = {
   squat:    ['Romanian Deadlift', 'Leg Curls', 'Barbell Rows', 'Plank', 'Calf Raises', 'Hip Thrusts', 'Farmer Walks'],
   bench:    ['Barbell Curls', 'Face Pulls', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
-  deadlift: ['Romanian Deadlift', 'Leg Curls', 'Abs', 'Farmer Walks', 'Shrugs', 'Back Extensions', 'Nordic Curls'],
+  deadlift: ['Bulgarian Split Squats', 'Abs', 'Leg Extensions', 'Goblet Squats', 'Calf Raises', 'Step-Ups', 'Sissy Squats'],
   upper:    ['Face Pulls', 'Lateral Raise Complex', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
+};
+
+// How each phase reshapes the day's accessory prescription. Applied at
+// render time only — saved templates keep deciding exercise identity and
+// are never mutated by phase adjustments. `note` is surfaced in the UI so
+// the program never silently changes what a week looks like.
+export const ACCESSORY_PHASE_PLAN: Record<WavePhase, {
+  setsDelta?: number;
+  setsOverride?: number;
+  maxExercises?: number;
+  dropBarbellVariations?: boolean;
+  note: string;
+}> = {
+  accumulation:    { setsDelta: 1, note: 'Volume phase — one extra set on each accessory.' },
+  intensification: { note: '' },
+  realization:     { note: '' },
+  deload:          { setsOverride: 2, note: 'Deload — 2 light sets each. Nothing close to failure.' },
+  peaking:         {
+    setsOverride: 2,
+    maxExercises: 3,
+    dropBarbellVariations: true,
+    note: 'Peaking — heavy barbell variations are dropped. Light upper-back, shoulder and core work keeps you moving without adding fatigue.',
+  },
+  meet_week:       { setsOverride: 0, maxExercises: 0, note: 'Meet week — no accessories.' },
+};
+
+function findExerciseDef(name: string): Exercise | null {
+  for (const day of Object.values(baseExercises)) {
+    const found = day.find(ex => ex.name === name);
+    if (found) return found;
+  }
+  return additionalExercises.find(ex => ex.name === name) ?? null;
+}
+
+/**
+ * Adjusts a day's accessory list for the current phase. Pure — returns new
+ * objects and never mutates the input, so callers can keep passing the raw
+ * template to edit/save flows. Barbell variations are identified by
+ * membership in ACCESSORY_PCT_OF_TM (that key set is exactly the heavy
+ * barbell lift variations); if a peaking filter would empty an all-barbell
+ * template, light general-support work fills in instead.
+ */
+export function applyPhaseToAccessories(
+  exercises: Exercise[],
+  phase: WavePhase | undefined,
+  liftType: string
+): { exercises: Exercise[]; note: string } {
+  const plan = phase ? ACCESSORY_PHASE_PLAN[phase] : undefined;
+  if (!plan) return { exercises, note: '' };
+
+  let result = exercises;
+  if (plan.dropBarbellVariations) {
+    result = result.filter(ex => !(ex.name in ACCESSORY_PCT_OF_TM));
+    if (result.length === 0) {
+      const fallbackNames = (generalSupportExercises[liftType] ?? []).slice(0, 3);
+      result = fallbackNames.map(
+        name => findExerciseDef(name) ?? { name, reps: '8-12', sets: 3, isBodyweight: false }
+      );
+    }
+  }
+  if (plan.maxExercises != null) {
+    result = result.slice(0, plan.maxExercises);
+  }
+
+  const adjusted = result.map(ex => ({
+    ...ex,
+    sets: plan.setsOverride ?? (plan.setsDelta != null ? ex.sets + plan.setsDelta : ex.sets),
+  }));
+
+  return { exercises: adjusted, note: plan.note };
+}
+
+// Cross-day weak-point targeting (see vault: Program Logic — Juggernaut,
+// "Cross-day Accessory Assignment"). Each day trains the weak points of the
+// *opposite* lift: heavy variations never stack on top of that lift's own
+// main sets, and each lift gets a second weekly exposure. `profileLift` is
+// which lift's weak points to read from the profile; `mapKey` is which entry
+// of weakPointExercisesMap to draw exercises from. Bench day is general
+// support only — upper day carries the bench weak-point work.
+export const ACCESSORY_WEAK_POINT_SOURCE: Record<string, { profileLift: 'squat' | 'bench' | 'deadlift'; mapKey: string } | null> = {
+  squat:    { profileLift: 'deadlift', mapKey: 'deadlift' },
+  deadlift: { profileLift: 'squat',    mapKey: 'squat' },
+  upper:    { profileLift: 'bench',    mapKey: 'upper' },
+  bench:    null,
 };
 
 export function selectMixedAccessories(
@@ -186,16 +295,19 @@ export function selectMixedAccessories(
   weakPoints: StickingPoint[] | undefined,
   excludeExercises: string[] = []
 ): string[] {
-  const allExercises = weakPointExercisesMap[liftType];
+  // weakPoints are the sticking points of the day's *target* lift (see
+  // ACCESSORY_WEAK_POINT_SOURCE) — callers read them via `profileLift`.
+  const source = ACCESSORY_WEAK_POINT_SOURCE[liftType] ?? null;
+  const allExercises = source ? weakPointExercisesMap[source.mapKey] : undefined;
   const generalExercises = generalSupportExercises[liftType];
 
-  if (!allExercises || !generalExercises) return [];
+  if (!generalExercises) return [];
 
   const selected: string[] = [];
   const availableWeak = new Set<string>();
   const availableGeneral = generalExercises.filter(e => !excludeExercises.includes(e));
 
-  if (weakPoints && weakPoints.length > 0) {
+  if (allExercises && weakPoints && weakPoints.length > 0) {
     weakPoints.forEach(point => {
       allExercises[point].forEach(ex => {
         if (!excludeExercises.includes(ex)) availableWeak.add(ex);
@@ -203,11 +315,19 @@ export function selectMixedAccessories(
     });
   }
 
-  const numWeakPointExercises = weakPoints && weakPoints.length > 0 ? Math.min(2, availableWeak.size) : 0;
-  let weakPointCount = 0;
-  availableWeak.forEach(ex => {
-    if (weakPointCount < numWeakPointExercises) { selected.push(ex); weakPointCount++; }
-  });
+  // Up to 2 weak-point slots, but at most 1 heavy barbell variation — a
+  // second variation of the same lift adds axial fatigue without much new
+  // stimulus, so the other slot prefers a non-barbell movement from the
+  // same sticking-point list.
+  const numWeakPointExercises = Math.min(2, availableWeak.size);
+  let barbellCount = 0;
+  for (const ex of availableWeak) {
+    if (selected.length >= numWeakPointExercises) break;
+    const isBarbell = ex in ACCESSORY_PCT_OF_TM;
+    if (isBarbell && barbellCount >= 1) continue;
+    selected.push(ex);
+    if (isBarbell) barbellCount++;
+  }
 
   for (const ex of availableGeneral) {
     if (selected.length >= 4) break;

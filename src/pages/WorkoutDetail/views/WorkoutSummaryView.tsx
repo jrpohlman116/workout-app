@@ -13,6 +13,13 @@ import Button from '../../../components/ui/Button';
 interface WorkoutSummaryViewProps {
   mainConfig: JuggernautSetsConfig | null;
   exercises: Exercise[];
+  /**
+   * Raw saved template for Edit mode. `exercises` may be phase-adjusted for
+   * display; editing must seed from (and save back) the untransformed list
+   * so phase tweaks never get persisted into the template.
+   */
+  editExercises?: Exercise[];
+  phaseNote?: string;
   onStartWorkout: () => void;
   unitPreference?: string;
   wave?: number;
@@ -28,6 +35,8 @@ interface WorkoutSummaryViewProps {
 export default function WorkoutSummaryView({
   mainConfig,
   exercises,
+  editExercises,
+  phaseNote,
   onStartWorkout,
   unitPreference = 'lb',
   wave,
@@ -39,7 +48,8 @@ export default function WorkoutSummaryView({
   saveError = null,
 }: WorkoutSummaryViewProps) {
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editedExercises, setEditedExercises] = useState<Exercise[]>(exercises);
+  const templateSource = editExercises ?? exercises;
+  const [editedExercises, setEditedExercises] = useState<Exercise[]>(templateSource);
   const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
   const [substitutionTarget, setSubstitutionTarget] = useState<{ index: number; name: string } | null>(null);
@@ -47,8 +57,8 @@ export default function WorkoutSummaryView({
   const [announcement, setAnnouncement] = useState('');
 
   useEffect(() => {
-    setEditedExercises(exercises);
-  }, [exercises]);
+    setEditedExercises(templateSource);
+  }, [templateSource]);
 
   const announce = (message: string) => {
     setAnnouncement(message);
@@ -57,13 +67,13 @@ export default function WorkoutSummaryView({
 
   const handleEnterEditMode = () => {
     setIsEditMode(true);
-    setEditedExercises(exercises);
+    setEditedExercises(templateSource);
     announce('Edit mode active. You can now modify your accessory exercises.');
   };
 
   const handleCancelEdit = () => {
     setIsEditMode(false);
-    setEditedExercises(exercises);
+    setEditedExercises(templateSource);
     announce('Edit mode cancelled. Changes discarded.');
   };
 
@@ -194,6 +204,16 @@ export default function WorkoutSummaryView({
               </p>
             </div>
           </div>
+          {mainConfig.downSets && (
+            <div className="flex justify-between items-center py-3 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl mt-2">
+              <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">
+                Down Sets — {mainConfig.downSets.sets} × {mainConfig.downSets.reps}
+              </p>
+              <p className="text-sm font-bold tabular-nums text-gray-900 dark:text-gray-100">
+                {mainConfig.downSets.weight} <span className="text-xs font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span>
+              </p>
+            </div>
+          )}
         </Card>
       )}
 
@@ -223,6 +243,10 @@ export default function WorkoutSummaryView({
           >
             <p className="text-sm text-red-800 dark:text-red-200">{saveError}</p>
           </div>
+        )}
+
+        {phaseNote && !isEditMode && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{phaseNote}</p>
         )}
 
         {isEditMode ? (
