@@ -45,7 +45,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       .select('lift_type, calculated_1rm')
       .eq('user_id', user.id)
       .eq('cycle', profile.current_cycle)
-      .eq('week', profile.current_week);
+      .eq('week', profile.current_week)
+      .eq('is_1rm_test', false);
 
     if (data) {
       setCompletedWorkouts(new Set(data.map(w => w.lift_type)));
