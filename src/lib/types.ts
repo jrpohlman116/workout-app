@@ -61,7 +61,6 @@ export interface WorkoutDetailPageProps {
   liftType: string;
   onBack: () => void;
   onNavigateToProgress: () => void;
-  skipSummary?: boolean;
 }
 
 export interface SetInput {

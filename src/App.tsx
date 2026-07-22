@@ -147,7 +147,6 @@ function AppContent() {
               liftType={selectedLift}
               onBack={handleBack}
               onNavigateToProgress={() => handleNavigate('progress')}
-              skipSummary
             />
           )}
         </main>

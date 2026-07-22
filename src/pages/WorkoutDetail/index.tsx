@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG } from '../../lib/calculations';
 import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind } from '../../lib/constants';
@@ -65,17 +65,9 @@ interface SetChecks {
 
 const EMPTY_CHECKS: SetChecks = { warmup: [], main: [], accessories: {} };
 
-export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgress, skipSummary }: WorkoutDetailPageProps) {
+export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgress }: WorkoutDetailPageProps) {
   const { profile, user, refreshProfile } = useAuth();
-  const [currentStep, setCurrentStep] = useState<WorkoutStep>(
-    skipSummary ? (liftType === 'upper' ? 0 : 'main') : 'summary'
-  );
-
-  useLayoutEffect(() => {
-    if (skipSummary && currentStep === 'summary') {
-      setCurrentStep(liftType === 'upper' ? 0 : 'main');
-    }
-  }, []);
+  const [currentStep, setCurrentStep] = useState<WorkoutStep>('summary');
 
   const [saving, setSaving] = useState(false);
   const celebrate = useConfetti();
