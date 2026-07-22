@@ -9,6 +9,8 @@ import {
   buildWaveSchedule,
   calculateJuggernautSets,
   calculatePeakingSets,
+  calculatePlateBreakdown,
+  formatPlateBreakdown,
 } from '../../lib/calculations';
 
 describe('calculateOneRepMax', () => {
@@ -599,5 +601,59 @@ describe('calculatePeakingSets', () => {
     expect(calculatePeakingSets(2, 3, 200, 'kg', 'squat').weight).toBe(205);
     // 6 weeks out down sets: 160 exactly
     expect(calculatePeakingSets(1, 6, 200, 'kg').downSets?.weight).toBe(160);
+  });
+});
+
+describe('calculatePlateBreakdown', () => {
+  const LB_PLATES = [45, 35, 25, 10, 5, 2.5];
+
+  it('loads an exact target with heaviest plates first', () => {
+    // 180 lb: (180-45)/2 = 67.5/side -> 45 + 10 + 10 + 2.5
+    const b = calculatePlateBreakdown(180, 45, LB_PLATES);
+    expect(b).not.toBeNull();
+    expect(b!.exact).toBe(true);
+    expect(b!.loadedWeight).toBe(180);
+    expect(b!.plates).toEqual([
+      { weight: 45, count: 1 },
+      { weight: 10, count: 2 },
+      { weight: 2.5, count: 1 },
+    ]);
+  });
+
+  it('returns the nearest loadable weight below an unreachable target', () => {
+    // No 2.5s available: 180 -> per side 67.5, loadable 65 -> total 175
+    const b = calculatePlateBreakdown(180, 45, [45, 35, 25, 10, 5]);
+    expect(b!.exact).toBe(false);
+    expect(b!.loadedWeight).toBe(175);
+  });
+
+  it('handles the empty bar and below-bar targets', () => {
+    const bar = calculatePlateBreakdown(45, 45, LB_PLATES);
+    expect(bar!.plates).toEqual([]);
+    expect(bar!.exact).toBe(true);
+    expect(calculatePlateBreakdown(40, 45, LB_PLATES)).toBeNull();
+  });
+
+  it('works in kg with a 20 kg bar', () => {
+    // 100 kg: 40/side -> 25 + 15
+    const b = calculatePlateBreakdown(100, 20, [25, 20, 15, 10, 5, 2.5, 1.25]);
+    expect(b!.exact).toBe(true);
+    expect(b!.plates).toEqual([
+      { weight: 25, count: 1 },
+      { weight: 15, count: 1 },
+    ]);
+  });
+});
+
+describe('formatPlateBreakdown', () => {
+  it('collapses repeated plates and joins with dots', () => {
+    const b = calculatePlateBreakdown(230, 45, [45, 35, 25, 10, 5, 2.5]);
+    // (230-45)/2 = 92.5 -> 45x2 + 2.5
+    expect(formatPlateBreakdown(b!)).toBe('45×2 · 2.5');
+  });
+
+  it('labels the empty bar', () => {
+    const b = calculatePlateBreakdown(45, 45, [45]);
+    expect(formatPlateBreakdown(b!)).toBe('empty bar');
   });
 });

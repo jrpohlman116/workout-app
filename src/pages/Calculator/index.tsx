@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { calculateOneRepMax, calculateWilksScore, getWilksLevel } from '../../lib/calculations';
+import { calculateOneRepMax, calculateWilksScore, getWilksLevel, calculatePlateBreakdown, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG } from '../../lib/calculations';
 import { useRipple } from '../../hooks/useAnimations';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -35,11 +35,8 @@ export default function CalculatorPage() {
   const [plateUnit, setPlateUnit] = useState(profile?.unit_preference || 'lb');
   const [calculatedPlates, setCalculatedPlates] = useState<{ weight: number; count: number }[] | null>(null);
 
-  const defaultPlatesLb = [45, 35, 25, 10, 5, 2.5];
-  const defaultPlatesKg = [25, 20, 15, 10, 5, 2.5, 1.25];
-
-  const [selectedPlatesLb, setSelectedPlatesLb] = useState<number[]>(defaultPlatesLb);
-  const [selectedPlatesKg, setSelectedPlatesKg] = useState<number[]>(defaultPlatesKg);
+  const [selectedPlatesLb, setSelectedPlatesLb] = useState<number[]>(DEFAULT_PLATES_LB);
+  const [selectedPlatesKg, setSelectedPlatesKg] = useState<number[]>(DEFAULT_PLATES_KG);
 
   useEffect(() => {
     if (profile?.unit_preference) {
@@ -125,23 +122,9 @@ export default function CalculatorPage() {
       return;
     }
 
-    const weightToLoad = target - bar;
-    const perSide = weightToLoad / 2;
-
     const availablePlates = plateUnit === 'lb' ? selectedPlatesLb : selectedPlatesKg;
-
-    const plates: { weight: number; count: number }[] = [];
-    let remaining = perSide;
-
-    for (const plate of availablePlates) {
-      const count = Math.floor(remaining / plate);
-      if (count > 0) {
-        plates.push({ weight: plate, count });
-        remaining -= count * plate;
-      }
-    }
-
-    setCalculatedPlates(plates);
+    const breakdown = calculatePlateBreakdown(target, bar, availablePlates);
+    setCalculatedPlates(breakdown ? breakdown.plates : null);
     savePlatePreferences();
   };
 
@@ -291,7 +274,7 @@ export default function CalculatorPage() {
                   Available Plates
                 </label>
                 <div className="grid grid-cols-3 gap-3">
-                  {(plateUnit === 'lb' ? defaultPlatesLb : defaultPlatesKg).map(plate => {
+                  {(plateUnit === 'lb' ? DEFAULT_PLATES_LB : DEFAULT_PLATES_KG).map(plate => {
                     const isSelected = plateUnit === 'lb'
                       ? selectedPlatesLb.includes(plate)
                       : selectedPlatesKg.includes(plate);

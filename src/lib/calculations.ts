@@ -22,6 +22,64 @@ export function convertWeightUnit(value: number, fromUnit: string, toUnit: strin
   return fromUnit === 'kg' ? value * LB_PER_KG : value / LB_PER_KG;
 }
 
+// Standard bar weights by unit — also the Calculator's defaults
+export const BAR_WEIGHTS: Record<string, number> = { lb: 45, kg: 20 };
+
+// Plate sets assumed when the user hasn't customized theirs in the Calculator
+export const DEFAULT_PLATES_LB = [45, 35, 25, 10, 5, 2.5];
+export const DEFAULT_PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25];
+
+export interface PlateBreakdown {
+  /** Per-side plates, heaviest first. Empty array = empty bar. */
+  plates: { weight: number; count: number }[];
+  /** The total actually loadable with the available plates. */
+  loadedWeight: number;
+  /** False when the target isn't reachable exactly — loadedWeight is then
+      the nearest loadable weight below the target. */
+  exact: boolean;
+}
+
+/**
+ * Greedy per-side plate breakdown, matching the Calculator's behavior:
+ * heaviest available plates first, nearest-below when the target can't be
+ * hit exactly. Returns null when the target is below the bar itself.
+ */
+export function calculatePlateBreakdown(
+  targetWeight: number,
+  barWeight: number,
+  availablePlates: number[]
+): PlateBreakdown | null {
+  if (!targetWeight || targetWeight < barWeight) return null;
+
+  const perSide = (targetWeight - barWeight) / 2;
+  const sorted = [...availablePlates].sort((a, b) => b - a);
+  const plates: { weight: number; count: number }[] = [];
+  let remaining = perSide;
+
+  for (const plate of sorted) {
+    const count = Math.floor((remaining + 1e-9) / plate);
+    if (count > 0) {
+      plates.push({ weight: plate, count });
+      remaining -= count * plate;
+    }
+  }
+
+  const loadedPerSide = perSide - remaining;
+  return {
+    plates,
+    loadedWeight: Math.round((barWeight + loadedPerSide * 2) * 100) / 100,
+    exact: remaining < 1e-9,
+  };
+}
+
+/** Compact per-side notation: "45×3 · 25 · 2.5"; empty bar → "empty bar". */
+export function formatPlateBreakdown(breakdown: PlateBreakdown): string {
+  if (breakdown.plates.length === 0) return 'empty bar';
+  return breakdown.plates
+    .map(p => (p.count > 1 ? `${p.weight}×${p.count}` : `${p.weight}`))
+    .join(' · ');
+}
+
 export function getWilksLevel(score: number): string {
   if (score < 200) return 'Beginner';
   if (score < 238) return 'Novice';

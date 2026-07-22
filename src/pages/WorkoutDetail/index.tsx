@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement } from '../../lib/calculations';
+import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG } from '../../lib/calculations';
 import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
@@ -358,6 +358,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   };
 
   const unit = profile.unit_preference || 'lb';
+  const availablePlates = unit === 'kg'
+    ? (profile.available_plates_kg?.length ? profile.available_plates_kg : DEFAULT_PLATES_KG)
+    : (profile.available_plates_lb?.length ? profile.available_plates_lb : DEFAULT_PLATES_LB);
 
   // Suggested weight range for accessories that are barbell variations of a
   // main lift (pause squats, board press, rack pulls, etc.) — the rest of
@@ -754,6 +757,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             onToggleSetCheck={toggleMainCheck}
             badDayDrop={badDayDrop}
             onBadDayDrop={handleBadDayDrop}
+            availablePlates={availablePlates}
             onUpdateSet={updateMainSet}
             onRpeChange={setRpe}
             onWorkingWeightAdjust={handleWorkingWeightAdjust}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import AccessibleFormGroup from '../../../components/accessible/AccessibleFormGroup';
-import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets } from '../../../lib/calculations';
+import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets, calculatePlateBreakdown, formatPlateBreakdown, BAR_WEIGHTS } from '../../../lib/calculations';
 import { SetInput } from '../../../lib/types';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
@@ -20,6 +20,9 @@ interface MainLiftViewProps {
   onToggleSetCheck?: (index: number) => void;
   badDayDrop?: number;
   onBadDayDrop?: (dropPct: number) => void;
+  /** User's available plates for the current unit — enables per-side
+      plate-loading hints on warm-ups and working weights. */
+  availablePlates?: number[];
   onUpdateSet: (index: number, field: 'reps' | 'weight', value: string) => void;
   onRpeChange?: (rpe: number | null) => void;
   onWorkingWeightAdjust?: (weight: number) => void;
@@ -52,6 +55,7 @@ export default function MainLiftView({
   onToggleSetCheck,
   badDayDrop = 0,
   onBadDayDrop,
+  availablePlates,
   onUpdateSet,
   onRpeChange,
   onWorkingWeightAdjust,
@@ -94,6 +98,22 @@ export default function MainLiftView({
   const approachWeight = set4Feel && warmup ? warmup.getApproachWeight(set4Feel) : null;
   const adjustedWeight = set4Feel && set5Feel && warmup ? warmup.getAdjustedWorkingWeight(set4Feel, set5Feel) : null;
 
+  const barWeight = BAR_WEIGHTS[unitPreference] ?? BAR_WEIGHTS.lb;
+  const plateHint = (weight: number): string | null => {
+    if (!availablePlates || availablePlates.length === 0 || !weight) return null;
+    const breakdown = calculatePlateBreakdown(weight, barWeight, availablePlates);
+    if (!breakdown) return null;
+    return breakdown.exact
+      ? formatPlateBreakdown(breakdown)
+      : `≈${breakdown.loadedWeight}: ${formatPlateBreakdown(breakdown)}`;
+  };
+
+  // One bar-loading row per distinct working weight (peaking weeks have two:
+  // the single and its down sets), in set order.
+  const workingWeights = [...new Set(
+    mainSets.map(s => parseFloat(s.weight)).filter(w => w > 0)
+  )];
+
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
       {warmup && (
@@ -115,8 +135,15 @@ export default function MainLiftView({
                   <span className="text-gray-700 dark:text-gray-300 font-medium">
                     {set.percentage === 0 ? 'Bar' : `${set.percentage}%`}
                   </span>
-                  <span className="text-gray-900 dark:text-gray-100 font-bold">
-                    {set.weight} {unitPreference} × {set.reps}
+                  <span className="text-right">
+                    <span className="block text-gray-900 dark:text-gray-100 font-bold">
+                      {set.weight} {unitPreference} × {set.reps}
+                    </span>
+                    {set.percentage !== 0 && plateHint(set.weight) && (
+                      <span className="block text-xs text-gray-400 dark:text-gray-400 tabular-nums">
+                        {plateHint(set.weight)}
+                      </span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -199,6 +226,26 @@ export default function MainLiftView({
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl px-4 py-3">
           <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-0.5">AMAP — As Many As Possible</p>
           <p className="text-xs text-amber-700 dark:text-amber-400">Stop 1 rep before failure. Rest, then note your reps.</p>
+        </div>
+      )}
+
+      {availablePlates && availablePlates.length > 0 && workingWeights.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm px-6 py-4">
+          <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2">
+            Bar Loading — per side
+          </p>
+          <div className="space-y-1.5">
+            {workingWeights.map(weight => (
+              <div key={weight} className="flex justify-between items-baseline text-sm">
+                <span className="font-bold tabular-nums text-gray-900 dark:text-gray-100">
+                  {weight} {unitPreference}
+                </span>
+                <span className="text-gray-600 dark:text-gray-300 tabular-nums">
+                  {plateHint(weight) ?? '—'}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
