@@ -1,13 +1,14 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateOneRepMax, calculateNewTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement } from '../../lib/calculations';
-import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
+import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
 import WorkoutSuccessModal from '../../components/features/WorkoutSuccessModal';
 import ExerciseSubstitutionModal from '../../components/features/ExerciseSubstitutionModal';
 import AccessibleProgressIndicator from '../../components/accessible/AccessibleProgressIndicator';
+import RestTimer from '../../components/features/RestTimer';
 import WorkoutHeader from './views/WorkoutHeader';
 import WorkoutSummaryView from './views/WorkoutSummaryView';
 import MainLiftView from './views/MainLiftView';
@@ -88,6 +89,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: SetInput[] }>({});
   const [setChecks, setSetChecks] = useState<SetChecks>(EMPTY_CHECKS);
+  const [restTimer, setRestTimer] = useState<{ endsAt: number; totalSeconds: number } | null>(null);
   // Autosave only after the user actually does something — otherwise the
   // initial prefill would clobber a restorable draft on mount.
   const dirtyRef = useRef(false);
@@ -235,8 +237,16 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     return () => clearTimeout(timer);
   }, [mainSets, accessoryData, setChecks, user, profile, liftType]);
 
+  // Checking a set off (not un-checking) starts the rest countdown for
+  // that set type. Restarting on every check keeps the newest rest active.
+  const startRestTimer = (kind: RestTimerKind) => {
+    const seconds = REST_TIMER_DEFAULTS[kind];
+    setRestTimer({ endsAt: Date.now() + seconds * 1000, totalSeconds: seconds });
+  };
+
   const toggleWarmupCheck = (index: number) => {
     dirtyRef.current = true;
+    if (!setChecks.warmup[index]) startRestTimer('warmup');
     setSetChecks(prev => {
       const warmup = [...prev.warmup];
       warmup[index] = !warmup[index];
@@ -246,6 +256,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const toggleMainCheck = (index: number) => {
     dirtyRef.current = true;
+    if (!setChecks.main[index]) startRestTimer('main');
     setSetChecks(prev => {
       const main = [...prev.main];
       main[index] = !main[index];
@@ -255,12 +266,22 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const toggleAccessoryCheck = (exerciseIndex: number, setIndex: number) => {
     dirtyRef.current = true;
+    if (!setChecks.accessories[exerciseIndex]?.[setIndex]) startRestTimer('accessory');
     setSetChecks(prev => {
       const sets = [...(prev.accessories[exerciseIndex] || [])];
       sets[setIndex] = !sets[setIndex];
       return { ...prev, accessories: { ...prev.accessories, [exerciseIndex]: sets } };
     });
   };
+
+  const restTimerElement = restTimer && (
+    <RestTimer
+      endsAt={restTimer.endsAt}
+      totalSeconds={restTimer.totalSeconds}
+      onExtend={(seconds) => setRestTimer(prev => prev && ({ ...prev, endsAt: prev.endsAt + seconds * 1000 }))}
+      onDismiss={() => setRestTimer(null)}
+    />
+  );
 
   const handleRestoreDraft = () => {
     if (!draftOffer || !user) return;
@@ -712,6 +733,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             nextExerciseName={nextExercise}
           />
         </div>
+        {restTimerElement}
       </div>
     );
   }
@@ -787,6 +809,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           availableExercises={allAvailableExercises}
         />
       )}
+      {restTimerElement}
     </div>
   );
 }

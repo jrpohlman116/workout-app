@@ -63,6 +63,19 @@ export const MAX_ACCESSORY_EXERCISES = 7;
 // installed while the app is open — UpdateToast listens for it.
 export const SW_UPDATE_EVENT = 'sw-update-available';
 
+// Rest timer defaults in seconds, by set type. Main working sets get the
+// long powerlifting rests; warm-ups just need the plates changed.
+export const REST_TIMER_DEFAULTS = {
+  warmup: 60,
+  main: 180,
+  accessory: 90,
+} as const;
+
+export type RestTimerKind = keyof typeof REST_TIMER_DEFAULTS;
+
+// localStorage key for the timer's vibrate-on-finish preference (off by default)
+export const REST_TIMER_VIBRATE_KEY = 'rest_timer_vibrate';
+
 export const PROFILE_TAB_LABELS: Record<ProfileTab, string> = {
   body:     'Body Stats',
   maxes:    'Maxes',
