@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { Check, Play } from 'lucide-react';
 import AccessibleFormGroup from '../../../components/accessible/AccessibleFormGroup';
-import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets, calculatePlateBreakdown, formatPlateBreakdown, BAR_WEIGHTS } from '../../../lib/calculations';
+import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets, calculatePlateBreakdown, formatPlateBreakdown, getRoundingIncrement, BAR_WEIGHTS } from '../../../lib/calculations';
+import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../../lib/constants';
 import { SetInput } from '../../../lib/types';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
-import SetCheck from '../../../components/ui/SetCheck';
+import WarmupFlow from '../../../components/features/WarmupFlow';
 
 interface MainLiftViewProps {
   liftName: string;
@@ -66,6 +68,8 @@ export default function MainLiftView({
   const [set4Feel, setSet4Feel] = useState<WarmupFeel | null>(null);
   const [set5Feel, setSet5Feel] = useState<WarmupFeel | null>(null);
   const [showBadDayOptions, setShowBadDayOptions] = useState(false);
+  const [showWarmupFlow, setShowWarmupFlow] = useState(false);
+  const [warmupComplete, setWarmupComplete] = useState(false);
 
   const isRealization = phase === 'realization';
   const isDeload = phase === 'deload';
@@ -83,7 +87,18 @@ export default function MainLiftView({
     onRpeChange?.(next);
   };
 
-  const description = isRealization
+  const warmupBase = baseWeight ?? topSetWeight;
+  const warmup = warmupBase > 0 ? calculateWarmupSets(warmupBase, unitPreference) : null;
+  const adjustedWeight = set4Feel && set5Feel && warmup ? warmup.getAdjustedWorkingWeight(set4Feel, set5Feel) : null;
+
+  // Working weights display as a ±4% range until the warm-up flow locks
+  // today's number — warm-ups decide the weight, not the other way around.
+  const roundTo = getRoundingIncrement(unitPreference);
+  const rangeLow = Math.round(warmupBase * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo;
+  const rangeHigh = Math.round(warmupBase * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo;
+  const showRange = !!warmup && !warmupComplete && !isDeload;
+
+  const baseDescription = isRealization
     ? 'After warm-ups, push for max reps on your top set.'
     : isDeload
       ? 'Complete all sets at reduced effort. No grinding.'
@@ -93,10 +108,13 @@ export default function MainLiftView({
             : 'One heavy single after warm-ups. Crisp and fast — nothing else today.')
         : `Complete all ${mainSets.length} sets at the prescribed weight.`;
 
-  const warmupBase = baseWeight ?? topSetWeight;
-  const warmup = warmupBase > 0 ? calculateWarmupSets(warmupBase, unitPreference) : null;
-  const approachWeight = set4Feel && warmup ? warmup.getApproachWeight(set4Feel) : null;
-  const adjustedWeight = set4Feel && set5Feel && warmup ? warmup.getAdjustedWorkingWeight(set4Feel, set5Feel) : null;
+  const description = showRange
+    ? `${baseDescription} Target ${rangeLow}–${rangeHigh} ${unitPreference} — finish the warm-up to lock today's weight.`
+    : baseDescription;
+
+  const checkedWarmups = warmup
+    ? warmup.fixedSets.filter((_, idx) => warmupChecks?.[idx]).length
+    : 0;
 
   const barWeight = BAR_WEIGHTS[unitPreference] ?? BAR_WEIGHTS.lb;
   const plateHint = (weight: number): string | null => {
@@ -118,107 +136,24 @@ export default function MainLiftView({
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
       {warmup && (
         <Card className="p-6">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Warm-up Progression</h3>
-          <div className="space-y-3">
-            {warmup.fixedSets.map((set, idx) => (
-              <div key={idx} className="flex items-center gap-3">
-                {onToggleWarmupCheck && (
-                  <SetCheck
-                    checked={!!warmupChecks?.[idx]}
-                    label={warmupChecks?.[idx]
-                      ? `Warm-up set ${idx + 1} done — tap to undo`
-                      : `Mark warm-up set ${idx + 1} done`}
-                    onToggle={() => onToggleWarmupCheck(idx)}
-                  />
-                )}
-                <div className="flex-1 flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm">
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">
-                    {set.percentage === 0 ? 'Bar' : `${set.percentage}%`}
-                  </span>
-                  <span className="text-right">
-                    <span className="block text-gray-900 dark:text-gray-100 font-bold">
-                      {set.weight} {unitPreference} × {set.reps}
-                    </span>
-                    {set.percentage !== 0 && plateHint(set.weight) && (
-                      <span className="block text-xs text-gray-400 dark:text-gray-400 tabular-nums">
-                        {plateHint(set.weight)}
-                      </span>
-                    )}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          {/* Stage 1: how did 82% feel? */}
-          {!set4Feel && topSetWeight > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">How did the 82% set feel?</p>
-              <div className="flex gap-2">
-                {(['easy', 'good', 'bad'] as WarmupFeel[]).map(feel => (
-                  <Button
-                    key={feel}
-                    variant="tertiary"
-                    size="sm"
-                    onClick={() => setSet4Feel(feel)}
-                    className="flex-1 py-2.5 capitalize"
-                  >
-                    {feel.charAt(0).toUpperCase() + feel.slice(1)}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Stage 2: approach single + how did it feel? */}
-          {set4Feel && approachWeight && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Approach Single</p>
-                <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
-                  {approachWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference} × 1</span>
-                </p>
-              </div>
-
-              {!set5Feel && (
-                <>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">How did the approach feel?</p>
-                  <div className="flex gap-2">
-                    {(['easy', 'good', 'bad'] as WarmupFeel[]).map(feel => (
-                      <Button
-                        key={feel}
-                        variant="tertiary"
-                        size="sm"
-                        onClick={() => {
-                          setSet5Feel(feel);
-                          if (warmup) {
-                            onWorkingWeightAdjust?.(warmup.getAdjustedWorkingWeight(set4Feel, feel));
-                          }
-                        }}
-                        className="flex-1 py-2.5 capitalize"
-                      >
-                        {feel.charAt(0).toUpperCase() + feel.slice(1)}
-                      </Button>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* Stage 3: adjusted working weight */}
-              {set5Feel && adjustedWeight !== null && (
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                  <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Your Working Weight</p>
-                  <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
-                    {adjustedWeight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span>
-                  </p>
-                  {adjustedWeight !== warmupBase && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-                      {adjustedWeight > warmupBase ? '+' : ''}{adjustedWeight - warmupBase} {unitPreference} from planned — adjusted for today.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Warm-up Progression</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            {warmupComplete
+              ? `Done — working weight ${adjustedWeight ?? warmupBase} ${unitPreference}.`
+              : checkedWarmups > 0
+                ? `${checkedWarmups} of ${warmup.fixedSets.length} sets done — pick up where you left off.`
+                : `${warmup.fixedSets.length} sets, one at a time — locks in today's working weight.`}
+          </p>
+          <Button
+            type="button"
+            variant={warmupComplete ? 'ghost' : 'primary'}
+            size="md"
+            fullWidth
+            icon={warmupComplete ? <Check className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            onClick={() => setShowWarmupFlow(true)}
+          >
+            {warmupComplete ? 'Warm-up done — review' : checkedWarmups > 0 ? 'Continue Warm-up' : 'Start Warm-up'}
+          </Button>
 
           {/* Bad-day escape hatch — lives with the feel flow it extends:
               the ±4% adjustment above can't rescue a genuinely rough day. */}
@@ -383,6 +318,34 @@ export default function MainLiftView({
       >
         Next: {nextExerciseName}
       </Button>
+
+      {showWarmupFlow && warmup && (
+        <WarmupFlow
+          warmup={warmup}
+          plannedWeight={warmupBase}
+          adjustedWeight={adjustedWeight}
+          unit={unitPreference}
+          availablePlates={availablePlates ?? []}
+          warmupChecks={warmupChecks ?? []}
+          set4Feel={set4Feel}
+          set5Feel={set5Feel}
+          onCheckSet={(index) => {
+            if (!warmupChecks?.[index]) onToggleWarmupCheck?.(index);
+          }}
+          onSet4Feel={setSet4Feel}
+          onSet5Feel={(feel) => {
+            setSet5Feel(feel);
+            if (set4Feel) {
+              onWorkingWeightAdjust?.(warmup.getAdjustedWorkingWeight(set4Feel, feel));
+            }
+          }}
+          onComplete={() => {
+            setWarmupComplete(true);
+            setShowWarmupFlow(false);
+          }}
+          onClose={() => setShowWarmupFlow(false)}
+        />
+      )}
     </div>
   );
 }
