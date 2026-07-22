@@ -290,6 +290,62 @@ export const ACCESSORY_WEAK_POINT_SOURCE: Record<string, { profileLift: 'squat' 
   bench:    null,
 };
 
+/**
+ * Resolves a day's accessory list: saved template wins, else weak-point
+ * auto-selection, else the day's defaults. Shared by useWorkoutTemplate
+ * (resolving the CURRENT day) and the weekly-volume credit calculation
+ * (resolving every OTHER day) so the two never drift apart.
+ */
+export function resolveDayExercises(
+  liftType: string,
+  savedTemplate: Exercise[] | null | undefined,
+  weakPoints: StickingPoint[] | undefined,
+  defaultExercises: Exercise[]
+): Exercise[] {
+  if (savedTemplate) return savedTemplate;
+  if (weakPoints && weakPoints.length > 0) {
+    const selectedNames = selectMixedAccessories(liftType, weakPoints);
+    // Weak-point picks (e.g. "Pause Squats") live in the full accessory
+    // pool, not necessarily the 4-item baseExercises set for this day.
+    return selectedNames
+      .map(name => defaultExercises.find(e => e.name === name)
+        ?? additionalExercises.find(e => e.name === name)
+        ?? { name, reps: '8-12', sets: 3, isBodyweight: false })
+      .slice(0, 4);
+  }
+  return defaultExercises;
+}
+
+export interface VariationContribution {
+  /** Which day's template the variation set(s) were found on. */
+  dayLiftType: string;
+  exerciseName: string;
+  sets: number;
+}
+
+/**
+ * Plain-English explanation when a main-lift day's prescription shrinks
+ * because barbell variations of that lift are already planned elsewhere in
+ * the week — the transparency principle applied to weekly-volume
+ * redistribution. Returns null when there's nothing to explain.
+ */
+export function formatVariationCreditNote(
+  numSets: number,
+  reducedBy: number,
+  contributions: VariationContribution[]
+): string | null {
+  if (reducedBy <= 0 || contributions.length === 0) return null;
+  const parts = [...new Set(
+    contributions.map(c => `${c.exerciseName} on ${liftNamesShort[c.dayLiftType] ?? c.dayLiftType} day`)
+  )];
+  const list = parts.length > 1
+    ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
+    : parts[0];
+  const setsWord = numSets === 1 ? 'set' : 'sets';
+  const coverWord = parts.length > 1 ? 'cover' : 'covers';
+  return `${numSets} ${setsWord} today — ${list} ${coverWord} the rest of this week's volume.`;
+}
+
 export function selectMixedAccessories(
   liftType: string,
   weakPoints: StickingPoint[] | undefined,

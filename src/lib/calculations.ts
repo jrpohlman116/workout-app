@@ -311,6 +311,25 @@ export function calculateJuggernautSets(
   };
 }
 
+/**
+ * Redistributes main-lift volume when barbell variations of the same lift
+ * are already planned elsewhere in the week (accumulation/intensification
+ * only — the caller decides eligibility; realization's AMAP, deload,
+ * peaking, and meet week always run the full competition-lift prescription
+ * regardless of what this returns). Never drops the main lift below ~60%
+ * of its own prescribed sets, so the competition lift keeps specificity
+ * priority even when variation credit is generous.
+ */
+export function applyVariationCredit(
+  baseNumSets: number,
+  variationSetsPlanned: number
+): { numSets: number; reducedBy: number } {
+  if (variationSetsPlanned <= 0) return { numSets: baseNumSets, reducedBy: 0 };
+  const specificityFloor = Math.max(1, Math.ceil(baseNumSets * 0.6));
+  const numSets = Math.max(specificityFloor, baseNumSets - variationSetsPlanned);
+  return { numSets, reducedBy: baseNumSets - numSets };
+}
+
 // Peaking, counting back from the meet. Percentages are of training max
 // (TM = 90% 1RM, so 1.00 here ≈ 90% of true 1RM). Intensity stays ≥85% 1RM
 // through 3 weeks out with the peak single (~92% 1RM) landing 2 weeks out,

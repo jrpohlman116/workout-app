@@ -20,6 +20,10 @@ interface WorkoutSummaryViewProps {
    */
   editExercises?: Exercise[];
   phaseNote?: string;
+  /** Plain-English note when the main-lift prescription shrank because
+      barbell variations of this lift are already planned elsewhere this
+      week (weekly-volume redistribution, accumulation/intensification only). */
+  mainSetsNote?: string;
   onStartWorkout: () => void;
   unitPreference?: string;
   wave?: number;
@@ -37,6 +41,7 @@ export default function WorkoutSummaryView({
   exercises,
   editExercises,
   phaseNote,
+  mainSetsNote,
   onStartWorkout,
   unitPreference = 'lb',
   wave,
@@ -204,6 +209,9 @@ export default function WorkoutSummaryView({
               </p>
             </div>
           </div>
+          {mainSetsNote && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{mainSetsNote}</p>
+          )}
           {mainConfig.downSets && (
             <div className="flex justify-between items-center py-3 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl mt-2">
               <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">

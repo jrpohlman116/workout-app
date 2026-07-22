@@ -78,4 +78,31 @@ describe('WorkoutSummaryView peaking rendering', () => {
     await user.click(screen.getByRole('button', { name: /save changes/i }));
     expect(onSave).toHaveBeenCalledWith(templateExercises);
   });
+
+  it('shows the main-sets reduction note under the sets card when provided', () => {
+    render(
+      <WorkoutSummaryView
+        mainConfig={{ numSets: 3, reps: 10, weight: 180, isAmap: false }}
+        exercises={adjustedExercises}
+        editExercises={templateExercises}
+        mainSetsNote="3 sets today — Pin Squats on Deadlift day covers the rest of this week's volume."
+        phase="accumulation"
+        onStartWorkout={() => {}}
+      />
+    );
+    expect(screen.getByText(/Pin Squats on Deadlift day covers the rest/)).toBeInTheDocument();
+  });
+
+  it('renders no reduction note when none is provided', () => {
+    render(
+      <WorkoutSummaryView
+        mainConfig={{ numSets: 5, reps: 10, weight: 180, isAmap: false }}
+        exercises={adjustedExercises}
+        editExercises={templateExercises}
+        phase="accumulation"
+        onStartWorkout={() => {}}
+      />
+    );
+    expect(screen.queryByText(/covers the rest/)).not.toBeInTheDocument();
+  });
 });

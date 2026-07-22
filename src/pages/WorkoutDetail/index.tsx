@@ -1,10 +1,11 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG } from '../../lib/calculations';
+import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG } from '../../lib/calculations';
 import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
+import { useWeeklyVariationCredit } from '../../hooks/useWeeklyVariationCredit';
 import WorkoutSuccessModal from '../../components/features/WorkoutSuccessModal';
 import ExerciseSubstitutionModal from '../../components/features/ExerciseSubstitutionModal';
 import AccessibleProgressIndicator from '../../components/accessible/AccessibleProgressIndicator';
@@ -14,7 +15,7 @@ import WorkoutSummaryView from './views/WorkoutSummaryView';
 import MainLiftView from './views/MainLiftView';
 import AccessoryExerciseView from './views/AccessoryExerciseView';
 import { useWorkoutData } from '../../hooks/useWorkoutData';
-import { liftNames, liftNamesShort, baseExercises, additionalExercises, ACCESSORY_PCT_OF_TM, ACCESSORY_WEAK_POINT_SOURCE, applyPhaseToAccessories } from '../../lib/exercises';
+import { liftNames, liftNamesShort, baseExercises, additionalExercises, ACCESSORY_PCT_OF_TM, ACCESSORY_WEAK_POINT_SOURCE, applyPhaseToAccessories, formatVariationCreditNote } from '../../lib/exercises';
 import { WorkoutDetailPageProps, WorkoutStep, SetInput } from '../../lib/types';
 import type { StickingPoint } from '../../lib/supabase';
 import Card from '../../components/ui/Card';
@@ -149,8 +150,24 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     [templateExercises, currentBlock?.phase, liftType]
   );
 
+  // Weekly-volume redistribution: barbell variations of THIS lift planned
+  // on other days (accumulation/intensification only) shrink today's main
+  // prescription — see ACCESSORY_PCT_OF_TM.baseLift and applyVariationCredit.
+  const { variationSetsPlanned, contributions: variationContributions } = useWeeklyVariationCredit(
+    user?.id,
+    liftType,
+    currentBlock?.phase,
+    profile?.weak_points
+  );
+
   useEffect(() => {
     if (!loading && profile && !initialMainSetsSet && !isUpperDay && currentBlock) {
+      const creditPhase = currentBlock.phase === 'accumulation' || currentBlock.phase === 'intensification';
+      // Wait for weekly-volume credit to resolve before locking in the set
+      // count — otherwise a slow network response could leave the wrong
+      // (unreduced) count stuck for the rest of the session.
+      if (creditPhase && variationSetsPlanned === undefined) return;
+
       const lift1RM: Record<string, number> = {
         squat: profile.squat_max,
         bench: profile.bench_max,
@@ -162,7 +179,11 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         ? calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, max, unit, liftType)
         : calculateJuggernautSets(currentBlock.wave, currentBlock.phase, max, unit);
 
-      const sets: SetInput[] = Array.from({ length: cfg.numSets }, () => ({
+      const numSets = creditPhase
+        ? applyVariationCredit(cfg.numSets, variationSetsPlanned ?? 0).numSets
+        : cfg.numSets;
+
+      const sets: SetInput[] = Array.from({ length: numSets }, () => ({
         reps: cfg.isAmap ? '' : String(cfg.reps),
         weight: String(cfg.weight),
       }));
@@ -174,7 +195,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       setMainSets(sets);
       setInitialMainSetsSet(true);
     }
-  }, [loading, profile, initialMainSetsSet, liftType, isUpperDay]);
+  }, [loading, profile, initialMainSetsSet, liftType, isUpperDay, currentBlock, variationSetsPlanned]);
 
   useEffect(() => {
     if (!loading && Object.keys(lastAccessoryData).length > 0 && profile) {
@@ -378,16 +399,24 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     };
   };
 
-  const mainConfig: JuggernautSetsConfig | null = isUpperDay ? null : (() => {
-    const trainingMax = maxes[liftType] ?? 0;
-    if (currentBlock) {
-      if (currentBlock.phase === 'peaking') {
-        return calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, trainingMax, unit, liftType);
-      }
-      return calculateJuggernautSets(currentBlock.wave, currentBlock.phase, trainingMax, unit);
-    }
-    return null;
-  })();
+  const baseMainConfig: JuggernautSetsConfig | null = isUpperDay || !currentBlock ? null : (
+    currentBlock.phase === 'peaking'
+      ? calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, maxes[liftType] ?? 0, unit, liftType)
+      : calculateJuggernautSets(currentBlock.wave, currentBlock.phase, maxes[liftType] ?? 0, unit)
+  );
+
+  const creditPhase = !!currentBlock && (currentBlock.phase === 'accumulation' || currentBlock.phase === 'intensification');
+  const variationCreditResult = creditPhase && baseMainConfig
+    ? applyVariationCredit(baseMainConfig.numSets, variationSetsPlanned ?? 0)
+    : { numSets: baseMainConfig?.numSets ?? 0, reducedBy: 0 };
+
+  const mainConfig: JuggernautSetsConfig | null = baseMainConfig
+    ? { ...baseMainConfig, numSets: variationCreditResult.numSets }
+    : null;
+
+  const mainSetsNote = variationCreditResult.reducedBy > 0
+    ? formatVariationCreditNote(variationCreditResult.numSets, variationCreditResult.reducedBy, variationContributions) ?? undefined
+    : undefined;
 
   const mainReps = currentBlock
     ? (currentBlock.phase === 'peaking' ? 1 : currentBlock.wave)
@@ -701,6 +730,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           exercises={currentExercises}
           editExercises={templateExercises}
           phaseNote={phaseNote}
+          mainSetsNote={mainSetsNote}
           onStartWorkout={handleNext}
           unitPreference={profile.unit_preference || 'lb'}
           wave={currentBlock?.wave}

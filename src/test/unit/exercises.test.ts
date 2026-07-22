@@ -9,6 +9,8 @@ import {
   applyPhaseToAccessories,
   generalSupportExercises,
   selectMixedAccessories,
+  resolveDayExercises,
+  formatVariationCreditNote,
 } from '../../lib/exercises';
 import type { StickingPoint } from '../../lib/supabase';
 import type { Exercise } from '../../lib/types';
@@ -193,5 +195,67 @@ describe('applyPhaseToAccessories', () => {
   it('defines a plan entry for every phase', () => {
     const phases = ['accumulation', 'intensification', 'realization', 'deload', 'peaking', 'meet_week'];
     phases.forEach(phase => expect(ACCESSORY_PHASE_PLAN[phase as keyof typeof ACCESSORY_PHASE_PLAN]).toBeDefined());
+  });
+});
+
+describe('resolveDayExercises', () => {
+  const defaults: Exercise[] = [
+    { name: 'Romanian Deadlift', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Leg Curls', reps: '12-15', sets: 3, isBodyweight: false },
+  ];
+
+  it('prefers a saved template over everything else', () => {
+    const saved: Exercise[] = [{ name: 'Custom Exercise', reps: '5', sets: 5, isBodyweight: false }];
+    expect(resolveDayExercises('squat', saved, ['lockout'], defaults)).toBe(saved);
+  });
+
+  it('falls back to weak-point auto-selection when no template is saved', () => {
+    const result = resolveDayExercises('deadlift', null, ['mid_range'], defaults);
+    // Matches selectMixedAccessories('deadlift', ['mid_range']) resolved to real catalog entries
+    expect(result[0].name).toBe('Pin Squats');
+    expect(result.every(ex => ex.reps && ex.sets)).toBe(true);
+  });
+
+  it('falls back to the day defaults with no template and no weak points', () => {
+    expect(resolveDayExercises('squat', null, undefined, defaults)).toBe(defaults);
+    expect(resolveDayExercises('squat', undefined, [], defaults)).toBe(defaults);
+  });
+});
+
+describe('formatVariationCreditNote', () => {
+  it('returns null when nothing was reduced', () => {
+    expect(formatVariationCreditNote(5, 0, [])).toBeNull();
+  });
+
+  it('names a single contributing exercise and day', () => {
+    const note = formatVariationCreditNote(3, 2, [
+      { dayLiftType: 'deadlift', exerciseName: 'Pin Squats', sets: 2 },
+    ]);
+    expect(note).toBe("3 sets today — Pin Squats on Deadlift day covers the rest of this week's volume.");
+  });
+
+  it('lists multiple contributions with an Oxford-less "and"', () => {
+    const note = formatVariationCreditNote(3, 3, [
+      { dayLiftType: 'deadlift', exerciseName: 'Pin Squats', sets: 2 },
+      { dayLiftType: 'upper', exerciseName: 'Close-Grip Bench', sets: 1 },
+    ]);
+    expect(note).toBe(
+      "3 sets today — Pin Squats on Deadlift day and Close-Grip Bench on Upper day cover the rest of this week's volume."
+    );
+  });
+
+  it('deduplicates identical exercise+day pairs', () => {
+    const note = formatVariationCreditNote(3, 2, [
+      { dayLiftType: 'deadlift', exerciseName: 'Pin Squats', sets: 1 },
+      { dayLiftType: 'deadlift', exerciseName: 'Pin Squats', sets: 1 },
+    ]);
+    expect(note).toBe("3 sets today — Pin Squats on Deadlift day covers the rest of this week's volume.");
+  });
+
+  it('uses singular "set" wording for a single remaining set', () => {
+    const note = formatVariationCreditNote(1, 4, [
+      { dayLiftType: 'deadlift', exerciseName: 'Pin Squats', sets: 4 },
+    ]);
+    expect(note).toMatch(/^1 set today/);
   });
 });

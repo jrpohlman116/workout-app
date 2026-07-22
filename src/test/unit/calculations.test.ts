@@ -11,6 +11,7 @@ import {
   calculatePeakingSets,
   calculatePlateBreakdown,
   formatPlateBreakdown,
+  applyVariationCredit,
 } from '../../lib/calculations';
 
 describe('calculateOneRepMax', () => {
@@ -655,5 +656,33 @@ describe('formatPlateBreakdown', () => {
   it('labels the empty bar', () => {
     const b = calculatePlateBreakdown(45, 45, [45]);
     expect(formatPlateBreakdown(b!)).toBe('empty bar');
+  });
+});
+
+describe('applyVariationCredit', () => {
+  it('leaves the main lift unchanged when no variation sets are planned', () => {
+    expect(applyVariationCredit(5, 0)).toEqual({ numSets: 5, reducedBy: 0 });
+  });
+
+  it('reduces set-for-set when the reduction stays above the specificity floor', () => {
+    // 5-set week, 2 variation sets planned elsewhere -> 3 main sets, matching the worked example
+    expect(applyVariationCredit(5, 2)).toEqual({ numSets: 3, reducedBy: 2 });
+  });
+
+  it('never drops below ~60% of the base prescription', () => {
+    // floor = ceil(5*0.6) = 3; 4 variation sets planned would imply 1, clamped to 3
+    expect(applyVariationCredit(5, 4)).toEqual({ numSets: 3, reducedBy: 2 });
+    expect(applyVariationCredit(5, 100)).toEqual({ numSets: 3, reducedBy: 2 });
+  });
+
+  it('computes the floor per base count (6-set accumulation weeks)', () => {
+    // floor = ceil(6*0.6) = 4
+    expect(applyVariationCredit(6, 1)).toEqual({ numSets: 5, reducedBy: 1 });
+    expect(applyVariationCredit(6, 3)).toEqual({ numSets: 4, reducedBy: 2 });
+    expect(applyVariationCredit(6, 10)).toEqual({ numSets: 4, reducedBy: 2 });
+  });
+
+  it('never reduces a single-set prescription to zero', () => {
+    expect(applyVariationCredit(1, 5)).toEqual({ numSets: 1, reducedBy: 0 });
   });
 });
