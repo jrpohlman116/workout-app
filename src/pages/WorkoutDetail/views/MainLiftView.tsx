@@ -67,7 +67,6 @@ export default function MainLiftView({
   const [selectedRpe, setSelectedRpe] = useState<RpeValue | null>(null);
   const [set4Feel, setSet4Feel] = useState<WarmupFeel | null>(null);
   const [set5Feel, setSet5Feel] = useState<WarmupFeel | null>(null);
-  const [showBadDayOptions, setShowBadDayOptions] = useState(false);
   const [showWarmupFlow, setShowWarmupFlow] = useState(false);
   const [warmupComplete, setWarmupComplete] = useState(false);
 
@@ -154,66 +153,10 @@ export default function MainLiftView({
           >
             {warmupComplete ? 'Warm-up done — review' : checkedWarmups > 0 ? 'Continue Warm-up' : 'Start Warm-up'}
           </Button>
-
-          {/* Bad-day escape hatch — lives with the feel flow it extends:
-              the ±4% adjustment above can't rescue a genuinely rough day. */}
-          {onBadDayDrop && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              {badDayDrop > 0 && (
-                <div
-                  className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-3"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
-                    Weights reduced {Math.round(badDayDrop * 100)}% for your remaining sets
-                  </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-300">
-                    Smart call — volume at a lighter load still moves you forward.
-                  </p>
-                </div>
-              )}
-              <Button
-                type="button"
-                variant="tertiary"
-                size="sm"
-                fullWidth
-                className="py-2.5"
-                onClick={() => setShowBadDayOptions(v => !v)}
-                aria-expanded={showBadDayOptions}
-                aria-controls="bad-day-options"
-              >
-                {badDayDrop > 0 ? 'Drop the weight further' : 'Rough day? Drop the weight'}
-              </Button>
-              {showBadDayOptions && (
-                <div id="bad-day-options" className="mt-3">
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                    Not every day is a PR day. Lower the load on your remaining sets and keep
-                    the volume useful — that's autoregulation, not failure.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="tertiary"
-                      size="sm"
-                      className="flex-1 py-2.5"
-                      aria-label="Drop weights 10 percent — rough day"
-                      onClick={() => { onBadDayDrop(0.10); setShowBadDayOptions(false); }}
-                    >
-                      −10% · rough
-                    </Button>
-                    <Button
-                      variant="tertiary"
-                      size="sm"
-                      className="flex-1 py-2.5"
-                      aria-label="Drop weights 20 percent — very rough day"
-                      onClick={() => { onBadDayDrop(0.20); setShowBadDayOptions(false); }}
-                    >
-                      −20% · very rough
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
+          {badDayDrop > 0 && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3" role="status">
+              Weights reduced {Math.round(badDayDrop * 100)}% for today — smart call.
+            </p>
           )}
         </Card>
       )}
@@ -324,11 +267,14 @@ export default function MainLiftView({
           warmup={warmup}
           plannedWeight={warmupBase}
           adjustedWeight={adjustedWeight}
+          currentTopWeight={parseFloat(mainSets[0]?.weight || '0')}
           unit={unitPreference}
           availablePlates={availablePlates ?? []}
           warmupChecks={warmupChecks ?? []}
           set4Feel={set4Feel}
           set5Feel={set5Feel}
+          badDayDrop={badDayDrop}
+          onBadDayDrop={onBadDayDrop}
           onCheckSet={(index) => {
             if (!warmupChecks?.[index]) onToggleWarmupCheck?.(index);
           }}

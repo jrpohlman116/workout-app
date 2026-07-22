@@ -8,11 +8,17 @@ interface WarmupFlowProps {
   warmup: WarmupProgression;
   plannedWeight: number;
   adjustedWeight: number | null;
+  /** Live top-set weight from the sets state — reflects feel adjustments
+      AND bad-day drops, so the final card always shows what's actually
+      about to be lifted. */
+  currentTopWeight: number;
   unit: string;
   availablePlates: number[];
   warmupChecks: boolean[];
   set4Feel: WarmupFeel | null;
   set5Feel: WarmupFeel | null;
+  badDayDrop?: number;
+  onBadDayDrop?: (dropPct: number) => void;
   onCheckSet: (index: number) => void;
   onSet4Feel: (feel: WarmupFeel) => void;
   onSet5Feel: (feel: WarmupFeel) => void;
@@ -32,11 +38,14 @@ export default function WarmupFlow({
   warmup,
   plannedWeight,
   adjustedWeight,
+  currentTopWeight,
   unit,
   availablePlates,
   warmupChecks,
   set4Feel,
   set5Feel,
+  badDayDrop = 0,
+  onBadDayDrop,
   onCheckSet,
   onSet4Feel,
   onSet5Feel,
@@ -54,6 +63,7 @@ export default function WarmupFlow({
   })();
 
   const [step, setStep] = useState(initialStep);
+  const [showBadDayOptions, setShowBadDayOptions] = useState(false);
   const barWeight = BAR_WEIGHTS[unit] ?? BAR_WEIGHTS.lb;
 
   const isFixedStep = step < fixedCount;
@@ -72,7 +82,7 @@ export default function WarmupFlow({
 
   const currentFixed = isFixedStep ? warmup.fixedSets[step] : null;
   const approachWeight = set4Feel ? warmup.getApproachWeight(set4Feel) : null;
-  const finalWeight = adjustedWeight ?? plannedWeight;
+  const finalWeight = currentTopWeight > 0 ? currentTopWeight : (adjustedWeight ?? plannedWeight);
 
   return (
     <AccessibleModal
@@ -215,7 +225,7 @@ export default function WarmupFlow({
                 {finalWeight}
                 <span className="text-lg font-semibold text-gray-400 dark:text-gray-400"> {unit}</span>
               </p>
-              {adjustedWeight != null && adjustedWeight !== plannedWeight && (
+              {badDayDrop === 0 && adjustedWeight != null && adjustedWeight !== plannedWeight && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                   {adjustedWeight > plannedWeight ? '+' : ''}{adjustedWeight - plannedWeight} {unit} from planned — adjusted for today.
                 </p>
@@ -228,6 +238,67 @@ export default function WarmupFlow({
               availablePlates={availablePlates}
               unit={unit}
             />
+
+            {/* Rough-day escape hatch: the moment to decide is right here,
+                warmed up and looking at the proposed number. */}
+            {onBadDayDrop && (
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                {badDayDrop > 0 && (
+                  <div
+                    className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-3"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
+                      Weights reduced {Math.round(badDayDrop * 100)}% for your remaining sets
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300">
+                      Smart call — volume at a lighter load still moves you forward.
+                    </p>
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  size="sm"
+                  fullWidth
+                  className="py-2.5"
+                  onClick={() => setShowBadDayOptions(v => !v)}
+                  aria-expanded={showBadDayOptions}
+                  aria-controls="bad-day-options"
+                >
+                  {badDayDrop > 0 ? 'Drop the weight further' : 'Rough day? Drop the weight'}
+                </Button>
+                {showBadDayOptions && (
+                  <div id="bad-day-options" className="mt-3">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                      Not every day is a PR day. Lower the load on your working sets and keep
+                      the volume useful — that's autoregulation, not failure.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        className="flex-1 py-2.5"
+                        aria-label="Drop weights 10 percent — rough day"
+                        onClick={() => { onBadDayDrop(0.10); setShowBadDayOptions(false); }}
+                      >
+                        −10% · rough
+                      </Button>
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        className="flex-1 py-2.5"
+                        aria-label="Drop weights 20 percent — very rough day"
+                        onClick={() => { onBadDayDrop(0.20); setShowBadDayOptions(false); }}
+                      >
+                        −20% · very rough
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <Button fullWidth onClick={onComplete}>
               Start Working Sets

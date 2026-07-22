@@ -9,6 +9,8 @@ const makeProps = (overrides: Record<string, unknown> = {}) => ({
   warmup: calculateWarmupSets(165, 'lb'),
   plannedWeight: 165,
   adjustedWeight: null,
+  // 0 = fall back to adjusted/planned, matching pre-drop display behavior
+  currentTopWeight: 0,
   unit: 'lb',
   availablePlates: DEFAULT_PLATES_LB,
   warmupChecks: [] as boolean[],
