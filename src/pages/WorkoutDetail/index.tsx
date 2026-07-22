@@ -450,6 +450,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setMainSets(newSets);
   };
 
+  // Atomic reps+weight commit from the focused set-logging modal
+  const updateMainSetValues = (index: number, reps: string, weight: string) => {
+    dirtyRef.current = true;
+    setMainSets(prev => prev.map((set, i) => (i === index ? { reps, weight } : set)));
+  };
+
   const handleWorkingWeightAdjust = (weight: number) => {
     dirtyRef.current = true;
     // In peaking weeks with down sets, only the top single takes the warm-up
@@ -759,6 +765,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             onBadDayDrop={handleBadDayDrop}
             availablePlates={availablePlates}
             onUpdateSet={updateMainSet}
+            onUpdateSetValues={updateMainSetValues}
             onRpeChange={setRpe}
             onWorkingWeightAdjust={handleWorkingWeightAdjust}
             onNext={handleNext}

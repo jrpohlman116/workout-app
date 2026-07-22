@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Check, Play } from 'lucide-react';
-import AccessibleFormGroup from '../../../components/accessible/AccessibleFormGroup';
 import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets, calculatePlateBreakdown, formatPlateBreakdown, getRoundingIncrement, BAR_WEIGHTS } from '../../../lib/calculations';
 import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../../lib/constants';
 import { SetInput } from '../../../lib/types';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
+import SetCheck from '../../../components/ui/SetCheck';
 import WarmupFlow from '../../../components/features/WarmupFlow';
+import WorkingSetModal from '../../../components/features/WorkingSetModal';
 
 interface MainLiftViewProps {
   liftName: string;
@@ -26,6 +27,9 @@ interface MainLiftViewProps {
       plate-loading hints on warm-ups and working weights. */
   availablePlates?: number[];
   onUpdateSet: (index: number, field: 'reps' | 'weight', value: string) => void;
+  /** Atomic reps+weight commit from the focused set-logging modal — two
+      sequential onUpdateSet calls would clobber each other in one batch. */
+  onUpdateSetValues?: (index: number, reps: string, weight: string) => void;
   onRpeChange?: (rpe: number | null) => void;
   onWorkingWeightAdjust?: (weight: number) => void;
   onNext: () => void;
@@ -59,6 +63,7 @@ export default function MainLiftView({
   onBadDayDrop,
   availablePlates,
   onUpdateSet,
+  onUpdateSetValues,
   onRpeChange,
   onWorkingWeightAdjust,
   onNext,
@@ -69,6 +74,7 @@ export default function MainLiftView({
   const [set5Feel, setSet5Feel] = useState<WarmupFeel | null>(null);
   const [showWarmupFlow, setShowWarmupFlow] = useState(false);
   const [warmupComplete, setWarmupComplete] = useState(false);
+  const [logSetIndex, setLogSetIndex] = useState<number | null>(null);
 
   const isRealization = phase === 'realization';
   const isDeload = phase === 'deload';
@@ -188,24 +194,57 @@ export default function MainLiftView({
         </div>
       )}
 
-      <AccessibleFormGroup
-        legend={`Barbell ${liftName}`}
-        description={description}
-        sets={mainSets}
-        onUpdateSet={onUpdateSet}
-        onAddSet={() => {}}
-        onRemoveSet={() => {}}
-        weightUnit={unitPreference}
-        repsPlaceholder={isRealization
-          ? `${typeof mainReps === 'number' ? mainReps : 1}+`
-          : mainReps === '5-3-1' ? '5' : String(mainReps)}
-        weightPlaceholder="0"
-        minSets={mainSets.length}
-        maxSets={mainSets.length}
-        lastSetData={lastSetData}
-        setChecks={setChecks}
-        onToggleSetCheck={onToggleSetCheck}
-      />
+      <Card className="p-6">
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Barbell {liftName}</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{description}</p>
+
+        {lastSetData && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-4">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Previous Session</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">{lastSetData}</p>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {mainSets.map((set, index) => {
+            const setNumber = index + 1;
+            const repsLabel = set.reps || (isRealization
+              ? `${typeof mainReps === 'number' ? mainReps : 1}+`
+              : String(mainReps));
+            return (
+              <div key={index} className="flex items-center gap-3" role="group" aria-label={`Set ${setNumber} of ${mainSets.length}`}>
+                {onToggleSetCheck ? (
+                  <SetCheck
+                    checked={!!setChecks?.[index]}
+                    label={setChecks?.[index] ? `Set ${setNumber} done — tap to undo` : `Mark set ${setNumber} done`}
+                    display={String(setNumber)}
+                    onToggle={() => onToggleSetCheck(index)}
+                  />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-300 flex-shrink-0 tabular-nums select-none"
+                  >
+                    {setNumber}
+                  </span>
+                )}
+                <p className="flex-1 font-bold tabular-nums text-gray-900 dark:text-gray-100">
+                  {set.weight || '—'} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span> × {repsLabel}
+                </p>
+                <Button
+                  variant="tertiary"
+                  size="sm"
+                  className="py-2.5"
+                  onClick={() => setLogSetIndex(index)}
+                  aria-label={`Log set ${setNumber}`}
+                >
+                  Log
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
 
       {isRealization && (
         <Card className="p-6 space-y-4">
@@ -261,6 +300,34 @@ export default function MainLiftView({
       >
         Next: {nextExerciseName}
       </Button>
+
+      {logSetIndex !== null && mainSets[logSetIndex] && (
+        <WorkingSetModal
+          setNumber={logSetIndex + 1}
+          totalSets={mainSets.length}
+          initialReps={mainSets[logSetIndex].reps || (typeof mainReps === 'number' ? String(mainReps) : '')}
+          initialWeight={mainSets[logSetIndex].weight}
+          repsTarget={mainSets[logSetIndex].reps || (isRealization
+            ? `${typeof mainReps === 'number' ? mainReps : 1}+`
+            : String(mainReps))}
+          isAmap={isRealization}
+          unit={unitPreference}
+          availablePlates={availablePlates ?? []}
+          onSave={(reps, weight) => {
+            if (onUpdateSetValues) {
+              onUpdateSetValues(logSetIndex, reps, weight);
+            } else {
+              onUpdateSet(logSetIndex, 'reps', reps);
+              onUpdateSet(logSetIndex, 'weight', weight);
+            }
+            if (onToggleSetCheck && !setChecks?.[logSetIndex]) {
+              onToggleSetCheck(logSetIndex);
+            }
+            setLogSetIndex(null);
+          }}
+          onClose={() => setLogSetIndex(null)}
+        />
+      )}
 
       {showWarmupFlow && warmup && (
         <WarmupFlow
