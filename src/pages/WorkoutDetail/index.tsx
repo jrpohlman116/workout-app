@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateNewTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement } from '../../lib/calculations';
+import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement } from '../../lib/calculations';
 import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useConfetti } from '../../hooks/useAnimations';
@@ -90,6 +90,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: SetInput[] }>({});
   const [setChecks, setSetChecks] = useState<SetChecks>(EMPTY_CHECKS);
   const [restTimer, setRestTimer] = useState<{ endsAt: number; totalSeconds: number } | null>(null);
+  // Cumulative bad-day reduction (0 = none). Nonzero also switches the
+  // realization TM update to the Epley path — the per-rep plate bump
+  // assumes the AMAP was done at the standard weight.
+  const [badDayDrop, setBadDayDrop] = useState(0);
   // Autosave only after the user actually does something — otherwise the
   // initial prefill would clobber a restorable draft on mount.
   const dirtyRef = useRef(false);
@@ -103,6 +107,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     mainSets: SetInput[];
     accessoryData: { [key: number]: SetInput[] };
     setChecks?: SetChecks;
+    badDayDrop?: number;
     savedAt: string;
   } | null>(null);
 
@@ -213,7 +218,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         localStorage.removeItem(key);
         return;
       }
-      setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, setChecks: parsed.setChecks, savedAt: parsed.savedAt });
+      setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, setChecks: parsed.setChecks, badDayDrop: parsed.badDayDrop, savedAt: parsed.savedAt });
     } catch {
       try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
     }
@@ -227,7 +232,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     const timer = setTimeout(() => {
       try {
         localStorage.setItem(`jt_draft_${user.id}_${liftType}`, JSON.stringify({
-          liftType, mainSets, accessoryData, setChecks,
+          liftType, mainSets, accessoryData, setChecks, badDayDrop,
           cycle: profile.current_cycle,
           week: profile.current_week,
           savedAt: new Date().toISOString(),
@@ -235,7 +240,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       } catch { /* storage unavailable */ }
     }, 400);
     return () => clearTimeout(timer);
-  }, [mainSets, accessoryData, setChecks, user, profile, liftType]);
+  }, [mainSets, accessoryData, setChecks, badDayDrop, user, profile, liftType]);
 
   // Checking a set off (not un-checking) starts the rest countdown for
   // that set type. Restarting on every check keeps the newest rest active.
@@ -288,6 +293,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setMainSets(draftOffer.mainSets);
     setAccessoryData(draftOffer.accessoryData);
     setSetChecks(draftOffer.setChecks ?? EMPTY_CHECKS);
+    setBadDayDrop(draftOffer.badDayDrop ?? 0);
     dirtyRef.current = true;
     try { localStorage.removeItem(`jt_draft_${user.id}_${liftType}`); } catch { /* storage unavailable */ }
     setDraftOffer(null);
@@ -385,9 +391,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     : (profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5);
 
   // Only realization-week AMAP sets have a meaningful "standard vs actual reps"
-  // comparison to progress the training max from.
+  // comparison to progress the training max from. If the weight was reduced
+  // mid-session (bad-day drop), the rep standard no longer applies — fall
+  // back to the Epley estimate from the actual weight lifted.
   const newTrainingMax = mainConfig?.isAmap && currentBlock
-    ? calculateNewTrainingMax(maxes[liftType] ?? 0, currentBlock.wave, workoutStats.topReps, unit, liftType)
+    ? (badDayDrop > 0
+        ? (workoutStats.estimated1RM > 0 ? calculateTrainingMax(workoutStats.estimated1RM) : undefined)
+        : calculateNewTrainingMax(maxes[liftType] ?? 0, currentBlock.wave, workoutStats.topReps, unit, liftType))
     : undefined;
 
   const totalSteps = (isUpperDay ? 0 : 1) + currentExercises.length;
@@ -446,6 +456,22 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     } else {
       setMainSets(prev => prev.map(set => ({ ...set, weight: String(weight) })));
     }
+  };
+
+  // One-tap bad-day reduction: scales every not-yet-checked-off main set by
+  // the given fraction (so peaking down sets scale correctly too) and
+  // plate-rounds. Checked sets keep the weight they were done at.
+  const handleBadDayDrop = (dropPct: number) => {
+    dirtyRef.current = true;
+    const roundTo = getRoundingIncrement(unit);
+    setMainSets(prev => prev.map((set, i) => {
+      if (setChecks.main[i]) return set;
+      const current = parseFloat(set.weight);
+      if (!current || current <= 0) return set;
+      const reduced = Math.round(current * (1 - dropPct) / roundTo) * roundTo;
+      return { ...set, weight: String(Math.max(reduced, roundTo)) };
+    }));
+    setBadDayDrop(prev => 1 - (1 - prev) * (1 - dropPct));
   };
 
   const emptyAccessorySets = (exerciseIndex: number) =>
@@ -726,6 +752,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             onToggleWarmupCheck={toggleWarmupCheck}
             setChecks={setChecks.main}
             onToggleSetCheck={toggleMainCheck}
+            badDayDrop={badDayDrop}
+            onBadDayDrop={handleBadDayDrop}
             onUpdateSet={updateMainSet}
             onRpeChange={setRpe}
             onWorkingWeightAdjust={handleWorkingWeightAdjust}

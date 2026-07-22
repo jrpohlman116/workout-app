@@ -18,6 +18,8 @@ interface MainLiftViewProps {
   onToggleWarmupCheck?: (index: number) => void;
   setChecks?: boolean[];
   onToggleSetCheck?: (index: number) => void;
+  badDayDrop?: number;
+  onBadDayDrop?: (dropPct: number) => void;
   onUpdateSet: (index: number, field: 'reps' | 'weight', value: string) => void;
   onRpeChange?: (rpe: number | null) => void;
   onWorkingWeightAdjust?: (weight: number) => void;
@@ -48,6 +50,8 @@ export default function MainLiftView({
   onToggleWarmupCheck,
   setChecks,
   onToggleSetCheck,
+  badDayDrop = 0,
+  onBadDayDrop,
   onUpdateSet,
   onRpeChange,
   onWorkingWeightAdjust,
@@ -57,6 +61,7 @@ export default function MainLiftView({
   const [selectedRpe, setSelectedRpe] = useState<RpeValue | null>(null);
   const [set4Feel, setSet4Feel] = useState<WarmupFeel | null>(null);
   const [set5Feel, setSet5Feel] = useState<WarmupFeel | null>(null);
+  const [showBadDayOptions, setShowBadDayOptions] = useState(false);
 
   const isRealization = phase === 'realization';
   const isDeload = phase === 'deload';
@@ -215,6 +220,63 @@ export default function MainLiftView({
         setChecks={setChecks}
         onToggleSetCheck={onToggleSetCheck}
       />
+
+      {onBadDayDrop && (
+        <div className="px-1">
+          {badDayDrop > 0 && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-3" role="status">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
+                Weights reduced {Math.round(badDayDrop * 100)}% for your remaining sets
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">
+                Smart call — volume at a lighter load still moves you forward.
+              </p>
+            </div>
+          )}
+          {!showBadDayOptions ? (
+            <button
+              type="button"
+              onClick={() => setShowBadDayOptions(true)}
+              className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+            >
+              {badDayDrop > 0 ? 'Drop the weight further' : 'Rough day? Drop the weight'}
+            </button>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                Not every day is a PR day. Lower the load on your remaining sets and keep the
+                volume useful — that's autoregulation, not failure.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="tertiary"
+                  size="sm"
+                  className="flex-1 py-2.5"
+                  onClick={() => { onBadDayDrop(0.10); setShowBadDayOptions(false); }}
+                >
+                  −10% · rough
+                </Button>
+                <Button
+                  variant="tertiary"
+                  size="sm"
+                  className="flex-1 py-2.5"
+                  onClick={() => { onBadDayDrop(0.20); setShowBadDayOptions(false); }}
+                >
+                  −20% · very rough
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="py-2.5"
+                  onClick={() => setShowBadDayOptions(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {isRealization && (
         <Card className="p-6 space-y-4">
