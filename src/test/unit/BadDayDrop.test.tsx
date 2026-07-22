@@ -20,26 +20,47 @@ const baseProps = {
 };
 
 describe('bad-day weight reduction (MainLiftView)', () => {
-  it('is collapsed behind a low-key affordance by default', () => {
+  it('lives in the warm-up card as a collapsed disclosure', () => {
     render(<MainLiftView {...baseProps} onBadDayDrop={() => {}} />);
-    expect(screen.getByRole('button', { name: /rough day\? drop the weight/i })).toBeInTheDocument();
-    expect(screen.queryByText(/−10%/)).not.toBeInTheDocument();
+    const trigger = screen.getByRole('button', { name: /rough day\? drop the weight/i });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(trigger).toHaveAttribute('aria-controls', 'bad-day-options');
+    // Options hidden until disclosed
+    expect(screen.queryByRole('button', { name: /drop weights 10 percent/i })).not.toBeInTheDocument();
+    // Rendered inside the warm-up card, alongside the feel flow
+    const warmupCard = screen.getByText('Warm-up Progression').closest('div');
+    expect(warmupCard).toContainElement(trigger);
   });
 
-  it('offers one-tap percentage drops, not flat increments', async () => {
+  it('expands with correct ARIA state and offers percentage drops', async () => {
     const user = userEvent.setup();
     const onBadDayDrop = vi.fn();
     render(<MainLiftView {...baseProps} onBadDayDrop={onBadDayDrop} />);
 
-    await user.click(screen.getByRole('button', { name: /rough day\? drop the weight/i }));
-    await user.click(screen.getByRole('button', { name: /−20% · very rough/i }));
+    const trigger = screen.getByRole('button', { name: /rough day\? drop the weight/i });
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(screen.getByRole('button', { name: /drop weights 20 percent/i }));
     expect(onBadDayDrop).toHaveBeenCalledWith(0.20);
   });
 
-  it('confirms an applied drop with supportive framing and offers a further drop', () => {
+  it('collapses again when the trigger is toggled', async () => {
+    const user = userEvent.setup();
+    render(<MainLiftView {...baseProps} onBadDayDrop={() => {}} />);
+
+    const trigger = screen.getByRole('button', { name: /rough day\? drop the weight/i });
+    await user.click(trigger);
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: /drop weights 10 percent/i })).not.toBeInTheDocument();
+  });
+
+  it('announces an applied drop via a polite live region and offers a further drop', () => {
     render(<MainLiftView {...baseProps} onBadDayDrop={() => {}} badDayDrop={0.10} />);
-    expect(screen.getByText(/weights reduced 10% for your remaining sets/i)).toBeInTheDocument();
-    expect(screen.getByText(/smart call/i)).toBeInTheDocument();
+    const notice = screen.getByRole('status');
+    expect(notice).toHaveAttribute('aria-live', 'polite');
+    expect(notice).toHaveTextContent(/weights reduced 10% for your remaining sets/i);
     expect(screen.getByRole('button', { name: /drop the weight further/i })).toBeInTheDocument();
   });
 

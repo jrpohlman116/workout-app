@@ -219,6 +219,67 @@ export default function MainLiftView({
               )}
             </div>
           )}
+
+          {/* Bad-day escape hatch — lives with the feel flow it extends:
+              the ±4% adjustment above can't rescue a genuinely rough day. */}
+          {onBadDayDrop && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              {badDayDrop > 0 && (
+                <div
+                  className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-3"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
+                    Weights reduced {Math.round(badDayDrop * 100)}% for your remaining sets
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-300">
+                    Smart call — volume at a lighter load still moves you forward.
+                  </p>
+                </div>
+              )}
+              <Button
+                type="button"
+                variant="tertiary"
+                size="sm"
+                fullWidth
+                className="py-2.5"
+                onClick={() => setShowBadDayOptions(v => !v)}
+                aria-expanded={showBadDayOptions}
+                aria-controls="bad-day-options"
+              >
+                {badDayDrop > 0 ? 'Drop the weight further' : 'Rough day? Drop the weight'}
+              </Button>
+              {showBadDayOptions && (
+                <div id="bad-day-options" className="mt-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                    Not every day is a PR day. Lower the load on your remaining sets and keep
+                    the volume useful — that's autoregulation, not failure.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="tertiary"
+                      size="sm"
+                      className="flex-1 py-2.5"
+                      aria-label="Drop weights 10 percent — rough day"
+                      onClick={() => { onBadDayDrop(0.10); setShowBadDayOptions(false); }}
+                    >
+                      −10% · rough
+                    </Button>
+                    <Button
+                      variant="tertiary"
+                      size="sm"
+                      className="flex-1 py-2.5"
+                      aria-label="Drop weights 20 percent — very rough day"
+                      onClick={() => { onBadDayDrop(0.20); setShowBadDayOptions(false); }}
+                    >
+                      −20% · very rough
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       )}
 
@@ -267,63 +328,6 @@ export default function MainLiftView({
         setChecks={setChecks}
         onToggleSetCheck={onToggleSetCheck}
       />
-
-      {onBadDayDrop && (
-        <div className="px-1">
-          {badDayDrop > 0 && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-3" role="status">
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
-                Weights reduced {Math.round(badDayDrop * 100)}% for your remaining sets
-              </p>
-              <p className="text-xs text-gray-600 dark:text-gray-300">
-                Smart call — volume at a lighter load still moves you forward.
-              </p>
-            </div>
-          )}
-          {!showBadDayOptions ? (
-            <button
-              type="button"
-              onClick={() => setShowBadDayOptions(true)}
-              className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-            >
-              {badDayDrop > 0 ? 'Drop the weight further' : 'Rough day? Drop the weight'}
-            </button>
-          ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                Not every day is a PR day. Lower the load on your remaining sets and keep the
-                volume useful — that's autoregulation, not failure.
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="tertiary"
-                  size="sm"
-                  className="flex-1 py-2.5"
-                  onClick={() => { onBadDayDrop(0.10); setShowBadDayOptions(false); }}
-                >
-                  −10% · rough
-                </Button>
-                <Button
-                  variant="tertiary"
-                  size="sm"
-                  className="flex-1 py-2.5"
-                  onClick={() => { onBadDayDrop(0.20); setShowBadDayOptions(false); }}
-                >
-                  −20% · very rough
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="py-2.5"
-                  onClick={() => setShowBadDayOptions(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {isRealization && (
         <Card className="p-6 space-y-4">
