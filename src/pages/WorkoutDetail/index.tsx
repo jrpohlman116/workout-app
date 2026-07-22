@@ -53,6 +53,16 @@ function getCurrentWeekBlock(
 
 const IS_UPPER_DAY = (liftType: string) => liftType === 'upper';
 
+// Per-set done states — purely informational (completing a workout never
+// requires them). Also the trigger surface for the upcoming rest timer.
+interface SetChecks {
+  warmup: boolean[];
+  main: boolean[];
+  accessories: Record<number, boolean[]>;
+}
+
+const EMPTY_CHECKS: SetChecks = { warmup: [], main: [], accessories: {} };
+
 export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgress, skipSummary }: WorkoutDetailPageProps) {
   const { profile, user, refreshProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState<WorkoutStep>(
@@ -77,6 +87,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [rpe, setRpe] = useState<number | null>(null);
 
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: SetInput[] }>({});
+  const [setChecks, setSetChecks] = useState<SetChecks>(EMPTY_CHECKS);
+  // Autosave only after the user actually does something — otherwise the
+  // initial prefill would clobber a restorable draft on mount.
+  const dirtyRef = useRef(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [workoutStats, setWorkoutStats] = useState({ estimated1RM: 0, totalTonnage: 0, topReps: 0 });
   const savedSessionIdRef = useRef<string | null>(null);
@@ -86,6 +100,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [draftOffer, setDraftOffer] = useState<{
     mainSets: SetInput[];
     accessoryData: { [key: number]: SetInput[] };
+    setChecks?: SetChecks;
     savedAt: string;
   } | null>(null);
 
@@ -196,16 +211,63 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         localStorage.removeItem(key);
         return;
       }
-      setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, savedAt: parsed.savedAt });
+      setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, setChecks: parsed.setChecks, savedAt: parsed.savedAt });
     } catch {
       try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
     }
   }, [user?.id, liftType, profile?.current_cycle, profile?.current_week]);
 
+  // Continuous draft autosave (debounced): inputs and check-offs survive an
+  // accidental refresh or navigation. Only runs after first user interaction
+  // (dirtyRef) and is cleared on successful workout save.
+  useEffect(() => {
+    if (!user || !profile || !dirtyRef.current) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(`jt_draft_${user.id}_${liftType}`, JSON.stringify({
+          liftType, mainSets, accessoryData, setChecks,
+          cycle: profile.current_cycle,
+          week: profile.current_week,
+          savedAt: new Date().toISOString(),
+        }));
+      } catch { /* storage unavailable */ }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [mainSets, accessoryData, setChecks, user, profile, liftType]);
+
+  const toggleWarmupCheck = (index: number) => {
+    dirtyRef.current = true;
+    setSetChecks(prev => {
+      const warmup = [...prev.warmup];
+      warmup[index] = !warmup[index];
+      return { ...prev, warmup };
+    });
+  };
+
+  const toggleMainCheck = (index: number) => {
+    dirtyRef.current = true;
+    setSetChecks(prev => {
+      const main = [...prev.main];
+      main[index] = !main[index];
+      return { ...prev, main };
+    });
+  };
+
+  const toggleAccessoryCheck = (exerciseIndex: number, setIndex: number) => {
+    dirtyRef.current = true;
+    setSetChecks(prev => {
+      const sets = [...(prev.accessories[exerciseIndex] || [])];
+      sets[setIndex] = !sets[setIndex];
+      return { ...prev, accessories: { ...prev.accessories, [exerciseIndex]: sets } };
+    });
+  };
+
   const handleRestoreDraft = () => {
     if (!draftOffer || !user) return;
     setMainSets(draftOffer.mainSets);
     setAccessoryData(draftOffer.accessoryData);
+    setSetChecks(draftOffer.setChecks ?? EMPTY_CHECKS);
+    dirtyRef.current = true;
     try { localStorage.removeItem(`jt_draft_${user.id}_${liftType}`); } catch { /* storage unavailable */ }
     setDraftOffer(null);
   };
@@ -348,12 +410,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   };
 
   const updateMainSet = (index: number, field: 'reps' | 'weight', value: string) => {
+    dirtyRef.current = true;
     const newSets = [...mainSets];
     newSets[index][field] = value;
     setMainSets(newSets);
   };
 
   const handleWorkingWeightAdjust = (weight: number) => {
+    dirtyRef.current = true;
     // In peaking weeks with down sets, only the top single takes the warm-up
     // adjustment — down-set weights are prescribed independently of feel.
     if (mainConfig?.downSets) {
@@ -367,6 +431,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     Array(currentExercises[exerciseIndex]?.sets ?? 3).fill(null).map(() => ({ reps: '', weight: '' }));
 
   const updateAccessorySet = (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: string) => {
+    dirtyRef.current = true;
     const exerciseSets = accessoryData[exerciseIndex] || emptyAccessorySets(exerciseIndex);
     const newSets = [...exerciseSets];
     newSets[setIndex] = { ...newSets[setIndex], [field]: value };
@@ -374,14 +439,25 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   };
 
   const addAccessorySet = (exerciseIndex: number) => {
+    dirtyRef.current = true;
     const exerciseSets = accessoryData[exerciseIndex] || emptyAccessorySets(exerciseIndex);
     setAccessoryData({ ...accessoryData, [exerciseIndex]: [...exerciseSets, { reps: '', weight: '' }] });
   };
 
   const removeAccessorySet = (exerciseIndex: number, setIndex: number) => {
+    dirtyRef.current = true;
     const exerciseSets = accessoryData[exerciseIndex] || emptyAccessorySets(exerciseIndex);
     if (exerciseSets.length <= 1) return;
     setAccessoryData({ ...accessoryData, [exerciseIndex]: exerciseSets.filter((_, idx) => idx !== setIndex) });
+    // Keep check indices aligned with the surviving sets
+    setSetChecks(prev => {
+      const checks = prev.accessories[exerciseIndex];
+      if (!checks) return prev;
+      return {
+        ...prev,
+        accessories: { ...prev.accessories, [exerciseIndex]: checks.filter((_, idx) => idx !== setIndex) },
+      };
+    });
   };
 
   const calculateTotalTonnage = () => {
@@ -402,7 +478,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     const draftKey = `jt_draft_${user.id}_${liftType}`;
     try {
       localStorage.setItem(draftKey, JSON.stringify({
-        liftType, mainSets, accessoryData,
+        liftType, mainSets, accessoryData, setChecks,
         cycle: profile.current_cycle,
         week: profile.current_week,
         savedAt: new Date().toISOString(),
@@ -625,6 +701,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             lastSetData={getLastSetData('main')}
             phase={currentBlock?.phase}
             baseWeight={mainConfig?.weight}
+            warmupChecks={setChecks.warmup}
+            onToggleWarmupCheck={toggleWarmupCheck}
+            setChecks={setChecks.main}
+            onToggleSetCheck={toggleMainCheck}
             onUpdateSet={updateMainSet}
             onRpeChange={setRpe}
             onWorkingWeightAdjust={handleWorkingWeightAdjust}
@@ -674,6 +754,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           unitPreference={profile.unit_preference || 'lb'}
           lastSetData={getLastSetData(currentExercise.name)}
           suggestedWeight={getAccessorySuggestion(currentExercise.name)}
+          setChecks={setChecks.accessories[exerciseIndex]}
+          onToggleSetCheck={(index) => toggleAccessoryCheck(exerciseIndex, index)}
           onUpdateSet={(index, field, value) => updateAccessorySet(exerciseIndex, index, field, value)}
           onAddSet={() => addAccessorySet(exerciseIndex)}
           onRemoveSet={(index) => removeAccessorySet(exerciseIndex, index)}

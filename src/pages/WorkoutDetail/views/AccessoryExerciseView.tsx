@@ -3,6 +3,7 @@ import { Exercise, SetInput } from '../../../lib/types';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import IconButton from '../../../components/ui/IconButton';
+import SetCheck from '../../../components/ui/SetCheck';
 
 interface AccessoryExerciseViewProps {
   exercise: Exercise;
@@ -11,6 +12,8 @@ interface AccessoryExerciseViewProps {
   lastSetData: string;
   suggestedWeight?: { low: number; high: number } | null;
   substitutedFrom?: string;
+  setChecks?: boolean[];
+  onToggleSetCheck?: (index: number) => void;
   onUpdateSet: (index: number, field: 'reps' | 'weight', value: string) => void;
   onAddSet: () => void;
   onRemoveSet: (index: number) => void;
@@ -28,6 +31,8 @@ export default function AccessoryExerciseView({
   lastSetData,
   suggestedWeight,
   substitutedFrom,
+  setChecks,
+  onToggleSetCheck,
   onUpdateSet,
   onAddSet,
   onRemoveSet,
@@ -100,13 +105,22 @@ export default function AccessoryExerciseView({
                 role="group"
                 aria-labelledby={`${setId}-label`}
               >
-                <span
-                  id={`${setId}-label`}
-                  className="w-8 text-center font-mono text-sm font-bold text-gray-300 dark:text-gray-400 flex-shrink-0 select-none"
-                  aria-hidden="true"
-                >
-                  {String(setNumber).padStart(2, '0')}
-                </span>
+                {onToggleSetCheck ? (
+                  <SetCheck
+                    checked={!!setChecks?.[index]}
+                    label={setChecks?.[index] ? `Set ${setNumber} done — tap to undo` : `Mark set ${setNumber} done`}
+                    display={String(setNumber).padStart(2, '0')}
+                    onToggle={() => onToggleSetCheck(index)}
+                  />
+                ) : (
+                  <span
+                    id={`${setId}-label`}
+                    className="w-8 text-center font-mono text-sm font-bold text-gray-300 dark:text-gray-400 flex-shrink-0 select-none"
+                    aria-hidden="true"
+                  >
+                    {String(setNumber).padStart(2, '0')}
+                  </span>
+                )}
                 <span className="sr-only">Set {setNumber} of {exerciseSets.length}</span>
 
                 {exercise.isBodyweight ? (

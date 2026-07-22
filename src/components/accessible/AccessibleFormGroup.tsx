@@ -1,5 +1,6 @@
 import Button from '../../components/ui/Button';
 import IconButton from '../../components/ui/IconButton';
+import SetCheck from '../../components/ui/SetCheck';
 import { Trash2, Plus } from 'lucide-react';
 import type { SetInput } from '../../lib/types';
 
@@ -19,6 +20,11 @@ interface AccessibleFormGroupProps {
   maxSets?: number;
   isBodyweight?: boolean;
   lastSetData?: string;
+  /** Optional per-set done states — when provided (with the toggle handler),
+      the set-number chip becomes a tappable check-off. Never required to
+      complete a workout. */
+  setChecks?: boolean[];
+  onToggleSetCheck?: (index: number) => void;
 }
 
 export default function AccessibleFormGroup({
@@ -36,7 +42,9 @@ export default function AccessibleFormGroup({
   minSets = 1,
   maxSets = 10,
   isBodyweight = false,
-  lastSetData
+  lastSetData,
+  setChecks,
+  onToggleSetCheck
 }: AccessibleFormGroupProps) {
   const canAddSet = sets.length < maxSets;
   const canRemoveSet = sets.length > minSets;
@@ -96,12 +104,21 @@ export default function AccessibleFormGroup({
               aria-labelledby={`${setId}-label`}
             >
               <span id={`${setId}-label`} className="sr-only">Set {setNumber} of {sets.length}</span>
-              <span
-                aria-hidden="true"
-                className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-300 flex-shrink-0 tabular-nums select-none"
-              >
-                {setNumber}
-              </span>
+              {onToggleSetCheck ? (
+                <SetCheck
+                  checked={!!setChecks?.[index]}
+                  label={setChecks?.[index] ? `Set ${setNumber} done — tap to undo` : `Mark set ${setNumber} done`}
+                  display={String(setNumber)}
+                  onToggle={() => onToggleSetCheck(index)}
+                />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-300 flex-shrink-0 tabular-nums select-none"
+                >
+                  {setNumber}
+                </span>
+              )}
 
               {isBodyweight ? (
                 <input
