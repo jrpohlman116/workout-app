@@ -80,6 +80,7 @@ export default function WarmupFlow({
       onClose={onClose}
       title="Warm-up"
       description="Step through your warm-up sets one at a time. Progress is saved as you go."
+      fullScreen
     >
       <div className="space-y-6 pb-2">
         {isFixedStep && currentFixed && (

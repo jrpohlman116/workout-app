@@ -4,9 +4,12 @@ interface FocusTrapProps {
   active: boolean;
   children: React.ReactNode;
   onEscape?: () => void;
+  /** Sizing/layout for the wrapper div — needed when the trapped content
+      uses percentage dimensions (e.g. full-screen modal panels). */
+  className?: string;
 }
 
-export default function FocusTrap({ active, children, onEscape }: FocusTrapProps) {
+export default function FocusTrap({ active, children, onEscape, className }: FocusTrapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const hasInitialFocusRef = useRef(false);
@@ -71,7 +74,7 @@ export default function FocusTrap({ active, children, onEscape }: FocusTrapProps
   }, [active, onEscape]);
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} className={className}>
       {children}
     </div>
   );

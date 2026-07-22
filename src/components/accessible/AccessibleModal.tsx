@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import FocusTrap from './FocusTrap';
 
@@ -10,6 +11,9 @@ interface AccessibleModalProps {
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg';
   preventClose?: boolean;
+  /** Full-bleed below the sm breakpoint (phone-first flows); centered card
+      with backdrop from sm up. Default keeps the centered card everywhere. */
+  fullScreen?: boolean;
 }
 
 export default function AccessibleModal({
@@ -20,6 +24,7 @@ export default function AccessibleModal({
   children,
   size = 'md',
   preventClose = false,
+  fullScreen = false,
 }: AccessibleModalProps) {
   useEffect(() => {
     if (isOpen) {
@@ -44,9 +49,25 @@ export default function AccessibleModal({
   const titleId = `modal-title-${title.replace(/\s+/g, '-').toLowerCase()}`;
   const descId = description ? `modal-desc-${title.replace(/\s+/g, '-').toLowerCase()}` : undefined;
 
-  return (
+  // Same widths as sizeClasses, but only applied from sm up — below that
+  // the fullScreen panel is edge-to-edge with no width cap.
+  const fullScreenSizeClasses = {
+    sm: 'sm:w-96 sm:max-w-[calc(100vw-2rem)]',
+    md: 'sm:w-[28rem] sm:max-w-[calc(100vw-2rem)]',
+    lg: 'sm:w-[42rem] sm:max-w-[calc(100vw-2rem)]'
+  };
+
+  // Portal to <body>: ancestors with retained transforms (e.g. the page
+  // slide-in animation wrappers) would otherwise become the containing
+  // block for this fixed dialog, sizing it to the page instead of the
+  // viewport.
+  const panelClasses = fullScreen
+    ? `relative bg-white dark:bg-gray-800 w-full h-full max-h-full rounded-none sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:shadow-lg ${fullScreenSizeClasses[size]} overflow-y-auto transition-colors animate-modal-in`
+    : `relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg ${sizeClasses[size]} max-h-[90vh] overflow-y-auto transition-colors animate-modal-in`;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center ${fullScreen ? 'p-0 sm:p-4' : 'p-4'}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -58,10 +79,12 @@ export default function AccessibleModal({
         aria-hidden="true"
       />
 
-      <FocusTrap active={isOpen} onEscape={preventClose ? undefined : onClose}>
-        <div
-          className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg ${sizeClasses[size]} max-h-[90vh] overflow-y-auto transition-colors animate-modal-in`}
-        >
+      <FocusTrap
+        active={isOpen}
+        onEscape={preventClose ? undefined : onClose}
+        className={fullScreen ? 'w-full h-full sm:w-auto sm:h-auto' : undefined}
+      >
+        <div className={panelClasses}>
           <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between transition-colors">
             <h2 id={titleId} className="text-xl font-bold text-gray-900 dark:text-gray-100">
               {title}
@@ -88,6 +111,7 @@ export default function AccessibleModal({
           </div>
         </div>
       </FocusTrap>
-    </div>
+    </div>,
+    document.body
   );
 }
