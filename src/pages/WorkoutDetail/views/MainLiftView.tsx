@@ -175,6 +175,19 @@ export default function MainLiftView({
             const repsLabel = set.reps || (isRealization
               ? `${typeof mainReps === 'number' ? mainReps : 1}+`
               : String(mainReps));
+
+            // Each row ranges off its own prescribed weight — peaking weeks
+            // mix a single with lighter down sets, so a shared range would
+            // be wrong for one or the other. A logged (checked) set shows
+            // its real recorded weight, never a range.
+            const rowWeight = parseFloat(set.weight) || 0;
+            const showRowRange = showRange && !setChecks?.[index] && rowWeight > 0;
+            const rowRangeLow = Math.round(rowWeight * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo;
+            const rowRangeHigh = Math.round(rowWeight * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo;
+            const weightLabel = showRowRange
+              ? `${rowRangeLow}–${rowRangeHigh}`
+              : (set.weight || '—');
+
             return (
               <div key={index} className="flex items-center gap-3" role="group" aria-label={`Set ${setNumber} of ${mainSets.length}`}>
                 {onToggleSetCheck ? (
@@ -193,7 +206,7 @@ export default function MainLiftView({
                   </span>
                 )}
                 <p className="flex-1 font-bold tabular-nums text-gray-900 dark:text-gray-100">
-                  {set.weight || '—'} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span> × {repsLabel}
+                  {weightLabel} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span> × {repsLabel}
                 </p>
                 <Button
                   variant="tertiary"

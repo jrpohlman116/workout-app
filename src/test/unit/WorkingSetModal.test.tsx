@@ -103,4 +103,50 @@ describe('MainLiftView focused set rows', () => {
     expect(baseProps.onUpdateSetValues).toHaveBeenCalledWith(0, '10', '185');
     expect(baseProps.onToggleSetCheck).toHaveBeenCalledWith(0);
   });
+
+  // The row weight paragraph mixes a text node with a nested <span> for the
+  // unit, so RTL's getByText (which only concatenates direct text-node
+  // children) can't match the range as one string — assert on the row
+  // elements' full textContent instead.
+  const getWeightRows = () => screen.getAllByText(
+    (_, element) => element?.tagName === 'P' && !!element.classList.contains('font-bold')
+  );
+
+  it('shows a ±4% range per row (not the exact prescribed weight) before the warm-up is done', () => {
+    render(<MainLiftView {...baseProps} />);
+    // 180 * 0.96 = 172.8 -> 175, 180 * 1.04 = 187.2 -> 185 (rounded to nearest 5)
+    const rows = getWeightRows();
+    expect(rows).toHaveLength(2);
+    rows.forEach(row => {
+      expect(row.textContent).toContain('175–185');
+      expect(row.textContent).not.toMatch(/\b180\b/);
+    });
+  });
+
+  it('locks to the exact weight once the warm-up flow completes', async () => {
+    const user = userEvent.setup();
+    render(<MainLiftView {...baseProps} />);
+
+    await user.click(screen.getByRole('button', { name: /start warm-up/i }));
+    // Skip through every fixed set without rating feel, landing on the final card
+    for (let i = 0; i < 4; i++) {
+      const skip = screen.queryByRole('button', { name: 'Skip' });
+      if (skip) await user.click(skip);
+    }
+    await user.click(screen.getByRole('button', { name: /start working sets/i }));
+
+    const rows = getWeightRows();
+    rows.forEach(row => {
+      expect(row.textContent).not.toContain('–');
+      expect(row.textContent).toContain('180');
+    });
+  });
+
+  it('shows the real logged weight for a checked set even while the range is still active for others', () => {
+    render(<MainLiftView {...baseProps} mainSets={[{ reps: '10', weight: '175' }, { reps: '10', weight: '180' }]} setChecks={[true, false]} />);
+    const [checkedRow, uncheckedRow] = getWeightRows();
+    expect(checkedRow.textContent).not.toContain('–');
+    expect(checkedRow.textContent).toContain('175');
+    expect(uncheckedRow.textContent).toContain('175–185'); // unlogged set: still ranged off its own 180 target
+  });
 });
