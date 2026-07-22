@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, Play } from 'lucide-react';
-import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets, calculatePlateBreakdown, formatPlateBreakdown, getRoundingIncrement, BAR_WEIGHTS } from '../../../lib/calculations';
+import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets, getRoundingIncrement } from '../../../lib/calculations';
 import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../../lib/constants';
 import { SetInput } from '../../../lib/types';
 import Card from '../../../components/ui/Card';
@@ -121,22 +121,6 @@ export default function MainLiftView({
     ? warmup.fixedSets.filter((_, idx) => warmupChecks?.[idx]).length
     : 0;
 
-  const barWeight = BAR_WEIGHTS[unitPreference] ?? BAR_WEIGHTS.lb;
-  const plateHint = (weight: number): string | null => {
-    if (!availablePlates || availablePlates.length === 0 || !weight) return null;
-    const breakdown = calculatePlateBreakdown(weight, barWeight, availablePlates);
-    if (!breakdown) return null;
-    return breakdown.exact
-      ? formatPlateBreakdown(breakdown)
-      : `≈${breakdown.loadedWeight}: ${formatPlateBreakdown(breakdown)}`;
-  };
-
-  // One bar-loading row per distinct working weight (peaking weeks have two:
-  // the single and its down sets), in set order.
-  const workingWeights = [...new Set(
-    mainSets.map(s => parseFloat(s.weight)).filter(w => w > 0)
-  )];
-
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
       {warmup && (
@@ -171,26 +155,6 @@ export default function MainLiftView({
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl px-4 py-3">
           <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-0.5">AMAP — As Many As Possible</p>
           <p className="text-xs text-amber-700 dark:text-amber-400">Stop 1 rep before failure. Rest, then note your reps.</p>
-        </div>
-      )}
-
-      {availablePlates && availablePlates.length > 0 && workingWeights.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm px-6 py-4">
-          <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2">
-            Bar Loading — per side
-          </p>
-          <div className="space-y-1.5">
-            {workingWeights.map(weight => (
-              <div key={weight} className="flex justify-between items-baseline text-sm">
-                <span className="font-bold tabular-nums text-gray-900 dark:text-gray-100">
-                  {weight} {unitPreference}
-                </span>
-                <span className="text-gray-600 dark:text-gray-300 tabular-nums">
-                  {plateHint(weight) ?? '—'}
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
