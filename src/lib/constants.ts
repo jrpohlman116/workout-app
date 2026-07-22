@@ -59,6 +59,10 @@ export const PHASE_DETAIL_LABELS: Record<WavePhase, string> = {
 
 export const MAX_ACCESSORY_EXERCISES = 7;
 
+// Window event dispatched (from main.tsx) when a new service worker has
+// installed while the app is open — UpdateToast listens for it.
+export const SW_UPDATE_EVENT = 'sw-update-available';
+
 export const PROFILE_TAB_LABELS: Record<ProfileTab, string> = {
   body:     'Body Stats',
   maxes:    'Maxes',

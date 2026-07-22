@@ -1,4 +1,6 @@
-const CACHE_NAME = '531-tracker-v3';
+// Bump on breaking cache-shape changes only — routine deploys are picked up
+// automatically because navigations are network-first (see below).
+const CACHE_NAME = 'ironform-v4';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -15,13 +17,26 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  // Navigation requests (page refresh/direct URL) always get index.html
-  // so the SPA router can handle the path client-side.
+  // Navigation requests (page refresh/direct URL) are NETWORK-FIRST: a fresh
+  // index.html references the newly deployed hashed bundles, so users pick up
+  // updates on their next online visit. The cached shell is only an offline
+  // fallback — serving it cache-first left users stranded on stale bundles
+  // until they manually cleared site data (which also wiped their login).
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match('/index.html').then((cached) => {
-        return cached || fetch('/index.html');
-      })
+      fetch('/index.html')
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put('/index.html', responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match('/index.html').then((r) => r || Response.error());
+        })
     );
     return;
   }

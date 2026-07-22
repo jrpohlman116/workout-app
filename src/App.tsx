@@ -12,6 +12,7 @@ import Onboarding from './components/features/Onboarding';
 import Navigation from './components/layout/Navigation';
 import SkipLink from './components/accessible/SkipLink';
 import InstallPrompt from './components/features/InstallPrompt';
+import UpdateToast from './components/features/UpdateToast';
 import HomePage from './pages/Home';
 import CalculatorPage from './pages/Calculator';
 import ProgressPage from './pages/Progress';
@@ -165,6 +166,9 @@ export default function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
+        {/* Outside AppContent so update notices reach every screen,
+            including login and onboarding */}
+        <UpdateToast />
         <AppContent />
       </ThemeProvider>
     </AuthProvider>
