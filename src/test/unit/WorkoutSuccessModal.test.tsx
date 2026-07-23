@@ -97,7 +97,7 @@ describe('WorkoutSuccessModal', () => {
 
   it('shares a generated image via the native share sheet when available', async () => {
     const user = userEvent.setup();
-    const shareMock = vi.fn((_data: ShareData) => Promise.resolve());
+    const shareMock = vi.fn<(data: ShareData) => Promise<void>>(() => Promise.resolve());
     Object.assign(navigator, { share: shareMock, canShare: () => true });
 
     render(<WorkoutSuccessModal {...baseProps()} />);

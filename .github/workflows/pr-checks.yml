@@ -35,3 +35,10 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Audit production dependencies (blocking)
+        run: npm audit --omit=dev
+
+      - name: Audit dev dependencies (informational)
+        run: npm audit
+        continue-on-error: true
