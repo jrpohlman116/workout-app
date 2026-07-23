@@ -4,6 +4,7 @@ import {
   additionalExercises,
   weakPointExercisesMap,
   ACCESSORY_PCT_OF_TM,
+  BARBELL_VARIATION_LIFTS,
   ACCESSORY_PHASE_PLAN,
   ACCESSORY_WEAK_POINT_SOURCE,
   applyPhaseToAccessories,
@@ -90,13 +91,16 @@ describe('selectMixedAccessories cross-day targeting', () => {
 
   it('never selects the day\'s own lift variations as weak-point work', () => {
     // Squat day must not prescribe squat barbell variations, deadlift day no
-    // deadlift variations — that was the same-day stacking bug.
+    // deadlift variations — that was the same-day stacking bug. Checked via
+    // BARBELL_VARIATION_LIFTS, not ACCESSORY_PCT_OF_TM — some barbell
+    // variations deliberately have no weight suggestion yet but are still
+    // barbell work of that lift's pattern.
     for (const point of ALL_POINTS) {
       for (const name of selectMixedAccessories('squat', [point])) {
-        expect(ACCESSORY_PCT_OF_TM[name]?.baseLift).not.toBe('squat');
+        expect(BARBELL_VARIATION_LIFTS[name]).not.toBe('squat');
       }
       for (const name of selectMixedAccessories('deadlift', [point])) {
-        expect(ACCESSORY_PCT_OF_TM[name]?.baseLift).not.toBe('deadlift');
+        expect(BARBELL_VARIATION_LIFTS[name]).not.toBe('deadlift');
       }
     }
   });
@@ -111,11 +115,24 @@ describe('selectMixedAccessories cross-day targeting', () => {
       ];
       for (const points of combos) {
         const selected = selectMixedAccessories(liftType, points);
-        const barbellCount = selected.filter(name => name in ACCESSORY_PCT_OF_TM).length;
+        // BARBELL_VARIATION_LIFTS, not ACCESSORY_PCT_OF_TM — see above
+        const barbellCount = selected.filter(name => name in BARBELL_VARIATION_LIFTS).length;
         expect(barbellCount, `${liftType} + ${points.join(',')}`).toBeLessThanOrEqual(1);
         expect(selected.length).toBeLessThanOrEqual(4);
       }
     }
+  });
+
+  it('treats the new no-%TM barbell variations as barbell for the cap and peaking filter', () => {
+    // Force selection deep enough into bench.in_the_hole to reach the new
+    // entries by excluding everything ahead of them in the list.
+    const selected = selectMixedAccessories('upper', ['in_the_hole'], [
+      'Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench',
+    ]);
+    expect(selected[0]).toBe('3-Second Pause Bench');
+    // The second weak-point slot must skip Feet-Up Bench (also barbell) and
+    // land on Deep Stretch DB Bench (dumbbell, not barbell)
+    expect(selected[1]).toBe('Deep Stretch DB Bench');
   });
 });
 
@@ -171,6 +188,22 @@ describe('applyPhaseToAccessories', () => {
       expect(generalSupportExercises.squat).toContain(ex.name);
       expect(ex.sets).toBe(2);
     });
+  });
+
+  it('drops no-%TM barbell variations during peaking too, not just ones with a weight suggestion', () => {
+    const day: Exercise[] = [
+      { name: '3-Second Pause Bench', reps: '3-5', sets: 3, isBodyweight: false },
+      { name: 'Feet-Up Bench', reps: '6-10', sets: 3, isBodyweight: false },
+      { name: 'Deep Stretch DB Bench', reps: '8-12', sets: 3, isBodyweight: false },
+      { name: 'Face Pulls', reps: '15-20', sets: 3, isBodyweight: false },
+    ];
+    const { exercises } = applyPhaseToAccessories(day, 'peaking', 'bench');
+    const names = exercises.map(ex => ex.name);
+    expect(names).not.toContain('3-Second Pause Bench');
+    expect(names).not.toContain('Feet-Up Bench');
+    // Dumbbell work isn't barbell fatigue — stays in during peaking
+    expect(names).toContain('Deep Stretch DB Bench');
+    expect(names).toContain('Face Pulls');
   });
 
   it('returns no accessories for meet week', () => {

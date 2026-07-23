@@ -4,7 +4,7 @@ import type { WeakPoints } from '../lib/supabase';
 import type { WavePhase, Exercise } from '../lib/types';
 import {
   baseExercises,
-  ACCESSORY_PCT_OF_TM,
+  BARBELL_VARIATION_LIFTS,
   ACCESSORY_WEAK_POINT_SOURCE,
   applyPhaseToAccessories,
   resolveDayExercises,
@@ -82,7 +82,7 @@ export function useWeeklyVariationCredit(
         const { exercises: phaseAdjusted } = applyPhaseToAccessories(dayExercises, phase, day);
 
         phaseAdjusted.forEach(ex => {
-          if (ACCESSORY_PCT_OF_TM[ex.name]?.baseLift === targetLift) {
+          if (BARBELL_VARIATION_LIFTS[ex.name] === targetLift) {
             found.push({ dayLiftType: day, exerciseName: ex.name, sets: ex.sets });
           }
         });

@@ -84,6 +84,22 @@ describe('useWeeklyVariationCredit', () => {
     expect(result.current.contributions).toHaveLength(2);
   });
 
+  it('counts no-%TM barbell variations too, not just ones with a weight suggestion', async () => {
+    mockRows = [
+      { lift_type: 'deadlift', exercises_data: [{ name: '3-Second Pause Squat', reps: '3-5', sets: 3, isBodyweight: false }] },
+    ];
+
+    const { result } = renderHook(() =>
+      useWeeklyVariationCredit('user-1', 'squat', 'intensification', { squat: [], bench: [], deadlift: [] })
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.variationSetsPlanned).toBe(3);
+    expect(result.current.contributions).toEqual([
+      { dayLiftType: 'deadlift', exerciseName: '3-Second Pause Squat', sets: 3 },
+    ]);
+  });
+
   it('ignores variations of other lifts', async () => {
     mockRows = [
       { lift_type: 'deadlift', exercises_data: [{ name: 'Board Press', reps: '5-8', sets: 3, isBodyweight: false }] }, // bench variation

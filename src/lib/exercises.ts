@@ -69,6 +69,7 @@ export const additionalExercises = [
   { name: 'Safety Bar Box Squats', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Tempo Squats', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Pin Squats', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: '3-Second Pause Squat', reps: '3-5', sets: 3, isBodyweight: false },
   { name: 'Single-Leg Squats', reps: '6-10', sets: 3, isBodyweight: true },
   { name: 'Single-Leg Calf Raises', reps: '12-15', sets: 3, isBodyweight: true },
   { name: 'Donkey Calf Raises', reps: '15-20', sets: 3, isBodyweight: false },
@@ -117,7 +118,7 @@ export const additionalExercises = [
   { name: 'Rack Pulls', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Pin Pulls', reps: '3-5', sets: 3, isBodyweight: false },
   { name: 'Partial Deadlifts', reps: '3-5', sets: 3, isBodyweight: false },
-  { name: 'Deadlift from Deficit', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: 'Deficit Deadlift', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Tempo Deadlifts', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Paused Deadlifts', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Suitcase Carry', reps: '30-60 sec', sets: 3, isBodyweight: false },
@@ -127,6 +128,9 @@ export const additionalExercises = [
   { name: 'Pin Press', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Board Press', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Pause Bench', reps: '5-8', sets: 3, isBodyweight: false },
+  { name: '3-Second Pause Bench', reps: '3-5', sets: 3, isBodyweight: false },
+  { name: 'Feet-Up Bench', reps: '6-10', sets: 3, isBodyweight: false },
+  { name: 'Deep Stretch DB Bench', reps: '8-12', sets: 3, isBodyweight: false },
   { name: 'Incline Bench', reps: '6-10', sets: 3, isBodyweight: false },
   { name: 'Floor Press', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Lockout Bench', reps: '3-5', sets: 3, isBodyweight: false },
@@ -166,29 +170,53 @@ export const ACCESSORY_PCT_OF_TM: Record<string, { baseLift: 'squat' | 'bench' |
   'Rack Pulls': { baseLift: 'deadlift', pct: 0.90 },
   'Pin Pulls': { baseLift: 'deadlift', pct: 0.85 },
   'Partial Deadlifts': { baseLift: 'deadlift', pct: 0.90 },
-  'Deadlift from Deficit': { baseLift: 'deadlift', pct: 0.75 },
+  'Deficit Deadlift': { baseLift: 'deadlift', pct: 0.75 },
   'Tempo Deadlifts': { baseLift: 'deadlift', pct: 0.65 },
   'Paused Deadlifts': { baseLift: 'deadlift', pct: 0.70 },
 };
 
+// Barbell variations that intentionally have no ACCESSORY_PCT_OF_TM weight
+// suggestion yet (added 2026-07-21, pending the %TM recalibration pass —
+// see the roadmap) but are still real barbell lifts of the same lift
+// pattern. Dumbbell/machine variations (e.g. Deep Stretch DB Bench) are
+// deliberately excluded — they don't create the same axial-loading
+// same-day-stacking concern this list exists to guard against.
+const BARBELL_VARIATIONS_WITHOUT_PCT: Record<string, 'squat' | 'bench' | 'deadlift'> = {
+  '3-Second Pause Squat': 'squat',
+  '3-Second Pause Bench': 'bench',
+  'Feet-Up Bench': 'bench',
+};
+
+// Every barbell variation of a main lift, regardless of whether it has a
+// weight suggestion — the definition used anywhere the concern is "is this
+// heavy barbell work of the same pattern" rather than "what should it
+// weigh": the same-day 1-barbell cap, the peaking drop filter, and weekly-
+// volume credit. ACCESSORY_PCT_OF_TM alone is NOT this list — it's scoped
+// to weight suggestions only, and some barbell variations deliberately
+// don't have one yet.
+export const BARBELL_VARIATION_LIFTS: Record<string, 'squat' | 'bench' | 'deadlift'> = {
+  ...Object.fromEntries(Object.entries(ACCESSORY_PCT_OF_TM).map(([name, v]) => [name, v.baseLift])),
+  ...BARBELL_VARIATIONS_WITHOUT_PCT,
+};
+
 export const weakPointExercisesMap: Record<string, Record<StickingPoint, string[]>> = {
   squat: {
-    in_the_hole: ['Box Squats', 'Anderson Squats', 'Pin Squats', 'Pause Squats', 'Bulgarian Split Squats'],
+    in_the_hole: ['Box Squats', 'Anderson Squats', 'Pin Squats', 'Pause Squats', 'Bulgarian Split Squats', '3-Second Pause Squat'],
     mid_range:   ['Pin Squats', 'Tempo Squats', 'Front Squats', 'Pause Squats', 'Leg Press'],
     lockout:     ['Walking Lunges', 'Single-Leg Squats', 'Safety Bar Box Squats', 'Leg Extensions', 'Hip Thrusts'],
   },
   bench: {
-    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench'],
+    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench', '3-Second Pause Bench', 'Feet-Up Bench', 'Deep Stretch DB Bench'],
     mid_range:   ['Close-Grip Bench', 'Pin Press', 'Pause Bench', 'Incline Bench', 'Floor Press'],
     lockout:     ['Floor Press', 'Board Press', 'Close-Grip Bench', 'Tricep Pressdowns', 'JM Press'],
   },
   deadlift: {
-    in_the_hole: ['Deadlift from Deficit', 'Paused Deadlifts', 'Front Squats', 'Pause Squats', 'Step-Ups'],
+    in_the_hole: ['Deficit Deadlift', 'Paused Deadlifts', 'Front Squats', 'Pause Squats', 'Step-Ups'],
     mid_range:   ['Tempo Deadlifts', 'Paused Deadlifts', 'Pin Pulls', 'Partial Deadlifts', 'Rack Pulls'],
     lockout:     ['Rack Pulls', 'Pin Pulls', 'Partial Deadlifts', 'Shrugs', 'B Stance RDLs'],
   },
   upper: {
-    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench'],
+    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench', '3-Second Pause Bench', 'Feet-Up Bench', 'Deep Stretch DB Bench'],
     mid_range:   ['Close-Grip Bench', 'Pin Press', 'Pause Bench', 'JM Press', 'Floor Press'],
     lockout:     ['Floor Press', 'Board Press', 'Close-Grip Bench', 'Tricep Pressdowns', 'Lockout Bench'],
   },
@@ -242,9 +270,8 @@ function findExerciseDef(name: string): Exercise | null {
  * Adjusts a day's accessory list for the current phase. Pure — returns new
  * objects and never mutates the input, so callers can keep passing the raw
  * template to edit/save flows. Barbell variations are identified by
- * membership in ACCESSORY_PCT_OF_TM (that key set is exactly the heavy
- * barbell lift variations); if a peaking filter would empty an all-barbell
- * template, light general-support work fills in instead.
+ * membership in BARBELL_VARIATION_LIFTS; if a peaking filter would empty an
+ * all-barbell template, light general-support work fills in instead.
  */
 export function applyPhaseToAccessories(
   exercises: Exercise[],
@@ -256,7 +283,7 @@ export function applyPhaseToAccessories(
 
   let result = exercises;
   if (plan.dropBarbellVariations) {
-    result = result.filter(ex => !(ex.name in ACCESSORY_PCT_OF_TM));
+    result = result.filter(ex => !(ex.name in BARBELL_VARIATION_LIFTS));
     if (result.length === 0) {
       const fallbackNames = (generalSupportExercises[liftType] ?? []).slice(0, 3);
       result = fallbackNames.map(
@@ -379,7 +406,7 @@ export function selectMixedAccessories(
   let barbellCount = 0;
   for (const ex of availableWeak) {
     if (selected.length >= numWeakPointExercises) break;
-    const isBarbell = ex in ACCESSORY_PCT_OF_TM;
+    const isBarbell = ex in BARBELL_VARIATION_LIFTS;
     if (isBarbell && barbellCount >= 1) continue;
     selected.push(ex);
     if (isBarbell) barbellCount++;
