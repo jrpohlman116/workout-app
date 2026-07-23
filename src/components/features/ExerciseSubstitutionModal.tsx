@@ -4,7 +4,7 @@ import AccessibleModal from '../accessible/AccessibleModal';
 import { supabase } from '../../lib/supabase';
 import { ExerciseSubstitution } from '../../lib/supabase';
 import { Exercise } from '../../lib/types';
-import { getWeaknessAlignedSubstitutes } from '../../lib/exercises';
+import { getWeaknessAlignedSubstitutes, isValidSubstitution } from '../../lib/exercises';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 
@@ -78,6 +78,7 @@ export default function ExerciseSubstitutionModal({
       const seen = new Set<string>();
       const combined: ExerciseSubstitution[] = [...(forwardResult.data || []), ...reverseMapped].filter(s => {
         if (s.substitute_exercise === currentExercise || seen.has(s.substitute_exercise)) return false;
+        if (!isValidSubstitution(currentExercise, s.substitute_exercise, s.muscle_groups)) return false;
         seen.add(s.substitute_exercise);
         return true;
       });

@@ -236,27 +236,118 @@ for (const [liftType, points] of Object.entries(weakPointExercisesMap)) {
   }
 }
 
+// Primary muscle group(s) for every exercise that appears in
+// weakPointExercisesMap — used only to gate substitution suggestions, not to
+// describe the exercise exhaustively, so tags favor precision over
+// completeness. This is what stops e.g. deadlift.in_the_hole's Front Squats
+// (a squat intruder deliberately mixed into that bucket for *prescription*
+// variety) from being suggested as a *substitute* for Deficit Deadlift: same
+// weak point, but 'quads' vs 'hamstrings'/'glutes'/'lower back' don't
+// overlap. Squat-family entries deliberately omit 'hamstrings'/'glutes'
+// (even though real lifts touch them) so they don't bleed into the
+// deadlift-family tag set within a shared bucket. Vocabulary matches the
+// lowercase tags already used in the exercise_substitutions table.
+const EXERCISE_MUSCLE_GROUPS: Record<string, string[]> = {
+  // Squat-pattern (quad-dominant)
+  'Box Squats': ['quads'],
+  'Anderson Squats': ['quads'],
+  'Pin Squats': ['quads'],
+  'Pause Squats': ['quads'],
+  'Bulgarian Split Squats': ['quads', 'glutes'],
+  '3-Second Pause Squat': ['quads'],
+  'Tempo Squats': ['quads'],
+  'Front Squats': ['quads'],
+  'Leg Press': ['quads'],
+  'Walking Lunges': ['quads', 'glutes'],
+  'Single-Leg Squats': ['quads', 'glutes'],
+  'Safety Bar Box Squats': ['quads'],
+  'Leg Extensions': ['quads'],
+  'Step-Ups': ['quads'],
+  'Hip Thrusts': ['glutes', 'hamstrings'],
+  // Deadlift hip-hinge family
+  'Deficit Deadlift': ['hamstrings', 'glutes', 'lower back'],
+  'Paused Deadlifts': ['hamstrings', 'glutes', 'lower back'],
+  'Tempo Deadlifts': ['hamstrings', 'glutes', 'lower back'],
+  'B Stance RDLs': ['hamstrings', 'glutes'],
+  // Deadlift partial-pull/lockout family (more trap/upper-back at the top)
+  'Rack Pulls': ['glutes', 'lower back', 'traps'],
+  'Pin Pulls': ['glutes', 'lower back', 'traps'],
+  'Partial Deadlifts': ['glutes', 'lower back', 'traps'],
+  'Shrugs': ['traps'],
+  // Bench-pattern
+  'Board Press': ['chest', 'triceps'],
+  'Pin Press': ['chest', 'triceps'],
+  'Spoto Press': ['chest', 'triceps'],
+  'Pause Bench': ['chest', 'triceps'],
+  '3-Second Pause Bench': ['chest', 'triceps'],
+  'Feet-Up Bench': ['chest', 'triceps'],
+  'Deep Stretch DB Bench': ['chest', 'triceps'],
+  'Close-Grip Bench': ['chest', 'triceps'],
+  'Floor Press': ['chest', 'triceps'],
+  'Lockout Bench': ['chest', 'triceps'],
+  'Incline DB Press': ['chest', 'triceps', 'shoulders'],
+  'Incline Bench': ['chest', 'triceps', 'shoulders'],
+  'Tricep Pressdowns': ['triceps'],
+  'JM Press': ['triceps'],
+};
+
+function sharesMuscleGroup(a: string[], b: string[]): boolean {
+  if (a.length === 0 || b.length === 0) return false;
+  const setB = new Set(b.map(m => m.toLowerCase()));
+  return a.some(m => setB.has(m.toLowerCase()));
+}
+
+/** True when both exercises share at least one (liftType, stickingPoint) weak-point bucket. */
+export function sharesWeakPoint(a: string, b: string): boolean {
+  const bucketsA = exerciseToWeakPointBuckets.get(a);
+  const bucketsB = exerciseToWeakPointBuckets.get(b);
+  if (!bucketsA || !bucketsB) return false;
+  return bucketsA.some(ba => bucketsB.some(bb => ba.liftType === bb.liftType && ba.point === bb.point));
+}
+
 /**
  * Substitutes derived from the weak-point system rather than muscle group:
- * every other exercise that targets the same sticking point(s) as this one,
- * across every lift/day bucket it appears in. This is why Board Press's
- * substitutes include Feet-Up Bench and Pause Bench — all three are bench
- * "in the hole" work, which is the reason Board Press was prescribed in the
- * first place, not just similar-muscle-group presses. An exercise that
- * isn't part of the weak-point system (general support work like Leg Curls)
- * returns an empty array — its substitutes come from the `exercise_substitutions`
- * Supabase table (muscle-group based) or manual search instead.
+ * every other exercise that targets the same sticking point(s) AND shares a
+ * primary muscle group with this one. Both conditions are required — same
+ * weak point alone isn't enough (see EXERCISE_MUSCLE_GROUPS above for why).
+ * This is why Board Press's substitutes include Feet-Up Bench and Pause
+ * Bench — all three are bench "in the hole" presses targeting chest/
+ * triceps, which is the reason Board Press was prescribed in the first
+ * place. An exercise that isn't part of the weak-point system (general
+ * support work like Leg Curls) returns an empty array — its substitutes
+ * come from the `exercise_substitutions` Supabase table (muscle-group
+ * based) or manual search instead.
  */
 export function getWeaknessAlignedSubstitutes(exerciseName: string): string[] {
   const buckets = exerciseToWeakPointBuckets.get(exerciseName);
   if (!buckets) return [];
+  const ownMuscleGroups = EXERCISE_MUSCLE_GROUPS[exerciseName] ?? [];
   const names = new Set<string>();
   for (const { liftType, point } of buckets) {
     for (const name of weakPointExercisesMap[liftType][point]) {
-      if (name !== exerciseName) names.add(name);
+      if (name === exerciseName) continue;
+      if (sharesMuscleGroup(ownMuscleGroups, EXERCISE_MUSCLE_GROUPS[name] ?? [])) {
+        names.add(name);
+      }
     }
   }
   return [...names];
+}
+
+/**
+ * Gate for DB-sourced substitution rows: if `originalExercise` is part of
+ * the weak-point system, a candidate must share BOTH its weak point and a
+ * muscle group to count as a valid substitution — not just a muscle-group
+ * match (e.g. Close-Grip Bench and Dips share triceps/chest, but Dips isn't
+ * "in the hole" or "lockout" work, so it no longer qualifies). Exercises
+ * outside the weak-point system (general accessories) are ungated here —
+ * their DB rows are already curated as same-muscle-group swaps.
+ */
+export function isValidSubstitution(originalExercise: string, substituteExercise: string, substituteMuscleGroups: string[]): boolean {
+  const ownMuscleGroups = EXERCISE_MUSCLE_GROUPS[originalExercise];
+  if (!ownMuscleGroups) return true;
+  if (!sharesWeakPoint(originalExercise, substituteExercise)) return false;
+  return sharesMuscleGroup(ownMuscleGroups, substituteMuscleGroups);
 }
 
 // General-support fill follows the same cross-day principle as baseExercises:

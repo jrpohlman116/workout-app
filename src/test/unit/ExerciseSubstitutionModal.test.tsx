@@ -85,6 +85,40 @@ describe('ExerciseSubstitutionModal', () => {
     expect(screen.getByText('Harder')).toBeInTheDocument();
   });
 
+  it('excludes a DB row that matches muscle group but not weak point, for a weak-point exercise', async () => {
+    // Farmer Walks shares 'traps' with Rack Pulls but isn't part of the
+    // weak-point system — same weak point AND same muscle group are both
+    // required once the original exercise is a weak-point exercise. (Rack
+    // Pulls' own weak-point-aligned matches — Pin Pulls, Partial Deadlifts,
+    // Shrugs, B Stance RDLs — aren't in this test's availableExercises
+    // fixture, so that section stays empty too.)
+    forwardRows = [
+      {
+        id: '1',
+        original_exercise: 'Rack Pulls',
+        substitute_exercise: 'Farmer Walks',
+        description: 'desc',
+        equipment_needed: 'Barbell',
+        difficulty: 'similar',
+        muscle_groups: ['traps', 'forearms', 'core'],
+        created_at: '',
+      },
+    ];
+
+    render(
+      <ExerciseSubstitutionModal
+        isOpen={true}
+        onClose={() => {}}
+        currentExercise="Rack Pulls"
+        onSubstitute={() => {}}
+        availableExercises={availableExercises}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('No recommended substitutions available.')).toBeInTheDocument());
+    expect(screen.queryByText('Farmer Walks')).not.toBeInTheDocument();
+  });
+
   it('falls back to the empty state when neither weak-point nor DB substitutes exist', async () => {
     render(
       <ExerciseSubstitutionModal

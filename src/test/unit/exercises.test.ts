@@ -13,6 +13,8 @@ import {
   resolveDayExercises,
   formatVariationCreditNote,
   getWeaknessAlignedSubstitutes,
+  isValidSubstitution,
+  sharesWeakPoint,
 } from '../../lib/exercises';
 import type { StickingPoint } from '../../lib/supabase';
 import type { Exercise } from '../../lib/types';
@@ -73,6 +75,35 @@ describe('getWeaknessAlignedSubstitutes', () => {
         }
       }
     }
+  });
+
+  it('excludes same-weak-point exercises that are a different muscle group/movement pattern', () => {
+    // deadlift.in_the_hole deliberately mixes squat-pattern work (Front
+    // Squats, Pause Squats, Step-Ups) in for *prescription* variety — but
+    // none of those are a valid *substitute* for Deficit Deadlift, since
+    // same weak point alone isn't sufficient; muscle group must match too.
+    const substitutes = getWeaknessAlignedSubstitutes('Deficit Deadlift');
+    expect(substitutes).toContain('Paused Deadlifts');
+    expect(substitutes).not.toContain('Front Squats');
+    expect(substitutes).not.toContain('Pause Squats');
+    expect(substitutes).not.toContain('Step-Ups');
+  });
+});
+
+describe('isValidSubstitution', () => {
+  it('requires both a shared weak point and a shared muscle group for weak-point exercises', () => {
+    // Same weak point (bench/upper lockout) and same muscle group (chest/triceps)
+    expect(sharesWeakPoint('Close-Grip Bench', 'Board Press')).toBe(true);
+    expect(isValidSubstitution('Close-Grip Bench', 'Board Press', ['triceps', 'chest'])).toBe(true);
+
+    // Dips shares the muscle group but isn't part of the weak-point system at all
+    expect(sharesWeakPoint('Close-Grip Bench', 'Dips')).toBe(false);
+    expect(isValidSubstitution('Close-Grip Bench', 'Dips', ['triceps', 'chest', 'shoulders'])).toBe(false);
+  });
+
+  it('is ungated for exercises outside the weak-point system', () => {
+    // Leg Curls has no weak-point bucket, so DB-curated muscle-group swaps pass through
+    expect(isValidSubstitution('Leg Curls', 'Nordic Curls', ['hamstrings'])).toBe(true);
   });
 });
 
