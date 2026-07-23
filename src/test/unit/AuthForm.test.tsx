@@ -3,23 +3,22 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AuthForm from '../../components/features/AuthForm';
 
-const resetPasswordForEmail = vi.fn(() => Promise.resolve({ error: null }));
-const signInWithPassword = vi.fn(() => Promise.resolve({ error: null }));
-
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     auth: {
-      resetPasswordForEmail: (...args: unknown[]) => resetPasswordForEmail(...args),
-      signInWithPassword: (...args: unknown[]) => signInWithPassword(...args),
+      resetPasswordForEmail: vi.fn(() => Promise.resolve({ error: null })),
+      signInWithPassword: vi.fn(() => Promise.resolve({ error: null })),
       signUp: vi.fn(() => Promise.resolve({ error: null })),
     },
   },
 }));
 
+import { supabase } from '../../lib/supabase';
+
 describe('AuthForm — forgot password', () => {
   beforeEach(() => {
-    resetPasswordForEmail.mockClear();
-    signInWithPassword.mockClear();
+    vi.mocked(supabase.auth.resetPasswordForEmail).mockClear();
+    vi.mocked(supabase.auth.signInWithPassword).mockClear();
   });
 
   it('shows a "Forgot password?" link on the login tab only', async () => {
@@ -41,7 +40,7 @@ describe('AuthForm — forgot password', () => {
     await user.type(screen.getByPlaceholderText('you@example.com'), 'jordan@example.com');
     await user.click(screen.getByRole('button', { name: 'Send reset link' }));
 
-    await waitFor(() => expect(resetPasswordForEmail).toHaveBeenCalledWith(
+    await waitFor(() => expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
       'jordan@example.com',
       { redirectTo: window.location.origin }
     ));

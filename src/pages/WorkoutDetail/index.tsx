@@ -540,6 +540,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     Array(currentExercises[exerciseIndex]?.sets ?? 3).fill(null).map(() => ({ reps: '', weight: '' }));
 
   const updateAccessorySet = (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: string) => {
+    // These inputs support typing directly (not just steppers), so an
+    // invalid or negative keystroke is dropped here rather than committed —
+    // the DB also has a floor now (see the CHECK-constraints migration),
+    // but this is what stops a stray "-" from ever reaching that far.
+    if (value !== '') {
+      const parsed = parseFloat(value);
+      if (isNaN(parsed) || parsed < 0) return;
+    }
     dirtyRef.current = true;
     const exerciseSets = accessoryData[exerciseIndex] || emptyAccessorySets(exerciseIndex);
     const newSets = [...exerciseSets];

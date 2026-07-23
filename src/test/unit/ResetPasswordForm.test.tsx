@@ -3,24 +3,24 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ResetPasswordForm from '../../components/features/ResetPasswordForm';
 
-const updateUser = vi.fn(() => Promise.resolve({ error: null }));
-const clearPasswordRecovery = vi.fn();
-
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     auth: {
-      updateUser: (...args: unknown[]) => updateUser(...args),
+      updateUser: vi.fn(() => Promise.resolve({ error: null })),
     },
   },
 }));
 
+const clearPasswordRecovery = vi.fn();
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ clearPasswordRecovery }),
 }));
 
+import { supabase } from '../../lib/supabase';
+
 describe('ResetPasswordForm', () => {
   beforeEach(() => {
-    updateUser.mockClear();
+    vi.mocked(supabase.auth.updateUser).mockClear();
     clearPasswordRecovery.mockClear();
   });
 
@@ -33,7 +33,7 @@ describe('ResetPasswordForm', () => {
     await user.click(screen.getByRole('button', { name: 'Save new password' }));
 
     expect(screen.getByText('Passwords do not match')).toBeInTheDocument();
-    expect(updateUser).not.toHaveBeenCalled();
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
   });
 
   it('sets the new password and clears recovery mode on success', async () => {
@@ -44,12 +44,17 @@ describe('ResetPasswordForm', () => {
     await user.type(screen.getByLabelText('Confirm new password'), 'newpassword1');
     await user.click(screen.getByRole('button', { name: 'Save new password' }));
 
-    await waitFor(() => expect(updateUser).toHaveBeenCalledWith({ password: 'newpassword1' }));
+    await waitFor(() => expect(supabase.auth.updateUser).toHaveBeenCalledWith({ password: 'newpassword1' }));
     expect(clearPasswordRecovery).toHaveBeenCalledOnce();
   });
 
   it('does not clear recovery mode when the update fails', async () => {
-    updateUser.mockResolvedValueOnce({ error: new Error('Password should be at least 6 characters') });
+    vi.mocked(supabase.auth.updateUser).mockResolvedValueOnce({
+      data: { user: null },
+      // Must be a real Error instance — the component's catch block checks
+      // `err instanceof Error` before reading `.message`.
+      error: new Error('Password should be at least 6 characters') as never,
+    });
     const user = userEvent.setup();
     render(<ResetPasswordForm />);
 

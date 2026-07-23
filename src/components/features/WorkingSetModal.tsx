@@ -55,6 +55,24 @@ export default function WorkingSetModal({
     setReps(next ? String(next) : '');
   };
 
+  // Typing bypasses the steppers entirely, so it needs its own floor — an
+  // invalid or negative keystroke is dropped rather than committed, which
+  // also has the effect of resetting the (now-stale) controlled input back
+  // to its last valid value.
+  const handleWeightChange = (v: string) => {
+    if (v === '') { setWeight(''); return; }
+    const parsed = parseFloat(v);
+    if (isNaN(parsed) || parsed < 0) return;
+    setWeight(v);
+  };
+
+  const handleRepsChange = (v: string) => {
+    if (v === '') { setReps(''); return; }
+    const parsed = parseInt(v);
+    if (isNaN(parsed) || parsed < 0) return;
+    setReps(v);
+  };
+
   const stepperRow = (
     label: string,
     value: string,
@@ -127,8 +145,8 @@ export default function WorkingSetModal({
           />
         )}
 
-        {stepperRow('Weight', weight, unit, () => stepWeight(-1), () => stepWeight(1), setWeight, 'decimal')}
-        {stepperRow('Reps', reps, null, () => stepReps(-1), () => stepReps(1), setReps, 'numeric')}
+        {stepperRow('Weight', weight, unit, () => stepWeight(-1), () => stepWeight(1), handleWeightChange, 'decimal')}
+        {stepperRow('Reps', reps, null, () => stepReps(-1), () => stepReps(1), handleRepsChange, 'numeric')}
 
         <Button fullWidth onClick={() => onSave(reps, weight)}>
           Log Set

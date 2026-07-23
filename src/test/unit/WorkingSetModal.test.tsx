@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WorkingSetModal from '../../components/features/WorkingSetModal';
 import MainLiftView from '../../pages/WorkoutDetail/views/MainLiftView';
@@ -61,6 +61,44 @@ describe('WorkingSetModal', () => {
   it('frames AMAP sets correctly', () => {
     render(<WorkingSetModal {...modalProps({ isAmap: true, repsTarget: '10+' })} />);
     expect(screen.getByText(/AMAP set — target 10\+\. Log every rep you got\./)).toBeInTheDocument();
+  });
+
+  it('rejects a negative typed weight rather than committing it', async () => {
+    const user = userEvent.setup();
+    render(<WorkingSetModal {...modalProps()} />);
+
+    const weightInput = screen.getByRole('spinbutton', { name: 'Weight' });
+    await user.clear(weightInput);
+    // fireEvent lets us assert on the exact string reaching onChange in one
+    // shot (e.g. a paste), rather than depending on jsdom's keystroke-level
+    // number-input sanitization, which doesn't model real browsers reliably.
+    fireEvent.change(weightInput, { target: { value: '-50' } });
+
+    expect(weightInput).not.toHaveValue(-50);
+    expect(weightInput).toHaveValue(null);
+  });
+
+  it('rejects negative typed reps rather than committing them', async () => {
+    const user = userEvent.setup();
+    render(<WorkingSetModal {...modalProps()} />);
+
+    const repsInput = screen.getByRole('spinbutton', { name: 'Reps' });
+    await user.clear(repsInput);
+    fireEvent.change(repsInput, { target: { value: '-8' } });
+
+    expect(repsInput).not.toHaveValue(-8);
+    expect(repsInput).toHaveValue(null);
+  });
+
+  it('still allows typing a normal positive weight', async () => {
+    const user = userEvent.setup();
+    render(<WorkingSetModal {...modalProps()} />);
+
+    const weightInput = screen.getByRole('spinbutton', { name: 'Weight' });
+    await user.clear(weightInput);
+    fireEvent.change(weightInput, { target: { value: '225' } });
+
+    expect(weightInput).toHaveValue(225);
   });
 });
 
