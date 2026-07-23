@@ -66,37 +66,6 @@ export function useRipple() {
   return createRipple;
 }
 
-export function useConfetti() {
-  const celebrate = (count: number = 50) => {
-    const prefersReducedMotion =
-      document.documentElement.classList.contains('reduce-motion') ||
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (prefersReducedMotion) {
-      return;
-    }
-
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-
-    for (let i = 0; i < count; i++) {
-      const confetti = document.createElement('div');
-      confetti.classList.add('confetti');
-      confetti.style.left = `${Math.random() * 100}%`;
-      confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-      confetti.style.animationDelay = `${Math.random() * 0.3}s`;
-      confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
-
-      document.body.appendChild(confetti);
-
-      setTimeout(() => {
-        confetti.remove();
-      }, 4000);
-    }
-  };
-
-  return celebrate;
-}
-
 export function useStaggeredAnimation(itemCount: number, delay: number = 100) {
   const [visibleItems, setVisibleItems] = useState(0);
 

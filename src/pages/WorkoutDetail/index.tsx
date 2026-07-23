@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG } from '../../lib/calculations';
-import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind } from '../../lib/constants';
+import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, WAVE_LABELS, PHASE_LABELS } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
-import { useConfetti } from '../../hooks/useAnimations';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
 import { useWeeklyVariationCredit } from '../../hooks/useWeeklyVariationCredit';
 import WorkoutSuccessModal from '../../components/features/WorkoutSuccessModal';
@@ -70,7 +69,6 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [currentStep, setCurrentStep] = useState<WorkoutStep>('summary');
 
   const [saving, setSaving] = useState(false);
-  const celebrate = useConfetti();
 
   const [mainSets, setMainSets] = useState<SetInput[]>([
     { reps: '', weight: '' },
@@ -92,6 +90,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const dirtyRef = useRef(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [workoutStats, setWorkoutStats] = useState({ estimated1RM: 0, totalTonnage: 0, topReps: 0 });
+  const [completedAccessories, setCompletedAccessories] = useState<{ name: string; setsCompleted: number }[]>([]);
   const savedSessionIdRef = useRef<string | null>(null);
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
   const [substitutionTarget, setSubstitutionTarget] = useState<{ exerciseIndex: number; exerciseName: string } | null>(null);
@@ -642,14 +641,15 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage, topReps: topReps || 0 });
       }
 
-      const accessoryInserts = Object.entries(accessoryData)
-        .filter(([, sets]) => sets.some(set => set.reps || set.weight))
-        .map(([exerciseIndex, sets]) => ({
-          workout_session_id: sessionId,
-          exercise_name: currentExercises[parseInt(exerciseIndex)].name,
-          exercise_order: parseInt(exerciseIndex),
-          sets_data: sets,
-        }));
+      const completedAccessoryEntries = Object.entries(accessoryData)
+        .filter(([, sets]) => sets.some(set => set.reps || set.weight));
+
+      const accessoryInserts = completedAccessoryEntries.map(([exerciseIndex, sets]) => ({
+        workout_session_id: sessionId,
+        exercise_name: currentExercises[parseInt(exerciseIndex)].name,
+        exercise_order: parseInt(exerciseIndex),
+        sets_data: sets,
+      }));
 
       if (accessoryInserts.length > 0) {
         // Delete before insert: idempotent on retry, no-op on first call.
@@ -660,8 +660,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         if (accessoryError) throw accessoryError;
       }
 
+      setCompletedAccessories(completedAccessoryEntries.map(([exerciseIndex, sets]) => ({
+        name: currentExercises[parseInt(exerciseIndex)].name,
+        setsCompleted: sets.filter(set => set.reps || set.weight).length,
+      })));
+
       try { localStorage.removeItem(draftKey); } catch { /* storage unavailable */ }
-      celebrate(40);
       setShowSuccessModal(true);
     } catch {
       setWorkoutSaveError(
@@ -887,8 +891,11 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       {showSuccessModal && (
         <WorkoutSuccessModal
           liftName={liftNames[liftType] ?? liftType}
+          isAccessoryOnly={isUpperDay}
           estimated1RM={workoutStats.estimated1RM}
           totalTonnage={workoutStats.totalTonnage}
+          completedAccessories={completedAccessories}
+          waveLabel={currentBlock ? `${WAVE_LABELS[currentBlock.wave]} — ${PHASE_LABELS[currentBlock.phase]}` : undefined}
           unitPreference={profile?.unit_preference || 'lb'}
           onClose={handleSuccessClose}
           onSetAsMax={!isUpperDay && newTrainingMax != null ? handleSetAsMax : undefined}
