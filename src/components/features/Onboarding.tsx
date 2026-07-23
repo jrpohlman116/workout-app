@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax } from '../../lib/calculations';
+import { calculateOneRepMax, calculateTrainingMax } from '../../lib/calculations';
 import { StickingPoint, WeakPoints } from '../../lib/supabase';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
@@ -148,13 +148,26 @@ export default function Onboarding() {
       const today = new Date().toISOString().split('T')[0];
       const hasAnyWeakPoints = Object.values(weakPoints).some(arr => arr.length > 0);
 
+      // The form asks for a 1-rep max ("Enter Your Starting Maxes... Use the
+      // calculator if you need help estimating your 1RM"), but squat_max/
+      // bench_max/deadlift_max are training maxes (TM = 1RM × 0.9, per
+      // calculateTrainingMax) — the entered value belongs in the
+      // *_tested_max columns, with the TM derived from it, not stored
+      // directly as the TM.
+      const squatMaxNum = parseFloat(squatMax) || 0;
+      const benchMaxNum = parseFloat(benchMax) || 0;
+      const deadliftMaxNum = parseFloat(deadliftMax) || 0;
+
       const updatePayload: Record<string, unknown> = {
         bodyweight: parseFloat(bodyweight) || 0,
         unit_preference: unitPreference,
         gender,
-        squat_max: parseFloat(squatMax) || 0,
-        bench_max: parseFloat(benchMax) || 0,
-        deadlift_max: parseFloat(deadliftMax) || 0,
+        squat_max: calculateTrainingMax(squatMaxNum),
+        bench_max: calculateTrainingMax(benchMaxNum),
+        deadlift_max: calculateTrainingMax(deadliftMaxNum),
+        squat_tested_max: squatMaxNum > 0 ? squatMaxNum : null,
+        bench_tested_max: benchMaxNum > 0 ? benchMaxNum : null,
+        deadlift_tested_max: deadliftMaxNum > 0 ? deadliftMaxNum : null,
         onboarding_completed: true,
         updated_at: new Date().toISOString(),
       };
@@ -177,10 +190,12 @@ export default function Onboarding() {
 
       if (profileError) throw profileError;
 
+      // Logged at the entered 1RM (not the derived TM) — a real lift of 1
+      // rep at that weight is that lift's 1RM by definition.
       const initialMaxes = [
-        { lift_type: 'squat', max: parseFloat(squatMax) || 0 },
-        { lift_type: 'bench', max: parseFloat(benchMax) || 0 },
-        { lift_type: 'deadlift', max: parseFloat(deadliftMax) || 0 },
+        { lift_type: 'squat', max: squatMaxNum },
+        { lift_type: 'bench', max: benchMaxNum },
+        { lift_type: 'deadlift', max: deadliftMaxNum },
       ].filter(lift => lift.max > 0);
 
       if (initialMaxes.length > 0 && profile) {
