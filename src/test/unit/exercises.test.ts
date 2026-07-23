@@ -12,6 +12,7 @@ import {
   selectMixedAccessories,
   resolveDayExercises,
   formatVariationCreditNote,
+  getWeaknessAlignedSubstitutes,
 } from '../../lib/exercises';
 import type { StickingPoint } from '../../lib/supabase';
 import type { Exercise } from '../../lib/types';
@@ -45,6 +46,31 @@ describe('exercise catalog integrity', () => {
     for (const [lift, names] of Object.entries(generalSupportExercises)) {
       for (const name of names) {
         expect(catalogNames.has(name), `generalSupport/${lift}: "${name}" missing from catalog`).toBe(true);
+      }
+    }
+  });
+});
+
+describe('getWeaknessAlignedSubstitutes', () => {
+  it('suggests Board Press substitutes that target the same "in the hole" weak point', () => {
+    const substitutes = getWeaknessAlignedSubstitutes('Board Press');
+    expect(substitutes).toContain('Feet-Up Bench');
+    expect(substitutes).toContain('Pause Bench');
+    expect(substitutes).not.toContain('Board Press');
+  });
+
+  it('returns an empty array for exercises outside the weak-point system', () => {
+    expect(getWeaknessAlignedSubstitutes('Leg Curls')).toEqual([]);
+  });
+
+  it('every returned name resolves to a real catalog entry', () => {
+    for (const [lift, points] of Object.entries(weakPointExercisesMap)) {
+      for (const names of Object.values(points)) {
+        for (const name of names) {
+          for (const substitute of getWeaknessAlignedSubstitutes(name)) {
+            expect(catalogNames.has(substitute), `${lift}: "${substitute}" missing from catalog`).toBe(true);
+          }
+        }
       }
     }
   });

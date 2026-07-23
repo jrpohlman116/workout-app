@@ -222,6 +222,43 @@ export const weakPointExercisesMap: Record<string, Record<StickingPoint, string[
   },
 };
 
+// Reverse index built once at module load: exercise name -> every
+// (liftType, stickingPoint) weak-point bucket it appears in. Powers
+// getWeaknessAlignedSubstitutes below.
+const exerciseToWeakPointBuckets = new Map<string, Array<{ liftType: string; point: StickingPoint }>>();
+for (const [liftType, points] of Object.entries(weakPointExercisesMap)) {
+  for (const point of Object.keys(points) as StickingPoint[]) {
+    for (const name of points[point]) {
+      const buckets = exerciseToWeakPointBuckets.get(name) ?? [];
+      buckets.push({ liftType, point });
+      exerciseToWeakPointBuckets.set(name, buckets);
+    }
+  }
+}
+
+/**
+ * Substitutes derived from the weak-point system rather than muscle group:
+ * every other exercise that targets the same sticking point(s) as this one,
+ * across every lift/day bucket it appears in. This is why Board Press's
+ * substitutes include Feet-Up Bench and Pause Bench — all three are bench
+ * "in the hole" work, which is the reason Board Press was prescribed in the
+ * first place, not just similar-muscle-group presses. An exercise that
+ * isn't part of the weak-point system (general support work like Leg Curls)
+ * returns an empty array — its substitutes come from the `exercise_substitutions`
+ * Supabase table (muscle-group based) or manual search instead.
+ */
+export function getWeaknessAlignedSubstitutes(exerciseName: string): string[] {
+  const buckets = exerciseToWeakPointBuckets.get(exerciseName);
+  if (!buckets) return [];
+  const names = new Set<string>();
+  for (const { liftType, point } of buckets) {
+    for (const name of weakPointExercisesMap[liftType][point]) {
+      if (name !== exerciseName) names.add(name);
+    }
+  }
+  return [...names];
+}
+
 // General-support fill follows the same cross-day principle as baseExercises:
 // squat day fills with posterior-chain (deadlift-supporting) work, deadlift
 // day with quad/core (squat-supporting) work. Lists are ordered — fill takes
