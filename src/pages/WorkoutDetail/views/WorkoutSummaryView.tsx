@@ -200,14 +200,14 @@ export default function WorkoutSummaryView({
                 <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">Easy effort, no grinding</p>
               )}
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-black tabular-nums text-gray-900 dark:text-gray-100 leading-none">
+            <p className="text-right gap-2 flex flex-row items-end">
+              <span className="text-3xl font-black tabular-nums text-gray-900 dark:text-gray-100 leading-none">
                 {mainConfig.weight}
-              </p>
-              <p className="text-xs font-medium text-gray-400 dark:text-gray-400 mt-1">
+              </span>
+              <span className="text-xs font-medium text-gray-400 dark:text-gray-400 mt-1">
                 {unitPreference}{mainConfig.isAmap ? ` × ${mainConfig.reps}+` : ''}
-              </p>
-            </div>
+              </span>
+            </p>
           </div>
           {mainSetsNote && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{mainSetsNote}</p>
