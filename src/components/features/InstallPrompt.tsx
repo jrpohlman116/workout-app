@@ -12,6 +12,7 @@ interface BeforeInstallPromptEvent extends Event {
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -30,16 +31,21 @@ export default function InstallPrompt() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt || installing) return;
 
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    setInstalling(true);
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
 
-    if (outcome === 'accepted') {
-      setShowPrompt(false);
+      if (outcome === 'accepted') {
+        setShowPrompt(false);
+      }
+
+      setDeferredPrompt(null);
+    } finally {
+      setInstalling(false);
     }
-
-    setDeferredPrompt(null);
   };
 
   const handleDismiss = () => {
@@ -64,6 +70,7 @@ export default function InstallPrompt() {
             <div className="flex gap-2">
               <Button
                 size="sm"
+                disabled={installing}
                 onClick={handleInstall}
               >
                 Install
@@ -71,6 +78,7 @@ export default function InstallPrompt() {
               <Button
                 size="sm"
                 variant="ghost"
+                disabled={installing}
                 onClick={handleDismiss}
               >
                 Not now

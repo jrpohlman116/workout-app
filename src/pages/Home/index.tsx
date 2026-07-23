@@ -456,10 +456,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             : "You haven't completed all workouts yet. Are you sure you want to skip ahead?"}
         </p>
         <div className="flex gap-3">
-          <Button variant="secondary" size="md" className="flex-1" onClick={() => setShowSkipWeekModal(false)}>
+          <Button variant="secondary" size="md" className="flex-1" disabled={skipping} onClick={() => setShowSkipWeekModal(false)}>
             Cancel
           </Button>
-          <Button size="md" className="flex-1" onClick={handleSkipWeek}>
+          <Button size="md" className="flex-1" disabled={skipping} onClick={handleSkipWeek}>
             Advance Week
           </Button>
         </div>
