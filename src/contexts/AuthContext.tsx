@@ -65,6 +65,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (event === 'PASSWORD_RECOVERY') {
         setPasswordRecovery(true);
       }
+      if (event === 'SIGNED_OUT') {
+        // Second layer against the service worker ever serving one user's
+        // cached response to the next user on a shared device — the first
+        // layer (excluding cross-origin requests from caching at all) lives
+        // in public/sw.js. Catches every sign-out path, not just the
+        // Security tab's button.
+        navigator.serviceWorker?.getRegistration().then(reg => {
+          reg?.active?.postMessage({ type: 'CLEAR_CACHES' });
+        });
+      }
       (async () => {
         if (session?.user) {
           await fetchProfile(session.user.id);
