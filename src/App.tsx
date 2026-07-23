@@ -8,6 +8,7 @@ const GRID_BG = {
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import AuthForm from './components/features/AuthForm';
+import ResetPasswordForm from './components/features/ResetPasswordForm';
 import Onboarding from './components/features/Onboarding';
 import Navigation from './components/layout/Navigation';
 import SkipLink from './components/accessible/SkipLink';
@@ -20,7 +21,7 @@ import ProfilePage from './pages/Profile';
 import WorkoutDetailPage from './pages/WorkoutDetail';
 
 function AppContent() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, passwordRecovery } = useAuth();
   const [currentPage, setCurrentPage] = useState('home');
   const [selectedLift, setSelectedLift] = useState<string | null>(null);
 
@@ -120,6 +121,13 @@ function AppContent() {
         </div>
       </div>
     );
+  }
+
+  // Checked before the normal !user gate — a recovery link establishes a
+  // real session, so `user` is already truthy at this point, but the user
+  // still needs to set a new password before doing anything else.
+  if (passwordRecovery) {
+    return <ResetPasswordForm />;
   }
 
   if (!user) {

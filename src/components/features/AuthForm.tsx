@@ -9,20 +9,32 @@ const GRID_BG = {
   backgroundSize: '32px 32px',
 };
 
+type Mode = 'login' | 'signup' | 'forgot';
+
 export default function AuthForm() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+
+  const isLogin = mode === 'login';
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setError('');
+    setConfirmPassword('');
+    setResetSent(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!isLogin && password !== confirmPassword) {
+    if (mode === 'signup' && password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
@@ -30,7 +42,13 @@ export default function AuthForm() {
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (mode === 'forgot') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+        setResetSent(true);
+      } else if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
@@ -78,101 +96,177 @@ export default function AuthForm() {
           </p>
         </div>
 
-        <div className="flex border-b border-white/20 mb-8 gap-8">
-          <button type="button" onClick={() => { setIsLogin(true); setConfirmPassword(''); setError(''); }} className={tabClass(isLogin)}>
-            Log in
-          </button>
-          <button type="button" onClick={() => { setIsLogin(false); setError(''); }} className={tabClass(!isLogin)}>
-            Sign up
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-xs tracking-wide text-white/70 mb-2">
-              Email
-            </label>
-            <Input
-              variant="onDark"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs tracking-wide text-white/70 mb-2">
-              Password
-            </label>
-            {!isLogin && (
-              <p className="text-xs text-white/60 mb-2">Minimum 6 characters</p>
-            )}
-            <div className="relative">
-              <Input
-                variant="onDark"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="pr-12"
-                placeholder="••••••••"
-              />
+        {mode === 'forgot' ? (
+          resetSent ? (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-2">Check your email</h2>
+                <p className="text-sm text-white/60">
+                  If an account exists for <span className="text-white/90">{email}</span>, we've sent a link to reset your password.
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => switchMode('login')}
+                className="text-sm font-semibold text-white/70 hover:text-white transition-colors"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                &larr; Back to log in
               </button>
             </div>
-          </div>
-
-          {!isLogin && (
-            <div>
-              <label className="block text-xs tracking-wide text-white/70 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-2">Reset your password</h2>
+                <p className="text-sm text-white/60 mb-6">
+                  Enter your email and we'll send you a link to set a new password.
+                </p>
+                <label className="block text-xs tracking-wide text-white/70 mb-2">
+                  Email
+                </label>
                 <Input
                   variant="onDark"
-                  type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="pr-12"
-                  placeholder="••••••••"
+                  placeholder="you@example.com"
                 />
+              </div>
+
+              {error && (
+                <div className="border border-red-400/30 bg-red-900/20 text-red-300 px-4 py-3 rounded-xl text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="pt-2 space-y-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-white text-blue-700 py-4 rounded-xl font-bold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Sending...' : 'Send reset link'}
+                </button>
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  onClick={() => switchMode('login')}
+                  className="w-full text-sm font-semibold text-white/70 hover:text-white transition-colors py-2"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  Back to log in
                 </button>
               </div>
+            </form>
+          )
+        ) : (
+          <>
+            <div className="flex border-b border-white/20 mb-8 gap-8">
+              <button type="button" onClick={() => switchMode('login')} className={tabClass(isLogin)}>
+                Log in
+              </button>
+              <button type="button" onClick={() => switchMode('signup')} className={tabClass(!isLogin)}>
+                Sign up
+              </button>
             </div>
-          )}
 
-          {error && (
-            <div className="border border-red-400/30 bg-red-900/20 text-red-300 px-4 py-3 rounded-xl text-sm">
-              {error}
-            </div>
-          )}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-xs tracking-wide text-white/70 mb-2">
+                  Email
+                </label>
+                <Input
+                  variant="onDark"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@example.com"
+                />
+              </div>
 
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-white text-blue-700 py-4 rounded-xl font-bold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading
-                ? isLogin ? 'Signing in...' : 'Creating account...'
-                : isLogin ? 'Log in' : 'Sign up'}
-            </button>
-          </div>
-        </form>
+              <div>
+                <div className="flex items-baseline justify-between mb-2">
+                  <label className="block text-xs tracking-wide text-white/70">
+                    Password
+                  </label>
+                  {isLogin && (
+                    <button
+                      type="button"
+                      onClick={() => switchMode('forgot')}
+                      className="text-xs text-white/50 hover:text-white/80 transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                {!isLogin && (
+                  <p className="text-xs text-white/60 mb-2">Minimum 6 characters</p>
+                )}
+                <div className="relative">
+                  <Input
+                    variant="onDark"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="pr-12"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {!isLogin && (
+                <div>
+                  <label className="block text-xs tracking-wide text-white/70 mb-2">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <Input
+                      variant="onDark"
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="pr-12"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="border border-red-400/30 bg-red-900/20 text-red-300 px-4 py-3 rounded-xl text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-white text-blue-700 py-4 rounded-xl font-bold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading
+                    ? isLogin ? 'Signing in...' : 'Creating account...'
+                    : isLogin ? 'Log in' : 'Sign up'}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );
