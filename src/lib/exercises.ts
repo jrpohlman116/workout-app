@@ -147,10 +147,25 @@ export const additionalExercises = [
 // natural %TM basis and isn't included. These are starting-point estimates,
 // not prescriptions; a lifter should still adjust based on how the pause/
 // range-of-motion/leverage change actually feels.
+//
+// Recalibrated 2026-07-23 against real %1RM relationships between each
+// variation and the competition lift (see vault: Program Logic —
+// Accessories, "%TM recalibration" section, for sources and the full
+// derivation). The one pattern worth internalizing: partial-range-of-motion
+// work (board press, rack pulls, lockout bench) is BIASED HEAVIER than the
+// full lift, not lighter — shorter ROM means more weight, so several of
+// these now sit above 100% of TM. Values are flat across every wave on
+// purpose — accessory work progresses linearly across weeks rather than
+// undulating with the main lift's wave, per standard programming practice.
+// Pin Pulls and Partial Deadlifts are deliberately NOT recalibrated: the
+// correct number depends heavily on pin/rack height, which the weak-point
+// map currently collapses into one name per lift for two different heights
+// (mid_range vs lockout) — fixing this needs height-specific exercise
+// variants, not just a new number.
 export const ACCESSORY_PCT_OF_TM: Record<string, { baseLift: 'squat' | 'bench' | 'deadlift'; pct: number }> = {
-  'Box Squats': { baseLift: 'squat', pct: 0.70 },
-  'Pause Squats': { baseLift: 'squat', pct: 0.75 },
-  'Front Squats': { baseLift: 'squat', pct: 0.65 },
+  'Box Squats': { baseLift: 'squat', pct: 0.84 },
+  'Pause Squats': { baseLift: 'squat', pct: 0.80 },
+  'Front Squats': { baseLift: 'squat', pct: 0.72 },
   'Anderson Squats': { baseLift: 'squat', pct: 0.65 },
   'Safety Bar Box Squats': { baseLift: 'squat', pct: 0.70 },
   'Tempo Squats': { baseLift: 'squat', pct: 0.60 },
@@ -160,19 +175,19 @@ export const ACCESSORY_PCT_OF_TM: Record<string, { baseLift: 'squat' | 'bench' |
   'High Bar Squats': { baseLift: 'squat', pct: 0.80 },
   'Spoto Press': { baseLift: 'bench', pct: 0.70 },
   'Pin Press': { baseLift: 'bench', pct: 0.70 },
-  'Board Press': { baseLift: 'bench', pct: 0.85 },
+  'Board Press': { baseLift: 'bench', pct: 1.05 },
   'Pause Bench': { baseLift: 'bench', pct: 0.80 },
-  'Close-Grip Bench': { baseLift: 'bench', pct: 0.80 },
+  'Close-Grip Bench': { baseLift: 'bench', pct: 0.72 },
   'Incline Bench': { baseLift: 'bench', pct: 0.70 },
-  'Floor Press': { baseLift: 'bench', pct: 0.75 },
-  'Lockout Bench': { baseLift: 'bench', pct: 0.90 },
+  'Floor Press': { baseLift: 'bench', pct: 0.85 },
+  'Lockout Bench': { baseLift: 'bench', pct: 1.10 },
   'JM Press': { baseLift: 'bench', pct: 0.55 },
-  'Rack Pulls': { baseLift: 'deadlift', pct: 0.90 },
+  'Rack Pulls': { baseLift: 'deadlift', pct: 1.06 },
   'Pin Pulls': { baseLift: 'deadlift', pct: 0.85 },
   'Partial Deadlifts': { baseLift: 'deadlift', pct: 0.90 },
   'Deficit Deadlift': { baseLift: 'deadlift', pct: 0.75 },
   'Tempo Deadlifts': { baseLift: 'deadlift', pct: 0.65 },
-  'Paused Deadlifts': { baseLift: 'deadlift', pct: 0.70 },
+  'Paused Deadlifts': { baseLift: 'deadlift', pct: 0.80 },
 };
 
 // Barbell variations that intentionally have no ACCESSORY_PCT_OF_TM weight
