@@ -122,6 +122,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const {
     exercises: templateExercises,
+    loading: templateLoading,
     saving: templateSaving,
     error: templateError,
     saveTemplate,
@@ -319,6 +320,20 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   };
 
   if (!profile) return null;
+
+  // Wait for the tailored accessory list (saved template or weak-point
+  // selection) before painting anything exercise-dependent — otherwise the
+  // page briefly shows the untailored defaults and swaps them a beat later.
+  if (templateLoading) {
+    return (
+      <div className="min-h-screen bg-blue-700 dark:bg-blue-900 flex items-center justify-center" role="status" aria-live="polite">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" aria-hidden="true"></div>
+          <p className="text-white/60">Loading your plan...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentBlock) {
     return (
