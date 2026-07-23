@@ -492,6 +492,24 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setMainSets(prev => prev.map((set, i) => (i === index ? { reps, weight } : set)));
   };
 
+  // Add-only: going beyond the prescribed volume is always allowed; removing
+  // a prescribed set isn't offered (skip it via the check chip instead). New
+  // set takes the most recent set's weight (the prescribed working weight on
+  // a standard day; the current down-set weight on a peaking day) with empty
+  // reps — the user fills those in via the same focused-logging modal as
+  // every other set. Purely additive on the already-settled mainSets array,
+  // so it has no interaction with weekly-volume redistribution, which only
+  // runs once at initial prescription time.
+  const addMainSet = () => {
+    if (mainSets.length >= 10) return;
+    dirtyRef.current = true;
+    setMainSets(prev => {
+      if (prev.length >= 10) return prev;
+      const lastWeight = prev[prev.length - 1]?.weight || (mainConfig?.weight != null ? String(mainConfig.weight) : '');
+      return [...prev, { reps: '', weight: lastWeight }];
+    });
+  };
+
   const handleWorkingWeightAdjust = (weight: number) => {
     dirtyRef.current = true;
     // In peaking weeks with down sets, only the top single takes the warm-up
@@ -803,6 +821,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             availablePlates={availablePlates}
             onUpdateSet={updateMainSet}
             onUpdateSetValues={updateMainSetValues}
+            onAddSet={addMainSet}
             onRpeChange={setRpe}
             onWorkingWeightAdjust={handleWorkingWeightAdjust}
             onNext={handleNext}

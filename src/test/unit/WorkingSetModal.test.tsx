@@ -92,6 +92,28 @@ describe('MainLiftView focused set rows', () => {
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
   });
 
+  it('hides the Add Set affordance when onAddSet is not provided', () => {
+    render(<MainLiftView {...baseProps} />);
+    expect(screen.queryByRole('button', { name: /add set|add another set/i })).not.toBeInTheDocument();
+  });
+
+  it('shows Add Set when onAddSet is provided and calls it on tap', async () => {
+    const user = userEvent.setup();
+    const onAddSet = vi.fn();
+    render(<MainLiftView {...baseProps} onAddSet={onAddSet} />);
+
+    const addButton = screen.getByRole('button', { name: /add another set \(2 of 10 sets used\)/i });
+    await user.click(addButton);
+    expect(onAddSet).toHaveBeenCalledOnce();
+  });
+
+  it('swaps to a "Max 10 sets" message instead of the button once at the cap', () => {
+    const tenSets = Array.from({ length: 10 }, () => ({ reps: '10', weight: '180' }));
+    render(<MainLiftView {...baseProps} mainSets={tenSets} setChecks={new Array(10).fill(false)} onAddSet={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /add another set/i })).not.toBeInTheDocument();
+    expect(screen.getByText('Max 10 sets')).toBeInTheDocument();
+  });
+
   it('logging a set commits values atomically and checks it off', async () => {
     const user = userEvent.setup();
     render(<MainLiftView {...baseProps} />);

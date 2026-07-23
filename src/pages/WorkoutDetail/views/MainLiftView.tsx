@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Play } from 'lucide-react';
+import { Check, Play, Plus } from 'lucide-react';
 import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets, getRoundingIncrement } from '../../../lib/calculations';
 import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../../lib/constants';
 import { SetInput } from '../../../lib/types';
@@ -30,6 +30,10 @@ interface MainLiftViewProps {
   /** Atomic reps+weight commit from the focused set-logging modal — two
       sequential onUpdateSet calls would clobber each other in one batch. */
   onUpdateSetValues?: (index: number, reps: string, weight: string) => void;
+  /** Appends an extra set beyond the prescribed count — going beyond the
+      plan is always allowed; removing a prescribed set is not (skip it via
+      the check chip instead). Omit to hide the affordance entirely. */
+  onAddSet?: () => void;
   onRpeChange?: (rpe: number | null) => void;
   onWorkingWeightAdjust?: (weight: number) => void;
   onNext: () => void;
@@ -64,6 +68,7 @@ export default function MainLiftView({
   availablePlates,
   onUpdateSet,
   onUpdateSetValues,
+  onAddSet,
   onRpeChange,
   onWorkingWeightAdjust,
   onNext,
@@ -221,6 +226,27 @@ export default function MainLiftView({
             );
           })}
         </div>
+
+        {onAddSet && (
+          mainSets.length < 10 ? (
+            <Button
+              type="button"
+              variant="dashed"
+              size="md"
+              fullWidth
+              icon={<Plus className="w-4 h-4" />}
+              onClick={onAddSet}
+              aria-label={`Add another set (${mainSets.length} of 10 sets used)`}
+              className="mt-4"
+            >
+              Add Set
+            </Button>
+          ) : (
+            <p className="text-xs tracking-wide font-semibold text-gray-400 dark:text-gray-400 text-center mt-4">
+              Max 10 sets
+            </p>
+          )
+        )}
       </Card>
 
       {isRealization && (
