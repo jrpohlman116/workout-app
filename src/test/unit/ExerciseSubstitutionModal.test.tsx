@@ -48,10 +48,46 @@ describe('ExerciseSubstitutionModal', () => {
       />
     );
 
-    await waitFor(() => expect(screen.getByText(/Targets the Same Weak Point/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Recommended Substitutions/)).toBeInTheDocument());
     expect(screen.getByText('Feet-Up Bench')).toBeInTheDocument();
     expect(screen.getByText('Pause Bench')).toBeInTheDocument();
     expect(screen.queryByText('No recommended substitutions available.')).not.toBeInTheDocument();
+  });
+
+  it('merges a weak-point-aligned match that also has a DB row into a single card', async () => {
+    // Board Press's weak-point-aligned matches include Close-Grip Bench —
+    // give it a DB row too and confirm it renders once, with both badges,
+    // under the one "Recommended Substitutions" heading (no duplicate card).
+    forwardRows = [
+      {
+        id: '1',
+        original_exercise: 'Board Press',
+        substitute_exercise: 'Close-Grip Bench',
+        description: 'Partial range bench for triceps',
+        equipment_needed: 'Barbell',
+        difficulty: 'similar',
+        muscle_groups: ['triceps', 'chest'],
+        created_at: '',
+      },
+    ];
+
+    render(
+      <ExerciseSubstitutionModal
+        isOpen={true}
+        onClose={() => {}}
+        currentExercise="Board Press"
+        onSubstitute={() => {}}
+        availableExercises={availableExercises}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('Close-Grip Bench')).toBeInTheDocument());
+    expect(screen.getAllByText('Close-Grip Bench')).toHaveLength(1);
+    expect(screen.queryByText('Targets the Same Weak Point')).not.toBeInTheDocument();
+    const card = screen.getByText('Close-Grip Bench').closest('button');
+    expect(card).not.toBeNull();
+    expect(card!.textContent).toContain('Same weak point');
+    expect(card!.textContent).toContain('Similar');
   });
 
   it('reads DB rows in both directions and inverts difficulty for the reverse side', async () => {

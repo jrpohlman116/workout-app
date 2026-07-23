@@ -147,11 +147,38 @@ export default function ExerciseSubstitutionModal({
     [currentExercise]
   );
 
-  const weaknessAlignedExercises = availableExercises.filter(ex => weaknessAlignedNames.has(ex.name));
-
-  // DB-sourced recommendations already covered by the weak-point section are
-  // dropped from here so nothing is listed twice.
-  const dbOnlySubstitutions = substitutions.filter(s => !weaknessAlignedNames.has(s.substitute_exercise));
+  // Weak-point-aligned and DB-sourced recommendations are two ways of
+  // finding the same thing — a single valid substitute — so they render as
+  // one merged, deduped list rather than two sections. An exercise present
+  // in both keeps its DB details (description/equipment/difficulty) plus
+  // the "Same weak point" badge.
+  interface RecommendedItem {
+    name: string;
+    isWeaknessAligned: boolean;
+    dbData?: ExerciseSubstitution;
+    exercise?: Exercise;
+  }
+  const recommendedItems = useMemo(() => {
+    const byName = new Map<string, RecommendedItem>();
+    for (const exercise of availableExercises) {
+      if (weaknessAlignedNames.has(exercise.name)) {
+        byName.set(exercise.name, { name: exercise.name, isWeaknessAligned: true, exercise });
+      }
+    }
+    for (const sub of substitutions) {
+      const existing = byName.get(sub.substitute_exercise);
+      if (existing) {
+        existing.dbData = sub;
+      } else {
+        byName.set(sub.substitute_exercise, { name: sub.substitute_exercise, isWeaknessAligned: false, dbData: sub });
+      }
+    }
+    return [...byName.values()].sort((a, b) => {
+      const rankA = a.dbData ? DIFFICULTY_RANK[a.dbData.difficulty] : 1;
+      const rankB = b.dbData ? DIFFICULTY_RANK[b.dbData.difficulty] : 1;
+      return rankA !== rankB ? rankA - rankB : a.name.localeCompare(b.name);
+    });
+  }, [availableExercises, weaknessAlignedNames, substitutions]);
 
   const isSearching = searchQuery.trim().length > 0;
 
@@ -280,107 +307,81 @@ export default function ExerciseSubstitutionModal({
               </div>
             )}
           </div>
-        ) : weaknessAlignedExercises.length > 0 || dbOnlySubstitutions.length > 0 ? (
-          <div className="space-y-6">
-            {weaknessAlignedExercises.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                  Targets the Same Weak Point ({weaknessAlignedExercises.length})
-                </h3>
-                <div className="space-y-2 max-h-96 overflow-y-auto" role="list">
-                  {weaknessAlignedExercises.map((exercise) => (
-                    <button
-                      key={exercise.name}
-                      type="button"
-                      onClick={() => handleSelectExercise(exercise.name)}
-                      className={`w-full text-left p-4 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
-                        selectedSubstitution === exercise.name
-                          ? 'border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                      role="listitem"
-                      aria-label={`${exercise.name}, targets the same weak point. ${exercise.sets} sets of ${exercise.reps} reps`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">{exercise.name}</h4>
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20">
-                              Same weak point
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">
-                            {exercise.sets} sets × {exercise.reps} reps
-                            {exercise.isBodyweight && (
-                              <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
-                                Bodyweight
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                        {selectedSubstitution === exercise.name && (
-                          <Check className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
+        ) : recommendedItems.length > 0 ? (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+              Recommended Substitutions ({recommendedItems.length})
+            </h3>
+            <div className="space-y-2 max-h-96 overflow-y-auto" role="list">
+              {recommendedItems.map((item) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  onClick={() => handleSelectExercise(item.name)}
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
+                    selectedSubstitution === item.name
+                      ? 'border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                  role="listitem"
+                  aria-label={
+                    item.dbData
+                      ? `${item.name}, ${getDifficultyLabel(item.dbData.difficulty)} difficulty${item.isWeaknessAligned ? ', targets the same weak point' : ''}. ${item.dbData.description}`
+                      : `${item.name}, targets the same weak point. ${item.exercise?.sets} sets of ${item.exercise?.reps} reps`
+                  }
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100">{item.name}</h4>
+                        {item.dbData && (
+                          <span
+                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${getDifficultyColor(
+                              item.dbData.difficulty
+                            )}`}
+                          >
+                            {getDifficultyLabel(item.dbData.difficulty)}
+                          </span>
+                        )}
+                        {item.isWeaknessAligned && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20">
+                            Same weak point
+                          </span>
                         )}
                       </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {dbOnlySubstitutions.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                  Recommended Substitutions ({dbOnlySubstitutions.length})
-                </h3>
-                <div className="space-y-2 max-h-96 overflow-y-auto" role="list">
-                  {dbOnlySubstitutions.map((sub) => (
-                    <button
-                      key={sub.id}
-                      type="button"
-                      onClick={() => handleSelectExercise(sub.substitute_exercise)}
-                      className={`w-full text-left p-4 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
-                        selectedSubstitution === sub.substitute_exercise
-                          ? 'border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                      role="listitem"
-                      aria-label={`${sub.substitute_exercise}, ${getDifficultyLabel(sub.difficulty)} difficulty. ${sub.description}`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">{sub.substitute_exercise}</h4>
-                            <span
-                              className={`text-xs font-medium px-2 py-0.5 rounded-full ${getDifficultyColor(
-                                sub.difficulty
-                              )}`}
-                            >
-                              {getDifficultyLabel(sub.difficulty)}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{sub.description}</p>
+                      {item.dbData ? (
+                        <>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{item.dbData.description}</p>
                           <div className="flex flex-wrap gap-2 text-xs">
                             <span className="text-gray-500 dark:text-gray-400">
-                              <span className="font-medium">Equipment:</span> {sub.equipment_needed}
+                              <span className="font-medium">Equipment:</span> {item.dbData.equipment_needed}
                             </span>
-                            {sub.muscle_groups.length > 0 && (
+                            {item.dbData.muscle_groups.length > 0 && (
                               <span className="text-gray-500 dark:text-gray-400">
                                 <span className="font-medium">Targets:</span>{' '}
-                                {sub.muscle_groups.join(', ')}
+                                {item.dbData.muscle_groups.join(', ')}
                               </span>
                             )}
                           </div>
-                        </div>
-                        {selectedSubstitution === sub.substitute_exercise && (
-                          <Check className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          {item.exercise?.sets} sets × {item.exercise?.reps} reps
+                          {item.exercise?.isBodyweight && (
+                            <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
+                              Bodyweight
+                            </span>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                    {selectedSubstitution === item.name && (
+                      <Check className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="py-12 text-center">
