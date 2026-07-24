@@ -108,7 +108,7 @@ export default function WorkoutSuccessModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-4 top-4 z-10 rounded-lg p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-500 dark:hover:text-gray-300"
+            className="absolute right-4 top-4 z-10 rounded-lg p-3 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-500 dark:hover:text-gray-300"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
