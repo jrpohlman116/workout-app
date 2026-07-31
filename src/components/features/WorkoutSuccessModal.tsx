@@ -9,6 +9,7 @@ import { buildShareImageBlob } from '../../lib/shareImage';
 interface CompletedAccessory {
   name: string;
   setsCompleted: number;
+  reps: string;
 }
 
 interface WorkoutSuccessModalProps {
@@ -61,7 +62,7 @@ export default function WorkoutSuccessModal({
         heroValue,
         unit: unitPreference,
         tonnage: Math.round(totalTonnage),
-        accessoryCount: completedAccessories.length,
+        accessories: completedAccessories,
       });
       if (!blob) throw new Error('Image generation unavailable');
 
@@ -166,6 +167,7 @@ export default function WorkoutSuccessModal({
                       <span>{accessory.name}</span>
                       <span className="text-gray-400 dark:text-gray-500">
                         {accessory.setsCompleted} {accessory.setsCompleted === 1 ? 'set' : 'sets'}
+                        {accessory.reps && ` × ${accessory.reps} reps`}
                       </span>
                     </li>
                   ))}

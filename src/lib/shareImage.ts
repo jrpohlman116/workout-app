@@ -2,6 +2,12 @@
 // API. No image library dependency — the layout is simple enough to draw
 // directly, and this only ever runs on share/download, not on page load.
 
+export interface ShareImageAccessory {
+  name: string;
+  setsCompleted: number;
+  reps: string;
+}
+
 export interface ShareImageParams {
   liftName: string;
   waveLabel?: string;
@@ -9,7 +15,7 @@ export interface ShareImageParams {
   heroValue: number;
   unit: string;
   tonnage: number;
-  accessoryCount: number;
+  accessories: ShareImageAccessory[];
 }
 
 const WIDTH = 1080;
@@ -27,7 +33,7 @@ function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
 }
 
 export function drawShareImage(ctx: CanvasRenderingContext2D, params: ShareImageParams) {
-  const { liftName, waveLabel, heroLabel, heroValue, unit, tonnage, accessoryCount } = params;
+  const { liftName, waveLabel, heroLabel, heroValue, unit, tonnage, accessories } = params;
   const margin = 80;
 
   // Page surface
@@ -73,12 +79,34 @@ export function drawShareImage(ctx: CanvasRenderingContext2D, params: ShareImage
   ctx.font = `500 32px ${FONT}`;
   ctx.fillText(`${tonnage.toLocaleString()} ${unit} tonnage`, margin + 48, blockY + blockH - 56);
 
-  // Accessories footer line
-  if (accessoryCount > 0) {
-    ctx.fillStyle = '#4b5563';
-    ctx.font = `500 32px ${FONT}`;
-    const word = accessoryCount === 1 ? 'accessory exercise' : 'accessory exercises';
-    ctx.fillText(`+ ${accessoryCount} ${word} completed`, margin, blockY + blockH + 70);
+  // Accessories footer list — name plus sets/reps actually completed, capped
+  // to what fits above the wordmark footer with a "+N more" overflow line.
+  if (accessories.length > 0) {
+    const listTop = blockY + blockH + 60;
+    const maxBottom = HEIGHT - 130;
+    const lineHeight = 44;
+    const maxLines = Math.max(1, Math.floor((maxBottom - listTop) / lineHeight));
+    const shown = accessories.slice(0, maxLines - (accessories.length > maxLines ? 1 : 0));
+
+    ctx.fillStyle = '#6b7280';
+    ctx.font = `600 26px ${FONT}`;
+    ctx.fillText('ACCESSORIES', margin, listTop);
+
+    ctx.font = `500 30px ${FONT}`;
+    shown.forEach((accessory, i) => {
+      const y = listTop + 44 + i * lineHeight;
+      ctx.fillStyle = '#374151';
+      ctx.fillText(accessory.name, margin, y);
+      ctx.fillStyle = '#9ca3af';
+      const detail = `${accessory.setsCompleted}${accessory.setsCompleted === 1 ? ' set' : ' sets'}${accessory.reps ? ` × ${accessory.reps} reps` : ''}`;
+      const detailWidth = ctx.measureText(detail).width;
+      ctx.fillText(detail, WIDTH - margin - detailWidth, y);
+    });
+
+    if (accessories.length > shown.length) {
+      ctx.fillStyle = '#9ca3af';
+      ctx.fillText(`+ ${accessories.length - shown.length} more`, margin, listTop + 44 + shown.length * lineHeight);
+    }
   }
 
   ctx.fillStyle = '#9ca3af';

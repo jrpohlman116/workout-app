@@ -88,18 +88,24 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   // Autosave only after the user actually does something — otherwise the
   // initial prefill would clobber a restorable draft on mount.
   const dirtyRef = useRef(false);
+  const draftRef = useRef({ mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides: {} as Record<number, string> });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [workoutStats, setWorkoutStats] = useState({ estimated1RM: 0, totalTonnage: 0, topReps: 0 });
-  const [completedAccessories, setCompletedAccessories] = useState<{ name: string; setsCompleted: number }[]>([]);
+  const [completedAccessories, setCompletedAccessories] = useState<{ name: string; setsCompleted: number; reps: string }[]>([]);
   const savedSessionIdRef = useRef<string | null>(null);
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
   const [substitutionTarget, setSubstitutionTarget] = useState<{ exerciseIndex: number; exerciseName: string } | null>(null);
+  // Session-only substitutions made via the in-workout "Sub" button — layered
+  // on top of the saved template rather than written into it, since that's a
+  // separate, deliberate "Edit Exercises" flow (saveTemplate).
+  const [exerciseOverrides, setExerciseOverrides] = useState<Record<number, string>>({});
   const [workoutSaveError, setWorkoutSaveError] = useState<string | null>(null);
   const [draftOffer, setDraftOffer] = useState<{
     mainSets: SetInput[];
     accessoryData: { [key: number]: SetInput[] };
     setChecks?: SetChecks;
     badDayDrop?: number;
+    exerciseOverrides?: Record<number, string>;
     savedAt: string;
   } | null>(null);
 
@@ -134,12 +140,33 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     userWeakPoints
   );
 
+  const allAvailableExercises = useMemo(() => [
+    ...baseExercises.squat,
+    ...baseExercises.bench,
+    ...baseExercises.deadlift,
+    ...baseExercises.upper,
+    ...additionalExercises,
+  ].filter((ex, index, self) => index === self.findIndex(e => e.name === ex.name)), []);
+
   // Phase-adjusted view of the template: identity comes from the saved
   // template, set counts and peaking filters from the phase plan. Render-time
-  // only — the raw template is what Edit mode sees and saves.
-  const { exercises: currentExercises, note: phaseNote } = useMemo(
-    () => applyPhaseToAccessories(templateExercises, currentBlock?.phase, liftType),
-    [templateExercises, currentBlock?.phase, liftType]
+  // only — the raw template is what Edit mode sees and saves. Session-only
+  // "Sub" substitutions (exerciseOverrides) are layered on last, swapping in
+  // the replacement's own prescribed sets/reps.
+  const { exercises: currentExercises, note: phaseNote } = useMemo(() => {
+    const phased = applyPhaseToAccessories(templateExercises, currentBlock?.phase, liftType);
+    if (Object.keys(exerciseOverrides).length === 0) return phased;
+    return {
+      ...phased,
+      exercises: phased.exercises.map((exercise, index) => {
+        const overrideName = exerciseOverrides[index];
+        if (!overrideName) return exercise;
+        const replacement = allAvailableExercises.find(ex => ex.name === overrideName);
+        return replacement ? { ...replacement } : { ...exercise, name: overrideName };
+      }),
+    };
+  },
+    [templateExercises, currentBlock?.phase, liftType, exerciseOverrides, allAvailableExercises]
   );
 
   // Weekly-volume redistribution: barbell variations of THIS lift planned
@@ -193,12 +220,27 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     if (!loading && Object.keys(lastAccessoryData).length > 0 && profile) {
       const initialAccessoryData: { [key: number]: SetInput[] } = {};
       currentExercises.forEach((exercise, index) => {
+        // Variations with a %TM prescription (ACCESSORY_PCT_OF_TM) get a
+        // suggested-weight placeholder instead — autofilling from history
+        // would both contradict the prescription and hide that placeholder.
+        if (ACCESSORY_PCT_OF_TM[exercise.name]) return;
         const lastData = lastAccessoryData[exercise.name];
         if (lastData && lastData.length > 0) {
-          initialAccessoryData[index] = lastData.map(set => ({
+          const mapped = lastData.map(set => ({
             reps: set.reps || '',
             weight: set.weight || '',
           }));
+          // History can have more or fewer rows than currently prescribed
+          // (template changed, sets added/removed that session). Reconcile
+          // to exercise.sets so the input rows match the "N sets of X-Y"
+          // label — dropping extras from the front, padding shortfalls at
+          // the end.
+          const target = exercise.sets;
+          initialAccessoryData[index] = mapped.length > target
+            ? mapped.slice(mapped.length - target)
+            : mapped.length < target
+              ? [...mapped, ...Array.from({ length: target - mapped.length }, () => ({ reps: '', weight: '' }))]
+              : mapped;
         }
       });
       if (Object.keys(initialAccessoryData).length > 0) {
@@ -231,7 +273,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         localStorage.removeItem(key);
         return;
       }
-      setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, setChecks: parsed.setChecks, badDayDrop: parsed.badDayDrop, savedAt: parsed.savedAt });
+      setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, setChecks: parsed.setChecks, badDayDrop: parsed.badDayDrop, exerciseOverrides: parsed.exerciseOverrides, savedAt: parsed.savedAt });
     } catch {
       try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
     }
@@ -240,20 +282,43 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   // Continuous draft autosave (debounced): inputs and check-offs survive an
   // accidental refresh or navigation. Only runs after first user interaction
   // (dirtyRef) and is cleared on successful workout save.
+  draftRef.current = { mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides };
+
+  const flushDraft = () => {
+    if (!user || !profile || !dirtyRef.current) return;
+    try {
+      localStorage.setItem(`jt_draft_${user.id}_${liftType}`, JSON.stringify({
+        liftType, ...draftRef.current,
+        cycle: profile.current_cycle,
+        week: profile.current_week,
+        savedAt: new Date().toISOString(),
+      }));
+    } catch { /* storage unavailable */ }
+  };
+
+  // Phones can freeze or kill a backgrounded tab's JS well before a 400ms
+  // debounce fires — e.g. locking the screen right after checking off a
+  // warm-up set — silently dropping whatever hadn't been written yet. Flush
+  // synchronously the moment the page is hidden as a safety net.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushDraft();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', flushDraft);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', flushDraft);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, profile, liftType]);
+
   useEffect(() => {
     if (!user || !profile || !dirtyRef.current) return;
-    const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(`jt_draft_${user.id}_${liftType}`, JSON.stringify({
-          liftType, mainSets, accessoryData, setChecks, badDayDrop,
-          cycle: profile.current_cycle,
-          week: profile.current_week,
-          savedAt: new Date().toISOString(),
-        }));
-      } catch { /* storage unavailable */ }
-    }, 400);
+    const timer = setTimeout(flushDraft, 400);
     return () => clearTimeout(timer);
-  }, [mainSets, accessoryData, setChecks, badDayDrop, user, profile, liftType]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, user, profile, liftType]);
 
   // Checking a set off (not un-checking) starts the rest countdown for
   // that set type. Restarting on every check keeps the newest rest active.
@@ -307,6 +372,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setAccessoryData(draftOffer.accessoryData);
     setSetChecks(draftOffer.setChecks ?? EMPTY_CHECKS);
     setBadDayDrop(draftOffer.badDayDrop ?? 0);
+    setExerciseOverrides(draftOffer.exerciseOverrides ?? {});
     dirtyRef.current = true;
     try { localStorage.removeItem(`jt_draft_${user.id}_${liftType}`); } catch { /* storage unavailable */ }
     setDraftOffer(null);
@@ -668,10 +734,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         if (accessoryError) throw accessoryError;
       }
 
-      setCompletedAccessories(completedAccessoryEntries.map(([exerciseIndex, sets]) => ({
-        name: currentExercises[parseInt(exerciseIndex)].name,
-        setsCompleted: sets.filter(set => set.reps || set.weight).length,
-      })));
+      setCompletedAccessories(completedAccessoryEntries.map(([exerciseIndex, sets]) => {
+        const completedSets = sets.filter(set => set.reps || set.weight);
+        return {
+          name: currentExercises[parseInt(exerciseIndex)].name,
+          setsCompleted: completedSets.length,
+          reps: completedSets.find(set => set.reps)?.reps ?? '',
+        };
+      }));
 
       try { localStorage.removeItem(draftKey); } catch { /* storage unavailable */ }
       setShowSuccessModal(true);
@@ -715,13 +785,25 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setShowSubstitutionModal(true);
   };
 
-  const allAvailableExercises = [
-    ...baseExercises.squat,
-    ...baseExercises.bench,
-    ...baseExercises.deadlift,
-    ...baseExercises.upper,
-    ...additionalExercises,
-  ].filter((ex, index, self) => index === self.findIndex(e => e.name === ex.name));
+  // The replacement has its own prescribed sets/reps, and any weight/reps
+  // already typed or checked off belong to the exercise being replaced — so
+  // both get cleared rather than carried over onto the new exercise.
+  const handleConfirmSubstitution = (newExerciseName: string) => {
+    if (!substitutionTarget) return;
+    const { exerciseIndex } = substitutionTarget;
+    dirtyRef.current = true;
+    setExerciseOverrides(prev => ({ ...prev, [exerciseIndex]: newExerciseName }));
+    setAccessoryData(prev => {
+      const next = { ...prev };
+      delete next[exerciseIndex];
+      return next;
+    });
+    setSetChecks(prev => {
+      const accessories = { ...prev.accessories };
+      delete accessories[exerciseIndex];
+      return { ...prev, accessories };
+    });
+  };
 
   const headerProps = {
     liftName: liftNames[liftType] ?? liftType,
@@ -915,7 +997,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           isOpen={showSubstitutionModal}
           onClose={() => setShowSubstitutionModal(false)}
           currentExercise={substitutionTarget.exerciseName}
-          onSubstitute={() => console.log('Substitution handled in template system')}
+          onSubstitute={handleConfirmSubstitution}
           availableExercises={allAvailableExercises}
         />
       )}
