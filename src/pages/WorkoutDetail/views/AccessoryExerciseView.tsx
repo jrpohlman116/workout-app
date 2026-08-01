@@ -130,7 +130,7 @@ export default function AccessoryExerciseView({
                     value={set.reps}
                     onChange={(e) => onUpdateSet(index, 'reps', e.target.value)}
                     placeholder={exercise.reps}
-                    className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+                    className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-400 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
                     aria-label={`Set ${setNumber}: Reps`}
                     min="0"
                   />
@@ -142,7 +142,7 @@ export default function AccessoryExerciseView({
                       value={set.reps}
                       onChange={(e) => onUpdateSet(index, 'reps', e.target.value)}
                       placeholder={exercise.reps}
-                      className="px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+                      className="px-4 py-3 border border-gray-200 dark:border-gray-400 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
                       aria-label={`Set ${setNumber}: Reps`}
                       min="0"
                     />
@@ -153,7 +153,7 @@ export default function AccessoryExerciseView({
                       value={set.weight}
                       onChange={(e) => onUpdateSet(index, 'weight', e.target.value)}
                       placeholder={suggestedWeight ? `${suggestedWeight.low}-${suggestedWeight.high}` : '0'}
-                      className="px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
+                      className="px-4 py-3 border border-gray-200 dark:border-gray-400 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
                       aria-label={`Set ${setNumber}: Weight in ${unitPreference}`}
                       min="0"
                     />

@@ -98,8 +98,8 @@ export default function AccessibleChartTable({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-      <div className="px-6 py-4 bg-white dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <div className="px-6 py-4 bg-white dark:bg-gray-700 border-b border-gray-200 dark:border-gray-400">
+        <h2 className="text-h4 text-gray-900 dark:text-gray-100">
           Progress Data Table
         </h2>
       </div>

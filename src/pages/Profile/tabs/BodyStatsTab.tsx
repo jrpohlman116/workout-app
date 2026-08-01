@@ -57,7 +57,7 @@ export default function BodyStatsTab() {
 
   return (
     <Card className="p-6 animate-enter">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Body Stats</h2>
+      <h2 className="text-h4 text-gray-900 dark:text-gray-100 mb-4">Body Stats</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex gap-3 items-end">
           <Input

@@ -242,7 +242,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               </IconButton>
             </div>
             <div className="mb-2 flex flex-wrap items-baseline">
-              <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
+              <span className="text-display-lg tabular-nums leading-none text-gray-900 dark:text-gray-100">
                 {displayWave}
               </span>
               <span className="text-sm font-semibold text-gray-400 dark:text-gray-400 ml-1">rep</span>
@@ -264,7 +264,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">Days Out</p>
                 </div>
                 <div className="mb-2 flex flex-wrap items-baseline">
-                  <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
+                  <span className="text-display-lg tabular-nums leading-none text-gray-900 dark:text-gray-100">
                     {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))}
                   </span>
                   <span className="text-xl font-semibold text-gray-400 dark:text-gray-400 ml-0.5">d</span>
@@ -277,7 +277,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               <>
                 <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-3">Week</p>
                 <div className="mb-2 flex flex-wrap items-baseline">
-                  <span className="text-4xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-100">
+                  <span className="text-display-lg tabular-nums leading-none text-gray-900 dark:text-gray-100">
                     {currentBlock ? currentBlock.weekIndex + 1 : profile.current_week}
                   </span>
                   <span className="text-sm font-semibold text-gray-400 dark:text-gray-400 ml-1">of 4</span>
@@ -337,7 +337,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Workouts</h2>
+            <h2 className="text-h3 text-gray-900 dark:text-gray-100">Workouts</h2>
             {isViewing && (
               <span className="text-xs font-semibold text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full">
                 Preview

@@ -91,7 +91,7 @@ export default function SecurityTab() {
   return (
     <div className="space-y-4 animate-enter">
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Appearance</h2>
+        <h2 className="text-h4 text-gray-900 dark:text-gray-100 mb-4">Appearance</h2>
         <Button
           type="button"
           variant="secondary"
@@ -120,7 +120,7 @@ export default function SecurityTab() {
       />
 
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Change Password</h2>
+        <h2 className="text-h4 text-gray-900 dark:text-gray-100 mb-4">Change Password</h2>
         <form onSubmit={handleChangePassword} className="space-y-4">
           {([
             ['Password', password, setPassword, showPassword, setShowPassword],

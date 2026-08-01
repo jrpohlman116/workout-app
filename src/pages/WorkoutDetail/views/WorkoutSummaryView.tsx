@@ -227,7 +227,7 @@ export default function WorkoutSummaryView({
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Accessory Exercises</h2>
+          <h2 className="text-h3 text-gray-900 dark:text-gray-100">Accessory Exercises</h2>
           {canEdit && !isEditMode && (
             <Button
               type="button"
@@ -281,7 +281,7 @@ export default function WorkoutSummaryView({
               </Button>
             )}
 
-            <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-400">
               <Button
                 type="button"
                 variant="ghost"

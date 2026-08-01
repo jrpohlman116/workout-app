@@ -360,7 +360,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           <div className="max-w-md mx-auto px-4 pt-8 pb-6">
             <Button variant="ghost" size="sm" onClick={onBack} className="mb-4">← Back</Button>
             <SectionLabel tone="page" className="mb-1">Meet Week</SectionLabel>
-            <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100">{liftNames[liftType] ?? liftType}</h1>
+            <h1 className="text-h1 text-gray-900 dark:text-gray-100">{liftNames[liftType] ?? liftType}</h1>
           </div>
         </div>
         <div className="max-w-md mx-auto px-4 py-6">
@@ -746,7 +746,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         <div className="animate-enter">
         {draftOffer && (
           <div className="max-w-md mx-auto px-4 pt-4">
-            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-400 rounded-xl p-4">
               <SectionLabel className="mb-1">Unsaved session found</SectionLabel>
               <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
                 Your last workout was interrupted. Restore your sets to try again.
@@ -799,7 +799,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         </div>
         {draftOffer && (
           <div className="max-w-md mx-auto px-4 pt-4">
-            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-0">
+            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-400 rounded-xl p-4 mb-0">
               <SectionLabel className="mb-1">Unsaved session found</SectionLabel>
               <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
                 Your last workout was interrupted. Restore your sets to try again.
