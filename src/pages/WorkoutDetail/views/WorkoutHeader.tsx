@@ -32,7 +32,7 @@ export default function WorkoutHeader({ liftName, wave, phase, peakWeek, totalPe
       <IconButton label="Go back" onClick={onBack} className="mb-4">
         <ArrowLeft className="w-6 h-6" aria-hidden="true" />
       </IconButton>
-      <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1 animate-slide-in-left">{liftName} Day</h1>
+      <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1 animate-slide-in-left break-words">{liftName} Day</h1>
       {subtitle && <p className="text-gray-600 dark:text-gray-300">{subtitle}</p>}
       {peakingNote ? (
         <p className="text-sm text-gray-400 dark:text-gray-400 mt-1">{peakingNote}</p>

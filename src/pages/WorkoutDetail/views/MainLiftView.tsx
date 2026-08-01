@@ -130,7 +130,7 @@ export default function MainLiftView({
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
       {warmup && (
         <Card className="p-6">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Warm-up Progression</h3>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Warm-up Progression</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
             {warmupComplete
               ? `Done — working weight ${adjustedWeight ?? warmupBase} ${unitPreference}.`
@@ -164,7 +164,7 @@ export default function MainLiftView({
       )}
 
       <Card className="p-6">
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Barbell {liftName}</h3>
+        <h2 className="text-h2 text-gray-900 dark:text-gray-100 mb-1">Barbell {liftName}</h2>
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{description}</p>
 
         {lastSetData && (
@@ -225,7 +225,7 @@ export default function MainLiftView({
                 <Button
                   variant="tertiary"
                   size="sm"
-                  className="py-2.5"
+                  className="py-3"
                   onClick={() => setLogSetIndex(index)}
                   aria-label={`Log set ${setNumber}`}
                 >
@@ -261,7 +261,7 @@ export default function MainLiftView({
       {isRealization && (
         <Card className="p-6 space-y-4">
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">How hard was that top set?</h3>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">How hard was that top set?</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">Rate of Perceived Exertion — used to calculate your back-off sets</p>
           </div>
 

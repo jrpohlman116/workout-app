@@ -216,7 +216,7 @@ export default function ProgressPage() {
             />
 
             {nonDeloadSessions.length === 0 && (
-              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-400 rounded-xl p-4">
                 <SectionLabel className="mb-1">No data yet</SectionLabel>
                 <p className="text-sm text-gray-700 dark:text-gray-300">Complete your first workout to see your progress here.</p>
               </div>

@@ -235,7 +235,7 @@ export default function ExerciseSubstitutionModal({
                       className={`w-full text-left p-4 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                         selectedSubstitution === exercise.name
                           ? 'border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          : 'border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                       role="listitem"
                       aria-label={
@@ -321,7 +321,7 @@ export default function ExerciseSubstitutionModal({
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 ${
                     selectedSubstitution === item.name
                       ? 'border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      : 'border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                   role="listitem"
                   aria-label={
@@ -395,7 +395,7 @@ export default function ExerciseSubstitutionModal({
         )}
         </div>
 
-        <div className="flex gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex gap-3 pt-2 border-t border-gray-200 dark:border-gray-400">
           <Button
             type="button"
             variant="secondary"

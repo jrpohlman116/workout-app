@@ -99,9 +99,9 @@ export default function WarmupFlow({
               <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1">
                 Set {step + 1} of {fixedCount} — {currentFixed.percentage === 0 ? 'Empty bar' : `${currentFixed.percentage}%`}
               </p>
-              <p className="text-4xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+              <p className="text-display-lg tabular-nums text-gray-900 dark:text-gray-100">
                 {currentFixed.weight}
-                <span className="text-lg font-semibold text-gray-400 dark:text-gray-400"> {unit} × {currentFixed.reps}</span>
+                <span className="text-body-lg-semibold text-gray-400 dark:text-gray-400"> {unit} × {currentFixed.reps}</span>
               </p>
             </div>
 
@@ -169,9 +169,9 @@ export default function WarmupFlow({
               <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1">
                 Approach Single
               </p>
-              <p className="text-4xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+              <p className="text-display-lg tabular-nums text-gray-900 dark:text-gray-100">
                 {approachWeight}
-                <span className="text-lg font-semibold text-gray-400 dark:text-gray-400"> {unit} × 1</span>
+                <span className="text-body-lg-semibold text-gray-400 dark:text-gray-400"> {unit} × 1</span>
               </p>
             </div>
 
@@ -221,9 +221,9 @@ export default function WarmupFlow({
               <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1">
                 {adjustedWeight != null ? 'Your Working Weight' : 'Planned Working Weight'}
               </p>
-              <p className="text-4xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+              <p className="text-display-lg tabular-nums text-gray-900 dark:text-gray-100">
                 {finalWeight}
-                <span className="text-lg font-semibold text-gray-400 dark:text-gray-400"> {unit}</span>
+                <span className="text-body-lg-semibold text-gray-400 dark:text-gray-400"> {unit}</span>
               </p>
               {badDayDrop === 0 && adjustedWeight != null && adjustedWeight !== plannedWeight && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
@@ -242,7 +242,7 @@ export default function WarmupFlow({
             {/* Rough-day escape hatch: the moment to decide is right here,
                 warmed up and looking at the proposed number. */}
             {onBadDayDrop && (
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-400">
                 {badDayDrop > 0 && (
                   <div
                     className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-3"

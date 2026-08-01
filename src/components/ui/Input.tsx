@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes } from 'react';
 
 type InputVariant = 'default' | 'onDark';
@@ -25,14 +25,16 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { label, hint, variant = 'default', className = '', id, ...props },
   ref
 ) {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
   return (
     <div>
       {label && (
-        <label htmlFor={id} className={labelStyles[variant]}>
+        <label htmlFor={inputId} className={labelStyles[variant]}>
           {label}
         </label>
       )}
-      <input ref={ref} id={id} className={`${base} ${variantStyles[variant]} ${className}`} {...props} />
+      <input ref={ref} id={inputId} className={`${base} ${variantStyles[variant]} ${className}`} {...props} />
       {hint && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{hint}</p>}
     </div>
   );

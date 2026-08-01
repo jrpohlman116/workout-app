@@ -120,10 +120,10 @@ export default function WorkingSetModal({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             aria-label={label}
-            className="w-28 text-center text-4xl font-black tabular-nums bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-28 text-center text-display-lg tabular-nums bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             min="0"
           />
-          {suffix && <span className="text-lg font-semibold text-gray-400 dark:text-gray-400">{suffix}</span>}
+          {suffix && <span className="text-body-lg-semibold text-gray-400 dark:text-gray-400">{suffix}</span>}
         </div>
         <Button
           type="button"

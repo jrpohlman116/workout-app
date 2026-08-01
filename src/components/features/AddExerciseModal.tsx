@@ -123,7 +123,7 @@ export default function AddExerciseModal({
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                     selectedExercise?.name === exercise.name
                       ? 'border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      : 'border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900`}
                   onFocus={() => setSelectedExercise(exercise)}
                   role="listitem"
@@ -157,14 +157,14 @@ export default function AddExerciseModal({
           </div>
         ) : null}
 
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-400">
           <button
             type="button"
             onClick={() => setShowCustomInput(!showCustomInput)}
             className={`w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${
               showCustomInput
                 ? 'border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                : 'border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
             } focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900`}
             aria-expanded={showCustomInput}
             aria-controls="custom-exercise-form"
