@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG } from '../../lib/calculations';
+import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG, WarmupFeel } from '../../lib/calculations';
 import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, WAVE_LABELS, PHASE_LABELS } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
@@ -77,6 +77,15 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   ]);
   const [initialMainSetsSet, setInitialMainSetsSet] = useState(false);
   const [rpe, setRpe] = useState<number | null>(null);
+  // Warm-up feel ratings and completion — lifted out of MainLiftView (rather
+  // than kept as its own local state) so they survive the same remount that
+  // the localStorage draft already protects mainSets/setChecks against.
+  // Without this, a backgrounded/reloaded tab shows the warm-up circuit as
+  // "not done" and the working weight reverts to a range, even though the
+  // checks and computed weight are otherwise restored.
+  const [set4Feel, setSet4Feel] = useState<WarmupFeel | null>(null);
+  const [set5Feel, setSet5Feel] = useState<WarmupFeel | null>(null);
+  const [warmupComplete, setWarmupComplete] = useState(false);
 
   const [accessoryData, setAccessoryData] = useState<{ [key: number]: SetInput[] }>({});
   const [setChecks, setSetChecks] = useState<SetChecks>(EMPTY_CHECKS);
@@ -88,7 +97,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   // Autosave only after the user actually does something — otherwise the
   // initial prefill would clobber a restorable draft on mount.
   const dirtyRef = useRef(false);
-  const draftRef = useRef({ mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides: {} as Record<number, string> });
+  const draftRef = useRef({
+    mainSets, accessoryData, setChecks, badDayDrop,
+    exerciseOverrides: {} as Record<number, string>,
+    set4Feel: null as WarmupFeel | null,
+    set5Feel: null as WarmupFeel | null,
+    warmupComplete: false,
+  });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [workoutStats, setWorkoutStats] = useState({ estimated1RM: 0, totalTonnage: 0, topReps: 0 });
   const [completedAccessories, setCompletedAccessories] = useState<{ name: string; setsCompleted: number; reps: string }[]>([]);
@@ -106,6 +121,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setChecks?: SetChecks;
     badDayDrop?: number;
     exerciseOverrides?: Record<number, string>;
+    set4Feel?: WarmupFeel | null;
+    set5Feel?: WarmupFeel | null;
+    warmupComplete?: boolean;
     savedAt: string;
   } | null>(null);
 
@@ -273,7 +291,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         localStorage.removeItem(key);
         return;
       }
-      setDraftOffer({ mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, setChecks: parsed.setChecks, badDayDrop: parsed.badDayDrop, exerciseOverrides: parsed.exerciseOverrides, savedAt: parsed.savedAt });
+      setDraftOffer({
+        mainSets: parsed.mainSets, accessoryData: parsed.accessoryData, setChecks: parsed.setChecks, badDayDrop: parsed.badDayDrop,
+        exerciseOverrides: parsed.exerciseOverrides,
+        set4Feel: parsed.set4Feel, set5Feel: parsed.set5Feel, warmupComplete: parsed.warmupComplete,
+        savedAt: parsed.savedAt,
+      });
     } catch {
       try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
     }
@@ -282,7 +305,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   // Continuous draft autosave (debounced): inputs and check-offs survive an
   // accidental refresh or navigation. Only runs after first user interaction
   // (dirtyRef) and is cleared on successful workout save.
-  draftRef.current = { mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides };
+  draftRef.current = { mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, set4Feel, set5Feel, warmupComplete };
 
   const flushDraft = () => {
     if (!user || !profile || !dirtyRef.current) return;
@@ -318,7 +341,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     const timer = setTimeout(flushDraft, 400);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, user, profile, liftType]);
+  }, [mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, set4Feel, set5Feel, warmupComplete, user, profile, liftType]);
 
   // Checking a set off (not un-checking) starts the rest countdown for
   // that set type. Restarting on every check keeps the newest rest active.
@@ -373,6 +396,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setSetChecks(draftOffer.setChecks ?? EMPTY_CHECKS);
     setBadDayDrop(draftOffer.badDayDrop ?? 0);
     setExerciseOverrides(draftOffer.exerciseOverrides ?? {});
+    setSet4Feel(draftOffer.set4Feel ?? null);
+    setSet5Feel(draftOffer.set5Feel ?? null);
+    setWarmupComplete(draftOffer.warmupComplete ?? false);
     dirtyRef.current = true;
     try { localStorage.removeItem(`jt_draft_${user.id}_${liftType}`); } catch { /* storage unavailable */ }
     setDraftOffer(null);
@@ -584,6 +610,21 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     } else {
       setMainSets(prev => prev.map(set => ({ ...set, weight: String(weight) })));
     }
+  };
+
+  const handleSet4Feel = (feel: WarmupFeel | null) => {
+    dirtyRef.current = true;
+    setSet4Feel(feel);
+  };
+
+  const handleSet5Feel = (feel: WarmupFeel | null) => {
+    dirtyRef.current = true;
+    setSet5Feel(feel);
+  };
+
+  const handleWarmupCompleteChange = (complete: boolean) => {
+    dirtyRef.current = true;
+    setWarmupComplete(complete);
   };
 
   // One-tap bad-day reduction: scales every not-yet-checked-off main set by
@@ -918,6 +959,12 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             onAddSet={addMainSet}
             onRpeChange={setRpe}
             onWorkingWeightAdjust={handleWorkingWeightAdjust}
+            set4Feel={set4Feel}
+            set5Feel={set5Feel}
+            onSet4FeelChange={handleSet4Feel}
+            onSet5FeelChange={handleSet5Feel}
+            warmupComplete={warmupComplete}
+            onWarmupCompleteChange={handleWarmupCompleteChange}
             onNext={handleNext}
             nextExerciseName={nextExercise}
           />

@@ -36,6 +36,14 @@ interface MainLiftViewProps {
   onAddSet?: () => void;
   onRpeChange?: (rpe: number | null) => void;
   onWorkingWeightAdjust?: (weight: number) => void;
+  /** Warm-up feel ratings and completion — lifted to the parent so they
+      survive a remount (see WorkoutDetailPage's localStorage draft). */
+  set4Feel: WarmupFeel | null;
+  set5Feel: WarmupFeel | null;
+  onSet4FeelChange: (feel: WarmupFeel | null) => void;
+  onSet5FeelChange: (feel: WarmupFeel | null) => void;
+  warmupComplete: boolean;
+  onWarmupCompleteChange: (complete: boolean) => void;
   onNext: () => void;
   nextExerciseName: string | null;
 }
@@ -71,14 +79,17 @@ export default function MainLiftView({
   onAddSet,
   onRpeChange,
   onWorkingWeightAdjust,
+  set4Feel,
+  set5Feel,
+  onSet4FeelChange,
+  onSet5FeelChange,
+  warmupComplete,
+  onWarmupCompleteChange,
   onNext,
   nextExerciseName,
 }: MainLiftViewProps) {
   const [selectedRpe, setSelectedRpe] = useState<RpeValue | null>(null);
-  const [set4Feel, setSet4Feel] = useState<WarmupFeel | null>(null);
-  const [set5Feel, setSet5Feel] = useState<WarmupFeel | null>(null);
   const [showWarmupFlow, setShowWarmupFlow] = useState(false);
-  const [warmupComplete, setWarmupComplete] = useState(false);
   const [logSetIndex, setLogSetIndex] = useState<number | null>(null);
 
   const isRealization = phase === 'realization';
@@ -348,15 +359,15 @@ export default function MainLiftView({
           onCheckSet={(index) => {
             if (!warmupChecks?.[index]) onToggleWarmupCheck?.(index);
           }}
-          onSet4Feel={setSet4Feel}
+          onSet4Feel={onSet4FeelChange}
           onSet5Feel={(feel) => {
-            setSet5Feel(feel);
+            onSet5FeelChange(feel);
             if (set4Feel) {
               onWorkingWeightAdjust?.(warmup.getAdjustedWorkingWeight(set4Feel, feel));
             }
           }}
           onComplete={() => {
-            setWarmupComplete(true);
+            onWarmupCompleteChange(true);
             setShowWarmupFlow(false);
           }}
           onClose={() => setShowWarmupFlow(false)}
