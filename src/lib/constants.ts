@@ -59,6 +59,22 @@ export const PHASE_DETAIL_LABELS: Record<WavePhase, string> = {
 
 export const MAX_ACCESSORY_EXERCISES = 7;
 
+// RPE (Rate of Perceived Exertion) scale used both for the session-level
+// back-off calculation (MainLiftView) and optional per-set RPE logging
+// (WorkingSetModal). 5 is the floor — calculateBackoffSets buckets anything
+// <=7 together, so it doesn't need its own case.
+export const RPE_OPTIONS = [5, 6, 7, 8, 9, 10] as const;
+export type RpeValue = typeof RPE_OPTIONS[number];
+
+export const RPE_DESCRIPTIONS: Record<RpeValue, string> = {
+  5: 'Feels like a warm-up',
+  6: '4+ reps left',
+  7: '3 reps left',
+  8: '2 reps left',
+  9: '1 rep left',
+  10: 'Max effort',
+};
+
 // Window event dispatched (from main.tsx) when a new service worker has
 // installed while the app is open — UpdateToast listens for it.
 export const SW_UPDATE_EVENT = 'sw-update-available';

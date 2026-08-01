@@ -66,6 +66,10 @@ export interface WorkoutDetailPageProps {
 export interface SetInput {
   reps: string;
   weight: string;
+  /** Rate of Perceived Exertion (1-10) — optional, main-lift top sets only. */
+  rpe?: string;
+  /** Mean concentric bar velocity in m/s — optional, main-lift top sets only. */
+  vbt?: string;
 }
 
 export interface Exercise {

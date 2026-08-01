@@ -577,10 +577,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setMainSets(newSets);
   };
 
-  // Atomic reps+weight commit from the focused set-logging modal
-  const updateMainSetValues = (index: number, reps: string, weight: string) => {
+  // Atomic reps+weight(+rpe+vbt) commit from the focused set-logging modal
+  const updateMainSetValues = (index: number, reps: string, weight: string, rpe?: string, vbt?: string) => {
     dirtyRef.current = true;
-    setMainSets(prev => prev.map((set, i) => (i === index ? { reps, weight } : set)));
+    setMainSets(prev => prev.map((set, i) => (i === index ? { reps, weight, rpe: rpe || undefined, vbt: vbt || undefined } : set)));
   };
 
   // Add-only: going beyond the prescribed volume is always allowed; removing
@@ -741,6 +741,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         }
         if (rpe !== null) {
           sessionPayload.rpe = rpe;
+        }
+        // Per-set weight/reps/RPE/VBT — only workout_sessions.weight_lifted
+        // above (the top set) is otherwise queryable; this is what lets the
+        // optional per-set RPE/VBT survive past the localStorage draft.
+        // Upper days never touch the 'main' step, so mainSets stays at its
+        // untouched default there — skip saving it.
+        if (!isUpperDay && mainSets.some(set => set.reps || set.weight)) {
+          sessionPayload.main_sets_data = mainSets;
         }
 
         const { data: sessionData, error: sessionError } = await supabase

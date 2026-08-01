@@ -77,7 +77,7 @@ describe('WorkingSetModal', () => {
     await user.click(screen.getByRole('button', { name: 'Decrease weight' }));
     await user.click(screen.getByRole('button', { name: 'Decrease reps' }));
     await user.click(screen.getByRole('button', { name: 'Log Set' }));
-    expect(props.onSave).toHaveBeenCalledWith('9', '175');
+    expect(props.onSave).toHaveBeenCalledWith('9', '175', '', '');
   });
 
   it('frames AMAP sets correctly', () => {
@@ -121,6 +121,27 @@ describe('WorkingSetModal', () => {
     fireEvent.change(weightInput, { target: { value: '225' } });
 
     expect(weightInput).toHaveValue(225);
+  });
+
+  it('keeps RPE/bar speed collapsed by default and saves them once entered', async () => {
+    const user = userEvent.setup();
+    const props = modalProps();
+    render(<WorkingSetModal {...props} />);
+
+    expect(screen.queryByRole('spinbutton', { name: 'Bar Speed (m/s)' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'RPE / bar speed (optional)' }));
+    await user.click(screen.getByRole('button', { name: '8' }));
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Bar Speed (m/s)' }), { target: { value: '0.42' } });
+    await user.click(screen.getByRole('button', { name: 'Log Set' }));
+
+    expect(props.onSave).toHaveBeenCalledWith('10', '180', '8', '0.42');
+  });
+
+  it('auto-expands and prefills RPE/bar speed when the set already has values', () => {
+    render(<WorkingSetModal {...modalProps({ initialRpe: '9', initialVbt: '0.3' })} />);
+    expect(screen.getByRole('button', { name: '9' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('spinbutton', { name: 'Bar Speed (m/s)' })).toHaveValue(0.3);
   });
 });
 
@@ -182,7 +203,7 @@ describe('MainLiftView focused set rows', () => {
     await user.click(screen.getByRole('button', { name: 'Increase weight' }));
     await user.click(screen.getByRole('button', { name: 'Log Set' }));
 
-    expect(baseProps.onUpdateSetValues).toHaveBeenCalledWith(0, '10', '185');
+    expect(baseProps.onUpdateSetValues).toHaveBeenCalledWith(0, '10', '185', '', '');
     expect(baseProps.onToggleSetCheck).toHaveBeenCalledWith(0);
   });
 
