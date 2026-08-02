@@ -66,7 +66,7 @@ export default function ResetPasswordForm() {
         </div>
 
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-white mb-2">Set a new password</h2>
+          <h2 className="text-h3 text-white mb-2">Set a new password</h2>
           <p className="text-sm text-white/60">Choose a new password for your account.</p>
         </div>
 

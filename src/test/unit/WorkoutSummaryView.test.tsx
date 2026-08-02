@@ -4,6 +4,17 @@ import userEvent from '@testing-library/user-event';
 import WorkoutSummaryView from '../../pages/WorkoutDetail/views/WorkoutSummaryView';
 import type { Exercise, JuggernautSetsConfig } from '../../lib/types';
 
+// WorkoutSummaryView renders ExerciseSubstitutionModal, which imports the real
+// supabase client — mock it so this file doesn't need live env vars to load.
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
+    })),
+  },
+}));
+
 const peakingConfig: JuggernautSetsConfig = {
   numSets: 1,
   reps: 1,

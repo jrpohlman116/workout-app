@@ -240,7 +240,7 @@ export default function Onboarding() {
           <p className="text-xs tracking-wide font-semibold text-gray-400 dark:text-gray-400 mb-2">
             Juggernaut Method
           </p>
-          <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2">
+          <h1 className="text-h1 text-gray-900 dark:text-white mb-2">
             Build Your Program
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -362,8 +362,8 @@ export default function Onboarding() {
                   const isCalculatorActive = activeCalculator === lift;
 
                   return (
-                    <div key={lift} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">{info.name}</h3>
+                    <div key={lift} className="border border-gray-200 dark:border-gray-400 rounded-xl p-4">
+                      <h3 className="text-h4 text-gray-900 dark:text-white mb-3">{info.name}</h3>
 
                       <div className="space-y-4">
                         <div>
@@ -443,7 +443,7 @@ export default function Onboarding() {
                             </fieldset>
 
                             {calc.calculatedMax !== null && (
-                              <div className="border-t border-gray-200 dark:border-gray-700 pt-4" role="status" aria-live="polite">
+                              <div className="border-t border-gray-200 dark:border-gray-400 pt-4" role="status" aria-live="polite">
                                 <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
                                   Estimated 1RM: <span className="font-semibold">{calc.calculatedMax} {unitPreference}</span>
                                 </p>

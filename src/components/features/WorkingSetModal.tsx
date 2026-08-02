@@ -1,35 +1,43 @@
 import { useState } from 'react';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import AccessibleModal from '../accessible/AccessibleModal';
 import PlateVisual from './PlateVisual';
 import Button from '../ui/Button';
+import Input from '../ui/Input';
 import { getRoundingIncrement, BAR_WEIGHTS } from '../../lib/calculations';
+import { RPE_OPTIONS } from '../../lib/constants';
 
 interface WorkingSetModalProps {
   setNumber: number;
   totalSets: number;
   initialReps: string;
   initialWeight: string;
+  /** Previously logged RPE/bar speed for this set, if any — both optional. */
+  initialRpe?: string;
+  initialVbt?: string;
   /** Rep prescription for the hint line, e.g. "10" or "10+" for AMAP. */
   repsTarget: string;
   isAmap: boolean;
   unit: string;
   availablePlates: number[];
-  onSave: (reps: string, weight: string) => void;
+  onSave: (reps: string, weight: string, rpe: string, vbt: string) => void;
   onClose: () => void;
 }
 
 /**
  * Focused logging view for one working set: live plate visual, weight and
- * rep steppers (typing works too). Saving commits the values and marks the
- * set done — which is what starts the rest timer. RPE input is deliberately
- * absent for now; it arrives with the RPE-everywhere/VBT roadmap items.
+ * rep steppers (typing works too), plus optional RPE and bar-speed (VBT)
+ * inputs tucked behind a collapsed toggle to keep the default flow fast.
+ * Saving commits the values and marks the set done — which is what starts
+ * the rest timer.
  */
 export default function WorkingSetModal({
   setNumber,
   totalSets,
   initialReps,
   initialWeight,
+  initialRpe = '',
+  initialVbt = '',
   repsTarget,
   isAmap,
   unit,
@@ -39,8 +47,18 @@ export default function WorkingSetModal({
 }: WorkingSetModalProps) {
   const [weight, setWeight] = useState(initialWeight);
   const [reps, setReps] = useState(initialReps);
+  const [rpe, setRpe] = useState(initialRpe);
+  const [vbt, setVbt] = useState(initialVbt);
+  const [showMetrics, setShowMetrics] = useState(!!(initialRpe || initialVbt));
   const roundTo = getRoundingIncrement(unit);
   const barWeight = BAR_WEIGHTS[unit] ?? BAR_WEIGHTS.lb;
+
+  const handleVbtChange = (v: string) => {
+    if (v === '') { setVbt(''); return; }
+    const parsed = parseFloat(v);
+    if (isNaN(parsed) || parsed < 0) return;
+    setVbt(v);
+  };
 
   const weightNum = parseFloat(weight) || 0;
   const repsNum = parseInt(reps) || 0;
@@ -102,10 +120,10 @@ export default function WorkingSetModal({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             aria-label={label}
-            className="w-28 text-center text-4xl font-black tabular-nums bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-28 text-center text-display-lg tabular-nums bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             min="0"
           />
-          {suffix && <span className="text-lg font-semibold text-gray-400 dark:text-gray-400">{suffix}</span>}
+          {suffix && <span className="text-body-lg-semibold text-gray-400 dark:text-gray-400">{suffix}</span>}
         </div>
         <Button
           type="button"
@@ -148,7 +166,57 @@ export default function WorkingSetModal({
         {stepperRow('Weight', weight, unit, () => stepWeight(-1), () => stepWeight(1), handleWeightChange, 'decimal')}
         {stepperRow('Reps', reps, null, () => stepReps(-1), () => stepReps(1), handleRepsChange, 'numeric')}
 
-        <Button fullWidth onClick={() => onSave(reps, weight)}>
+        <div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            fullWidth
+            icon={showMetrics ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            onClick={() => setShowMetrics(v => !v)}
+            aria-expanded={showMetrics}
+          >
+            RPE / bar speed (optional)
+          </Button>
+
+          {showMetrics && (
+            <div className="space-y-4 pt-3">
+              <div>
+                <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 text-center mb-2">RPE</p>
+                <div className="flex gap-2">
+                  {RPE_OPTIONS.map((option) => (
+                    <Button
+                      key={option}
+                      type="button"
+                      variant={rpe === String(option) ? 'primary' : 'ghost'}
+                      size="sm"
+                      fullWidth
+                      onClick={() => setRpe(rpe === String(option) ? '' : String(option))}
+                      aria-pressed={rpe === String(option)}
+                    >
+                      {option}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <Input
+                id="vbt-input"
+                label="Bar Speed (m/s)"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={vbt}
+                onChange={(e) => handleVbtChange(e.target.value)}
+                placeholder="e.g. 0.45"
+                className="text-center text-lg font-bold tabular-nums"
+              />
+            </div>
+          )}
+        </div>
+
+        <Button fullWidth onClick={() => onSave(reps, weight, rpe, vbt)}>
           Log Set
         </Button>
       </div>

@@ -73,6 +73,10 @@ export interface WorkoutSession {
   wave?: 10 | 8 | 5 | 3;
   phase?: 'accumulation' | 'intensification' | 'realization' | 'deload';
   rpe?: number;
+  // Per-set weight/reps/RPE/VBT for the main lift's top sets — the fields
+  // above only capture the top set. Optional: sessions saved before this
+  // field existed, and upper-body days (no main lift), have it unset.
+  main_sets_data?: { reps: string; weight: string; rpe?: string; vbt?: string }[];
 }
 
 export interface WorkoutTemplate {

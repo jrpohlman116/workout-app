@@ -139,7 +139,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
   return (
     <div className="fixed inset-0 bg-gray-900/75 flex items-end sm:items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-400 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Meet Day — 1RM Attempts</h2>
@@ -385,7 +385,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
             <div className="text-center space-y-6 py-4">
               <div>
                 <p className="text-4xl mb-3">{attemptResult === 'success' ? '🏆' : '💪'}</p>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                <h3 className="text-h3 text-gray-900 dark:text-gray-100">
                   {attemptResult === 'success' ? 'Attempt successful!' : 'Attempt logged'}
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 mt-1">

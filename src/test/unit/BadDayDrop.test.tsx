@@ -74,6 +74,12 @@ describe('bad-day weight reduction (warm-up flow final card)', () => {
         badDayDrop={0.10}
         onBadDayDrop={() => {}}
         onUpdateSet={() => {}}
+        set4Feel={null}
+        set5Feel={null}
+        onSet4FeelChange={() => {}}
+        onSet5FeelChange={() => {}}
+        warmupComplete={false}
+        onWarmupCompleteChange={() => {}}
         onNext={() => {}}
         nextExerciseName="Pin Squats"
       />

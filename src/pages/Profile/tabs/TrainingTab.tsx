@@ -78,7 +78,7 @@ export default function TrainingTab() {
   return (
     <Card className="p-6 space-y-6 animate-enter">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Training Settings</h2>
+        <h2 className="text-h4 text-gray-900 dark:text-gray-100 mb-1">Training Settings</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Your program is built around your meet date and tailored to your sticking points.
         </p>

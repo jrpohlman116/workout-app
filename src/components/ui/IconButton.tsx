@@ -40,6 +40,7 @@ export default function IconButton({
         className={[
           'rounded-xl transition-colors focus:outline-none focus:ring-2',
           'disabled:opacity-30 disabled:cursor-not-allowed',
+          'min-w-11 min-h-11 flex items-center justify-center',
           variantClasses[variant],
           sizeClasses[size],
           className,

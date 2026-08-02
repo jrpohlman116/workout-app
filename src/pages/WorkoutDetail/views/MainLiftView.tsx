@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Check, Play, Plus } from 'lucide-react';
 import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets, getRoundingIncrement } from '../../../lib/calculations';
-import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../../lib/constants';
+import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, RPE_OPTIONS, RPE_DESCRIPTIONS, RpeValue } from '../../../lib/constants';
 import { SetInput } from '../../../lib/types';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
@@ -27,29 +27,26 @@ interface MainLiftViewProps {
       plate-loading hints on warm-ups and working weights. */
   availablePlates?: number[];
   onUpdateSet: (index: number, field: 'reps' | 'weight', value: string) => void;
-  /** Atomic reps+weight commit from the focused set-logging modal — two
+  /** Atomic reps+weight(+rpe+vbt) commit from the focused set-logging modal —
       sequential onUpdateSet calls would clobber each other in one batch. */
-  onUpdateSetValues?: (index: number, reps: string, weight: string) => void;
+  onUpdateSetValues?: (index: number, reps: string, weight: string, rpe?: string, vbt?: string) => void;
   /** Appends an extra set beyond the prescribed count — going beyond the
       plan is always allowed; removing a prescribed set is not (skip it via
       the check chip instead). Omit to hide the affordance entirely. */
   onAddSet?: () => void;
   onRpeChange?: (rpe: number | null) => void;
   onWorkingWeightAdjust?: (weight: number) => void;
+  /** Warm-up feel ratings and completion — lifted to the parent so they
+      survive a remount (see WorkoutDetailPage's localStorage draft). */
+  set4Feel: WarmupFeel | null;
+  set5Feel: WarmupFeel | null;
+  onSet4FeelChange: (feel: WarmupFeel | null) => void;
+  onSet5FeelChange: (feel: WarmupFeel | null) => void;
+  warmupComplete: boolean;
+  onWarmupCompleteChange: (complete: boolean) => void;
   onNext: () => void;
   nextExerciseName: string | null;
 }
-
-const RPE_OPTIONS = [6, 7, 8, 9, 10] as const;
-type RpeValue = typeof RPE_OPTIONS[number];
-
-const RPE_DESCRIPTIONS: Record<RpeValue, string> = {
-  6: '4+ reps left',
-  7: '3 reps left',
-  8: '2 reps left',
-  9: '1 rep left',
-  10: 'Max effort',
-};
 
 export default function MainLiftView({
   liftName,
@@ -71,14 +68,17 @@ export default function MainLiftView({
   onAddSet,
   onRpeChange,
   onWorkingWeightAdjust,
+  set4Feel,
+  set5Feel,
+  onSet4FeelChange,
+  onSet5FeelChange,
+  warmupComplete,
+  onWarmupCompleteChange,
   onNext,
   nextExerciseName,
 }: MainLiftViewProps) {
   const [selectedRpe, setSelectedRpe] = useState<RpeValue | null>(null);
-  const [set4Feel, setSet4Feel] = useState<WarmupFeel | null>(null);
-  const [set5Feel, setSet5Feel] = useState<WarmupFeel | null>(null);
   const [showWarmupFlow, setShowWarmupFlow] = useState(false);
-  const [warmupComplete, setWarmupComplete] = useState(false);
   const [logSetIndex, setLogSetIndex] = useState<number | null>(null);
 
   const isRealization = phase === 'realization';
@@ -130,7 +130,7 @@ export default function MainLiftView({
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
       {warmup && (
         <Card className="p-6">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Warm-up Progression</h3>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Warm-up Progression</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
             {warmupComplete
               ? `Done — working weight ${adjustedWeight ?? warmupBase} ${unitPreference}.`
@@ -164,7 +164,7 @@ export default function MainLiftView({
       )}
 
       <Card className="p-6">
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Barbell {liftName}</h3>
+        <h2 className="text-h2 text-gray-900 dark:text-gray-100 mb-1">Barbell {liftName}</h2>
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{description}</p>
 
         {lastSetData && (
@@ -210,13 +210,22 @@ export default function MainLiftView({
                     {setNumber}
                   </span>
                 )}
-                <p className="flex-1 font-bold tabular-nums text-gray-900 dark:text-gray-100">
-                  {weightLabel} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span> × {repsLabel}
-                </p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold tabular-nums text-gray-900 dark:text-gray-100">
+                    {weightLabel} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span> × {repsLabel}
+                  </p>
+                  {(set.rpe || set.vbt) && (
+                    <p className="text-xs text-gray-400 dark:text-gray-400 tabular-nums">
+                      {set.rpe && `RPE ${set.rpe}`}
+                      {set.rpe && set.vbt && ' · '}
+                      {set.vbt && `${set.vbt} m/s`}
+                    </p>
+                  )}
+                </div>
                 <Button
                   variant="tertiary"
                   size="sm"
-                  className="py-2.5"
+                  className="py-3"
                   onClick={() => setLogSetIndex(index)}
                   aria-label={`Log set ${setNumber}`}
                 >
@@ -252,7 +261,7 @@ export default function MainLiftView({
       {isRealization && (
         <Card className="p-6 space-y-4">
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">How hard was that top set?</h3>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">How hard was that top set?</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">Rate of Perceived Exertion — used to calculate your back-off sets</p>
           </div>
 
@@ -277,8 +286,8 @@ export default function MainLiftView({
               <span className="tabular-nums">RPE {selectedRpe} — {RPE_DESCRIPTIONS[selectedRpe]}</span>
             ) : (
               <>
-                <span>6 — 4+ reps left</span>
-                <span>10 — max effort</span>
+                <span>{RPE_OPTIONS[0]} — {RPE_DESCRIPTIONS[RPE_OPTIONS[0]]}</span>
+                <span>{RPE_OPTIONS[RPE_OPTIONS.length - 1]} — {RPE_DESCRIPTIONS[RPE_OPTIONS[RPE_OPTIONS.length - 1]].toLowerCase()}</span>
               </>
             )}
           </div>
@@ -310,15 +319,17 @@ export default function MainLiftView({
           totalSets={mainSets.length}
           initialReps={mainSets[logSetIndex].reps || (typeof mainReps === 'number' ? String(mainReps) : '')}
           initialWeight={mainSets[logSetIndex].weight}
+          initialRpe={mainSets[logSetIndex].rpe ?? ''}
+          initialVbt={mainSets[logSetIndex].vbt ?? ''}
           repsTarget={mainSets[logSetIndex].reps || (isRealization
             ? `${typeof mainReps === 'number' ? mainReps : 1}+`
             : String(mainReps))}
           isAmap={isRealization}
           unit={unitPreference}
           availablePlates={availablePlates ?? []}
-          onSave={(reps, weight) => {
+          onSave={(reps, weight, rpe, vbt) => {
             if (onUpdateSetValues) {
-              onUpdateSetValues(logSetIndex, reps, weight);
+              onUpdateSetValues(logSetIndex, reps, weight, rpe, vbt);
             } else {
               onUpdateSet(logSetIndex, 'reps', reps);
               onUpdateSet(logSetIndex, 'weight', weight);
@@ -348,15 +359,15 @@ export default function MainLiftView({
           onCheckSet={(index) => {
             if (!warmupChecks?.[index]) onToggleWarmupCheck?.(index);
           }}
-          onSet4Feel={setSet4Feel}
+          onSet4Feel={onSet4FeelChange}
           onSet5Feel={(feel) => {
-            setSet5Feel(feel);
+            onSet5FeelChange(feel);
             if (set4Feel) {
               onWorkingWeightAdjust?.(warmup.getAdjustedWorkingWeight(set4Feel, feel));
             }
           }}
           onComplete={() => {
-            setWarmupComplete(true);
+            onWarmupCompleteChange(true);
             setShowWarmupFlow(false);
           }}
           onClose={() => setShowWarmupFlow(false)}

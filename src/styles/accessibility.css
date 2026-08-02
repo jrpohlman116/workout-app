@@ -127,6 +127,23 @@ h1, h2, h3, h4, h5, h6 {
   color: #6b7280; /* Ensures 4.5:1 contrast on white */
 }
 
+/* text-gray-400/300 were the actual contrast failures (2.4-2.6:1, one as low
+   as 1.41:1 on white) found in the 2026-07-23 accessibility review — remapped
+   to Text Tertiary (gray-500) to meet 4.5:1. Not touched in dark mode: gray-300/400
+   already exceed 4.5:1 against the app's dark surfaces.
+   !important is required here: this file is @imported before @tailwind
+   utilities in index.css, so without it Tailwind's same-specificity utility
+   class wins the cascade and silently no-ops the override (this was already
+   true of the .text-gray-500/.text-gray-600 rules above — they just never
+   got caught because those two shades already passed AA on their own). */
+.text-gray-400 {
+  color: #6b7280 !important;
+}
+
+.text-gray-300 {
+  color: #6b7280 !important;
+}
+
 /* Loading States - Accessible indicators */
 @keyframes spin {
   to {

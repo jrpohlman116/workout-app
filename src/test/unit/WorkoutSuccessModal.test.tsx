@@ -52,19 +52,19 @@ describe('WorkoutSuccessModal', () => {
     expect(screen.queryByText(/as new training max/)).not.toBeInTheDocument();
   });
 
-  it('lists completed accessories with their set counts', () => {
+  it('lists completed accessories with their set counts and reps', () => {
     render(
       <WorkoutSuccessModal
         {...baseProps({
           completedAccessories: [
-            { name: 'Pause Squats', setsCompleted: 3 },
-            { name: 'Leg Curls', setsCompleted: 1 },
+            { name: 'Pause Squats', setsCompleted: 3, reps: '8' },
+            { name: 'Leg Curls', setsCompleted: 1, reps: '' },
           ],
         })}
       />
     );
     expect(screen.getByText('Pause Squats')).toBeInTheDocument();
-    expect(screen.getByText('3 sets')).toBeInTheDocument();
+    expect(screen.getByText('3 sets × 8 reps')).toBeInTheDocument();
     expect(screen.getByText('Leg Curls')).toBeInTheDocument();
     expect(screen.getByText('1 set')).toBeInTheDocument();
   });
