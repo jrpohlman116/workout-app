@@ -201,7 +201,7 @@ export default function ProgressPage() {
   return (
     <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
-        <PageHeader eyebrow="Juggernaut" title="Progress" />
+        <PageHeader eyebrow="Strength Training" title="Progress" />
 
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} onRipple={createRipple} />
       </div>

@@ -61,7 +61,7 @@ export default function ResetPasswordForm() {
             Ironform
           </h1>
           <p className="text-xs tracking-wide text-white/40 mt-3">
-            Juggernaut Method
+            Strength Training System
           </p>
         </div>
 

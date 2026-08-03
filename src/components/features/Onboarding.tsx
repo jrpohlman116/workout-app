@@ -238,7 +238,7 @@ export default function Onboarding() {
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <p className="text-xs tracking-wide font-semibold text-gray-400 dark:text-gray-400 mb-2">
-            Juggernaut Method
+            Strength Training System
           </p>
           <h1 className="text-h1 text-gray-900 dark:text-white mb-2">
             Build Your Program
