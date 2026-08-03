@@ -86,7 +86,10 @@ export function getMaxChangePercent(sessions: WorkoutSession[], nonDeloadSession
 }
 
 export function getBestWeightForLift(sessions: WorkoutSession[], liftType: string) {
-  const liftSessions = sessions.filter(s => s.lift_type === liftType);
+  // Missed attempts still carry the attempted weight_lifted (that's how the
+  // meet card shows them crossed out) — exclude them or a missed meet PR
+  // would outrank an actually-made lift.
+  const liftSessions = sessions.filter(s => s.lift_type === liftType && s.reps_performed > 0);
   if (liftSessions.length === 0) return null;
 
   let bestSession = liftSessions[0];

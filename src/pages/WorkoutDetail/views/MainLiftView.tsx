@@ -317,7 +317,7 @@ export default function MainLiftView({
         <WorkingSetModal
           setNumber={logSetIndex + 1}
           totalSets={mainSets.length}
-          initialReps={mainSets[logSetIndex].reps || (typeof mainReps === 'number' ? String(mainReps) : '')}
+          initialReps={mainSets[logSetIndex].reps || (isRealization || typeof mainReps !== 'number' ? '' : String(mainReps))}
           initialWeight={mainSets[logSetIndex].weight}
           initialRpe={mainSets[logSetIndex].rpe ?? ''}
           initialVbt={mainSets[logSetIndex].vbt ?? ''}
