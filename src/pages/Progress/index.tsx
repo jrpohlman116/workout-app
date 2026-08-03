@@ -85,9 +85,9 @@ export default function ProgressPage() {
     deadlift: utils.getAverageOfLastThreeSessions(nonDeloadSessions, 'deadlift') || profile.deadlift_max,
   };
   const bestMaxes = {
-    squat: utils.getBestWeightForLift(sessions, 'squat')?.weight_lifted || profile.squat_max,
-    bench: utils.getBestWeightForLift(sessions, 'bench')?.weight_lifted || profile.bench_max,
-    deadlift: utils.getBestWeightForLift(sessions, 'deadlift')?.weight_lifted || profile.deadlift_max,
+    squat: utils.getBestE1RMForLift(sessions, 'squat') || profile.squat_max,
+    bench: utils.getBestE1RMForLift(sessions, 'bench') || profile.bench_max,
+    deadlift: utils.getBestE1RMForLift(sessions, 'deadlift') || profile.deadlift_max,
   };
   const initialMaxes = {
     squat: utils.getFirstRecordedMax(sessions, 'squat') || profile.squat_max,
@@ -241,13 +241,13 @@ export default function ProgressPage() {
               <AccessibleChartTable chartData={chartData} meets={meetGroups} unitPreference={profile.unit_preference || 'lb'} />
             )}
 
-            <p className="text-xs tracking-wide font-semibold text-white/70 mb-2">Average Projected 1RM</p>
+            <p className="text-xs tracking-wide font-semibold text-white/70 mb-2">Top e1RM</p>
             <div className="grid grid-rows-3 gap-3">
               {lifts.map((lift, index) => {
-                const averageMax = utils.getAverageOfLastThreeSessions(nonDeloadSessions, lift.type);
-                const displayMax = averageMax > 0 ? averageMax : lift.initial;
+                const topMax = effectiveMaxes[lift.type as keyof typeof effectiveMaxes];
+                const displayMax = topMax > 0 ? topMax : lift.initial;
                 const firstRecorded = utils.getFirstRecordedMax(sessions, lift.type);
-                const changePercent = utils.getMaxChangePercent(sessions, nonDeloadSessions, lift.type);
+                const changePercent = utils.getMaxChangePercent(firstRecorded, displayMax);
                 const isVisible = index < visibleLifts;
 
                 return (

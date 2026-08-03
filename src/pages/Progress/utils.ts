@@ -77,12 +77,21 @@ export function getAverageOfLastThreeSessions(nonDeloadSessions: WorkoutSession[
   return Math.round(sum / lastThree.length);
 }
 
-export function getMaxChangePercent(sessions: WorkoutSession[], nonDeloadSessions: WorkoutSession[], liftType: string): string {
-  const firstRecorded = getFirstRecordedMax(sessions, liftType);
-  const currentAverage = getAverageOfLastThreeSessions(nonDeloadSessions, liftType);
-
+export function getMaxChangePercent(firstRecorded: number, currentValue: number): string {
   if (firstRecorded === 0) return '0';
-  return (((currentAverage - firstRecorded) / firstRecorded) * 100).toFixed(1);
+  return (((currentValue - firstRecorded) / firstRecorded) * 100).toFixed(1);
+}
+
+export function getBestE1RMForLift(sessions: WorkoutSession[], liftType: string): number {
+  // Same missed-attempt exclusion as getBestWeightForLift — a missed meet
+  // single has no real 1RM behind it. A lighter set with more reps can
+  // project a higher e1RM than the heaviest single actually moved, which is
+  // the point: this tracks estimated max strength, not the heaviest weight
+  // physically tested.
+  const liftSessions = sessions.filter(s => s.lift_type === liftType && s.reps_performed > 0);
+  if (liftSessions.length === 0) return 0;
+
+  return Math.max(...liftSessions.map(s => s.calculated_1rm));
 }
 
 export function getBestWeightForLift(sessions: WorkoutSession[], liftType: string) {
