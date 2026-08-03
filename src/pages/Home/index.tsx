@@ -35,17 +35,26 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     if (user && profile) {
       loadCompletedWorkouts();
     }
-  }, [user, profile?.current_cycle, profile?.current_week]);
+  }, [user, profile?.current_cycle, profile?.current_week, weekOffset]);
 
   const loadCompletedWorkouts = async () => {
     if (!user || !profile) return;
+
+    // Same cycle/week arithmetic as viewedManual/handleJumpToWeek below —
+    // cycle/week is a running counter kept in sync with current_week_index
+    // regardless of program mode, so it doubles as the id for "which week
+    // is being previewed" here.
+    const base = (profile.current_cycle - 1) * 4 + (profile.current_week - 1);
+    const total = Math.max(0, base + weekOffset);
+    const viewedWeek = (total % 4) + 1;
+    const viewedCycle = Math.floor(total / 4) + 1;
 
     const { data } = await supabase
       .from('workout_sessions')
       .select('lift_type, calculated_1rm')
       .eq('user_id', user.id)
-      .eq('cycle', profile.current_cycle)
-      .eq('week', profile.current_week)
+      .eq('cycle', viewedCycle)
+      .eq('week', viewedWeek)
       .eq('is_1rm_test', false);
 
     if (data) {
@@ -368,7 +377,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               const weightLow = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo : null;
               const weightHigh = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo : null;
 
-              const trailing = !isViewing && isCompleted
+              const trailing = isCompleted
                 ? <Check className="w-5 h-5 text-green-500 dark:text-green-400 flex-shrink-0" />
                 : !isViewing
                   ? <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-300 flex-shrink-0" />
@@ -383,11 +392,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     onNavigate('workout', workout.type);
                   }}
                   style={{ animationDelay: `${160 + index * 40}ms` }}
-                  className={`animate-enter ${isViewing
-                      ? 'bg-gray-50 dark:bg-gray-700 cursor-default'
-                      : isCompleted
-                        ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 hover-scale active-press ripple-container'
-                        : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 hover-scale active-press ripple-container'
+                  className={`animate-enter ${isCompleted
+                      ? `bg-green-50 dark:bg-green-900/20 ${isViewing ? 'cursor-default' : 'hover:bg-green-100 dark:hover:bg-green-900/30 hover-scale active-press ripple-container'}`
+                      : `bg-gray-50 dark:bg-gray-700 ${isViewing ? 'cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-600 hover-scale active-press ripple-container'}`
                     }`}
                   leading={
                     <span className="min-w-7 text-center font-mono text-sm font-bold text-gray-300 dark:text-gray-300 select-none">
@@ -396,11 +403,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   }
                   trailing={trailing}
                 >
-                  <p className={`text-xs tracking-wide font-semibold mb-0.5 ${!isViewing && isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'
+                  <p className={`text-xs tracking-wide font-semibold mb-0.5 ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'
                     }`}>
                     {workout.name}
                   </p>
-                  {!isViewing && isCompleted ? (
+                  {isCompleted ? (
                     <p className="text-sm font-semibold text-green-700 dark:text-green-300 tabular-nums">
                       {projected1RM ? `${Math.round(projected1RM)} ${unit} proj.` : 'Done'}
                     </p>
