@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, Play, Plus } from 'lucide-react';
-import { WavePhase, WarmupFeel, calculateBackoffSets, calculateWarmupSets, getRoundingIncrement } from '../../../lib/calculations';
+import { WavePhase, WarmupFeel, calculateWarmupSets, getRoundingIncrement } from '../../../lib/calculations';
 import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, RPE_OPTIONS, RPE_DESCRIPTIONS, RpeValue } from '../../../lib/constants';
 import { SetInput } from '../../../lib/types';
 import Card from '../../../components/ui/Card';
@@ -85,11 +85,11 @@ export default function MainLiftView({
   const isDeload = phase === 'deload';
   const isPeaking = phase === 'peaking';
 
-  const topSet = mainSets[mainSets.length - 1];
+  // Realization days append back-off rows after the top (AMRAP) set, so the
+  // top set stays pinned to index 0 there rather than "last" — every other
+  // phase still means "last" (peaking's down sets trail the single, etc).
+  const topSet = isRealization ? mainSets[0] : mainSets[mainSets.length - 1];
   const topSetWeight = parseFloat(topSet?.weight || '0');
-  const backoff = selectedRpe !== null && topSetWeight > 0
-    ? calculateBackoffSets(topSetWeight, selectedRpe, unitPreference)
-    : null;
 
   const handleRpeSelect = (rpe: RpeValue) => {
     const next = selectedRpe === rpe ? null : rpe;
@@ -291,18 +291,6 @@ export default function MainLiftView({
               </>
             )}
           </div>
-
-          {backoff && (
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-              <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Back-off Sets</p>
-              <p className="text-xl font-black tabular-nums text-gray-900 dark:text-gray-100">
-                {backoff.sets} × {backoff.reps} @ {backoff.weight} <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span>
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                RPE {selectedRpe} · {Math.round((1 - backoff.weight / topSetWeight) * 100)}% drop from top set
-              </p>
-            </div>
-          )}
         </Card>
       )}
 
@@ -313,18 +301,23 @@ export default function MainLiftView({
         Next: {nextExerciseName}
       </Button>
 
-      {logSetIndex !== null && mainSets[logSetIndex] && (
+      {logSetIndex !== null && mainSets[logSetIndex] && (() => {
+        // Only the top set (index 0) on a realization day is the actual
+        // AMRAP set — back-off rows appended after it have a fixed
+        // prescribed rep target, same as any other main set.
+        const isAmapRow = isRealization && logSetIndex === 0;
+        return (
         <WorkingSetModal
           setNumber={logSetIndex + 1}
           totalSets={mainSets.length}
-          initialReps={mainSets[logSetIndex].reps || (isRealization || typeof mainReps !== 'number' ? '' : String(mainReps))}
+          initialReps={mainSets[logSetIndex].reps || (isAmapRow || typeof mainReps !== 'number' ? '' : String(mainReps))}
           initialWeight={mainSets[logSetIndex].weight}
           initialRpe={mainSets[logSetIndex].rpe ?? ''}
           initialVbt={mainSets[logSetIndex].vbt ?? ''}
-          repsTarget={mainSets[logSetIndex].reps || (isRealization
+          repsTarget={mainSets[logSetIndex].reps || (isAmapRow
             ? `${typeof mainReps === 'number' ? mainReps : 1}+`
             : String(mainReps))}
-          isAmap={isRealization}
+          isAmap={isAmapRow}
           unit={unitPreference}
           availablePlates={availablePlates ?? []}
           onSave={(reps, weight, rpe, vbt) => {
@@ -341,7 +334,8 @@ export default function MainLiftView({
           }}
           onClose={() => setLogSetIndex(null)}
         />
-      )}
+        );
+      })()}
 
       {showWarmupFlow && warmup && (
         <WarmupFlow

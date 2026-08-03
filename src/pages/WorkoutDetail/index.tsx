@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG, WarmupFeel } from '../../lib/calculations';
+import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, calculateBackoffSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG, WarmupFeel } from '../../lib/calculations';
 import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, WAVE_LABELS, PHASE_LABELS } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
@@ -583,6 +583,39 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     setMainSets(prev => prev.map((set, i) => (i === index ? { reps, weight, rpe: rpe || undefined, vbt: vbt || undefined } : set)));
   };
 
+  // Rating the top set's RPE prescribes back-off sets (Juggernaut's built-in
+  // down-sets scheme) — generate them as real, loggable rows appended after
+  // the top set, same as any other main set. Re-rating regenerates the
+  // prescription, but only while no back-off row has been checked off yet;
+  // once the lifter has started logging, their work is left alone rather
+  // than silently replaced.
+  const handleRpeSelect = (newRpe: number | null) => {
+    dirtyRef.current = true;
+    setRpe(newRpe);
+
+    if (currentBlock?.phase !== 'realization') return;
+    if (setChecks.main.slice(1).some(Boolean)) return;
+
+    if (newRpe === null) {
+      setMainSets(prev => prev.slice(0, 1));
+      setSetChecks(prev => ({ ...prev, main: prev.main.slice(0, 1) }));
+      return;
+    }
+
+    const topWeight = parseFloat(mainSets[0]?.weight || '0');
+    if (!topWeight) return;
+
+    const backoff = calculateBackoffSets(topWeight, newRpe, unit);
+    const backoffCount = Math.min(backoff.sets, 9);
+    const backoffSets: SetInput[] = Array.from({ length: backoffCount }, () => ({
+      reps: String(backoff.reps),
+      weight: String(backoff.weight),
+    }));
+
+    setMainSets(prev => [prev[0], ...backoffSets]);
+    setSetChecks(prev => ({ ...prev, main: [prev.main[0] ?? false, ...backoffSets.map(() => false)] }));
+  };
+
   // Add-only: going beyond the prescribed volume is always allowed; removing
   // a prescribed set isn't offered (skip it via the check chip instead). New
   // set takes the most recent set's weight (the prescribed working weight on
@@ -966,7 +999,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
             onUpdateSet={updateMainSet}
             onUpdateSetValues={updateMainSetValues}
             onAddSet={addMainSet}
-            onRpeChange={setRpe}
+            onRpeChange={handleRpeSelect}
             onWorkingWeightAdjust={handleWorkingWeightAdjust}
             set4Feel={set4Feel}
             set5Feel={set5Feel}
