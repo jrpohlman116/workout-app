@@ -15,7 +15,7 @@ interface WorkingSetModalProps {
   /** Previously logged RPE/bar speed for this set, if any — both optional. */
   initialRpe?: string;
   initialVbt?: string;
-  /** Rep prescription for the hint line, e.g. "10" or "10+" for AMAP. */
+  /** Rep prescription for the hint line, e.g. "10" or "10+" for AMRAP. */
   repsTarget: string;
   isAmap: boolean;
   unit: string;
@@ -150,7 +150,7 @@ export default function WorkingSetModal({
       <div className="space-y-6 pb-2">
         <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
           {isAmap
-            ? `AMAP set — target ${repsTarget}. Log every rep you got.`
+            ? `AMRAP set — target ${repsTarget}. Log every rep you got.`
             : `Prescribed: ${repsTarget} reps.`}
         </p>
 

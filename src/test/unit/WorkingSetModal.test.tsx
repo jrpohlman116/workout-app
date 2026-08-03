@@ -80,9 +80,9 @@ describe('WorkingSetModal', () => {
     expect(props.onSave).toHaveBeenCalledWith('9', '175', '', '');
   });
 
-  it('frames AMAP sets correctly', () => {
+  it('frames AMRAP sets correctly', () => {
     render(<WorkingSetModal {...modalProps({ isAmap: true, repsTarget: '10+' })} />);
-    expect(screen.getByText(/AMAP set — target 10\+\. Log every rep you got\./)).toBeInTheDocument();
+    expect(screen.getByText(/AMRAP set — target 10\+\. Log every rep you got\./)).toBeInTheDocument();
   });
 
   it('rejects a negative typed weight rather than committing it', async () => {

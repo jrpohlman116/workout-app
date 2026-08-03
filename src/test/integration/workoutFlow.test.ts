@@ -199,7 +199,7 @@ describe('E2E Workout Flow Tests', () => {
 
   it('should update training max after successful cycle', async () => {
     const currentTrainingMax = 315;
-    const standardReps = 5; // realization AMAP target for the 5-rep wave
+    const standardReps = 5; // realization AMRAP target for the 5-rep wave
 
     await createTestProfile(userId, {
       squat_max: currentTrainingMax,

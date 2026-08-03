@@ -357,7 +357,7 @@ describe('buildWaveSchedule', () => {
 // ─── calculateJuggernautSets ──────────────────────────────────────────────────
 //
 // Lifter profile used throughout: squat 1RM = 295 lb → TM = 266 lb
-// Each wave uses the TM produced by the previous wave's realization AMAP set.
+// Each wave uses the TM produced by the previous wave's realization AMRAP set.
 
 describe('calculateJuggernautSets', () => {
   // TM derived from a 295 lb 1RM
@@ -380,7 +380,7 @@ describe('calculateJuggernautSets', () => {
       expect(cfg.isAmap).toBe(false);
     });
 
-    it('realization: 1 AMAP set × 10+ reps @ 75% TM', () => {
+    it('realization: 1 AMRAP set × 10+ reps @ 75% TM', () => {
       const cfg = calculateJuggernautSets(10, 'realization', TM_266);
       expect(cfg.numSets).toBe(1);
       expect(cfg.reps).toBe(10);
@@ -414,7 +414,7 @@ describe('calculateJuggernautSets', () => {
       expect(cfg.weight).toBe(190);
     });
 
-    it('realization: 1 AMAP set × 8+ reps @ 80% TM', () => {
+    it('realization: 1 AMRAP set × 8+ reps @ 80% TM', () => {
       const cfg = calculateJuggernautSets(8, 'realization', TM_270);
       expect(cfg.numSets).toBe(1);
       expect(cfg.reps).toBe(8);
@@ -461,12 +461,12 @@ describe('calculateJuggernautSets', () => {
 // ─── Juggernaut integration: full program cycle ───────────────────────────────
 //
 // Simulates a lifter completing all 4 waves, beating each realization week's
-// AMAP target (= the wave number) by 2 reps every time. After each realization
+// AMRAP target (= the wave number) by 2 reps every time. After each realization
 // week the TM is recalculated (+5 lb per rep over target) and fed into the
 // next wave.
 //
 // Starting squat 1RM: 295 lb → TM 266
-// AMAP reps hit: 10-rep=12, 8-rep=10, 5-rep=7, 3-rep=5 (standard + 2 each wave)
+// AMRAP reps hit: 10-rep=12, 8-rep=10, 5-rep=7, 3-rep=5 (standard + 2 each wave)
 
 describe('Juggernaut integration: full 4-wave program cycle', () => {
   const STARTING_1RM = 295;
@@ -520,7 +520,7 @@ describe('Juggernaut integration: full 4-wave program cycle', () => {
     expect(tmStrong).toBeGreaterThan(tmBarely);
   });
 
-  it('full cycle: squat TM grows from 266 to 310 with good AMAP performance', () => {
+  it('full cycle: squat TM grows from 266 to 310 with good AMRAP performance', () => {
     // 10-rep: TM 266, beat standard (10) by 2 reps → TM 280
     const tm1 = calculateNewTrainingMax(266, 10, 12, 'lb');
     expect(tm1).toBe(280);

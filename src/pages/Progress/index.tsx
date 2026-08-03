@@ -72,7 +72,7 @@ export default function ProgressPage() {
 
   // Filter deloads: use phase if available (new sessions), fall back to week 4 (legacy).
   // Meet/1RM-test attempts are excluded too — they're actual competition singles, not
-  // AMAP training projections, and get their own markers on the chart via `meets` below.
+  // AMRAP training projections, and get their own markers on the chart via `meets` below.
   const nonDeloadSessions = sessions.filter(s => s.phase !== 'deload' && s.week !== 4 && !s.is_1rm_test);
 
   const toKg = (w: number) => profile.unit_preference !== 'kg' ? w * 0.453592 : w;
@@ -224,7 +224,7 @@ export default function ProgressPage() {
 
             <Card className="p-6">
               <SectionLabel className="mb-1">Estimated 1RM Over Time</SectionLabel>
-              <p className="text-xs text-gray-400 dark:text-gray-400 mb-4">AMAP sets, realization weeks only</p>
+              <p className="text-xs text-gray-400 dark:text-gray-400 mb-4">AMRAP sets, realization weeks only</p>
               {nonDeloadSessions.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-600 dark:text-gray-300 mb-2">Complete your first workout to see progress</p>

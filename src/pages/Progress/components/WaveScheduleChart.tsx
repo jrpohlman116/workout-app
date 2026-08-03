@@ -170,7 +170,7 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
             <p className="text-xs text-gray-400">Rest — save it for the platform</p>
           ) : d.isAmap ? (
             <p className="text-xs mb-1.5">
-              1 set × {d.reps}+ reps <span className="text-gray-400">(AMAP)</span>
+              1 set × {d.reps}+ reps <span className="text-gray-400">(AMRAP)</span>
             </p>
           ) : (
             <p className="text-xs mb-1.5">

@@ -92,7 +92,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const [restTimer, setRestTimer] = useState<{ endsAt: number; totalSeconds: number } | null>(null);
   // Cumulative bad-day reduction (0 = none). Nonzero also switches the
   // realization TM update to the Epley path — the per-rep plate bump
-  // assumes the AMAP was done at the standard weight.
+  // assumes the AMRAP was done at the standard weight.
   const [badDayDrop, setBadDayDrop] = useState(0);
   // Autosave only after the user actually does something — otherwise the
   // initial prefill would clobber a restorable draft on mount.
@@ -520,7 +520,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     ? (currentBlock.phase === 'peaking' ? 1 : currentBlock.wave)
     : (profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5);
 
-  // Only realization-week AMAP sets have a meaningful "standard vs actual reps"
+  // Only realization-week AMRAP sets have a meaningful "standard vs actual reps"
   // comparison to progress the training max from. If the weight was reduced
   // mid-session (bad-day drop), the rep standard no longer applies — fall
   // back to the Epley estimate from the actual weight lifted.
@@ -794,7 +794,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
       try { localStorage.removeItem(draftKey); } catch { /* storage unavailable */ }
       setShowSuccessModal(true);
-    } catch {
+    } catch (error) {
+      console.error('Failed to save workout:', error);
       setWorkoutSaveError(
         savedSessionIdRef.current
           ? 'Session logged, but accessories failed to save. Tap "Try again" to retry.'

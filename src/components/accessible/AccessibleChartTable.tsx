@@ -61,7 +61,7 @@ export default function AccessibleChartTable({
     });
   };
 
-  // Meets aren't part of chartData (they're competition singles, not AMAP
+  // Meets aren't part of chartData (they're competition singles, not AMRAP
   // training projections — see Progress/index.tsx), so merge each lift's best
   // successful meet attempt in here, sorted chronologically alongside training
   // sessions so "Starting"/"Current" stats stay accurate.

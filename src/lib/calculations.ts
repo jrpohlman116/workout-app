@@ -243,8 +243,8 @@ const STANDARD_PHASES: WavePhase[] = ['accumulation', 'intensification', 'realiz
 const COMPRESSED_PHASES: WavePhase[] = ['accumulation', 'realization', 'deload'];
 
 /**
- * Calculates the new training max after a Realization week AMAP set.
- * Each rep above (or below) the wave's standard AMAP target shifts the
+ * Calculates the new training max after a Realization week AMRAP set.
+ * Each rep above (or below) the wave's standard AMRAP target shifts the
  * training max by one plate increment (5 lb / 2.5 kg per rep over/under) —
  * half that for bench, which responds to rep swings with smaller jumps than
  * squat/deadlift — then rounds up to the nearest full plate increment.
@@ -314,7 +314,7 @@ export function calculateJuggernautSets(
 /**
  * Redistributes main-lift volume when barbell variations of the same lift
  * are already planned elsewhere in the week (accumulation/intensification
- * only — the caller decides eligibility; realization's AMAP, deload,
+ * only — the caller decides eligibility; realization's AMRAP, deload,
  * peaking, and meet week always run the full competition-lift prescription
  * regardless of what this returns). Never drops the main lift below ~60%
  * of its own prescribed sets, so the competition lift keeps specificity

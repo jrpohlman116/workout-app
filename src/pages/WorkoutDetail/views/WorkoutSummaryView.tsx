@@ -190,7 +190,7 @@ export default function WorkoutSummaryView({
             <div>
               <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">
                 {mainConfig.isAmap
-                  ? 'AMAP Set'
+                  ? 'AMRAP Set'
                   : `${mainConfig.numSets} sets × ${mainConfig.reps}`}
               </p>
               {mainConfig.isAmap && (
