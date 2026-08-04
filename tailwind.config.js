@@ -18,24 +18,24 @@ export default {
         h4: ['1.125rem', { lineHeight: '1.625rem', fontWeight: '600' }],
 
         // Body — Large (18px)
-        'body-lg': ['1.125rem', { lineHeight: '1.625rem', fontWeight: '400' }],
-        'body-lg-semibold': ['1.125rem', { lineHeight: '1.625rem', fontWeight: '600' }],
-        'body-lg-bold': ['1.125rem', { lineHeight: '1.625rem', fontWeight: '700' }],
+        'body-lg': ['1.125rem', { lineHeight: '1.6875rem', fontWeight: '400' }],
+        'body-lg-semibold': ['1.125rem', { lineHeight: '1.6875rem', fontWeight: '600' }],
+        'body-lg-bold': ['1.125rem', { lineHeight: '1.6875rem', fontWeight: '700' }],
 
         // Body — Medium (16px)
-        'body-md': ['1rem', { lineHeight: '1.375rem', fontWeight: '400' }],
+        'body-md': ['1rem', { lineHeight: '1.5rem', fontWeight: '400' }],
         'body-md-semibold': ['1rem', { lineHeight: '1.5rem', fontWeight: '600' }],
-        'body-md-bold': ['1rem', { lineHeight: '1.375rem', fontWeight: '700' }],
+        'body-md-bold': ['1rem', { lineHeight: '1.5rem', fontWeight: '700' }],
 
         // Body — Small (14px)
-        'body-sm': ['0.875rem', { lineHeight: '1.25rem', fontWeight: '400' }],
-        'body-sm-semibold': ['0.875rem', { lineHeight: '1.25rem', fontWeight: '600' }],
-        'body-sm-bold': ['0.875rem', { lineHeight: '1.25rem', fontWeight: '700' }],
+        'body-sm': ['0.875rem', { lineHeight: '1.3125rem', fontWeight: '400' }],
+        'body-sm-semibold': ['0.875rem', { lineHeight: '1.3125rem', fontWeight: '600' }],
+        'body-sm-bold': ['0.875rem', { lineHeight: '1.3125rem', fontWeight: '700' }],
 
         // Body — Extra Small (12px)
-        'body-xs': ['0.75rem', { lineHeight: '1rem', fontWeight: '400' }],
-        'body-xs-semibold': ['0.75rem', { lineHeight: '1.125rem', fontWeight: '600' }],
-        'body-xs-bold': ['0.75rem', { lineHeight: '1.125rem', fontWeight: '700' }],
+        'body-xs': ['0.75rem', { lineHeight: '1.25rem', fontWeight: '400' }],
+        'body-xs-semibold': ['0.75rem', { lineHeight: '1.25rem', fontWeight: '600' }],
+        'body-xs-bold': ['0.75rem', { lineHeight: '1.25rem', fontWeight: '700' }],
 
         // Display — decorative numerals/wordmark, used sparingly
         'display-sm': ['1.125rem', { lineHeight: '1.375rem', fontWeight: '900' }],
@@ -45,10 +45,10 @@ export default {
         'display-wordmark': ['3.5rem', { lineHeight: '3.625rem', fontWeight: '900' }],
 
         // UI labels
-        eyebrow: ['0.75rem', { lineHeight: '1rem', fontWeight: '600', letterSpacing: '0.05em' }],
-        'nav-label': ['0.625rem', { lineHeight: '0.8125rem', fontWeight: '600' }],
-        'button-label': ['0.9375rem', { lineHeight: '1.25rem', fontWeight: '700' }],
-        'chart-label': ['0.5625rem', { lineHeight: '0.75rem', fontWeight: '400' }],
+        'eyebrow': ['0.75rem', { lineHeight: '1.25rem', fontWeight: '600'}],
+        'nav-label': ['0.75rem', { lineHeight: '1.25rem', fontWeight: '600' }],
+        'button-label': ['1rem', { lineHeight: '1.5rem', fontWeight: '700' }],
+        'chart-label': ['0.75rem', { lineHeight: '1.25rem', fontWeight: '400' }],
       },
     },
   },

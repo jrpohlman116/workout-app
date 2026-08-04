@@ -238,67 +238,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           />
         </Card>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="p-5 min-w-0">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">Wave</p>
-              <IconButton
-                size="sm"
-                label="About this phase"
-                onClick={() => setShowPhaseInfo(v => !v)}
-              >
-                <Info className="w-3.5 h-3.5" aria-hidden="true" />
-              </IconButton>
-            </div>
-            <div className="mb-2 flex flex-wrap items-baseline">
-              <span className="text-display-lg tabular-nums leading-none text-gray-900 dark:text-gray-100">
-                {displayWave}
-              </span>
-              <span className="text-sm font-semibold text-gray-400 dark:text-gray-400 ml-1">rep</span>
-            </div>
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
-              {PHASE_LABELS[displayPhase]}
-            </p>
-            {showPhaseInfo && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                {PHASE_DESCRIPTIONS[displayPhase]}
-              </p>
-            )}
-          </Card>
-
-          <Card className="p-5 min-w-0">
-            {profile.meet_date ? (
-              <>
-                <div className="min-h-11 flex items-center justify-between mb-3">
-                  <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">Days Out</p>
-                </div>
-                <div className="mb-2 flex flex-wrap items-baseline">
-                  <span className="text-display-lg tabular-nums leading-none text-gray-900 dark:text-gray-100">
-                    {Math.max(0, Math.ceil((new Date(profile.meet_date).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))}
-                  </span>
-                  <span className="text-xl font-semibold text-gray-400 dark:text-gray-400 ml-0.5">d</span>
-                </div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                  {PHASE_LABELS[displayPhase]}
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-3">Week</p>
-                <div className="mb-2 flex flex-wrap items-baseline">
-                  <span className="text-display-lg tabular-nums leading-none text-gray-900 dark:text-gray-100">
-                    {currentBlock ? currentBlock.weekIndex + 1 : profile.current_week}
-                  </span>
-                  <span className="text-sm font-semibold text-gray-400 dark:text-gray-400 ml-1">of 4</span>
-                </div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                  {PHASE_LABELS[displayPhase]}
-                </p>
-              </>
-            )}
-          </Card>
-        </div>
-
         {isMeetDay && (
           <Tile
             onClick={() => setShowOneRMTest(true)}
@@ -315,7 +254,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         )}
 
         {/* Week navigator */}
-        <Card className="px-4 py-3 flex items-center justify-between">
+        <Card className="p-5 flex items-center justify-between">
           <IconButton
             label="Previous week"
             onClick={() => setWeekOffset(o => o - 1)}
@@ -324,10 +263,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             <ChevronLeft className="w-5 h-5" aria-hidden="true" />
           </IconButton>
           <div className="text-center">
-            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-body-md-semibold text-gray-900 dark:text-gray-100">
               {displayWave}-Rep {PHASE_LABELS[displayPhase]}
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
+            <p className="text-body-sm text-gray-400 dark:text-gray-400 mt-0.5">
               {isViewing
                 ? weekOffset > 0
                   ? `${weekOffset} week${weekOffset !== 1 ? 's' : ''} ahead`
@@ -346,17 +285,17 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-h3 text-gray-900 dark:text-gray-100">Workouts</h2>
+            <h2 className="text-h2 text-gray-900 dark:text-gray-100">Workouts</h2>
             {isViewing && (
-              <span className="text-xs font-semibold text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full">
+              <span className="text-body-sm-semibold text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full">
                 Preview
               </span>
             )}
           </div>
           {isDeload && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4 mb-4">
-              <p className="text-gray-900 dark:text-gray-100 font-semibold mb-1">Deload Week</p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Lighter weights, same movements. Complete the sets and move on.</p>
+              <p className="text-body-md-semibold text-gray-900 dark:text-gray-100 mb-1">Deload Week</p>
+              <p className="text-body-sm text-gray-600 dark:text-gray-300">Lighter weights, same movements. Complete the sets and move on.</p>
             </div>
           )}
           <div className="space-y-3">
@@ -396,29 +335,31 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                       ? `bg-green-50 dark:bg-green-900/20 ${isViewing ? 'cursor-default' : 'hover:bg-green-100 dark:hover:bg-green-900/30 hover-scale active-press ripple-container'}`
                       : `bg-gray-50 dark:bg-gray-700 ${isViewing ? 'cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-600 hover-scale active-press ripple-container'}`
                     }`}
-                  leading={
-                    <span className="min-w-7 text-center font-mono text-sm font-bold text-gray-300 dark:text-gray-300 select-none">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                  }
                   trailing={trailing}
                 >
-                  <p className={`text-xs tracking-wide font-semibold mb-0.5 ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'
+                  <p className={`text-eyebrow tracking-wide mb-1 ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'
                     }`}>
                     {workout.name}
                   </p>
                   {isCompleted ? (
-                    <p className="text-sm font-semibold text-green-700 dark:text-green-300 tabular-nums">
-                      {projected1RM ? `${Math.round(projected1RM)} ${unit} proj.` : 'Done'}
+                    <p className="text-body-lg-bold text-green-700 dark:text-green-300 tabular-nums">
+                      {
+                      projected1RM ? 
+                        <>
+                          {`${Math.round(projected1RM)} ${unit} `}
+                          <span className="text-body-sm-semibold">proj.</span>
+                        </>
+                        : 'Done'
+                      }
                     </p>
                   ) : isUpperDayWorkout ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-300">Accessory work</p>
+                    <p className="text-body-md text-gray-500 dark:text-gray-300">Accessory work</p>
                   ) : weightLow !== null && weightHigh !== null ? (
-                    <p className="text-xl font-black tabular-nums leading-tight text-gray-900 dark:text-gray-100">
+                    <p className="text-body-lg-bold font-black tabular-nums leading-tight text-gray-900 dark:text-gray-100">
                       {weightLow}<wbr />–{weightHigh} <span className="text-sm font-medium text-gray-400 dark:text-gray-300">{unit}</span>
                     </p>
                   ) : (
-                    <p className="text-sm text-gray-500 dark:text-gray-300">—</p>
+                    <p className="text-body-sm text-gray-500 dark:text-gray-300">—</p>
                   )}
                 </Tile>
               );
@@ -457,7 +398,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         description={`Skip to ${nextAdvanceLabel}`}
         size="sm"
       >
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
+        <p className="text-body-md text-gray-600 dark:text-gray-300 mb-6">
           {completedWorkouts.size === 4
             ? "You've completed all workouts for this week. Ready to move to the next week?"
             : "You haven't completed all workouts yet. Are you sure you want to skip ahead?"}

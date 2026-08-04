@@ -13,7 +13,7 @@ const tones: Record<Tone, string> = {
 
 export default function SectionLabel({ children, tone = 'card', className = '', ...props }: SectionLabelProps) {
   return (
-    <p className={`text-xs tracking-wide font-semibold ${tones[tone]} ${className}`} {...props}>
+    <p className={`text-eyebrow ${tones[tone]} ${className}`} {...props}>
       {children}
     </p>
   );

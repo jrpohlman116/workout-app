@@ -74,7 +74,7 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
   if (!schedule.weeks.length) {
     return (
       <div className="text-center py-12 space-y-2">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-body-sm text-gray-500 dark:text-gray-400">
           {schedule.adjustments.length
             ? schedule.adjustments[0]
             : 'Set a meet date in your profile to see your program schedule.'}
@@ -164,32 +164,32 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
     return (
       <div className="bg-gray-900 text-white px-3 py-2.5 rounded-lg shadow-xl text-sm min-w-[168px]">
         <p className="font-bold leading-tight">{title}</p>
-        <p className="text-xs text-gray-400 mb-2">{PHASE_LABELS[d.phase]}</p>
+        <p className="text-body-sm text-gray-400 mb-2">{PHASE_LABELS[d.phase]}</p>
         <div className="space-y-0.5">
           {d.isMeetWeek ? (
-            <p className="text-xs text-gray-400">Rest — save it for the platform</p>
+            <p className="text-body-sm text-gray-400">Rest — save it for the platform</p>
           ) : d.isAmap ? (
-            <p className="text-xs mb-1.5">
+            <p className="text-body-sm mb-1.5">
               1 set × {d.reps}+ reps <span className="text-gray-400">(AMRAP)</span>
             </p>
           ) : (
-            <p className="text-xs mb-1.5">
+            <p className="text-body-sm mb-1.5">
               {d.numSets} × {d.reps} = <span className="font-semibold">{d.totalReps} reps</span>
             </p>
           )}
           {!d.isMeetWeek && (
             <div className="space-y-0.5">
-              <p className="text-xs"><span className="text-gray-400 w-14 inline-block">Squat</span><span className="font-semibold">{d.squatWeight} {unit}</span></p>
-              <p className="text-xs"><span className="text-gray-400 w-14 inline-block">Bench</span><span className="font-semibold">{d.benchWeight} {unit}</span></p>
-              <p className="text-xs"><span className="text-gray-400 w-14 inline-block">Deadlift</span><span className="font-semibold">{d.deadliftWeight} {unit}</span></p>
+              <p className="text-body-sm"><span className="text-gray-400 w-14 inline-block">Squat</span><span className="font-semibold">{d.squatWeight} {unit}</span></p>
+              <p className="text-body-sm"><span className="text-gray-400 w-14 inline-block">Bench</span><span className="font-semibold">{d.benchWeight} {unit}</span></p>
+              <p className="text-body-sm"><span className="text-gray-400 w-14 inline-block">Deadlift</span><span className="font-semibold">{d.deadliftWeight} {unit}</span></p>
             </div>
           )}
         </div>
         {d.isCurrentWeek && (
-          <p className="text-xs text-amber-400 font-semibold mt-1.5">← You are here</p>
+          <p className="text-body-sm text-amber-400 font-semibold mt-1.5">← You are here</p>
         )}
         {d.isPast && (
-          <p className="text-xs text-gray-500 mt-1.5">Completed</p>
+          <p className="text-body-sm text-gray-500 mt-1.5">Completed</p>
         )}
       </div>
     );
@@ -200,9 +200,9 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
   const wavesInSchedule = [...new Set(data.filter(d => !d.isPeaking && !d.isMeetWeek).map(d => d.wave))].sort((a, b) => b - a);
 
   return (
-    <div className="space-y-2">
+    <div>
       {/* Summary row */}
-      <div className="flex items-center gap-4 text-xs flex-wrap">
+      <div className="flex items-center gap-4 text-body-sm flex-wrap">
         <span className="text-gray-500 dark:text-gray-400">
           <span className="font-bold text-gray-900 dark:text-gray-100">{pastCount}</span> weeks done
         </span>
@@ -218,26 +218,17 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
         <span className="text-gray-500 dark:text-gray-400">
           <span className="font-bold text-gray-900 dark:text-gray-100">{remainingCount}</span> weeks left
         </span>
-        {schedule.adjustments.length > 0 && (
-          <IconButton
-            size="sm"
-            label="Schedule details"
-            onClick={() => setShowInfo(v => !v)}
-          >
-            <Info className="w-3.5 h-3.5" aria-hidden="true" />
-          </IconButton>
-        )}
       </div>
       {showInfo && schedule.adjustments.length > 0 && (
         <div className="space-y-1">
           {schedule.adjustments.map((msg, i) => (
-            <p key={i} className="text-xs text-gray-400 dark:text-gray-400">{msg}</p>
+            <p key={i} className="text-body-sm text-gray-400 dark:text-gray-400">{msg}</p>
           ))}
         </div>
       )}
 
       {/* Chart — scrollable on narrow screens */}
-      <div className="overflow-x-auto -mx-1 px-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+      <div className="overflow-x-auto mt-4 -mx-1 px-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
         <div style={{ width: chartWidth, minWidth: '100%' }}>
           <ComposedChart
             width={chartWidth}
@@ -317,28 +308,28 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1">
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1 mt-4">
         {wavesInSchedule.map(wave => (
           <div key={wave} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: WAVE_COLORS[wave] }} />
-            <span className="text-xs text-gray-500 dark:text-gray-400">{wave}-Rep</span>
+            <span className="text-body-sm text-gray-500 dark:text-gray-400">{wave}-Rep</span>
           </div>
         ))}
         {data.some(d => d.isPeaking) && (
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PEAKING_COLOR }} />
-            <span className="text-xs text-gray-500 dark:text-gray-400">Peaking</span>
+            <span className="text-body-sm text-gray-500 dark:text-gray-400">Peaking</span>
           </div>
         )}
         {data.some(d => d.isMeetWeek) && (
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: MEET_WEEK_COLOR }} />
-            <span className="text-xs text-gray-500 dark:text-gray-400">Meet</span>
+            <span className="text-body-sm text-gray-500 dark:text-gray-400">Meet</span>
           </div>
         )}
         <div className="flex items-center gap-1.5">
           <div className="w-5 h-0 border-t-2 border-dashed border-gray-300 dark:border-gray-500" />
-          <span className="text-xs text-gray-500 dark:text-gray-400">% TM</span>
+          <span className="text-body-sm text-gray-500 dark:text-gray-400">% TM</span>
         </div>
       </div>
 
