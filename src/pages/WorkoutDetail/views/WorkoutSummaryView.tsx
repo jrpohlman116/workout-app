@@ -227,7 +227,7 @@ export default function WorkoutSummaryView({
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-h3 text-gray-900 dark:text-gray-100">Accessory Exercises</h2>
+          <h3 className="text-h3 text-gray-900 dark:text-gray-100">Accessory Exercises</h3>
           {canEdit && !isEditMode && (
             <Button
               type="button"

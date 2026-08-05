@@ -223,8 +223,7 @@ export default function ProgressPage() {
             )}
 
             <Card className="p-6">
-              <SectionLabel className="mb-1">Estimated 1RM Over Time</SectionLabel>
-              <p className="text-sm text-gray-400 dark:text-gray-400 mb-4">AMRAP sets, realization weeks only</p>
+              <h3 className="text-h3 text-gray-900 dark:text-gray-100 mb-8">Estimated 1RM Over Time</h3>
               {nonDeloadSessions.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-600 dark:text-gray-300 mb-2">Complete your first workout to see progress</p>
@@ -241,28 +240,32 @@ export default function ProgressPage() {
               <AccessibleChartTable chartData={chartData} meets={meetGroups} unitPreference={profile.unit_preference || 'lb'} />
             )}
 
-            <p className="text-sm tracking-wide font-semibold text-white/70 mb-2">Top e1RM</p>
-            <div className="grid grid-rows-3 gap-3">
-              {lifts.map((lift, index) => {
-                const topMax = effectiveMaxes[lift.type as keyof typeof effectiveMaxes];
-                const displayMax = topMax > 0 ? topMax : lift.initial;
-                const firstRecorded = utils.getFirstRecordedMax(sessions, lift.type);
-                const changePercent = utils.getMaxChangePercent(firstRecorded, displayMax);
-                const isVisible = index < visibleLifts;
+            <Card className="overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-h3 text-gray-900 dark:text-gray-100">Top Estimated 1 Rep Max</h3>
+              </div>
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {lifts.map((lift, index) => {
+                  const topMax = effectiveMaxes[lift.type as keyof typeof effectiveMaxes];
+                  const displayMax = topMax > 0 ? topMax : lift.initial;
+                  const firstRecorded = utils.getFirstRecordedMax(sessions, lift.type);
+                  const changePercent = utils.getMaxChangePercent(firstRecorded, displayMax);
+                  const isVisible = index < visibleLifts;
 
-                return (
-                  <LiftSummaryCard
-                    key={lift.type}
-                    displayName={lift.displayName}
-                    current={displayMax}
-                    initial={firstRecorded > 0 ? firstRecorded : lift.initial}
-                    changePercent={changePercent}
-                    isVisible={isVisible}
-                    unitPreference={profile.unit_preference || 'lb'}
-                  />
-                );
-              })}
-            </div>
+                  return (
+                    <LiftSummaryCard
+                      key={lift.type}
+                      displayName={lift.displayName}
+                      current={displayMax}
+                      initial={firstRecorded > 0 ? firstRecorded : lift.initial}
+                      changePercent={changePercent}
+                      isVisible={isVisible}
+                      unitPreference={profile.unit_preference || 'lb'}
+                    />
+                  );
+                })}
+              </div>
+            </Card>
           </div>
         )}
 
@@ -272,10 +275,10 @@ export default function ProgressPage() {
               const bestSession = utils.getBestWeightForLift(sessions, lift.type);
               const bestVolume = utils.getBestVolumeForLift(sessions, lift.type);
               const unit = profile.unit_preference || 'lb';
-
+              
               return (
                 <Card key={lift.type} className="p-6 animate-enter" style={{ animationDelay: `${index * 50}ms` }}>
-                  <SectionLabel className="mb-4">{lift.displayName}</SectionLabel>
+                  <p className="text-body-sm text-gray-500 dark:text-gray-400 mb-4">{lift.displayName}</p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-400 dark:text-gray-400 mb-2">Best Set</p>

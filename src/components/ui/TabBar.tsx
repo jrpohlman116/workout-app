@@ -21,7 +21,7 @@ export default function TabBar<T extends string>({ tabs, activeTab, onChange, on
               onRipple?.(e);
               onChange(tab.id);
             }}
-            className={`pt-3 pb-3 font-semibold whitespace-nowrap transition-colors relative overflow-hidden ${
+            className={`pt-3 pb-3 text-body-sm-semibold whitespace-nowrap transition-colors relative overflow-hidden ${
               activeTab === tab.id
                 ? 'text-gray-900 dark:text-gray-100'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'

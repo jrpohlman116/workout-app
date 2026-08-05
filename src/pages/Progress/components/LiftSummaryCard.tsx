@@ -1,5 +1,4 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import Card from '../../../components/ui/Card';
 
 interface LiftSummaryCardProps {
   displayName: string;
@@ -15,12 +14,12 @@ export default function LiftSummaryCard({ displayName, current, initial, changeP
   const isPositive = change >= 0;
 
   return (
-    <Card className={`p-4 transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-      <div className="flex items-start justify-between mb-2">
-        <h2 className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 leading-tight">{displayName}</h2>
+    <div className={`px-6 py-4 transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+      <div className="flex items-center justify-between mb-1.5">
+        <p className="text-body-md-semibold tracking-wide text-gray-500 dark:text-gray-400">{displayName}</p>
         {change !== 0 && (
           <span
-            className={`flex items-center text-xs font-semibold flex-shrink-0 ml-1 ${
+            className={`flex items-center text-eyebrow tracking-wide flex-shrink-0 ml-1 ${
               isPositive ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'
             }`}
           >
@@ -29,8 +28,8 @@ export default function LiftSummaryCard({ displayName, current, initial, changeP
           </span>
         )}
       </div>
-      <p className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100 mb-0.5 leading-none">{current} <span className="text-xs font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span></p>
-      <p className="text-xs text-gray-400 dark:text-gray-400 tabular-nums">from {initial}</p>
-    </Card>
+      <p className="text-display-md tabular-nums text-gray-900 dark:text-gray-100 mb-0.5 leading-none">{current} <span className="text-body-sm-semibold text-gray-400 dark:text-gray-400">{unitPreference}</span></p>
+      <p className="text-body-xs text-gray-400 dark:text-gray-400 tabular-nums">from {initial}</p>
+    </div>
   );
 }

@@ -100,7 +100,7 @@ export default function AuthForm() {
           resetSent ? (
             <div className="space-y-6">
               <div>
-                <h2 className="text-h3 text-white mb-2">Check your email</h2>
+                <h3 className="text-h3 text-white mb-2">Check your email</h3>
                 <p className="text-sm text-white/60">
                   If an account exists for <span className="text-white/90">{email}</span>, we've sent a link to reset your password.
                 </p>
@@ -116,7 +116,7 @@ export default function AuthForm() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <h2 className="text-h3 text-white mb-2">Reset your password</h2>
+                <h3 className="text-h3 text-white mb-2">Reset your password</h3>
                 <p className="text-sm text-white/60 mb-6">
                   Enter your email and we'll send you a link to set a new password.
                 </p>

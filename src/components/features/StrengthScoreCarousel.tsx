@@ -80,7 +80,7 @@ export default function StrengthScoreCarousel({
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">
+            <p className="text-body-md-semibold text-gray-500 dark:text-gray-400">
               {currentConfig.name}
             </p>
             <IconButton
@@ -99,7 +99,7 @@ export default function StrengthScoreCarousel({
         </div>
         {hasProjectedData && parseFloat(currentChangePercent) !== 0 && (
           <div
-            className={`text-sm font-semibold flex-shrink-0 ${
+            className={`text-body-sm-semibold flex-shrink-0 ${
               parseFloat(currentChangePercent) > 0
                 ? 'text-green-600 dark:text-green-400'
                 : 'text-red-600 dark:text-red-400'
@@ -120,10 +120,10 @@ export default function StrengthScoreCarousel({
         </IconButton>
 
         <div className="text-center flex-1 py-4">
-          <p className="text-6xl font-black text-gray-900 dark:text-gray-100 tabular-nums leading-none mb-3">
+          <p className="text-display-hero text-gray-900 dark:text-gray-100 tabular-nums leading-none mb-3">
             {animatedScore}
           </p>
-          <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+          <p className="text-body-sm-semibold text-blue-600 dark:text-blue-400">
             {currentConfig.getLevelFn(currentScore)}
           </p>
         </div>

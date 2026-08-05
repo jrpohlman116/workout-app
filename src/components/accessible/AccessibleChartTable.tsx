@@ -99,9 +99,9 @@ export default function AccessibleChartTable({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
       <div className="px-6 py-4 bg-white dark:bg-gray-700 border-b border-gray-200 dark:border-gray-400">
-        <h2 className="text-h4 text-gray-900 dark:text-gray-100">
+        <h3 className="text-h3 text-gray-900 dark:text-gray-100">
           Progress Data Table
-        </h2>
+        </h3>
       </div>
 
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -128,9 +128,9 @@ export default function AccessibleChartTable({
                       aria-hidden="true"
                     />
                     <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">{lift.name}</h4>
+                      <h4 className="text-h4 text-gray-900 dark:text-gray-100">{lift.name}</h4>
                       {stats && (
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                        <p className="text-body-sm text-gray-600 dark:text-gray-300 mt-1">
                           {lift.data.length} session{lift.data.length !== 1 ? 's' : ''}
                           {meetCount > 0 && ` · ${meetCount} meet${meetCount !== 1 ? 's' : ''}`}
                         </p>
@@ -153,16 +153,16 @@ export default function AccessibleChartTable({
                   {stats && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-300">Starting</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{stats.first} {unitPreference}</p>
+                        <p className="text-body-sm text-gray-600 dark:text-gray-300">Starting</p>
+                        <p className="text-display-sm text-gray-900 dark:text-gray-100">{stats.first} {unitPreference}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-300">Current</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{stats.last} {unitPreference}</p>
+                        <p className="text-body-sm text-gray-600 dark:text-gray-300">Current</p>
+                        <p className="text-display-sm text-gray-900 dark:text-gray-100">{stats.last} {unitPreference}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-300">Best</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{stats.max} {unitPreference}</p>
+                        <p className="text-body-sm text-gray-600 dark:text-gray-300">Best</p>
+                        <p className="text-display-sm text-gray-900 dark:text-gray-100">{stats.max} {unitPreference}</p>
                       </div>
                     </div>
                   )}
@@ -225,7 +225,7 @@ export default function AccessibleChartTable({
                                 })}
                               </span>
                               {dataPoint.isMeet && (
-                                <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                                <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-eyebrow tracking-wide bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                                   Meet
                                 </span>
                               )}

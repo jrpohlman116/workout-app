@@ -86,9 +86,9 @@ export default function AccessibleModal({
       >
         <div className={panelClasses}>
           <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-400 px-6 py-4 flex items-center justify-between transition-colors">
-            <h2 id={titleId} className="text-h3 text-gray-900 dark:text-gray-100">
+            <h3 id={titleId} className="text-h3 text-gray-900 dark:text-gray-100">
               {title}
-            </h2>
+            </h3>
             <button
               type="button"
               onClick={onClose}
