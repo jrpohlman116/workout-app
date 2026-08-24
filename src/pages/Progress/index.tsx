@@ -281,7 +281,7 @@ export default function ProgressPage() {
               
               return (
                 <Card key={lift.type} className="p-6 animate-enter" style={{ animationDelay: `${index * 50}ms` }}>
-                  <p className="text-body-sm text-gray-500 dark:text-gray-400 mb-4">{lift.displayName}</p>
+                  <h2 className="text-h2 text-gray-900 dark:text-gray-100 mb-4">{lift.displayName}</h2>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-400 dark:text-gray-400 mb-2">Best Set</p>
