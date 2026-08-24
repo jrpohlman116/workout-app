@@ -148,6 +148,7 @@ describe('WorkingSetModal', () => {
 describe('MainLiftView focused set rows', () => {
   const baseProps = {
     liftName: 'Deadlift',
+    liftType: 'deadlift',
     mainSets: [
       { reps: '10', weight: '180' },
       { reps: '10', weight: '180' },
@@ -231,10 +232,13 @@ describe('MainLiftView focused set rows', () => {
     render(<ControlledMainLiftView {...baseProps} />);
 
     await user.click(screen.getByRole('button', { name: /start warm-up/i }));
-    // Skip through every fixed set without rating feel, landing on the final card
-    for (let i = 0; i < 4; i++) {
-      const skip = screen.queryByRole('button', { name: 'Skip' });
-      if (skip) await user.click(skip);
+    // Skip through every fixed set without rating feel, landing on the final
+    // card — the ramp's set count is an implementation detail, so skip
+    // however many times it takes rather than hardcoding a count.
+    let skip = screen.queryByRole('button', { name: 'Skip' });
+    while (skip) {
+      await user.click(skip);
+      skip = screen.queryByRole('button', { name: 'Skip' });
     }
     await user.click(screen.getByRole('button', { name: /start working sets/i }));
 

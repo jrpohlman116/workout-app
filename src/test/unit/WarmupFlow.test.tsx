@@ -6,8 +6,9 @@ import PlateVisual from '../../components/features/PlateVisual';
 import { calculateWarmupSets, DEFAULT_PLATES_LB } from '../../lib/calculations';
 
 const makeProps = (overrides: Record<string, unknown> = {}) => ({
-  warmup: calculateWarmupSets(165, 'lb'),
-  plannedWeight: 165,
+  // Squat ramp for 405: 45 (0%), 160 (40%), 205 (50%), 245 (60%), 285 (70%), 325 (80%)
+  warmup: calculateWarmupSets(405, 'lb', 'squat'),
+  plannedWeight: 405,
   adjustedWeight: null,
   // 0 = fall back to adjusted/planned, matching pre-drop display behavior
   currentTopWeight: 0,
@@ -28,7 +29,7 @@ describe('WarmupFlow', () => {
   it('opens as a dialog on the first set (empty bar)', () => {
     render(<WarmupFlow {...makeProps()} />);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText(/set 1 of 4 — empty bar/i)).toBeInTheDocument();
+    expect(screen.getByText(/set 1 of 6 — empty bar/i)).toBeInTheDocument();
   });
 
   it('steps through sets, checking each one off', async () => {
@@ -38,24 +39,24 @@ describe('WarmupFlow', () => {
 
     await user.click(screen.getByRole('button', { name: /done — next set/i }));
     expect(props.onCheckSet).toHaveBeenCalledWith(0);
-    expect(screen.getByText(/set 2 of 4 — 50%/i)).toBeInTheDocument();
+    expect(screen.getByText(/set 2 of 6 — 40%/i)).toBeInTheDocument();
   });
 
-  it('asks for feel on the 82% set and advances to the approach single', async () => {
+  it('asks for feel on the last set and advances to the approach single', async () => {
     const user = userEvent.setup();
-    const props = makeProps({ warmupChecks: [true, true, true] });
+    const props = makeProps({ warmupChecks: [true, true, true, true, true] });
     render(<WarmupFlow {...props} />);
 
-    // Resumes at the 82% step
-    expect(screen.getByText(/set 4 of 4 — 82%/i)).toBeInTheDocument();
+    // Resumes at the last ramp step (325 lb, 80% of the 405 top set)
+    expect(screen.getByText(/set 6 of 6 — 80%/i)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Good' }));
-    expect(props.onCheckSet).toHaveBeenCalledWith(3);
+    expect(props.onCheckSet).toHaveBeenCalledWith(5);
     expect(props.onSet4Feel).toHaveBeenCalledWith('good');
   });
 
   it('rates the approach single and lands on the final card', async () => {
     const user = userEvent.setup();
-    const props = makeProps({ warmupChecks: [true, true, true, true], set4Feel: 'good' });
+    const props = makeProps({ warmupChecks: [true, true, true, true, true, true], set4Feel: 'good' });
     render(<WarmupFlow {...props} />);
 
     expect(screen.getByText(/approach single/i)).toBeInTheDocument();
@@ -67,7 +68,7 @@ describe('WarmupFlow', () => {
   it('shows the adjusted working weight on the final card and completes', async () => {
     const user = userEvent.setup();
     const props = makeProps({
-      warmupChecks: [true, true, true, true],
+      warmupChecks: [true, true, true, true, true, true],
       set4Feel: 'good',
       set5Feel: 'easy',
       adjustedWeight: 170,
@@ -81,9 +82,9 @@ describe('WarmupFlow', () => {
     expect(props.onComplete).toHaveBeenCalledOnce();
   });
 
-  it('skipping the 82% feel skips the approach single too', async () => {
+  it('skipping the feel on the last set skips the approach single too', async () => {
     const user = userEvent.setup();
-    const props = makeProps({ warmupChecks: [true, true, true] });
+    const props = makeProps({ warmupChecks: [true, true, true, true, true] });
     render(<WarmupFlow {...props} />);
 
     await user.click(screen.getByRole('button', { name: 'Skip' }));

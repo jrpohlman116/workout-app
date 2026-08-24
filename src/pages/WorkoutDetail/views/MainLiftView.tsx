@@ -11,6 +11,8 @@ import WorkingSetModal from '../../../components/features/WorkingSetModal';
 
 interface MainLiftViewProps {
   liftName: string;
+  /** Drives which warm-up ramp shape to use (squat/bench/deadlift); 'upper'/'ohp' warm up like bench. */
+  liftType?: string;
   mainSets: SetInput[];
   mainReps: string | number;
   unitPreference: string;
@@ -50,6 +52,7 @@ interface MainLiftViewProps {
 
 export default function MainLiftView({
   liftName,
+  liftType = 'squat',
   mainSets,
   mainReps,
   unitPreference,
@@ -98,7 +101,7 @@ export default function MainLiftView({
   };
 
   const warmupBase = baseWeight ?? topSetWeight;
-  const warmup = warmupBase > 0 ? calculateWarmupSets(warmupBase, unitPreference) : null;
+  const warmup = warmupBase > 0 ? calculateWarmupSets(warmupBase, unitPreference, liftType) : null;
   const adjustedWeight = set4Feel && set5Feel && warmup ? warmup.getAdjustedWorkingWeight(set4Feel, set5Feel) : null;
 
   // Working weights display as a ±4% range until the warm-up flow locks

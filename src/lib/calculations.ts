@@ -443,23 +443,72 @@ export function calculateBackoffSets(
   return { weight, sets, reps };
 }
 
+// Per-lift warm-up ramps: percentage of the top set and reps at each step,
+// after the empty bar. Squat gets the most graduated ramp (it responds well
+// to volume at moderate loads), bench a shorter one (less neural/joint
+// overhead), deadlift the shortest with the biggest relative jumps (its
+// warm-up is mostly setup/positional rehearsal, not muscle priming) —
+// per general powerlifting warm-up guidance rather than a fixed percentage
+// or plate-jump formula applied uniformly across lifts.
+const BAR_REPS: Record<'squat' | 'bench' | 'deadlift', number> = {
+  squat: 8,
+  bench: 10,
+  deadlift: 5,
+};
+
+const WARMUP_RAMPS: Record<'squat' | 'bench' | 'deadlift', { pct: number; reps: number }[]> = {
+  squat: [
+    { pct: 0.40, reps: 5 },
+    { pct: 0.50, reps: 5 },
+    { pct: 0.60, reps: 3 },
+    { pct: 0.70, reps: 3 },
+    { pct: 0.80, reps: 2 },
+  ],
+  bench: [
+    { pct: 0.40, reps: 5 },
+    { pct: 0.60, reps: 3 },
+    { pct: 0.75, reps: 2 },
+    { pct: 0.85, reps: 1 },
+  ],
+  deadlift: [
+    { pct: 0.30, reps: 5 },
+    { pct: 0.50, reps: 3 },
+    { pct: 0.70, reps: 2 },
+    { pct: 0.85, reps: 1 },
+  ],
+};
+
+function getWarmupRampKey(liftType: string): 'squat' | 'bench' | 'deadlift' {
+  if (liftType === 'deadlift') return 'deadlift';
+  if (liftType === 'bench' || liftType === 'upper' || liftType === 'ohp') return 'bench';
+  return 'squat';
+}
+
 /**
- * Calculates warm-up set progression leading to a top set.
- * Fixed progression: bar (10), 50% (5), 67% (3), 82% (2)
- * Then calculates approach weights based on feel of 82% set.
+ * Calculates warm-up set progression leading to a top set, using a ramp
+ * shaped for the specific lift (see WARMUP_RAMPS) rather than one formula
+ * applied to every lift. Percentages are of the top set itself, so the ramp
+ * scales correctly whether the top set is light or heavy — sports-science
+ * findings on this are limited, but the available evidence indicates
+ * relative (percentage) warm-up structure holds regardless of absolute
+ * strength level; what should vary is the lift, not the load.
  */
 export function calculateWarmupSets(
   topSetWeight: number,
-  unit: string = 'lb'
+  unit: string = 'lb',
+  liftType: string = 'squat'
 ): WarmupProgression {
   const roundTo = getRoundingIncrement(unit);
-  const bar = unit === 'kg' ? 20 : 45;
+  const bar = BAR_WEIGHTS[unit] ?? BAR_WEIGHTS.lb;
+  const rampKey = getWarmupRampKey(liftType);
 
   const fixedSets: WarmupSet[] = [
-    { weight: bar, reps: 10, percentage: 0 },
-    { weight: Math.round(topSetWeight * 0.5 / roundTo) * roundTo, reps: 5, percentage: 50 },
-    { weight: Math.round(topSetWeight * 0.67 / roundTo) * roundTo, reps: 3, percentage: 67 },
-    { weight: Math.round(topSetWeight * 0.82 / roundTo) * roundTo, reps: 2, percentage: 82 },
+    { weight: bar, reps: BAR_REPS[rampKey], percentage: 0 },
+    ...WARMUP_RAMPS[rampKey].map(({ pct, reps }) => ({
+      weight: Math.round(topSetWeight * pct / roundTo) * roundTo,
+      reps,
+      percentage: Math.round(pct * 100),
+    })),
   ];
 
   const getApproachWeight = (set4Feel: WarmupFeel): number =>

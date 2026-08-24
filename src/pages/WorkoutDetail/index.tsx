@@ -983,6 +983,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         <div className="animate-slide-right">
           <MainLiftView
             liftName={liftNames[liftType] ?? liftType}
+            liftType={liftType}
             mainSets={mainSets}
             mainReps={mainReps}
             unitPreference={profile.unit_preference || 'lb'}

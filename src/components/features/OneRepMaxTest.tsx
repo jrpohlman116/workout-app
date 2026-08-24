@@ -57,7 +57,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
   const suggestedSecond = Math.round((currentMax * 0.95) / roundTo) * roundTo;
 
   const planned = parseFloat(plannedAttempt) || 0;
-  const warmup = planned > 0 ? calculateWarmupSets(planned, unit) : null;
+  const warmup = planned > 0 ? calculateWarmupSets(planned, unit, selectedLift ?? 'squat') : null;
   const approachWeight = warmup && warmupFeel ? warmup.getApproachWeight(warmupFeel) : null;
   const adjustedAttempt = warmup && warmupFeel && approachFeel
     ? warmup.getAdjustedWorkingWeight(warmupFeel, approachFeel)
