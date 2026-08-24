@@ -54,8 +54,10 @@ function getCurrentWeekBlock(
 
 const IS_UPPER_DAY = (liftType: string) => liftType === 'upper';
 
-// Per-set done states — purely informational (completing a workout never
-// requires them). Also the trigger surface for the upcoming rest timer.
+// Per-set done states — completing a workout never requires them, but they
+// gate what counts toward tonnage/e1RM and the completion screen (an
+// unchecked set is still just the prescribed placeholder). Also the trigger
+// surface for the rest timer.
 interface SetChecks {
   warmup: boolean[];
   main: boolean[];
@@ -105,7 +107,15 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     warmupComplete: false,
   });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [workoutStats, setWorkoutStats] = useState({ estimated1RM: 0, totalTonnage: 0, topReps: 0 });
+  const [workoutStats, setWorkoutStats] = useState<{
+    estimated1RM: number;
+    totalTonnage: number;
+    topReps: number;
+    /** Snapshotted once at completion — computing this live from the current
+        profile would shift the moment "Set as Max" saves and refreshes it,
+        since the new max becomes the base for a value that adds on top of it. */
+    newTrainingMax: number | undefined;
+  }>({ estimated1RM: 0, totalTonnage: 0, topReps: 0, newTrainingMax: undefined });
   const [completedAccessories, setCompletedAccessories] = useState<{ name: string; setsCompleted: number; reps: string }[]>([]);
   const savedSessionIdRef = useRef<string | null>(null);
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
@@ -520,15 +530,11 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     ? (currentBlock.phase === 'peaking' ? 1 : currentBlock.wave)
     : (profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5);
 
-  // Only realization-week AMRAP sets have a meaningful "standard vs actual reps"
-  // comparison to progress the training max from. If the weight was reduced
-  // mid-session (bad-day drop), the rep standard no longer applies — fall
-  // back to the Epley estimate from the actual weight lifted.
-  const newTrainingMax = mainConfig?.isAmap && currentBlock
-    ? (badDayDrop > 0
-        ? (workoutStats.estimated1RM > 0 ? calculateTrainingMax(workoutStats.estimated1RM) : undefined)
-        : calculateNewTrainingMax(maxes[liftType] ?? 0, currentBlock.wave, workoutStats.topReps, unit, liftType))
-    : undefined;
+  // The realization-week new-training-max value lives in workoutStats — it's
+  // snapshotted once at completion (see handleComplete) rather than derived
+  // live here, since live derivation would shift as soon as maxes[liftType]
+  // itself gets updated (e.g. by "Set as Max" saving and refreshing profile).
+  const newTrainingMax = workoutStats.newTrainingMax;
 
   const totalSteps = (isUpperDay ? 0 : 1) + currentExercises.length;
 
@@ -717,11 +723,21 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     });
   };
 
+  // Only checked-off sets count toward tonnage — mainSets/accessoryData are
+  // pre-filled with the prescription before the lifter does anything, so an
+  // unchecked set is still just a placeholder, not completed work.
   const calculateTotalTonnage = () => {
     let tonnage = 0;
-    mainSets.forEach(set => { tonnage += (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0); });
-    Object.values(accessoryData).forEach(sets => {
-      sets.forEach(set => { tonnage += (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0); });
+    mainSets.forEach((set, i) => {
+      if (!setChecks.main[i]) return;
+      tonnage += (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0);
+    });
+    Object.entries(accessoryData).forEach(([exerciseIndex, sets]) => {
+      const checks = setChecks.accessories[parseInt(exerciseIndex)] ?? [];
+      sets.forEach((set, i) => {
+        if (!checks[i]) return;
+        tonnage += (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0);
+      });
     });
     return tonnage;
   };
@@ -748,10 +764,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       if (!sessionId) {
         // Heaviest set, not last — peaking weeks put the top single first
         // with lighter down sets after it. Ties keep the last occurrence,
-        // matching the old last-element behavior in uniform phases.
-        const topSet = mainSets.reduce(
+        // matching the old last-element behavior in uniform phases. Only
+        // checked-off sets are eligible — an unchecked set is still just
+        // the prescribed placeholder, not something the lifter actually did.
+        const checkedMainSets = mainSets.filter((_, i) => setChecks.main[i]);
+        const topSet = checkedMainSets.reduce(
           (best, set) => ((parseFloat(set.weight) || 0) >= (parseFloat(best.weight) || 0) ? set : best),
-          mainSets[0]
+          checkedMainSets[0] ?? { reps: '', weight: '' }
         );
         const topWeight = parseFloat(topSet.weight);
         const topReps = parseInt(topSet.reps);
@@ -794,7 +813,17 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
         sessionId = sessionData.id;
         savedSessionIdRef.current = sessionId;
-        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage, topReps: topReps || 0 });
+
+        // Snapshotted now, from the training max as it stood walking into this
+        // set — not read live later, or "Set as Max" saving it would shift
+        // the base this adds on top of on the very next render.
+        const newTrainingMax = mainConfig?.isAmap && currentBlock
+          ? (badDayDrop > 0
+              ? (calculated1RM > 0 ? calculateTrainingMax(calculated1RM) : undefined)
+              : calculateNewTrainingMax(maxes[liftType] ?? 0, currentBlock.wave, topReps || 0, unit, liftType))
+          : undefined;
+
+        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage, topReps: topReps || 0, newTrainingMax });
       }
 
       const completedAccessoryEntries = Object.entries(accessoryData)
@@ -816,14 +845,20 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         if (accessoryError) throw accessoryError;
       }
 
-      setCompletedAccessories(completedAccessoryEntries.map(([exerciseIndex, sets]) => {
-        const completedSets = sets.filter(set => set.reps || set.weight);
-        return {
-          name: currentExercises[parseInt(exerciseIndex)].name,
-          setsCompleted: completedSets.length,
-          reps: completedSets.find(set => set.reps)?.reps ?? '',
-        };
-      }));
+      // The completion screen counts only checked-off sets — accessoryInserts
+      // above still persists every set with data (the attempt history), but
+      // "completed" on the summary should mean actually done, not just typed.
+      setCompletedAccessories(completedAccessoryEntries
+        .map(([exerciseIndex, sets]) => {
+          const checks = setChecks.accessories[parseInt(exerciseIndex)] ?? [];
+          const completedSets = sets.filter((set, i) => checks[i] && (set.reps || set.weight));
+          return {
+            name: currentExercises[parseInt(exerciseIndex)].name,
+            setsCompleted: completedSets.length,
+            reps: completedSets.find(set => set.reps)?.reps ?? '',
+          };
+        })
+        .filter(entry => entry.setsCompleted > 0));
 
       try { localStorage.removeItem(draftKey); } catch { /* storage unavailable */ }
       setShowSuccessModal(true);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Share2, X } from 'lucide-react';
+import { Check, Loader2, Share2, X } from 'lucide-react';
 import FocusTrap from '../accessible/FocusTrap';
 import Button from '../ui/Button';
 import SectionLabel from '../ui/SectionLabel';
@@ -28,6 +28,7 @@ interface WorkoutSuccessModalProps {
 }
 
 type ShareState = 'idle' | 'preparing' | 'error';
+type SetMaxState = 'idle' | 'saving' | 'done' | 'error';
 
 export default function WorkoutSuccessModal({
   liftName,
@@ -47,6 +48,13 @@ export default function WorkoutSuccessModal({
   }, []);
 
   const [shareState, setShareState] = useState<ShareState>('idle');
+  const [setMaxState, setSetMaxState] = useState<SetMaxState>('idle');
+  // newTrainingMax is derived from the live training max in the parent, which
+  // shifts the moment onSetAsMax's refreshProfile() lands — freezing the
+  // value we're about to save keeps the button from flashing to a second,
+  // re-derived number once the profile updates underneath it.
+  const [frozenMax, setFrozenMax] = useState<number | null>(null);
+  const displayMax = frozenMax ?? newTrainingMax;
 
   const heroLabel = isAccessoryOnly ? 'Tonnage' : 'Estimated Max';
   const heroValue = Math.round(isAccessoryOnly ? totalTonnage : estimated1RM);
@@ -93,6 +101,20 @@ export default function WorkoutSuccessModal({
         return;
       }
       setShareState('error');
+    }
+  };
+
+  // Stays open through the request — the lifter should see the save land
+  // (or fail) on this modal rather than have it vanish mid-request.
+  const handleSetAsMax = async () => {
+    if (!onSetAsMax) return;
+    setFrozenMax(newTrainingMax ?? null);
+    setSetMaxState('saving');
+    try {
+      await onSetAsMax();
+      setSetMaxState('done');
+    } catch {
+      setSetMaxState('error');
     }
   };
 
@@ -178,14 +200,31 @@ export default function WorkoutSuccessModal({
             <div className="space-y-3 animate-enter" style={{ animationDelay: '320ms' }}>
               <Button fullWidth onClick={onClose}>View Progress</Button>
               {!isAccessoryOnly && onSetAsMax && newTrainingMax != null && (
-                <Button
-                  variant="ghost"
-                  size="md"
-                  fullWidth
-                  onClick={async () => { await onSetAsMax(); onClose(); }}
-                >
-                  Set {newTrainingMax} {unitPreference} as new training max
-                </Button>
+                <>
+                  <Button
+                    variant={setMaxState === 'done' ? 'success' : 'ghost'}
+                    size="md"
+                    fullWidth
+                    icon={
+                      setMaxState === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" />
+                      : setMaxState === 'done' ? <Check className="h-4 w-4" />
+                      : undefined
+                    }
+                    onClick={handleSetAsMax}
+                    disabled={setMaxState === 'saving' || setMaxState === 'done'}
+                  >
+                    {setMaxState === 'saving'
+                      ? 'Saving…'
+                      : setMaxState === 'done'
+                        ? `Training max set to ${displayMax} ${unitPreference}`
+                        : `Set ${displayMax} ${unitPreference} as new training max`}
+                  </Button>
+                  {setMaxState === 'error' && (
+                    <p className="text-center text-sm text-red-600 dark:text-red-400">
+                      Couldn't update your training max — try again.
+                    </p>
+                  )}
+                </>
               )}
               <Button
                 variant="tertiary"

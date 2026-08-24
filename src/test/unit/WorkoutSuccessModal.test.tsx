@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -81,6 +82,66 @@ describe('WorkoutSuccessModal', () => {
       />
     );
     expect(screen.getByRole('button', { name: /320 lb as new training max/ })).toBeInTheDocument();
+  });
+
+  it('shows a loading then success state on the training-max button without closing the modal', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    let resolveSetMax: () => void;
+    const onSetAsMax = vi.fn(() => new Promise<void>(resolve => { resolveSetMax = resolve; }));
+
+    render(
+      <WorkoutSuccessModal {...baseProps({ onClose, onSetAsMax, newTrainingMax: 320 })} />
+    );
+
+    await user.click(screen.getByRole('button', { name: /320 lb as new training max/ }));
+
+    expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
+    expect(onClose).not.toHaveBeenCalled();
+
+    resolveSetMax!();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Training max set to 320 lb' })).toBeDisabled()
+    );
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onSetAsMax).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps showing the value it saved even if newTrainingMax changes afterward', async () => {
+    // Regression test: the parent recalculates newTrainingMax from the live
+    // profile, which onSetAsMax's refreshProfile() just updated — so the
+    // prop shifts to a second, re-derived number right after saving. The
+    // button must keep showing what it actually saved, not the new prop.
+    const user = userEvent.setup();
+
+    function Harness() {
+      const [newTrainingMax, setNewTrainingMax] = useState(320);
+      const onSetAsMax = async () => { setNewTrainingMax(335); };
+      return <WorkoutSuccessModal {...baseProps({ onSetAsMax, newTrainingMax })} />;
+    }
+
+    render(<Harness />);
+
+    await user.click(screen.getByRole('button', { name: /320 lb as new training max/ }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Training max set to 320 lb' })).toBeInTheDocument()
+    );
+    expect(screen.queryByText(/335/)).not.toBeInTheDocument();
+  });
+
+  it('shows an error and re-enables the button when setting the training max fails', async () => {
+    const user = userEvent.setup();
+    const onSetAsMax = vi.fn(() => Promise.reject(new Error('network')));
+
+    render(<WorkoutSuccessModal {...baseProps({ onSetAsMax, newTrainingMax: 320 })} />);
+
+    await user.click(screen.getByRole('button', { name: /320 lb as new training max/ }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/couldn't update your training max/i)).toBeInTheDocument()
+    );
+    expect(screen.getByRole('button', { name: /320 lb as new training max/ })).not.toBeDisabled();
   });
 
   it('calls onClose from both the close button and the primary CTA', async () => {

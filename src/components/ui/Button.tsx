@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'tertiary' | 'danger' | 'dashed';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'tertiary' | 'danger' | 'dashed' | 'success';
 type Size = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -18,6 +18,7 @@ const variants: Record<Variant, string> = {
   tertiary:  'border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
   danger:    'bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600',
   dashed:    'border-2 border-dashed border-blue-300 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20',
+  success:   'bg-emerald-600 dark:bg-emerald-500 text-white',
 };
 
 const sizes: Record<Size, string> = {
@@ -45,7 +46,9 @@ export default function Button({
         variants[variant],
         sizes[size],
         fullWidth ? 'w-full' : '',
-        disabled ? 'disabled:opacity-50' : '',
+        // Success stays fully opaque while disabled — it's a confirmation,
+        // not a deactivated control, so it shouldn't read as dimmed/inert.
+        disabled && variant !== 'success' ? 'disabled:opacity-50' : '',
         className,
       ].filter(Boolean).join(' ')}
       {...props}
