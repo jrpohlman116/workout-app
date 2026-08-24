@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase, WorkoutSession } from '../../lib/supabase';
-import { calculateWilksScore, calculateDOTSScore, calculateIPFGLScore } from '../../lib/calculations';
+import { calculateWilksScore, calculateDOTSScore, calculateIPFGLScore, convertWeightUnit } from '../../lib/calculations';
 import ProgressChart from './components/ProgressChart';
 import AccessibleChartTable from '../../components/accessible/AccessibleChartTable';
 import { useStaggeredAnimation, useRipple } from '../../hooks/useAnimations';
@@ -27,6 +27,9 @@ export default function ProgressPage() {
   const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [showPastMeetModal, setShowPastMeetModal] = useState(false);
+  // Display-only override for the meets tab — meet weights are always stored
+  // in profile.unit_preference, so switching this just converts on the way out.
+  const [meetsUnit, setMeetsUnit] = useState<'lb' | 'kg'>(profile?.unit_preference === 'kg' ? 'kg' : 'lb');
   const visibleLifts = useStaggeredAnimation(3, 100);
   const createRipple = useRipple();
 
@@ -347,20 +350,43 @@ export default function ProgressPage() {
 
         {activeTab === 'meets' && (
           <div className="space-y-4 animate-enter">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <p className="text-sm tracking-wide font-semibold text-white/70">Meet History</p>
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={<Plus className="w-3.5 h-3.5" />}
-                onClick={() => setShowPastMeetModal(true)}
-              >
-                Log Meet
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="flex rounded-xl border border-gray-300 dark:border-gray-500 overflow-hidden flex-shrink-0">
+                  {(['lb', 'kg'] as const).map(u => (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => setMeetsUnit(u)}
+                      aria-pressed={meetsUnit === u}
+                      className={`px-3 py-2 text-xs font-semibold transition-colors ${
+                        meetsUnit === u
+                          ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+                          : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {u}
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<Plus className="w-3.5 h-3.5" />}
+                  onClick={() => setShowPastMeetModal(true)}
+                >
+                  Log Meet
+                </Button>
+              </div>
             </div>
 
             {(() => {
-              const unit = profile.unit_preference || 'lb';
+              // Meet weights are always stored in profile.unit_preference —
+              // meetsUnit only controls how they're displayed here.
+              const storedUnit = profile.unit_preference || 'lb';
+              const unit = meetsUnit;
+              const displayWeight = (w: number) => Math.round(convertWeightUnit(w, storedUnit, meetsUnit) * 10) / 10;
               const liftLabels: Record<string, string> = {
                 squat: 'Squat',
                 bench: 'Bench',
@@ -421,7 +447,7 @@ export default function ProgressPage() {
                           <p className="text-sm text-gray-400 dark:text-gray-400 mb-0.5">Total</p>
                           <div className="flex items-baseline gap-1">
                             <span className="text-2xl font-black tabular-nums text-gray-900 dark:text-gray-100">
-                              {meet.total.toLocaleString()}
+                              {displayWeight(meet.total).toLocaleString()}
                             </span>
                             <span className="text-sm font-medium text-gray-400 dark:text-gray-400">{unit}</span>
                           </div>
@@ -456,7 +482,7 @@ export default function ProgressPage() {
                                         : 'font-medium text-gray-400 dark:text-gray-400 line-through'
                                     }`}
                                   >
-                                    {attempt.weight_lifted}
+                                    {displayWeight(attempt.weight_lifted)}
                                   </span>
                                   <span className="text-sm text-gray-400 dark:text-gray-400">{unit}</span>
                                 </div>
