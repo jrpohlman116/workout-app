@@ -286,6 +286,12 @@ describe('applyPhaseToAccessories', () => {
     const phases = ['accumulation', 'intensification', 'realization', 'deload', 'peaking', 'meet_week'];
     phases.forEach(phase => expect(ACCESSORY_PHASE_PLAN[phase as keyof typeof ACCESSORY_PHASE_PLAN]).toBeDefined());
   });
+
+  it('scales down %TM accessory weight suggestions only on deload', () => {
+    expect(ACCESSORY_PHASE_PLAN.deload.weightMultiplier).toBeLessThan(1);
+    const otherPhases = ['accumulation', 'intensification', 'realization', 'peaking', 'meet_week'] as const;
+    otherPhases.forEach(phase => expect(ACCESSORY_PHASE_PLAN[phase].weightMultiplier).toBeUndefined());
+  });
 });
 
 describe('resolveDayExercises', () => {

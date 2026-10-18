@@ -154,9 +154,12 @@ export const additionalExercises = [
 // derivation). The one pattern worth internalizing: partial-range-of-motion
 // work (board press, rack pulls, lockout bench) is BIASED HEAVIER than the
 // full lift, not lighter — shorter ROM means more weight, so several of
-// these now sit above 100% of TM. Values are flat across every wave on
-// purpose — accessory work progresses linearly across weeks rather than
-// undulating with the main lift's wave, per standard programming practice.
+// these now sit above 100% of TM. Values are flat across accumulation/
+// intensification/realization on purpose — accessory work progresses
+// linearly across those weeks rather than undulating with the main lift's
+// wave, per standard programming practice. Deload is the one exception: see
+// ACCESSORY_PHASE_PLAN.deload.weightMultiplier, which scales these pct
+// values down for that week only.
 // Pin Pulls and Partial Deadlifts are deliberately NOT recalibrated: the
 // correct number depends heavily on pin/rack height, which the weak-point
 // map currently collapses into one name per lift for two different heights
@@ -386,12 +389,14 @@ export const ACCESSORY_PHASE_PLAN: Record<WavePhase, {
   setsOverride?: number;
   maxExercises?: number;
   dropBarbellVariations?: boolean;
+  /** Scales ACCESSORY_PCT_OF_TM-based weight suggestions for this phase only; unset (1x) everywhere but deload. */
+  weightMultiplier?: number;
   note: string;
 }> = {
   accumulation:    { setsDelta: 1, note: 'Volume phase — one extra set on each accessory.' },
   intensification: { note: '' },
   realization:     { note: '' },
-  deload:          { setsOverride: 2, note: 'Deload — 2 light sets each. Nothing close to failure.' },
+  deload:          { setsOverride: 2, weightMultiplier: 0.75, note: 'Deload — 2 light sets each, roughly 75% of normal accessory weight. Nothing close to failure.' },
   peaking:         {
     setsOverride: 2,
     maxExercises: 3,
