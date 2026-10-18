@@ -1,18 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateJuggernautSets, calculatePeakingSets, getGreeting, buildWaveSchedule, MS_PER_WEEK, RepWave, WavePhase } from '../../lib/calculations';
-import { DEFAULT_PROGRAM_WEEKS, PHASE_LABELS, PHASE_DESCRIPTIONS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
+import { calculateJuggernautSets, calculatePeakingSets, getGreeting, buildWaveSchedule, isWaveBoundaryAdvance, MS_PER_WEEK, RepWave, WavePhase } from '../../lib/calculations';
+import { DEFAULT_PROGRAM_WEEKS, PHASE_LABELS, PHASE_DESCRIPTIONS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WAVE_LABELS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
 import { ChevronLeft, ChevronRight, Check, Activity, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import type { StickingPoint, WeakPoints } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
+import WeakPointPicker, { type MainLiftKey } from '../../components/features/WeakPointPicker';
 import WaveScheduleChart from '../Progress/components/WaveScheduleChart';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import PageHeader from '../../components/ui/PageHeader';
 import IconButton from '../../components/ui/IconButton';
 import Tile from '../../components/ui/Tile';
+
+const EMPTY_WEAK_POINTS: WeakPoints = { squat: [], bench: [], deadlift: [] };
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -26,6 +30,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
   const [showSkipWeekModal, setShowSkipWeekModal] = useState(false);
+  const [pendingWeakPoints, setPendingWeakPoints] = useState<WeakPoints>(EMPTY_WEAK_POINTS);
   const createRipple = useRipple();
   const [showPhaseInfo, setShowPhaseInfo] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -94,6 +99,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         updates.current_week_index = Math.min(currentBlockIndex + 1, weeksCount - 1);
       }
 
+      // Wave boundary: persist any weak-point edits from the check-in prompt
+      // and mark this wave reviewed so it isn't asked again until the next one.
+      if (needsWeakPointReview && upcomingWave != null) {
+        updates.weak_points = pendingWeakPoints;
+        updates.weak_points_reviewed_wave = upcomingWave;
+      }
+
       await supabase
         .from('user_profiles')
         .update(updates)
@@ -105,6 +117,16 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     } finally {
       setSkipping(false);
     }
+  };
+
+  const handleTogglePendingWeakPoint = (lift: MainLiftKey, point: StickingPoint) => {
+    setPendingWeakPoints(prev => {
+      const current = prev[lift];
+      const updated = current.includes(point)
+        ? current.filter(p => p !== point)
+        : [...current, point];
+      return { ...prev, [lift]: updated };
+    });
   };
 
   const handleJumpToWeek = async () => {
@@ -214,6 +236,17 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         ? `Peaking Week ${nextAdvanceBlock.peakWeek}`
         : `${nextAdvanceBlock.wave}-Rep ${PHASE_LABELS[nextAdvanceBlock.phase]}`
     : `Week ${profile.current_week === 4 ? 1 : profile.current_week + 1}`;
+
+  // Manual (no meet date) programs have no peaking block — wrapping week 4
+  // always lands back on accumulation of the next cycle's wave.
+  const upcomingWave: RepWave | undefined = profile.meet_date
+    ? nextAdvanceBlock?.wave
+    : CYCLE_TO_WAVE[profile.current_cycle + 1] ?? 3;
+  const upcomingPhase: WavePhase | undefined = profile.meet_date
+    ? nextAdvanceBlock?.phase
+    : 'accumulation';
+  const needsWeakPointReview = isWaveBoundaryAdvance(displayPhase, upcomingPhase)
+    && profile.weak_points_reviewed_wave !== upcomingWave;
 
   const workouts = [
     { name: 'Squat', max: profile.squat_max, type: 'squat' },
@@ -374,7 +407,15 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   : `Go back ${Math.abs(weekOffset)} week${Math.abs(weekOffset) !== 1 ? 's' : ''}`}
             </Button>
           ) : completedWorkouts.size === 4 ? (
-            <Button fullWidth className="mt-4" onClick={() => setShowSkipWeekModal(true)} disabled={skipping}>
+            <Button
+              fullWidth
+              className="mt-4"
+              onClick={() => {
+                if (needsWeakPointReview) setPendingWeakPoints(profile.weak_points ?? EMPTY_WEAK_POINTS);
+                setShowSkipWeekModal(true);
+              }}
+              disabled={skipping}
+            >
               {skipping ? 'Advancing your program...' : `Start ${nextAdvanceLabel}`}
             </Button>
           ) : null}
@@ -394,21 +435,27 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       <AccessibleModal
         isOpen={showSkipWeekModal}
         onClose={() => setShowSkipWeekModal(false)}
-        title="Move to Next Week"
-        description={`Skip to ${nextAdvanceLabel}`}
+        title={needsWeakPointReview && upcomingWave != null ? `New wave: ${WAVE_LABELS[upcomingWave]}` : 'Move to Next Week'}
+        description={needsWeakPointReview ? 'Anything changed with your sticking points?' : `Skip to ${nextAdvanceLabel}`}
         size="sm"
       >
-        <p className="text-body-md text-gray-600 dark:text-gray-300 mb-6">
-          {completedWorkouts.size === 4
-            ? "You've completed all workouts for this week. Ready to move to the next week?"
-            : "You haven't completed all workouts yet. Are you sure you want to skip ahead?"}
-        </p>
+        {needsWeakPointReview ? (
+          <div className="mb-6">
+            <WeakPointPicker value={pendingWeakPoints} onToggle={handleTogglePendingWeakPoint} />
+          </div>
+        ) : (
+          <p className="text-body-md text-gray-600 dark:text-gray-300 mb-6">
+            {completedWorkouts.size === 4
+              ? "You've completed all workouts for this week. Ready to move to the next week?"
+              : "You haven't completed all workouts yet. Are you sure you want to skip ahead?"}
+          </p>
+        )}
         <div className="flex gap-3">
           <Button variant="secondary" size="md" className="flex-1" disabled={skipping} onClick={() => setShowSkipWeekModal(false)}>
             Cancel
           </Button>
           <Button size="md" className="flex-1" disabled={skipping} onClick={handleSkipWeek}>
-            Advance Week
+            {needsWeakPointReview && upcomingWave != null ? `Start ${WAVE_LABELS[upcomingWave]}` : 'Advance Week'}
           </Button>
         </div>
       </AccessibleModal>

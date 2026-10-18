@@ -330,6 +330,16 @@ export function applyVariationCredit(
   return { numSets, reducedBy: baseNumSets - numSets };
 }
 
+/**
+ * True when advancing now starts a brand-new rep wave (not peaking/meet
+ * week) — the point where weak-point-driven accessory selection should be
+ * re-checked. A new wave always follows a deload; deload into peaking (end
+ * of the 3-rep wave) or meet_week is not a wave boundary.
+ */
+export function isWaveBoundaryAdvance(leavingPhase: WavePhase, enteringPhase: WavePhase | undefined): boolean {
+  return leavingPhase === 'deload' && enteringPhase === 'accumulation';
+}
+
 // Peaking, counting back from the meet. Percentages are of training max
 // (TM = 90% 1RM, so 1.00 here ≈ 90% of true 1RM). Intensity stays ≥85% 1RM
 // through 3 weeks out with the peak single (~92% 1RM) landing 2 weeks out,

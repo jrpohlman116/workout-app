@@ -12,6 +12,7 @@ import {
   calculatePlateBreakdown,
   formatPlateBreakdown,
   applyVariationCredit,
+  isWaveBoundaryAdvance,
 } from '../../lib/calculations';
 
 describe('calculateOneRepMax', () => {
@@ -684,5 +685,25 @@ describe('applyVariationCredit', () => {
 
   it('never reduces a single-set prescription to zero', () => {
     expect(applyVariationCredit(1, 5)).toEqual({ numSets: 1, reducedBy: 0 });
+  });
+});
+
+describe('isWaveBoundaryAdvance', () => {
+  it('is true only for deload -> accumulation', () => {
+    expect(isWaveBoundaryAdvance('deload', 'accumulation')).toBe(true);
+  });
+
+  it('is false for deload into peaking or meet week (end of the 3-rep wave)', () => {
+    expect(isWaveBoundaryAdvance('deload', 'peaking')).toBe(false);
+    expect(isWaveBoundaryAdvance('deload', 'meet_week')).toBe(false);
+  });
+
+  it('is false when the next phase is undefined (no schedule computed)', () => {
+    expect(isWaveBoundaryAdvance('deload', undefined)).toBe(false);
+  });
+
+  it('is false for every non-deload leaving phase', () => {
+    const nonDeloadPhases = ['accumulation', 'intensification', 'realization', 'peaking', 'meet_week'] as const;
+    nonDeloadPhases.forEach(phase => expect(isWaveBoundaryAdvance(phase, 'accumulation')).toBe(false));
   });
 });
