@@ -14,7 +14,7 @@ import WorkoutSummaryView from './views/WorkoutSummaryView';
 import MainLiftView from './views/MainLiftView';
 import AccessoryExerciseView from './views/AccessoryExerciseView';
 import { useWorkoutData } from '../../hooks/useWorkoutData';
-import { liftNames, liftNamesShort, baseExercises, additionalExercises, ACCESSORY_PCT_OF_TM, getAccessoryWeightMultiplier, ACCESSORY_WEAK_POINT_SOURCE, applyPhaseToAccessories, formatVariationCreditNote } from '../../lib/exercises';
+import { liftNames, liftNamesShort, baseExercises, additionalExercises, ACCESSORY_PCT_OF_TM, getAccessoryWeightMultiplier, getWeakPointSources, applyPhaseToAccessories, formatVariationCreditNote } from '../../lib/exercises';
 import { WorkoutDetailPageProps, WorkoutStep, SetInput } from '../../lib/types';
 import type { StickingPoint } from '../../lib/supabase';
 import Card from '../../components/ui/Card';
@@ -147,10 +147,15 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const liftTypeKey = liftType as 'squat' | 'bench' | 'deadlift' | 'ohp' | 'upper';
   // Cross-day targeting: each day trains the opposite lift's weak points
   // (squat day → deadlift, deadlift day → squat, upper day → bench, bench
-  // day → general support only). See ACCESSORY_WEAK_POINT_SOURCE.
-  const weakPointSource = ACCESSORY_WEAK_POINT_SOURCE[liftTypeKey] ?? null;
-  const userWeakPoints = weakPointSource
-    ? (profile?.weak_points?.[weakPointSource.profileLift] as StickingPoint[] | undefined)
+  // day → general support only); full-body style moves squat variations to
+  // the upper day. See getWeakPointSources.
+  const splitStyle = profile?.split_style ?? undefined;
+  const [primarySource, secondarySource] = getWeakPointSources(liftTypeKey, splitStyle);
+  const userWeakPoints = primarySource
+    ? (profile?.weak_points?.[primarySource.profileLift] as StickingPoint[] | undefined)
+    : undefined;
+  const secondaryWeakPoints = secondarySource
+    ? (profile?.weak_points?.[secondarySource.profileLift] as StickingPoint[] | undefined)
     : undefined;
 
   const {
@@ -165,7 +170,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     liftTypeKey,
     'standard',
     defaultExercises,
-    userWeakPoints
+    userWeakPoints,
+    splitStyle,
+    secondaryWeakPoints
   );
 
   const allAvailableExercises = useMemo(() => [
@@ -204,7 +211,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     user?.id,
     liftType,
     currentBlock?.phase,
-    profile?.weak_points
+    profile?.weak_points,
+    splitStyle
   );
 
   useEffect(() => {

@@ -5,7 +5,8 @@ import type { WavePhase, Exercise } from '../lib/types';
 import {
   baseExercises,
   BARBELL_VARIATION_LIFTS,
-  ACCESSORY_WEAK_POINT_SOURCE,
+  getWeakPointSources,
+  type SplitStyle,
   applyPhaseToAccessories,
   resolveDayExercises,
   VariationContribution,
@@ -42,12 +43,13 @@ export function useWeeklyVariationCredit(
   userId: string | undefined,
   targetLift: string,
   phase: WavePhase | undefined,
-  weakPoints: WeakPoints | undefined
+  weakPoints: WeakPoints | undefined,
+  style?: SplitStyle
 ): UseWeeklyVariationCreditResult {
   const isMainLift = targetLift === 'squat' || targetLift === 'bench' || targetLift === 'deadlift';
   const eligible = !!userId && isMainLift && !!phase && CREDIT_PHASES.includes(phase);
   const weakPointsKey = JSON.stringify(weakPoints ?? {});
-  const currentKey = `${userId ?? ''}|${targetLift}|${phase ?? ''}|${weakPointsKey}`;
+  const currentKey = `${userId ?? ''}|${targetLift}|${phase ?? ''}|${style ?? ''}|${weakPointsKey}`;
 
   const [resolved, setResolved] = useState<{ key: string; contributions: VariationContribution[] } | null>(null);
 
@@ -76,9 +78,10 @@ export function useWeeklyVariationCredit(
       const found: VariationContribution[] = [];
       for (const day of otherDays) {
         const dayDefaults = baseExercises[day as keyof typeof baseExercises] ?? baseExercises.upper;
-        const source = ACCESSORY_WEAK_POINT_SOURCE[day];
-        const dayWeakPoints = source ? weakPoints?.[source.profileLift] : undefined;
-        const dayExercises = resolveDayExercises(day, templateByType.get(day) ?? null, dayWeakPoints, dayDefaults);
+        const [primary, secondary] = getWeakPointSources(day, style);
+        const dayWeakPoints = primary ? weakPoints?.[primary.profileLift] : undefined;
+        const daySecondary = secondary ? weakPoints?.[secondary.profileLift] : undefined;
+        const dayExercises = resolveDayExercises(day, templateByType.get(day) ?? null, dayWeakPoints, dayDefaults, style, daySecondary);
         const { exercises: phaseAdjusted } = applyPhaseToAccessories(dayExercises, phase, day);
 
         phaseAdjusted.forEach(ex => {

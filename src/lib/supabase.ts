@@ -52,6 +52,7 @@ export interface UserProfile {
   program_start_date?: string;  // ISO date — combined with meet_date to reconstruct schedule
   current_week_index?: number;  // explicit pointer into the wave schedule; null = derive from today's date
   weak_points?: WeakPoints;     // sticking points per lift
+  split_style?: 'upper_lower' | 'full_body'; // where squat variation work lives; null = upper_lower
   weak_points_reviewed_wave?: 10 | 8 | 5 | 3; // last wave the user confirmed/edited weak points for
   created_at: string;
   updated_at: string;

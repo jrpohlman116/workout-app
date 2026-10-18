@@ -484,20 +484,54 @@ export const ACCESSORY_WEAK_POINT_SOURCE: Record<string, { profileLift: 'squat' 
 };
 
 /**
+ * How the week's accessory variation work is laid out.
+ * - upper_lower (default): the cross-day table above — squat variations on
+ *   deadlift day, deadlift variations on squat day, bench variations on the
+ *   upper day.
+ * - full_body: squat variations move to the upper day alongside bench work,
+ *   and deadlift day carries general support only.
+ */
+export type SplitStyle = 'upper_lower' | 'full_body';
+export const DEFAULT_SPLIT_STYLE: SplitStyle = 'upper_lower';
+
+export interface WeakPointSource {
+  profileLift: 'squat' | 'bench' | 'deadlift';
+  mapKey: string;
+}
+
+const FULL_BODY_WEAK_POINT_SOURCES: Record<string, WeakPointSource[]> = {
+  squat:    [{ profileLift: 'deadlift', mapKey: 'deadlift' }],
+  deadlift: [],
+  upper:    [{ profileLift: 'bench', mapKey: 'upper' }, { profileLift: 'squat', mapKey: 'squat' }],
+  bench:    [],
+};
+
+/** Which lifts' weak points a day draws accessories from, in priority order. */
+export function getWeakPointSources(liftType: string, style: SplitStyle = DEFAULT_SPLIT_STYLE): WeakPointSource[] {
+  if (style === 'full_body') return FULL_BODY_WEAK_POINT_SOURCES[liftType] ?? [];
+  const source = ACCESSORY_WEAK_POINT_SOURCE[liftType];
+  return source ? [source] : [];
+}
+
+/**
  * Resolves a day's accessory list: saved template wins, else weak-point
  * auto-selection, else the day's defaults. Shared by useWorkoutTemplate
  * (resolving the CURRENT day) and the weekly-volume credit calculation
- * (resolving every OTHER day) so the two never drift apart.
+ * (resolving every OTHER day) so the two never drift apart. `weakPoints`
+ * belongs to the day's first source, `secondaryWeakPoints` to its second
+ * (only full-body upper day has one).
  */
 export function resolveDayExercises(
   liftType: string,
   savedTemplate: Exercise[] | null | undefined,
   weakPoints: StickingPoint[] | undefined,
-  defaultExercises: Exercise[]
+  defaultExercises: Exercise[],
+  style: SplitStyle = DEFAULT_SPLIT_STYLE,
+  secondaryWeakPoints?: StickingPoint[]
 ): Exercise[] {
   if (savedTemplate) return savedTemplate;
-  if (weakPoints && weakPoints.length > 0) {
-    const selectedNames = selectMixedAccessories(liftType, weakPoints);
+  if ((weakPoints && weakPoints.length > 0) || (secondaryWeakPoints && secondaryWeakPoints.length > 0)) {
+    const selectedNames = selectMixedAccessories(liftType, weakPoints, [], style, secondaryWeakPoints);
     // Weak-point picks (e.g. "Pause Squats") live in the full accessory
     // pool, not necessarily the 4-item baseExercises set for this day.
     return selectedNames
@@ -542,40 +576,52 @@ export function formatVariationCreditNote(
 export function selectMixedAccessories(
   liftType: string,
   weakPoints: StickingPoint[] | undefined,
-  excludeExercises: string[] = []
+  excludeExercises: string[] = [],
+  style: SplitStyle = DEFAULT_SPLIT_STYLE,
+  secondaryWeakPoints?: StickingPoint[]
 ): string[] {
   // weakPoints are the sticking points of the day's *target* lift (see
-  // ACCESSORY_WEAK_POINT_SOURCE) — callers read them via `profileLift`.
-  const source = ACCESSORY_WEAK_POINT_SOURCE[liftType] ?? null;
-  const allExercises = source ? weakPointExercisesMap[source.mapKey] : undefined;
+  // getWeakPointSources) — callers read them via `profileLift`.
+  const sources = getWeakPointSources(liftType, style);
   const generalExercises = generalSupportExercises[liftType];
 
   if (!generalExercises) return [];
 
   const selected: string[] = [];
-  const availableWeak = new Set<string>();
   const availableGeneral = generalExercises.filter(e => !excludeExercises.includes(e));
 
-  if (allExercises && weakPoints && weakPoints.length > 0) {
-    weakPoints.forEach(point => {
-      allExercises[point].forEach(ex => {
-        if (!excludeExercises.includes(ex)) availableWeak.add(ex);
+  const groups = sources.map((source, i) => {
+    const points = i === 0 ? weakPoints : secondaryWeakPoints;
+    const map = weakPointExercisesMap[source.mapKey];
+    const candidates = new Set<string>();
+    if (map && points) {
+      points.forEach(point => {
+        map[point].forEach(ex => {
+          if (!excludeExercises.includes(ex)) candidates.add(ex);
+        });
       });
-    });
-  }
+    }
+    return candidates;
+  }).filter(candidates => candidates.size > 0);
 
-  // Up to 2 weak-point slots, but at most 1 heavy barbell variation — a
-  // second variation of the same lift adds axial fatigue without much new
-  // stimulus, so the other slot prefers a non-barbell movement from the
-  // same sticking-point list.
-  const numWeakPointExercises = Math.min(2, availableWeak.size);
-  let barbellCount = 0;
-  for (const ex of availableWeak) {
-    if (selected.length >= numWeakPointExercises) break;
-    const isBarbell = ex in BARBELL_VARIATION_LIFTS;
-    if (isBarbell && barbellCount >= 1) continue;
-    selected.push(ex);
-    if (isBarbell) barbellCount++;
+  // One source gets up to 2 weak-point slots; several share them 1 each.
+  // Either way at most 1 heavy barbell variation per source — a second
+  // variation of the same lift adds axial fatigue without much new stimulus,
+  // so the other slot prefers a non-barbell movement from the same list.
+  const slotsPerGroup = groups.length === 1 ? 2 : 1;
+  for (const candidates of groups) {
+    const target = Math.min(slotsPerGroup, candidates.size);
+    let picked = 0;
+    let barbellCount = 0;
+    for (const ex of candidates) {
+      if (picked >= target) break;
+      if (selected.includes(ex)) continue;
+      const isBarbell = ex in BARBELL_VARIATION_LIFTS;
+      if (isBarbell && barbellCount >= 1) continue;
+      selected.push(ex);
+      picked++;
+      if (isBarbell) barbellCount++;
+    }
   }
 
   for (const ex of availableGeneral) {

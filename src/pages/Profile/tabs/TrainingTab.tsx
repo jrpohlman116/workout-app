@@ -5,10 +5,16 @@ import { MS_PER_WEEK } from '../../../lib/calculations';
 import { useFormState } from '../../../hooks/useFormState';
 import SaveFeedback from '../../../components/ui/SaveFeedback';
 import type { StickingPoint, WeakPoints } from '../../../lib/supabase';
+import { DEFAULT_SPLIT_STYLE, type SplitStyle } from '../../../lib/exercises';
 import WeakPointPicker, { type MainLiftKey } from '../../../components/features/WeakPointPicker';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
+
+const SPLIT_OPTIONS: { value: SplitStyle; label: string; description: string }[] = [
+  { value: 'upper_lower', label: 'Upper / lower', description: 'Squat variations on deadlift day, deadlift variations on squat day, bench variations on upper day.' },
+  { value: 'full_body', label: 'Full body', description: 'Squat variations move to the upper day alongside bench work. Deadlift day gets general support only.' },
+];
 
 export default function TrainingTab() {
   const { profile, user, refreshProfile } = useAuth();
@@ -16,6 +22,7 @@ export default function TrainingTab() {
   const [weakPoints, setWeakPoints] = useState<WeakPoints>(
     profile?.weak_points || { squat: [], bench: [], deadlift: [] }
   );
+  const [splitStyle, setSplitStyle] = useState<SplitStyle>(profile?.split_style ?? DEFAULT_SPLIT_STYLE);
   const { loading, error, saved, run, markUnsaved } = useFormState();
 
   const toggleWeakPoint = (lift: MainLiftKey, point: StickingPoint) => {
@@ -36,6 +43,7 @@ export default function TrainingTab() {
       const updatePayload: Record<string, unknown> = {
         meet_date: meetDate || null,
         weak_points: weakPoints,
+        split_style: splitStyle,
         updated_at: new Date().toISOString(),
       };
       if (meetDate && !profile?.program_start_date) {
@@ -74,6 +82,35 @@ export default function TrainingTab() {
             ))} weeks away
           </p>
         )}
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Training Split</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          Where your accessory variation work goes. You still train the same four days.
+        </p>
+        <div role="radiogroup" aria-label="Training split" className="grid grid-cols-1 gap-2">
+          {SPLIT_OPTIONS.map(option => {
+            const selected = splitStyle === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => { setSplitStyle(option.value); markUnsaved(); }}
+                className={`px-3 py-2 rounded-lg transition-all text-left ${
+                  selected
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <span className="block text-sm font-medium">{option.label}</span>
+                <span className="block text-xs font-normal opacity-60 mt-0.5">{option.description}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div>

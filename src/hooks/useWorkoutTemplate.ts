@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase, WorkoutTemplate } from '../lib/supabase';
 import { Exercise } from '../lib/types';
 import { StickingPoint } from '../lib/supabase';
-import { resolveDayExercises } from '../lib/exercises';
+import { resolveDayExercises, type SplitStyle } from '../lib/exercises';
 
 interface UseWorkoutTemplateResult {
   template: WorkoutTemplate | null;
@@ -19,7 +19,9 @@ export function useWorkoutTemplate(
   liftType: 'squat' | 'bench' | 'deadlift' | 'ohp' | 'upper',
   programVariation: 'standard' | 'bbb' | 'bbs',
   defaultExercises: Exercise[],
-  weakPoints?: StickingPoint[]
+  weakPoints?: StickingPoint[],
+  style?: SplitStyle,
+  secondaryWeakPoints?: StickingPoint[]
 ): UseWorkoutTemplateResult {
   const [template, setTemplate] = useState<WorkoutTemplate | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>(defaultExercises);
@@ -34,7 +36,7 @@ export function useWorkoutTemplate(
       setExercises(defaultExercises);
       setLoading(false);
     }
-  }, [userId, liftType, programVariation, weakPoints]);
+  }, [userId, liftType, programVariation, weakPoints, secondaryWeakPoints, style]);
 
   const loadTemplate = async () => {
     if (!userId) return;
@@ -58,7 +60,7 @@ export function useWorkoutTemplate(
         setExercises(data.exercises_data as Exercise[]);
       } else {
         setTemplate(null);
-        setExercises(resolveDayExercises(liftType, null, weakPoints, defaultExercises));
+        setExercises(resolveDayExercises(liftType, null, weakPoints, defaultExercises, style, secondaryWeakPoints));
       }
     } catch (err) {
       console.error('Error loading workout template:', err);

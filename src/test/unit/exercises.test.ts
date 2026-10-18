@@ -7,6 +7,7 @@ import {
   BARBELL_VARIATION_LIFTS,
   ACCESSORY_PHASE_PLAN,
   getAccessoryWeightMultiplier,
+  getWeakPointSources,
   ACCESSORY_WEAK_POINT_SOURCE,
   applyPhaseToAccessories,
   generalSupportExercises,
@@ -292,6 +293,31 @@ describe('applyPhaseToAccessories', () => {
     expect(ACCESSORY_PHASE_PLAN.deload.weightMultiplier).toBeLessThan(1);
     const otherPhases = ['accumulation', 'intensification', 'realization', 'peaking', 'meet_week'] as const;
     otherPhases.forEach(phase => expect(ACCESSORY_PHASE_PLAN[phase].weightMultiplier).toBeUndefined());
+  });
+});
+
+describe('full-body split style', () => {
+  it('keeps the cross-day layout by default', () => {
+    expect(getWeakPointSources('deadlift').map(s => s.profileLift)).toEqual(['squat']);
+    expect(getWeakPointSources('upper').map(s => s.profileLift)).toEqual(['bench']);
+  });
+
+  it('moves squat variations to the upper day and leaves deadlift day general-only', () => {
+    expect(getWeakPointSources('deadlift', 'full_body')).toEqual([]);
+    expect(getWeakPointSources('upper', 'full_body').map(s => s.profileLift)).toEqual(['bench', 'squat']);
+    expect(getWeakPointSources('squat', 'full_body').map(s => s.profileLift)).toEqual(['deadlift']);
+  });
+
+  it('upper day draws one bench and one squat weak-point pick', () => {
+    const picks = selectMixedAccessories('upper', ['in_the_hole'], [], 'full_body', ['in_the_hole']);
+    expect(picks.some(n => weakPointExercisesMap.upper.in_the_hole.includes(n))).toBe(true);
+    expect(picks.some(n => weakPointExercisesMap.squat.in_the_hole.includes(n))).toBe(true);
+    expect(picks).toHaveLength(4);
+  });
+
+  it('deadlift day draws no barbell squat variations in full body', () => {
+    const picks = selectMixedAccessories('deadlift', ['in_the_hole'], [], 'full_body');
+    picks.forEach(n => expect(BARBELL_VARIATION_LIFTS[n]).not.toBe('squat'));
   });
 });
 
