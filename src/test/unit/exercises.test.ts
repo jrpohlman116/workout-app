@@ -6,6 +6,7 @@ import {
   ACCESSORY_PCT_OF_TM,
   BARBELL_VARIATION_LIFTS,
   ACCESSORY_PHASE_PLAN,
+  getAccessoryWeightMultiplier,
   ACCESSORY_WEAK_POINT_SOURCE,
   applyPhaseToAccessories,
   generalSupportExercises,
@@ -291,6 +292,24 @@ describe('applyPhaseToAccessories', () => {
     expect(ACCESSORY_PHASE_PLAN.deload.weightMultiplier).toBeLessThan(1);
     const otherPhases = ['accumulation', 'intensification', 'realization', 'peaking', 'meet_week'] as const;
     otherPhases.forEach(phase => expect(ACCESSORY_PHASE_PLAN[phase].weightMultiplier).toBeUndefined());
+  });
+});
+
+describe('getAccessoryWeightMultiplier', () => {
+  it('gets lighter as the wave gets heavier and lower-rep', () => {
+    const mults = ([10, 8, 5, 3] as const).map(w => getAccessoryWeightMultiplier(w, 'accumulation'));
+    expect(mults[0]).toBe(1);
+    expect(mults[0]).toBeGreaterThan(mults[1]);
+    expect(mults[1]).toBeGreaterThan(mults[2]);
+    expect(mults[2]).toBeGreaterThan(mults[3]);
+  });
+
+  it('stacks the deload multiplier on top of the wave multiplier', () => {
+    expect(getAccessoryWeightMultiplier(3, 'deload')).toBeCloseTo(0.85 * 0.75);
+  });
+
+  it('defaults to 1 with no wave or phase', () => {
+    expect(getAccessoryWeightMultiplier(undefined, undefined)).toBe(1);
   });
 });
 

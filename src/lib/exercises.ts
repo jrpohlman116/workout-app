@@ -1,5 +1,5 @@
 import type { StickingPoint } from './supabase';
-import type { Exercise, WavePhase } from './types';
+import type { Exercise, RepWave, WavePhase } from './types';
 
 export const liftNames: Record<string, string> = {
   squat: 'Squat',
@@ -155,11 +155,12 @@ export const additionalExercises = [
 // work (board press, rack pulls, lockout bench) is BIASED HEAVIER than the
 // full lift, not lighter — shorter ROM means more weight, so several of
 // these now sit above 100% of TM. Values are flat across accumulation/
-// intensification/realization on purpose — accessory work progresses
-// linearly across those weeks rather than undulating with the main lift's
-// wave, per standard programming practice. Deload is the one exception: see
-// ACCESSORY_PHASE_PLAN.deload.weightMultiplier, which scales these pct
-// values down for that week only.
+// intensification/realization within a wave on purpose — accessory work
+// progresses linearly across those weeks. Two scalings sit on top of these
+// base values: WAVE_ACCESSORY_WEIGHT_MULTIPLIER (lighter as the main lift's
+// wave gets heavier and lower-rep, so a 5-8 rep variation doesn't approach
+// the main lift's own working weight) and ACCESSORY_PHASE_PLAN.deload.
+// weightMultiplier (deload week only). See getAccessoryWeightMultiplier.
 // Pin Pulls and Partial Deadlifts are deliberately NOT recalibrated: the
 // correct number depends heavily on pin/rack height, which the weak-point
 // map currently collapses into one name per lift for two different heights
@@ -405,6 +406,23 @@ export const ACCESSORY_PHASE_PLAN: Record<WavePhase, {
   },
   meet_week:       { setsOverride: 0, maxExercises: 0, note: 'Meet week — no accessories.' },
 };
+
+// Accessory %TM values are calibrated for the 10-rep wave. As the main lift
+// moves to heavier, lower-rep waves its own working weight climbs, so the
+// same 5-8 rep variation would otherwise sit uncomfortably close to it.
+export const WAVE_ACCESSORY_WEIGHT_MULTIPLIER: Record<RepWave, number> = {
+  10: 1.0,
+  8: 0.95,
+  5: 0.9,
+  3: 0.85,
+};
+
+/** Combined wave + phase scaling applied to ACCESSORY_PCT_OF_TM weight suggestions. */
+export function getAccessoryWeightMultiplier(wave: RepWave | undefined, phase: WavePhase | undefined): number {
+  const waveMult = wave ? WAVE_ACCESSORY_WEIGHT_MULTIPLIER[wave] : 1;
+  const phaseMult = phase ? ACCESSORY_PHASE_PLAN[phase].weightMultiplier ?? 1 : 1;
+  return waveMult * phaseMult;
+}
 
 function findExerciseDef(name: string): Exercise | null {
   for (const day of Object.values(baseExercises)) {

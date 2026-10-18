@@ -14,7 +14,7 @@ import WorkoutSummaryView from './views/WorkoutSummaryView';
 import MainLiftView from './views/MainLiftView';
 import AccessoryExerciseView from './views/AccessoryExerciseView';
 import { useWorkoutData } from '../../hooks/useWorkoutData';
-import { liftNames, liftNamesShort, baseExercises, additionalExercises, ACCESSORY_PCT_OF_TM, ACCESSORY_PHASE_PLAN, ACCESSORY_WEAK_POINT_SOURCE, applyPhaseToAccessories, formatVariationCreditNote } from '../../lib/exercises';
+import { liftNames, liftNamesShort, baseExercises, additionalExercises, ACCESSORY_PCT_OF_TM, getAccessoryWeightMultiplier, ACCESSORY_WEAK_POINT_SOURCE, applyPhaseToAccessories, formatVariationCreditNote } from '../../lib/exercises';
 import { WorkoutDetailPageProps, WorkoutStep, SetInput } from '../../lib/types';
 import type { StickingPoint } from '../../lib/supabase';
 import Card from '../../components/ui/Card';
@@ -493,17 +493,16 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   // Suggested weight range for accessories that are barbell variations of a
   // main lift (pause squats, board press, rack pulls, etc.) — the rest of
-  // the accessory pool has no %TM basis and gets no suggestion. Flat across
-  // accumulation/intensification/realization by design (see
-  // ACCESSORY_PCT_OF_TM), but deload scales it down via weightMultiplier so
-  // accessory weight backs off along with the main lift's wave.
+  // the accessory pool has no %TM basis and gets no suggestion. Scaled down
+  // for heavier, lower-rep waves and for deload (see
+  // getAccessoryWeightMultiplier) so accessory weight tracks the main lift.
   const getAccessorySuggestion = (exerciseName: string): { low: number; high: number } | null => {
     const mapping = ACCESSORY_PCT_OF_TM[exerciseName];
     if (!mapping) return null;
     const trainingMax = maxes[mapping.baseLift] ?? 0;
     if (trainingMax <= 0) return null;
     const roundTo = getRoundingIncrement(unit);
-    const weightMultiplier = currentBlock ? ACCESSORY_PHASE_PLAN[currentBlock.phase].weightMultiplier ?? 1 : 1;
+    const weightMultiplier = getAccessoryWeightMultiplier(currentBlock?.wave, currentBlock?.phase);
     const base = trainingMax * mapping.pct * weightMultiplier;
     return {
       low: Math.round((base * WEIGHT_DISPLAY_RANGE_LOW) / roundTo) * roundTo,
