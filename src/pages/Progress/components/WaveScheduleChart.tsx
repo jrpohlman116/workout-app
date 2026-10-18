@@ -166,17 +166,6 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
         <p className="font-bold leading-tight">{title}</p>
         <p className="text-body-sm text-gray-400 mb-2">{PHASE_LABELS[d.phase]}</p>
         <div className="space-y-0.5">
-          {d.isMeetWeek ? (
-            <p className="text-body-sm text-gray-400">Rest — save it for the platform</p>
-          ) : d.isAmap ? (
-            <p className="text-body-sm mb-1.5">
-              1 set × {d.reps}+ reps <span className="text-gray-400">(AMRAP)</span>
-            </p>
-          ) : (
-            <p className="text-body-sm mb-1.5">
-              {d.numSets} × {d.reps} = <span className="font-semibold">{d.totalReps} reps</span>
-            </p>
-          )}
           {!d.isMeetWeek && (
             <div className="space-y-0.5">
               <p className="text-body-sm"><span className="text-gray-400 w-14 inline-block">Squat</span><span className="font-semibold">{d.squatWeight} {unit}</span></p>
