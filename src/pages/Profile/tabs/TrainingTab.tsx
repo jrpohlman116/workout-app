@@ -54,6 +54,16 @@ export default function TrainingTab() {
         .update(updatePayload)
         .eq('id', user.id);
       if (error) throw error;
+      // A new split re-lays-out every day, so it replaces any custom
+      // accessory lists rather than being silently masked by them.
+      if (splitStyle !== (profile?.split_style ?? DEFAULT_SPLIT_STYLE)) {
+        const { error: resetError } = await supabase
+          .from('workout_templates')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('program_variation', 'standard');
+        if (resetError) throw resetError;
+      }
       await refreshProfile();
     }, 'Failed to save training settings. Please try again.');
   };
@@ -87,7 +97,7 @@ export default function TrainingTab() {
       <div>
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Training Split</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-          Where your accessory variation work goes. You still train the same four days.
+          Where your accessory variation work goes. Changing this replaces any custom accessory lists you've saved.
         </p>
         <div role="radiogroup" aria-label="Training split" className="grid grid-cols-1 gap-2">
           {SPLIT_OPTIONS.map(option => {
