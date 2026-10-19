@@ -13,7 +13,7 @@ import Input from '../../../components/ui/Input';
 
 const SPLIT_OPTIONS: { value: SplitStyle; label: string; description: string }[] = [
   { value: 'upper_lower', label: 'Upper / lower', description: 'Squat variations on deadlift day, deadlift variations on squat day, bench variations on upper day.' },
-  { value: 'full_body', label: 'Full body', description: 'Squat variations move to the upper day alongside bench work. Deadlift day gets general support only.' },
+  { value: 'full_body', label: 'Full body', description: 'Every day mixes squat, bench and deadlift variation work for your sticking points, plus general support.' },
 ];
 
 export default function TrainingTab() {
@@ -99,6 +99,11 @@ export default function TrainingTab() {
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
           Where your accessory variation work goes. Changing this replaces any custom accessory lists you've saved.
         </p>
+        {!Object.values(weakPoints).some(points => points.length > 0) && (
+          <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-3">
+            Select at least one sticking point below first — the split only changes which variations are picked for them.
+          </p>
+        )}
         <div role="radiogroup" aria-label="Training split" className="grid grid-cols-1 gap-2">
           {SPLIT_OPTIONS.map(option => {
             const selected = splitStyle === option.value;

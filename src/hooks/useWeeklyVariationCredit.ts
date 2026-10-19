@@ -78,10 +78,9 @@ export function useWeeklyVariationCredit(
       const found: VariationContribution[] = [];
       for (const day of otherDays) {
         const dayDefaults = baseExercises[day as keyof typeof baseExercises] ?? baseExercises.upper;
-        const [primary, secondary] = getWeakPointSources(day, style);
+        const [primary] = getWeakPointSources(day, style);
         const dayWeakPoints = primary ? weakPoints?.[primary.profileLift] : undefined;
-        const daySecondary = secondary ? weakPoints?.[secondary.profileLift] : undefined;
-        const dayExercises = resolveDayExercises(day, templateByType.get(day) ?? null, dayWeakPoints, dayDefaults, style, daySecondary);
+        const dayExercises = resolveDayExercises(day, templateByType.get(day) ?? null, dayWeakPoints, dayDefaults, style, weakPoints);
         const { exercises: phaseAdjusted } = applyPhaseToAccessories(dayExercises, phase, day);
 
         phaseAdjusted.forEach(ex => {

@@ -148,14 +148,11 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   // Cross-day targeting: each day trains the opposite lift's weak points
   // (squat day → deadlift, deadlift day → squat, upper day → bench, bench
   // day → general support only); full-body style moves squat variations to
-  // the upper day. See getWeakPointSources.
+  // every day draws all three lifts' variations. See getWeakPointSources.
   const splitStyle = profile?.split_style ?? undefined;
-  const [primarySource, secondarySource] = getWeakPointSources(liftTypeKey, splitStyle);
+  const [primarySource] = getWeakPointSources(liftTypeKey, splitStyle);
   const userWeakPoints = primarySource
     ? (profile?.weak_points?.[primarySource.profileLift] as StickingPoint[] | undefined)
-    : undefined;
-  const secondaryWeakPoints = secondarySource
-    ? (profile?.weak_points?.[secondarySource.profileLift] as StickingPoint[] | undefined)
     : undefined;
 
   const {
@@ -172,7 +169,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     defaultExercises,
     userWeakPoints,
     splitStyle,
-    secondaryWeakPoints
+    profile?.weak_points
   );
 
   const allAvailableExercises = useMemo(() => [

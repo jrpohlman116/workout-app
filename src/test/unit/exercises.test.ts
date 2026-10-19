@@ -145,7 +145,7 @@ describe('selectMixedAccessories cross-day targeting', () => {
 
   it('upper day carries the bench weak-point work', () => {
     const selected = selectMixedAccessories('upper', ['lockout']);
-    expect(selected).toEqual(['Floor Press', 'Tricep Pressdowns', 'Face Pulls', 'Lateral Raise Complex']);
+    expect(selected).toEqual(['Floor Press', 'Tricep Pressdowns', 'Face Pulls', 'Chest-Supported Rows']);
   });
 
   it('never selects the day\'s own lift variations as weak-point work', () => {
@@ -302,22 +302,50 @@ describe('full-body split style', () => {
     expect(getWeakPointSources('upper').map(s => s.profileLift)).toEqual(['bench']);
   });
 
-  it('moves squat variations to the upper day and leaves deadlift day general-only', () => {
-    expect(getWeakPointSources('deadlift', 'full_body')).toEqual([]);
-    expect(getWeakPointSources('upper', 'full_body').map(s => s.profileLift)).toEqual(['bench', 'squat']);
-    expect(getWeakPointSources('squat', 'full_body').map(s => s.profileLift)).toEqual(['deadlift']);
+  it('draws all three lifts on every day in full body', () => {
+    for (const day of ['squat', 'deadlift', 'bench', 'upper']) {
+      expect(getWeakPointSources(day, 'full_body').map(s => s.profileLift).sort()).toEqual(['bench', 'deadlift', 'squat']);
+    }
   });
 
-  it('upper day draws one bench and one squat weak-point pick', () => {
-    const picks = selectMixedAccessories('upper', ['in_the_hole'], [], 'full_body', ['in_the_hole']);
-    expect(picks.some(n => weakPointExercisesMap.upper.in_the_hole.includes(n))).toBe(true);
-    expect(picks.some(n => weakPointExercisesMap.squat.in_the_hole.includes(n))).toBe(true);
-    expect(picks).toHaveLength(4);
+  it('every day gets one pick per lift plus general support', () => {
+    const wp = {
+      squat: ['in_the_hole'] as StickingPoint[],
+      bench: ['in_the_hole'] as StickingPoint[],
+      deadlift: ['mid_range'] as StickingPoint[],
+    };
+    for (const day of ['squat', 'deadlift', 'bench', 'upper']) {
+      const picks = selectMixedAccessories(day, undefined, [], 'full_body', wp);
+      expect(picks).toHaveLength(4);
+      const [primary] = getWeakPointSources(day, 'full_body');
+      const upperMap = day === 'upper' ? weakPointExercisesMap.upper : weakPointExercisesMap.bench;
+      expect(picks.some(n => weakPointExercisesMap.squat.in_the_hole.includes(n))).toBe(true);
+      expect(picks.some(n => upperMap.in_the_hole.includes(n))).toBe(true);
+      expect(picks.some(n => weakPointExercisesMap.deadlift.mid_range.includes(n))).toBe(true);
+      expect(primary).toBeDefined();
+    }
   });
 
-  it('deadlift day draws no barbell squat variations in full body', () => {
-    const picks = selectMixedAccessories('deadlift', ['in_the_hole'], [], 'full_body');
-    picks.forEach(n => expect(BARBELL_VARIATION_LIFTS[n]).not.toBe('squat'));
+  it('does not repeat the same variation for a lift on every day', () => {
+    const wp = {
+      squat: ['in_the_hole', 'mid_range'] as StickingPoint[],
+      bench: ['in_the_hole', 'mid_range'] as StickingPoint[],
+      deadlift: ['mid_range', 'lockout'] as StickingPoint[],
+    };
+    const days = ['squat', 'deadlift', 'bench', 'upper'];
+    const picksByDay = days.map(day => selectMixedAccessories(day, undefined, [], 'full_body', wp));
+    const squatPicks = picksByDay.map(p => p.find(n => BARBELL_VARIATION_LIFTS[n] === 'squat' || weakPointExercisesMap.squat.in_the_hole.includes(n) || weakPointExercisesMap.squat.mid_range.includes(n)));
+    expect(new Set(squatPicks).size).toBeGreaterThan(2);
+    const fullDays = picksByDay.map(p => p.join('|'));
+    expect(new Set(fullDays).size).toBe(4);
+  });
+
+  it('resolves exercises in full body from any lift weak points', () => {
+    const result = resolveDayExercises('bench', null, undefined, baseExercises.bench, 'full_body', {
+      squat: ['in_the_hole'], bench: [], deadlift: [],
+    });
+    expect(result.length).toBeGreaterThan(0);
+    expect(result.some(ex => weakPointExercisesMap.squat.in_the_hole.includes(ex.name))).toBe(true);
   });
 });
 
