@@ -373,11 +373,11 @@ describe('calculateJuggernautSets', () => {
       expect(cfg.isAmap).toBe(false);
     });
 
-    it('intensification: 4 sets × 10 reps @ 65% TM', () => {
+    it('intensification: 4 sets × 10 reps @ 67.5% TM', () => {
       const cfg = calculateJuggernautSets(10, 'intensification', TM_266);
       expect(cfg.numSets).toBe(4);
       expect(cfg.reps).toBe(10);
-      expect(cfg.weight).toBe(175);
+      expect(cfg.weight).toBe(180);
       expect(cfg.isAmap).toBe(false);
     });
 
@@ -408,11 +408,11 @@ describe('calculateJuggernautSets', () => {
       expect(cfg.weight).toBe(175);
     });
 
-    it('intensification: 4 sets × 8 reps @ 70% TM', () => {
+    it('intensification: 4 sets × 8 reps @ 72.5% TM', () => {
       const cfg = calculateJuggernautSets(8, 'intensification', TM_270);
       expect(cfg.numSets).toBe(4);
       expect(cfg.reps).toBe(8);
-      expect(cfg.weight).toBe(190);
+      expect(cfg.weight).toBe(195);
     });
 
     it('realization: 1 AMRAP set × 8+ reps @ 80% TM', () => {
