@@ -150,9 +150,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   // day → general support only); full-body style moves squat variations to
   // every day draws all three lifts' variations. See getWeakPointSources.
   const splitStyle = profile?.split_style ?? undefined;
-  // Full body spreads variations over every day, so credit trims at most one
-  // main set rather than stacking up to the 60% floor.
-  const maxVariationCredit = splitStyle === 'full_body' ? 1 : undefined;
+  // Variation work trims at most one main set, so a single 3-set variation
+  // elsewhere doesn't cut the main lift straight to the 60% floor.
+  const maxVariationCredit = 1;
   const [primarySource] = getWeakPointSources(liftTypeKey, splitStyle);
   const userWeakPoints = primarySource
     ? (profile?.weak_points?.[primarySource.profileLift] as StickingPoint[] | undefined)

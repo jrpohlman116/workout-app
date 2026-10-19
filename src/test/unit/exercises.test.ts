@@ -115,12 +115,12 @@ describe('selectMixedAccessories cross-day targeting', () => {
   it('squat day draws weak-point work from the deadlift map', () => {
     const selected = selectMixedAccessories('squat', ['lockout']);
     // Deadlift lockout list, capped at 1 barbell variation, filled with squat-day support
-    expect(selected).toEqual(['Rack Pulls', 'Shrugs', 'Romanian Deadlift', 'Leg Curls']);
+    expect(selected).toEqual(['Rack Pulls', 'Shrugs', 'Chest-Supported Rows', 'Pallof Press']);
   });
 
   it('deadlift day draws weak-point work from the squat map', () => {
     const selected = selectMixedAccessories('deadlift', ['mid_range']);
-    expect(selected).toEqual(['Pin Squats', 'Leg Press', 'Bulgarian Split Squats', 'Hanging Leg Raises']);
+    expect(selected).toEqual(['Pin Squats', 'Leg Press', 'Lat Pulldowns', 'Hanging Leg Raises']);
   });
 
   it('squat and deadlift days never share an accessory, for any weak-point combo', () => {
@@ -139,7 +139,7 @@ describe('selectMixedAccessories cross-day targeting', () => {
 
   it('bench day ignores weak points and returns general support only', () => {
     const selected = selectMixedAccessories('bench', ['lockout']);
-    expect(selected).toEqual(['Cable Rows', 'Face Pulls', 'Barbell Curls', 'Chest Flyes']);
+    expect(selected).toEqual(['Cable Rows', 'Rear Delt Flyes', 'Barbell Curls', 'Chest Flyes']);
     expect(ACCESSORY_WEAK_POINT_SOURCE.bench).toBeNull();
   });
 

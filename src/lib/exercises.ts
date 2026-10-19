@@ -27,10 +27,10 @@ export const baseExercises = {
     { name: 'Pallof Press', reps: '10-12', sets: 3, isBodyweight: false },
   ],
   bench: [
-    { name: 'Incline DB Press', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Dumbbell Press', reps: '8-12', sets: 3, isBodyweight: false },
     { name: 'Cable Rows', reps: '10-15', sets: 3, isBodyweight: false },
     { name: 'Tricep Pressdowns', reps: '8-12', sets: 3, isBodyweight: false },
-    { name: 'Face Pulls', reps: '15-20', sets: 3, isBodyweight: false },
+    { name: 'Rear Delt Flyes', reps: '12-15', sets: 3, isBodyweight: false },
   ],
   deadlift: [
     { name: 'Bulgarian Split Squats', reps: '8-10', sets: 3, isBodyweight: false },
@@ -244,9 +244,9 @@ export const weakPointExercisesMap: Record<string, Record<StickingPoint, string[
     lockout:     ['Floor Press', 'Board Press', 'Close-Grip Bench', 'Tricep Pressdowns', 'JM Press', 'Rope Pressdowns', 'Overhead Tricep Extension', 'Skull Crushers', 'Dips'],
   },
   deadlift: {
-    in_the_hole: ['Deficit Deadlift', 'Paused Deadlifts', 'Trap Bar Deadlifts', 'Reverse Hyperextensions', 'Good Mornings', 'Romanian Deadlift', 'B Stance RDLs', 'Back Extensions'],
+    in_the_hole: ['Deficit Deadlift', 'Paused Deadlifts', 'Trap Bar Deadlifts', 'Reverse Hyperextensions', 'Good Mornings', 'B Stance RDLs', 'Back Extensions'],
     mid_range:   ['Tempo Deadlifts', 'Paused Deadlifts', 'Pin Pulls', 'Partial Deadlifts', 'Rack Pulls', 'B Stance RDLs', 'Reverse Hyperextensions', 'Romanian Deadlift', 'Back Extensions', 'Cable Pull-Throughs'],
-    lockout:     ['Rack Pulls', 'Pin Pulls', 'Partial Deadlifts', 'Shrugs', 'B Stance RDLs', 'Reverse Hyperextensions', 'Good Mornings', 'Hip Thrusts', 'Cable Pull-Throughs', 'Back Extensions'],
+    lockout:     ['Rack Pulls', 'Pin Pulls', 'Partial Deadlifts', 'Shrugs', 'B Stance RDLs', 'Reverse Hyperextensions', 'Good Mornings', 'Hip Thrusts', 'Cable Pull-Throughs', 'Back Extensions', 'Romanian Deadlift'],
   },
   upper: {
     in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench', '3-Second Pause Bench', 'Feet-Up Bench', 'Deep Stretch DB Bench', 'Dumbbell Press', 'Dumbbell Flyes', 'Dips'],
@@ -405,9 +405,9 @@ export function isValidSubstitution(originalExercise: string, substituteExercise
 // from the front — so the two days must not share leading exercises, or every
 // user ends up with identical accessories on both days.
 export const generalSupportExercises: Record<string, string[]> = {
-  squat:    ['Romanian Deadlift', 'Leg Curls', 'Chest-Supported Rows', 'Pallof Press', 'Plank', 'Calf Raises', 'Hip Thrusts', 'Farmer Walks'],
-  bench:    ['Cable Rows', 'Face Pulls', 'Barbell Curls', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
-  deadlift: ['Bulgarian Split Squats', 'Hanging Leg Raises', 'Leg Extensions', 'Goblet Squats', 'Calf Raises', 'Step-Ups', 'Sissy Squats'],
+  squat:    ['Chest-Supported Rows', 'Pallof Press', 'Romanian Deadlift', 'Leg Curls', 'Plank', 'Calf Raises', 'Hip Thrusts', 'Farmer Walks'],
+  bench:    ['Cable Rows', 'Rear Delt Flyes', 'Barbell Curls', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
+  deadlift: ['Lat Pulldowns', 'Hanging Leg Raises', 'Bulgarian Split Squats', 'Leg Extensions', 'Goblet Squats', 'Calf Raises', 'Step-Ups', 'Sissy Squats'],
   upper:    ['Face Pulls', 'Chest-Supported Rows', 'Lateral Raise Complex', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
 };
 
