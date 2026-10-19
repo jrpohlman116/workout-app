@@ -26,7 +26,7 @@ export function convertWeightUnit(value: number, fromUnit: string, toUnit: strin
 export const BAR_WEIGHTS: Record<string, number> = { lb: 45, kg: 20 };
 
 // Plate sets assumed when the user hasn't customized theirs in the Calculator
-export const DEFAULT_PLATES_LB = [45, 35, 25, 10, 5, 2.5];
+export const DEFAULT_PLATES_LB = [45, 25, 10, 5, 2.5];
 export const DEFAULT_PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25];
 
 export interface PlateBreakdown {
