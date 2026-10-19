@@ -98,9 +98,9 @@ describe('isValidSubstitution', () => {
     expect(sharesWeakPoint('Close-Grip Bench', 'Board Press')).toBe(true);
     expect(isValidSubstitution('Close-Grip Bench', 'Board Press', ['triceps', 'chest'])).toBe(true);
 
-    // Dips shares the muscle group but isn't part of the weak-point system at all
-    expect(sharesWeakPoint('Close-Grip Bench', 'Dips')).toBe(false);
-    expect(isValidSubstitution('Close-Grip Bench', 'Dips', ['triceps', 'chest', 'shoulders'])).toBe(false);
+    // Cable Flyes shares the muscle group but isn't part of the weak-point system at all
+    expect(sharesWeakPoint('Close-Grip Bench', 'Cable Flyes')).toBe(false);
+    expect(isValidSubstitution('Close-Grip Bench', 'Cable Flyes', ['chest'])).toBe(false);
   });
 
   it('is ungated for exercises outside the weak-point system', () => {
@@ -120,7 +120,7 @@ describe('selectMixedAccessories cross-day targeting', () => {
 
   it('deadlift day draws weak-point work from the squat map', () => {
     const selected = selectMixedAccessories('deadlift', ['mid_range']);
-    expect(selected).toEqual(['Pin Squats', 'Leg Press', 'Bulgarian Split Squats', 'Abs']);
+    expect(selected).toEqual(['Pin Squats', 'Leg Press', 'Bulgarian Split Squats', 'Hanging Leg Raises']);
   });
 
   it('squat and deadlift days never share an accessory, for any weak-point combo', () => {
@@ -139,7 +139,7 @@ describe('selectMixedAccessories cross-day targeting', () => {
 
   it('bench day ignores weak points and returns general support only', () => {
     const selected = selectMixedAccessories('bench', ['lockout']);
-    expect(selected).toEqual(['Barbell Curls', 'Face Pulls', 'Chest Flyes', 'Cable Flyes']);
+    expect(selected).toEqual(['Cable Rows', 'Face Pulls', 'Barbell Curls', 'Chest Flyes']);
     expect(ACCESSORY_WEAK_POINT_SOURCE.bench).toBeNull();
   });
 
@@ -308,7 +308,7 @@ describe('full-body split style', () => {
     }
   });
 
-  it('every day gets one pick per lift plus general support', () => {
+  it('every day gets at most one heavy barbell variation', () => {
     const wp = {
       squat: ['in_the_hole'] as StickingPoint[],
       bench: ['in_the_hole'] as StickingPoint[],
@@ -317,27 +317,41 @@ describe('full-body split style', () => {
     for (const day of ['squat', 'deadlift', 'bench', 'upper']) {
       const picks = selectMixedAccessories(day, undefined, [], 'full_body', wp);
       expect(picks).toHaveLength(4);
-      const [primary] = getWeakPointSources(day, 'full_body');
-      const upperMap = day === 'upper' ? weakPointExercisesMap.upper : weakPointExercisesMap.bench;
-      expect(picks.some(n => weakPointExercisesMap.squat.in_the_hole.includes(n))).toBe(true);
-      expect(picks.some(n => upperMap.in_the_hole.includes(n))).toBe(true);
-      expect(picks.some(n => weakPointExercisesMap.deadlift.mid_range.includes(n))).toBe(true);
-      expect(primary).toBeDefined();
+      const barbellLifts = picks.map(n => BARBELL_VARIATION_LIFTS[n]).filter(Boolean);
+      expect(barbellLifts.length).toBeLessThanOrEqual(1);
     }
   });
 
-  it('does not repeat the same variation for a lift on every day', () => {
+  it('never lists another lift barbell variation under a lift weak points', () => {
+    const picks = selectMixedAccessories('squat', ['in_the_hole', 'mid_range', 'lockout']);
+    picks.forEach(n => expect(BARBELL_VARIATION_LIFTS[n] ?? 'deadlift').toBe('deadlift'));
+  });
+
+  it('rotates which lift gets the one heavy barbell variation each day', () => {
     const wp = {
       squat: ['in_the_hole', 'mid_range'] as StickingPoint[],
       bench: ['in_the_hole', 'mid_range'] as StickingPoint[],
-      deadlift: ['mid_range', 'lockout'] as StickingPoint[],
+      deadlift: ['in_the_hole', 'mid_range'] as StickingPoint[],
     };
     const days = ['squat', 'deadlift', 'bench', 'upper'];
     const picksByDay = days.map(day => selectMixedAccessories(day, undefined, [], 'full_body', wp));
-    const squatPicks = picksByDay.map(p => p.find(n => BARBELL_VARIATION_LIFTS[n] === 'squat' || weakPointExercisesMap.squat.in_the_hole.includes(n) || weakPointExercisesMap.squat.mid_range.includes(n)));
-    expect(new Set(squatPicks).size).toBeGreaterThan(2);
-    const fullDays = picksByDay.map(p => p.join('|'));
-    expect(new Set(fullDays).size).toBe(4);
+    const barbellLiftByDay = picksByDay.map(p => p.map(n => BARBELL_VARIATION_LIFTS[n]).filter(Boolean));
+    barbellLiftByDay.forEach(lifts => expect(lifts.length).toBeLessThanOrEqual(1));
+    expect(new Set(barbellLiftByDay.flat()).size).toBeGreaterThanOrEqual(3);
+    expect(new Set(picksByDay.map(p => p.join('|'))).size).toBe(4);
+  });
+
+  it('keeps one general-support slot per day and never repeats a pick on the same day', () => {
+    const wp = {
+      squat: ['mid_range'] as StickingPoint[],
+      bench: ['in_the_hole'] as StickingPoint[],
+      deadlift: ['in_the_hole'] as StickingPoint[],
+    };
+    for (const day of ['squat', 'deadlift', 'bench', 'upper']) {
+      const picks = selectMixedAccessories(day, undefined, [], 'full_body', wp);
+      expect(picks).toHaveLength(4);
+      expect(new Set(picks).size).toBe(4);
+    }
   });
 
   it('resolves exercises in full body from any lift weak points', () => {

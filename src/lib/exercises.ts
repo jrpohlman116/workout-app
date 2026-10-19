@@ -23,19 +23,19 @@ export const baseExercises = {
   squat: [
     { name: 'Romanian Deadlift', reps: '8-12', sets: 3, isBodyweight: false },
     { name: 'Leg Curls', reps: '12-15', sets: 3, isBodyweight: false },
-    { name: 'Barbell Rows', reps: '8-12', sets: 3, isBodyweight: false },
-    { name: 'Plank', reps: '30-60 sec', sets: 3, isBodyweight: true },
+    { name: 'Chest-Supported Rows', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Pallof Press', reps: '10-12', sets: 3, isBodyweight: false },
   ],
   bench: [
     { name: 'Incline DB Press', reps: '8-12', sets: 3, isBodyweight: false },
-    { name: 'Barbell Curls', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Cable Rows', reps: '10-15', sets: 3, isBodyweight: false },
     { name: 'Tricep Pressdowns', reps: '8-12', sets: 3, isBodyweight: false },
     { name: 'Face Pulls', reps: '15-20', sets: 3, isBodyweight: false },
   ],
   deadlift: [
     { name: 'Bulgarian Split Squats', reps: '8-10', sets: 3, isBodyweight: false },
     { name: 'Leg Press', reps: '5-8', sets: 3, isBodyweight: false },
-    { name: 'Abs', reps: '10-15 min', sets: 3, isBodyweight: true },
+    { name: 'Hanging Leg Raises', reps: '8-15', sets: 3, isBodyweight: true },
     { name: 'B Stance RDLs', reps: '8-12', sets: 3, isBodyweight: false },
   ],
   upper: [
@@ -140,15 +140,15 @@ export const additionalExercises = [
   { name: 'Skull Crushers', reps: '8-12', sets: 3, isBodyweight: false },
   { name: 'Overhead Tricep Extension', reps: '10-15', sets: 3, isBodyweight: false },
   { name: 'Rear Delt Flyes', reps: '12-15', sets: 3, isBodyweight: false },
-  { name: 'Chest-Supported Rows', reps: '8-12', sets: 3, isBodyweight: false },
   { name: 'One-Arm DB Rows', reps: '8-12', sets: 3, isBodyweight: false },
-  { name: 'Cable Rows', reps: '10-15', sets: 3, isBodyweight: false },
+  { name: 'Barbell Rows', reps: '8-12', sets: 3, isBodyweight: false },
+  { name: 'Barbell Curls', reps: '8-12', sets: 3, isBodyweight: false },
+  { name: 'Plank', reps: '30-60 sec', sets: 3, isBodyweight: true },
+  { name: 'Abs', reps: '10-15 min', sets: 3, isBodyweight: true },
   { name: 'Good Mornings', reps: '8-12', sets: 3, isBodyweight: false },
   { name: 'Reverse Hyperextensions', reps: '10-15', sets: 3, isBodyweight: false },
   { name: 'Trap Bar Deadlifts', reps: '5-8', sets: 3, isBodyweight: false },
   { name: 'Ab Wheel', reps: '8-12', sets: 3, isBodyweight: true },
-  { name: 'Pallof Press', reps: '10-12', sets: 3, isBodyweight: false },
-  { name: 'Hanging Leg Raises', reps: '8-15', sets: 3, isBodyweight: true },
   { name: 'Overhead Press', reps: '6-10', sets: 3, isBodyweight: false },
   { name: 'Seated DB Press', reps: '8-12', sets: 3, isBodyweight: false },
   { name: 'Hammer Curls', reps: '10-12', sets: 3, isBodyweight: false },
@@ -234,24 +234,24 @@ export const BARBELL_VARIATION_LIFTS: Record<string, 'squat' | 'bench' | 'deadli
 
 export const weakPointExercisesMap: Record<string, Record<StickingPoint, string[]>> = {
   squat: {
-    in_the_hole: ['Box Squats', 'Anderson Squats', 'Pin Squats', 'Pause Squats', 'Bulgarian Split Squats', '3-Second Pause Squat'],
-    mid_range:   ['Pin Squats', 'Tempo Squats', 'Front Squats', 'Pause Squats', 'Leg Press'],
-    lockout:     ['Walking Lunges', 'Single-Leg Squats', 'Safety Bar Box Squats', 'Leg Extensions', 'Hip Thrusts'],
+    in_the_hole: ['Box Squats', 'Anderson Squats', 'Pin Squats', 'Pause Squats', 'Bulgarian Split Squats', '3-Second Pause Squat', 'Goblet Squats', 'Sissy Squats', 'Leg Press'],
+    mid_range:   ['Pin Squats', 'Tempo Squats', 'Front Squats', 'Pause Squats', 'Leg Press', 'Bulgarian Split Squats', 'Leg Extensions', 'Spanish Squats'],
+    lockout:     ['Walking Lunges', 'Single-Leg Squats', 'Safety Bar Box Squats', 'Leg Extensions', 'Hip Thrusts', 'Cable Pull-Throughs', 'Single-Leg Hip Thrusts'],
   },
   bench: {
-    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench', '3-Second Pause Bench', 'Feet-Up Bench', 'Deep Stretch DB Bench'],
-    mid_range:   ['Close-Grip Bench', 'Pin Press', 'Pause Bench', 'Incline Bench', 'Floor Press'],
-    lockout:     ['Floor Press', 'Board Press', 'Close-Grip Bench', 'Tricep Pressdowns', 'JM Press'],
+    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench', '3-Second Pause Bench', 'Feet-Up Bench', 'Deep Stretch DB Bench', 'Dumbbell Press', 'Dumbbell Flyes', 'Dips'],
+    mid_range:   ['Close-Grip Bench', 'Pin Press', 'Pause Bench', 'Incline Bench', 'Floor Press', 'Incline DB Press', 'Dumbbell Press', 'Dips'],
+    lockout:     ['Floor Press', 'Board Press', 'Close-Grip Bench', 'Tricep Pressdowns', 'JM Press', 'Rope Pressdowns', 'Overhead Tricep Extension', 'Skull Crushers', 'Dips'],
   },
   deadlift: {
-    in_the_hole: ['Deficit Deadlift', 'Paused Deadlifts', 'Front Squats', 'Pause Squats', 'Step-Ups', 'Trap Bar Deadlifts'],
-    mid_range:   ['Tempo Deadlifts', 'Paused Deadlifts', 'Pin Pulls', 'Partial Deadlifts', 'Rack Pulls'],
-    lockout:     ['Rack Pulls', 'Pin Pulls', 'Partial Deadlifts', 'Shrugs', 'B Stance RDLs', 'Reverse Hyperextensions', 'Good Mornings'],
+    in_the_hole: ['Deficit Deadlift', 'Paused Deadlifts', 'Trap Bar Deadlifts', 'Reverse Hyperextensions', 'Good Mornings', 'Romanian Deadlift', 'B Stance RDLs', 'Back Extensions'],
+    mid_range:   ['Tempo Deadlifts', 'Paused Deadlifts', 'Pin Pulls', 'Partial Deadlifts', 'Rack Pulls', 'B Stance RDLs', 'Reverse Hyperextensions', 'Romanian Deadlift', 'Back Extensions', 'Cable Pull-Throughs'],
+    lockout:     ['Rack Pulls', 'Pin Pulls', 'Partial Deadlifts', 'Shrugs', 'B Stance RDLs', 'Reverse Hyperextensions', 'Good Mornings', 'Hip Thrusts', 'Cable Pull-Throughs', 'Back Extensions'],
   },
   upper: {
-    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench', '3-Second Pause Bench', 'Feet-Up Bench', 'Deep Stretch DB Bench'],
-    mid_range:   ['Close-Grip Bench', 'Pin Press', 'Pause Bench', 'JM Press', 'Floor Press'],
-    lockout:     ['Floor Press', 'Board Press', 'Close-Grip Bench', 'Tricep Pressdowns', 'Lockout Bench'],
+    in_the_hole: ['Incline DB Press', 'Board Press', 'Pin Press', 'Spoto Press', 'Pause Bench', '3-Second Pause Bench', 'Feet-Up Bench', 'Deep Stretch DB Bench', 'Dumbbell Press', 'Dumbbell Flyes', 'Dips'],
+    mid_range:   ['Close-Grip Bench', 'Pin Press', 'Pause Bench', 'JM Press', 'Floor Press', 'Incline DB Press', 'Dumbbell Press', 'Dips'],
+    lockout:     ['Floor Press', 'Board Press', 'Close-Grip Bench', 'Tricep Pressdowns', 'Lockout Bench', 'Rope Pressdowns', 'Overhead Tricep Extension', 'Skull Crushers', 'Dips'],
   },
 };
 
@@ -297,6 +297,19 @@ const EXERCISE_MUSCLE_GROUPS: Record<string, string[]> = {
   'Leg Extensions': ['quads'],
   'Step-Ups': ['quads'],
   'Hip Thrusts': ['glutes', 'hamstrings'],
+  'Goblet Squats': ['quads', 'glutes'],
+  'Sissy Squats': ['quads'],
+  'Spanish Squats': ['quads'],
+  'Cable Pull-Throughs': ['glutes', 'hamstrings'],
+  'Single-Leg Hip Thrusts': ['glutes', 'hamstrings'],
+  'Romanian Deadlift': ['hamstrings', 'glutes', 'lower back'],
+  'Back Extensions': ['hamstrings', 'glutes', 'lower back'],
+  'Dumbbell Press': ['chest', 'triceps', 'shoulders'],
+  'Dumbbell Flyes': ['chest'],
+  'Dips': ['chest', 'triceps'],
+  'Rope Pressdowns': ['triceps'],
+  'Overhead Tricep Extension': ['triceps'],
+  'Skull Crushers': ['triceps'],
   // Deadlift hip-hinge family
   'Deficit Deadlift': ['hamstrings', 'glutes', 'lower back'],
   'Paused Deadlifts': ['hamstrings', 'glutes', 'lower back'],
@@ -392,9 +405,9 @@ export function isValidSubstitution(originalExercise: string, substituteExercise
 // from the front — so the two days must not share leading exercises, or every
 // user ends up with identical accessories on both days.
 export const generalSupportExercises: Record<string, string[]> = {
-  squat:    ['Romanian Deadlift', 'Leg Curls', 'Barbell Rows', 'Plank', 'Calf Raises', 'Hip Thrusts', 'Farmer Walks'],
-  bench:    ['Barbell Curls', 'Face Pulls', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
-  deadlift: ['Bulgarian Split Squats', 'Abs', 'Leg Extensions', 'Goblet Squats', 'Calf Raises', 'Step-Ups', 'Sissy Squats'],
+  squat:    ['Romanian Deadlift', 'Leg Curls', 'Chest-Supported Rows', 'Pallof Press', 'Plank', 'Calf Raises', 'Hip Thrusts', 'Farmer Walks'],
+  bench:    ['Cable Rows', 'Face Pulls', 'Barbell Curls', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
+  deadlift: ['Bulgarian Split Squats', 'Hanging Leg Raises', 'Leg Extensions', 'Goblet Squats', 'Calf Raises', 'Step-Ups', 'Sissy Squats'],
   upper:    ['Face Pulls', 'Chest-Supported Rows', 'Lateral Raise Complex', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
 };
 
@@ -517,11 +530,25 @@ export interface WeakPointSource {
   mapKey: string;
 }
 
+// Order matters: the first source gets the day's one heavy barbell variation
+// and the rest draw non-barbell movements. Rotating the first source gives
+// squat day deadlift work, deadlift day squat work, upper day bench work and
+// bench day deadlift work — so each day's own main lift is never stacked with
+// its own heavy variation, and no lift is always drawn last.
 const FULL_BODY_WEAK_POINT_SOURCES: Record<string, WeakPointSource[]> = {
   squat:    [{ profileLift: 'deadlift', mapKey: 'deadlift' }, { profileLift: 'squat', mapKey: 'squat' }, { profileLift: 'bench', mapKey: 'bench' }],
   deadlift: [{ profileLift: 'squat', mapKey: 'squat' }, { profileLift: 'deadlift', mapKey: 'deadlift' }, { profileLift: 'bench', mapKey: 'bench' }],
-  bench:    [{ profileLift: 'bench', mapKey: 'bench' }, { profileLift: 'squat', mapKey: 'squat' }, { profileLift: 'deadlift', mapKey: 'deadlift' }],
+  bench:    [{ profileLift: 'deadlift', mapKey: 'deadlift' }, { profileLift: 'bench', mapKey: 'bench' }, { profileLift: 'squat', mapKey: 'squat' }],
   upper:    [{ profileLift: 'bench', mapKey: 'upper' }, { profileLift: 'squat', mapKey: 'squat' }, { profileLift: 'deadlift', mapKey: 'deadlift' }],
+};
+
+// Full body fills its one general-support slot with pulling or core work —
+// the weak-point picks otherwise crowd both out of the week.
+const FULL_BODY_GENERAL_SUPPORT: Record<string, string[]> = {
+  squat:    ['Pallof Press', 'Chest-Supported Rows', 'Leg Curls', 'Plank', 'Calf Raises'],
+  deadlift: ['Lat Pulldowns', 'Hanging Leg Raises', 'Face Pulls', 'Calf Raises'],
+  bench:    ['Cable Rows', 'Hanging Leg Raises', 'Face Pulls', 'Barbell Curls'],
+  upper:    ['Face Pulls', 'Hanging Leg Raises', 'Chest-Supported Rows', 'Lateral Raise Complex'],
 };
 
 // Full body draws the same three lifts every day, so each day starts a
@@ -598,6 +625,8 @@ export function formatVariationCreditNote(
   return `${numSets} ${setsWord} today — ${list} ${coverWord} the rest of this week's volume.`;
 }
 
+const MAX_BARBELL_VARIATIONS_PER_DAY = 2;
+
 export function selectMixedAccessories(
   liftType: string,
   weakPoints: StickingPoint[] | undefined,
@@ -608,7 +637,8 @@ export function selectMixedAccessories(
   // weakPoints are the sticking points of the day's *target* lift (see
   // getWeakPointSources) — callers read them via `profileLift`.
   const sources = getWeakPointSources(liftType, style);
-  const generalExercises = generalSupportExercises[liftType];
+  const generalExercises = (style === 'full_body' ? FULL_BODY_GENERAL_SUPPORT[liftType] : undefined)
+    ?? generalSupportExercises[liftType];
 
   if (!generalExercises) return [];
 
@@ -623,14 +653,27 @@ export function selectMixedAccessories(
     if (map && points) {
       points.forEach(point => {
         map[point].forEach(ex => {
+          // A barbell variation of a different lift doesn't belong to this
+          // source (e.g. a squat variation listed under deadlift weak points).
+          const variationLift = BARBELL_VARIATION_LIFTS[ex];
+          if (variationLift && variationLift !== source.profileLift) return;
           if (!excludeExercises.includes(ex)) candidates.add(ex);
         });
       });
     }
     if (style === 'full_body' && candidates.size > 1) {
+      // Rotate barbell and non-barbell options separately: the barbell cap
+      // skips the leading barbells on most days, so rotating the mixed list
+      // would land every day on the same first non-barbell pick.
+      const rotate = (items: string[]) => {
+        if (items.length < 2) return items;
+        const shift = (FULL_BODY_DAY_OFFSET[liftType] ?? 0) % items.length;
+        return [...items.slice(shift), ...items.slice(0, shift)];
+      };
       const items = [...candidates];
-      const shift = (FULL_BODY_DAY_OFFSET[liftType] ?? 0) % items.length;
-      return new Set([...items.slice(shift), ...items.slice(0, shift)]);
+      const barbells = items.filter(ex => ex in BARBELL_VARIATION_LIFTS);
+      const others = items.filter(ex => !(ex in BARBELL_VARIATION_LIFTS));
+      return new Set([...rotate(barbells), ...rotate(others)]);
     }
     return candidates;
   }).filter(candidates => candidates.size > 0);
@@ -639,7 +682,11 @@ export function selectMixedAccessories(
   // Either way at most 1 heavy barbell variation per source — a second
   // variation of the same lift adds axial fatigue without much new stimulus,
   // so the other slot prefers a non-barbell movement from the same list.
+  // A day also never carries more than the per-day barbell cap (full body is
+  // tighter, since every day already mixes all three lifts).
   const slotsPerGroup = groups.length === 1 ? 2 : 1;
+  const maxBarbell = style === 'full_body' ? 1 : MAX_BARBELL_VARIATIONS_PER_DAY;
+  let barbellTotal = 0;
   for (const candidates of groups) {
     const target = Math.min(slotsPerGroup, candidates.size);
     let picked = 0;
@@ -648,10 +695,10 @@ export function selectMixedAccessories(
       if (picked >= target) break;
       if (selected.includes(ex)) continue;
       const isBarbell = ex in BARBELL_VARIATION_LIFTS;
-      if (isBarbell && barbellCount >= 1) continue;
+      if (isBarbell && (barbellCount >= 1 || barbellTotal >= maxBarbell)) continue;
       selected.push(ex);
       picked++;
-      if (isBarbell) barbellCount++;
+      if (isBarbell) { barbellCount++; barbellTotal++; }
     }
   }
 

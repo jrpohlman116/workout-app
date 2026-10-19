@@ -150,6 +150,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   // day → general support only); full-body style moves squat variations to
   // every day draws all three lifts' variations. See getWeakPointSources.
   const splitStyle = profile?.split_style ?? undefined;
+  // Full body spreads variations over every day, so credit trims at most one
+  // main set rather than stacking up to the 60% floor.
+  const maxVariationCredit = splitStyle === 'full_body' ? 1 : undefined;
   const [primarySource] = getWeakPointSources(liftTypeKey, splitStyle);
   const userWeakPoints = primarySource
     ? (profile?.weak_points?.[primarySource.profileLift] as StickingPoint[] | undefined)
@@ -232,7 +235,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         : calculateJuggernautSets(currentBlock.wave, currentBlock.phase, max, unit);
 
       const numSets = creditPhase
-        ? applyVariationCredit(cfg.numSets, variationSetsPlanned ?? 0).numSets
+        ? applyVariationCredit(cfg.numSets, variationSetsPlanned ?? 0, maxVariationCredit).numSets
         : cfg.numSets;
 
       const sets: SetInput[] = Array.from({ length: numSets }, () => ({
@@ -523,7 +526,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const creditPhase = !!currentBlock && (currentBlock.phase === 'accumulation' || currentBlock.phase === 'intensification');
   const variationCreditResult = creditPhase && baseMainConfig
-    ? applyVariationCredit(baseMainConfig.numSets, variationSetsPlanned ?? 0)
+    ? applyVariationCredit(baseMainConfig.numSets, variationSetsPlanned ?? 0, maxVariationCredit)
     : { numSets: baseMainConfig?.numSets ?? 0, reducedBy: 0 };
 
   const mainConfig: JuggernautSetsConfig | null = baseMainConfig

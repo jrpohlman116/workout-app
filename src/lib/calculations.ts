@@ -322,10 +322,11 @@ export function calculateJuggernautSets(
  */
 export function applyVariationCredit(
   baseNumSets: number,
-  variationSetsPlanned: number
+  variationSetsPlanned: number,
+  maxReduction: number = Infinity
 ): { numSets: number; reducedBy: number } {
   if (variationSetsPlanned <= 0) return { numSets: baseNumSets, reducedBy: 0 };
-  const specificityFloor = Math.max(1, Math.ceil(baseNumSets * 0.6));
+  const specificityFloor = Math.max(1, Math.ceil(baseNumSets * 0.6), baseNumSets - maxReduction);
   const numSets = Math.max(specificityFloor, baseNumSets - variationSetsPlanned);
   return { numSets, reducedBy: baseNumSets - numSets };
 }

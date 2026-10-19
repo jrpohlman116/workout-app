@@ -683,6 +683,12 @@ describe('applyVariationCredit', () => {
     expect(applyVariationCredit(6, 10)).toEqual({ numSets: 4, reducedBy: 2 });
   });
 
+  it('caps the reduction when maxReduction is given', () => {
+    expect(applyVariationCredit(5, 4, 1)).toEqual({ numSets: 4, reducedBy: 1 });
+    expect(applyVariationCredit(6, 3, 1)).toEqual({ numSets: 5, reducedBy: 1 });
+    expect(applyVariationCredit(5, 0, 1)).toEqual({ numSets: 5, reducedBy: 0 });
+  });
+
   it('never reduces a single-set prescription to zero', () => {
     expect(applyVariationCredit(1, 5)).toEqual({ numSets: 1, reducedBy: 0 });
   });
