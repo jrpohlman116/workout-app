@@ -50,6 +50,7 @@ export interface UserProfile {
   // Juggernaut fields
   meet_date?: string;           // ISO date (YYYY-MM-DD) — drives wave schedule
   program_start_date?: string;  // ISO date — combined with meet_date to reconstruct schedule
+  program_restarted_at?: string | null; // ISO timestamp — sessions logged before this don't count as complete
   current_week_index?: number;  // explicit pointer into the wave schedule; null = derive from today's date
   weak_points?: WeakPoints;     // sticking points per lift
   split_style?: 'upper_lower' | 'full_body'; // where squat variation work lives; null = upper_lower

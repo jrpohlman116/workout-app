@@ -40,7 +40,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     if (user && profile) {
       loadCompletedWorkouts();
     }
-  }, [user, profile?.current_cycle, profile?.current_week, weekOffset]);
+  }, [user, profile?.current_cycle, profile?.current_week, profile?.program_restarted_at, weekOffset]);
 
   const loadCompletedWorkouts = async () => {
     if (!user || !profile) return;
@@ -54,13 +54,19 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     const viewedWeek = (total % 4) + 1;
     const viewedCycle = Math.floor(total / 4) + 1;
 
-    const { data } = await supabase
+    // A restart rewinds to cycle 1, week 1, so only sessions logged since
+    // then count as complete — earlier ones stay in history.
+    let query = supabase
       .from('workout_sessions')
       .select('lift_type, calculated_1rm')
       .eq('user_id', user.id)
       .eq('cycle', viewedCycle)
       .eq('week', viewedWeek)
       .eq('is_1rm_test', false);
+    if (profile.program_restarted_at) {
+      query = query.gte('completed_at', profile.program_restarted_at);
+    }
+    const { data } = await query;
 
     if (data) {
       setCompletedWorkouts(new Set(data.map(w => w.lift_type)));

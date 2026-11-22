@@ -7,6 +7,7 @@ import SaveFeedback from '../../../components/ui/SaveFeedback';
 import type { StickingPoint, WeakPoints } from '../../../lib/supabase';
 import { DEFAULT_SPLIT_STYLE, type SplitStyle } from '../../../lib/exercises';
 import WeakPointPicker, { type MainLiftKey } from '../../../components/features/WeakPointPicker';
+import AccessibleModal from '../../../components/accessible/AccessibleModal';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -24,6 +25,7 @@ export default function TrainingTab() {
   );
   const [splitStyle, setSplitStyle] = useState<SplitStyle>(profile?.split_style ?? DEFAULT_SPLIT_STYLE);
   const { loading, error, saved, run, markUnsaved } = useFormState();
+  const [showRestartModal, setShowRestartModal] = useState(false);
 
   const toggleWeakPoint = (lift: MainLiftKey, point: StickingPoint) => {
     setWeakPoints(prev => {
@@ -36,7 +38,7 @@ export default function TrainingTab() {
     markUnsaved();
   };
 
-  const handleSave = () => {
+  const handleSave = (restart = false) => {
     if (!user) return;
     run(async () => {
       const today = new Date().toISOString().split('T')[0];
@@ -46,7 +48,12 @@ export default function TrainingTab() {
         split_style: splitStyle,
         updated_at: new Date().toISOString(),
       };
-      if (meetDate && !profile?.program_start_date) {
+      if (restart) {
+        updatePayload.current_cycle = 1;
+        updatePayload.current_week = 1;
+        updatePayload.program_start_date = today;
+        updatePayload.program_restarted_at = new Date().toISOString();
+      } else if (meetDate && !profile?.program_start_date) {
         updatePayload.program_start_date = today;
       }
       const { error } = await supabase
@@ -65,7 +72,12 @@ export default function TrainingTab() {
         if (resetError) throw resetError;
       }
       await refreshProfile();
-    }, 'Failed to save training settings. Please try again.');
+    }, restart ? 'Failed to restart program. Please try again.' : 'Failed to save training settings. Please try again.');
+  };
+
+  const handleSaveAndRestart = () => {
+    setShowRestartModal(false);
+    handleSave(true);
   };
 
   return (
@@ -136,10 +148,38 @@ export default function TrainingTab() {
         <WeakPointPicker value={weakPoints} onToggle={toggleWeakPoint} />
       </div>
 
-      <Button fullWidth onClick={handleSave} disabled={loading}>
-        {loading ? 'Saving...' : 'Save Training Settings'}
-      </Button>
+      <div className="flex gap-3">
+        <Button variant="secondary" className="w-1/3" onClick={() => handleSave()} disabled={loading}>
+          {loading ? 'Saving...' : 'Save'}
+        </Button>
+        <Button onClick={() => setShowRestartModal(true)} disabled={loading} className="w-2/3">
+          Save & restart program
+        </Button>
+      </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+        "Save & restart program" rebuilds your wave schedule from today
+      </p>
       <SaveFeedback error={error} saved={saved} savedMessage="Training settings saved." />
+
+      <AccessibleModal
+        isOpen={showRestartModal}
+        onClose={() => setShowRestartModal(false)}
+        title="Restart program"
+        description="Your wave schedule will reset to cycle 1, week 1"
+        size="sm"
+      >
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          Your training settings will be saved and your program will restart from the beginning. Workouts will show as incomplete until you log them again. Your history is kept.
+        </p>
+        <div className="flex gap-3">
+          <Button variant="secondary" size="md" disabled={loading} className="flex-1" onClick={() => setShowRestartModal(false)}>
+            Cancel
+          </Button>
+          <Button size="md" disabled={loading} className="flex-1" onClick={handleSaveAndRestart}>
+            {loading ? 'Restarting...' : 'Save & restart'}
+          </Button>
+        </div>
+      </AccessibleModal>
     </Card>
   );
 }

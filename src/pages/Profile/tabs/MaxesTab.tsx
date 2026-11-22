@@ -5,7 +5,6 @@ import { TRAINING_MAX_FACTOR, getRoundingIncrement } from '../../../lib/calculat
 import { useFormState } from '../../../hooks/useFormState';
 import Card from '../../../components/ui/Card';
 import SaveFeedback from '../../../components/ui/SaveFeedback';
-import AccessibleModal from '../../../components/accessible/AccessibleModal';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 
@@ -21,7 +20,6 @@ export default function MaxesTab() {
   const [benchTestedMax, setBenchTestedMax] = useState(profile?.bench_tested_max?.toString() || '');
   const [deadliftTestedMax, setDeadliftTestedMax] = useState(profile?.deadlift_tested_max?.toString() || '');
   const { loading, error, saved, run, markUnsaved } = useFormState();
-  const [showRestartModal, setShowRestartModal] = useState(false);
 
   const payload = () => ({
     squat_max: parseFloat(squatMax) || 0,
@@ -33,25 +31,16 @@ export default function MaxesTab() {
     updated_at: new Date().toISOString(),
   });
 
-  const save = (extraFields?: Record<string, unknown>) => {
+  const save = () => {
     if (!user) return;
     run(async () => {
       const { error } = await supabase
         .from('user_profiles')
-        .update({ ...payload(), ...extraFields })
+        .update(payload())
         .eq('id', user.id);
       if (error) throw error;
       await refreshProfile();
-    }, extraFields ? 'Failed to restart program. Please try again.' : 'Failed to save maxes. Please try again.');
-  };
-
-  const handleSaveAndRestart = async () => {
-    setShowRestartModal(false);
-    await save({
-      current_cycle: 1,
-      current_week: 1,
-      program_start_date: new Date().toISOString().split('T')[0],
-    });
+    }, 'Failed to save maxes. Please try again.');
   };
 
   const recalcTm = (testedVal: string, setTm: (v: string) => void) => {
@@ -127,43 +116,10 @@ export default function MaxesTab() {
         );
       })}
 
-      <div className="flex gap-3">
-        <Button
-          variant="secondary"
-          className="w-1/3"
-          onClick={() => save()}
-          disabled={loading}
-        >
-          {loading ? 'Saving…' : 'Save'}
-        </Button>
-        <Button onClick={() => setShowRestartModal(true)} disabled={loading} className="w-2/3">
-          Save & Restart Program
-        </Button>
-      </div>
-      <p className="text-xs font-medium text-white dark:text-white/70 text-center">
-        "Save & Restart Program" rebuilds your wave schedule from today
-      </p>
+      <Button fullWidth onClick={save} disabled={loading}>
+        {loading ? 'Saving…' : 'Save'}
+      </Button>
       <SaveFeedback error={error} saved={saved} savedMessage="Maxes saved." />
-
-      <AccessibleModal
-        isOpen={showRestartModal}
-        onClose={() => setShowRestartModal(false)}
-        title="Restart Program"
-        description="Your wave schedule will reset to Cycle 1, Week 1"
-        size="sm"
-      >
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Your updated maxes will be saved and your program will restart from the beginning. This cannot be undone.
-        </p>
-        <div className="flex gap-3">
-          <Button variant="secondary" size="md" disabled={loading} className="flex-1" onClick={() => setShowRestartModal(false)}>
-            Cancel
-          </Button>
-          <Button size="md" disabled={loading} className="flex-1" onClick={handleSaveAndRestart}>
-            {loading ? 'Restarting...' : 'Save & Restart'}
-          </Button>
-        </div>
-      </AccessibleModal>
     </div>
   );
 }
