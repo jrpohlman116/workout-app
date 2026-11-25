@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { resolvePosition, type ResolvedPosition } from '../lib/programs/position';
-import type { WeekBlock } from '../lib/programs/types';
+import { getLayout } from '../lib/programs/registry';
+import type { DayLayout, WeekBlock } from '../lib/programs/types';
 
 export interface ProgramContext extends ResolvedPosition {
+  /** Days for the user's program and days per week. */
+  layout: DayLayout;
   /** Index of the week being previewed (current + weekOffset), clamped; -1 with no schedule. */
   viewedIndex: number;
   viewedBlock: WeekBlock | null;
@@ -20,6 +23,7 @@ export function useProgramContext(weekOffset = 0): ProgramContext | null {
   const startDate = profile?.program_start_date;
   const meetDate = profile?.meet_date;
   const weekIndex = profile?.current_week_index;
+  const daysPerWeek = profile?.days_per_week;
   const hasProfile = !!profile;
 
   return useMemo(() => {
@@ -31,6 +35,6 @@ export function useProgramContext(weekOffset = 0): ProgramContext | null {
     const viewedIndex = resolved.currentIndex >= 0
       ? Math.max(0, Math.min(count - 1, resolved.currentIndex + weekOffset))
       : -1;
-    return { ...resolved, viewedIndex, viewedBlock: viewedIndex >= 0 ? resolved.schedule.weeks[viewedIndex] : null };
-  }, [hasProfile, programId, startDate, meetDate, weekIndex, weekOffset]);
+    return { ...resolved, layout: getLayout(programId, daysPerWeek), viewedIndex, viewedBlock: viewedIndex >= 0 ? resolved.schedule.weeks[viewedIndex] : null };
+  }, [hasProfile, programId, daysPerWeek, startDate, meetDate, weekIndex, weekOffset]);
 }

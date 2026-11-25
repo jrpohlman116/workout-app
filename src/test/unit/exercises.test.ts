@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   baseExercises,
+  liftNames,
+  liftNamesShort,
   additionalExercises,
   weakPointExercisesMap,
   ACCESSORY_PCT_OF_TM,
@@ -440,5 +442,28 @@ describe('formatVariationCreditNote', () => {
       { dayLiftType: 'deadlift', exerciseName: 'Pin Squats', sets: 4 },
     ]);
     expect(note).toMatch(/^1 set today/);
+  });
+});
+
+describe('overhead press day', () => {
+  it('keeps the upper day accessory list so users carry over', () => {
+    expect(baseExercises.ohp).toEqual(baseExercises.upper);
+  });
+
+  it('carries the bench weak-point work, like the upper day', () => {
+    expect(getWeakPointSources('ohp').map(s => s.profileLift)).toEqual(['bench']);
+    expect(getWeakPointSources('ohp')).toEqual(getWeakPointSources('upper'));
+    expect(getWeakPointSources('ohp', 'full_body')).toEqual(getWeakPointSources('upper', 'full_body'));
+  });
+
+  it('has names and a support fill list', () => {
+    expect(liftNames.ohp).toBeTruthy();
+    expect(liftNamesShort.ohp).toBeTruthy();
+    expect(generalSupportExercises.ohp).toEqual(generalSupportExercises.upper);
+  });
+
+  it('resolves day exercises like the upper day for the same weak points', () => {
+    expect(resolveDayExercises('ohp', null, ['lockout'], baseExercises.ohp))
+      .toEqual(resolveDayExercises('upper', null, ['lockout'], baseExercises.upper));
   });
 });

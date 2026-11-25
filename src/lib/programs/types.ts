@@ -11,6 +11,25 @@ export type DaysPerWeek = 3 | 4;
 export type LiftId = 'squat' | 'bench' | 'deadlift' | 'ohp';
 export type Unit = 'lb' | 'kg';
 
+// Stable id for a training day. A day is not a lift: 'upper' is an
+// accessory-only day with no main lift. 'ohp' is reserved for the overhead
+// press day that replaces it.
+export type DayId = 'squat' | 'bench' | 'deadlift' | 'upper' | 'ohp';
+
+export interface DayDef {
+  dayId: DayId;
+  /** "Squat", "Upper" */
+  label: string;
+  /** Lift with a top set and back-offs, or null for an accessory-only day. */
+  primary: LiftId | null;
+}
+
+export interface DayLayout {
+  daysPerWeek: DaysPerWeek;
+  /** Training order within the week. */
+  days: DayDef[];
+}
+
 // Step 1 reuses the existing week/schedule shapes so nothing downstream
 // changes. Step 2 introduces index/cycleIndex/label (ITD section 1).
 export type { WeekBlock, WaveSchedule as Schedule };
@@ -72,6 +91,8 @@ export interface ProgramDefinition {
   summary: string;
   supportedDays: DaysPerWeek[];
 
+  /** Days for a supported days-per-week; throws for an unsupported value. */
+  layout(days: DaysPerWeek): DayLayout;
   buildSchedule(input: ScheduleInput): WaveSchedule;
   /** Pure: same input, same output. All weights are already rounded. */
   prescribe(input: PrescribeInput): Prescription;

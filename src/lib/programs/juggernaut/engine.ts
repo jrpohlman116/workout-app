@@ -23,7 +23,7 @@ export function calculateNewTrainingMax(
   liftType?: string
 ): number {
   const roundTo = getRoundingIncrement(unit);
-  const perRep = liftType === 'bench' ? roundTo / 2 : roundTo;
+  const perRep = liftType === 'bench' || liftType === 'ohp' ? roundTo / 2 : roundTo;
   const raw = currentTrainingMax + (actualReps - standardReps) * perRep;
   return Math.ceil(raw / roundTo) * roundTo;
 }

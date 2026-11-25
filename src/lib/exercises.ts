@@ -6,6 +6,7 @@ export const liftNames: Record<string, string> = {
   bench: 'Bench Press',
   deadlift: 'Deadlift',
   upper: 'Upper Body',
+  ohp: 'Overhead Press',
 };
 
 export const liftNamesShort: Record<string, string> = {
@@ -13,12 +14,13 @@ export const liftNamesShort: Record<string, string> = {
   bench: 'Bench',
   deadlift: 'Deadlift',
   upper: 'Upper',
+  ohp: 'OHP',
 };
 
 // Squat day: deadlift accessories (cross-day prescription)
 // Deadlift day: squat accessories
 // Bench day: bench support
-// Upper day: bench weak-point focused accessories
+// Upper / OHP day: bench weak-point focused accessories
 export const baseExercises = {
   squat: [
     { name: 'Romanian Deadlift', reps: '8-12', sets: 3, isBodyweight: false },
@@ -39,6 +41,15 @@ export const baseExercises = {
     { name: 'B Stance RDLs', reps: '8-12', sets: 3, isBodyweight: false },
   ],
   upper: [
+    { name: 'Incline DB Press', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Close-Grip Bench', reps: '8-12', sets: 3, isBodyweight: false },
+    { name: 'Face Pulls', reps: '15-20', sets: 3, isBodyweight: false },
+    { name: 'Lateral Raise Complex', reps: '12-15', sets: 3, isBodyweight: false },
+    { name: 'Tricep Pressdowns', reps: '8-12', sets: 3, isBodyweight: false },
+  ],
+  // The OHP day keeps the upper day's accessory list, so users' accessory
+  // work carries over when the day changes.
+  ohp: [
     { name: 'Incline DB Press', reps: '8-12', sets: 3, isBodyweight: false },
     { name: 'Close-Grip Bench', reps: '8-12', sets: 3, isBodyweight: false },
     { name: 'Face Pulls', reps: '15-20', sets: 3, isBodyweight: false },
@@ -409,6 +420,7 @@ export const generalSupportExercises: Record<string, string[]> = {
   bench:    ['Cable Rows', 'Rear Delt Flyes', 'Barbell Curls', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
   deadlift: ['Lat Pulldowns', 'Hanging Leg Raises', 'Bulgarian Split Squats', 'Leg Extensions', 'Goblet Squats', 'Calf Raises', 'Step-Ups', 'Sissy Squats'],
   upper:    ['Face Pulls', 'Chest-Supported Rows', 'Lateral Raise Complex', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
+  ohp:      ['Face Pulls', 'Chest-Supported Rows', 'Lateral Raise Complex', 'Chest Flyes', 'Cable Flyes', 'Dips', 'Chin-Ups', 'Pull-Ups'],
 };
 
 // How each phase reshapes the day's accessory prescription. Applied at
@@ -510,6 +522,8 @@ export const ACCESSORY_WEAK_POINT_SOURCE: Record<string, { profileLift: 'squat' 
   squat:    { profileLift: 'deadlift', mapKey: 'deadlift' },
   deadlift: { profileLift: 'squat',    mapKey: 'squat' },
   upper:    { profileLift: 'bench',    mapKey: 'upper' },
+  // The OHP day inherits the upper day's role: it carries the bench weak-point work.
+  ohp:      { profileLift: 'bench',    mapKey: 'upper' },
   bench:    null,
 };
 
@@ -540,6 +554,7 @@ const FULL_BODY_WEAK_POINT_SOURCES: Record<string, WeakPointSource[]> = {
   deadlift: [{ profileLift: 'squat', mapKey: 'squat' }, { profileLift: 'deadlift', mapKey: 'deadlift' }, { profileLift: 'bench', mapKey: 'bench' }],
   bench:    [{ profileLift: 'deadlift', mapKey: 'deadlift' }, { profileLift: 'bench', mapKey: 'bench' }, { profileLift: 'squat', mapKey: 'squat' }],
   upper:    [{ profileLift: 'bench', mapKey: 'upper' }, { profileLift: 'squat', mapKey: 'squat' }, { profileLift: 'deadlift', mapKey: 'deadlift' }],
+  ohp:      [{ profileLift: 'bench', mapKey: 'upper' }, { profileLift: 'squat', mapKey: 'squat' }, { profileLift: 'deadlift', mapKey: 'deadlift' }],
 };
 
 // Full body fills its one general-support slot with pulling or core work —
@@ -549,12 +564,13 @@ const FULL_BODY_GENERAL_SUPPORT: Record<string, string[]> = {
   deadlift: ['Lat Pulldowns', 'Hanging Leg Raises', 'Face Pulls', 'Calf Raises'],
   bench:    ['Cable Rows', 'Hanging Leg Raises', 'Face Pulls', 'Barbell Curls'],
   upper:    ['Face Pulls', 'Hanging Leg Raises', 'Chest-Supported Rows', 'Lateral Raise Complex'],
+  ohp:      ['Face Pulls', 'Hanging Leg Raises', 'Chest-Supported Rows', 'Lateral Raise Complex'],
 };
 
 // Full body draws the same three lifts every day, so each day starts a
 // different distance into every candidate list — otherwise all four days
 // would pick the identical first variation for each lift.
-const FULL_BODY_DAY_OFFSET: Record<string, number> = { squat: 0, bench: 1, deadlift: 2, upper: 3 };
+const FULL_BODY_DAY_OFFSET: Record<string, number> = { squat: 0, bench: 1, deadlift: 2, upper: 3, ohp: 3 };
 
 /** Which lifts' weak points a day draws accessories from, in priority order. */
 export function getWeakPointSources(liftType: string, style: SplitStyle = DEFAULT_SPLIT_STYLE): WeakPointSource[] {

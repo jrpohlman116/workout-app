@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { WeakPoints } from '../lib/supabase';
 import type { WavePhase, Exercise } from '../lib/types';
+import { getLayout } from '../lib/programs/registry';
 import {
   baseExercises,
   BARBELL_VARIATION_LIFTS,
@@ -12,7 +13,8 @@ import {
   VariationContribution,
 } from '../lib/exercises';
 
-const ALL_DAYS: Array<'squat' | 'bench' | 'deadlift' | 'upper'> = ['squat', 'bench', 'deadlift', 'upper'];
+// Days scanned when the caller doesn't pass its own layout.
+const DEFAULT_DAYS: readonly string[] = getLayout(undefined, undefined).days.map(d => d.dayId);
 const CREDIT_PHASES: WavePhase[] = ['accumulation', 'intensification'];
 
 interface UseWeeklyVariationCreditResult {
@@ -44,19 +46,21 @@ export function useWeeklyVariationCredit(
   targetLift: string,
   phase: WavePhase | undefined,
   weakPoints: WeakPoints | undefined,
-  style?: SplitStyle
+  style?: SplitStyle,
+  /** Day ids of the user's layout; defaults to the program's default layout. */
+  dayIds: readonly string[] = DEFAULT_DAYS
 ): UseWeeklyVariationCreditResult {
   const isMainLift = targetLift === 'squat' || targetLift === 'bench' || targetLift === 'deadlift';
   const eligible = !!userId && isMainLift && !!phase && CREDIT_PHASES.includes(phase);
   const weakPointsKey = JSON.stringify(weakPoints ?? {});
-  const currentKey = `${userId ?? ''}|${targetLift}|${phase ?? ''}|${style ?? ''}|${weakPointsKey}`;
+  const currentKey = `${userId ?? ''}|${targetLift}|${phase ?? ''}|${style ?? ''}|${dayIds.join(',')}|${weakPointsKey}`;
 
   const [resolved, setResolved] = useState<{ key: string; contributions: VariationContribution[] } | null>(null);
 
   useEffect(() => {
     if (!eligible) return;
     let cancelled = false;
-    const otherDays = ALL_DAYS.filter(d => d !== targetLift);
+    const otherDays = dayIds.filter(d => d !== targetLift);
 
     (async () => {
       const { data, error } = await supabase

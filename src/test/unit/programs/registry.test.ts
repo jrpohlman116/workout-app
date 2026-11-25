@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
-  getProgram, listPrograms, isSupported, DEFAULT_PROGRAM_ID, DEFAULT_DAYS_PER_WEEK,
+  getProgram, getLayout, listPrograms, isSupported, DEFAULT_PROGRAM_ID, DEFAULT_DAYS_PER_WEEK,
 } from '../../../lib/programs/registry';
 import {
   buildWaveSchedule, calculateJuggernautSets, calculatePeakingSets, calculateNewTrainingMax,
@@ -57,6 +57,24 @@ describe.each(listPrograms().map(p => [p.id, p] as const))('program contract: %s
     });
   });
 
+  it('has a valid layout for every supported days-per-week', () => {
+    for (const days of program.supportedDays) {
+      const layout = program.layout(days);
+      expect(layout.daysPerWeek).toBe(days);
+      expect(layout.days).toHaveLength(days);
+      const ids = layout.days.map(d => d.dayId);
+      expect(new Set(ids).size).toBe(ids.length);
+      layout.days.forEach(d => {
+        expect(d.label).toBeTruthy();
+        if (d.primary !== null) expect(['squat', 'bench', 'deadlift', 'ohp']).toContain(d.primary);
+      });
+    }
+  });
+
+  it('throws for an unsupported days-per-week', () => {
+    expect(() => program.layout(3)).toThrow();
+  });
+
   it('builds an empty schedule with no meet date', () => {
     expect(program.buildSchedule({ startDate: start }).weeks).toEqual([]);
   });
@@ -83,6 +101,26 @@ describe.each(listPrograms().map(p => [p.id, p] as const))('program contract: %s
     expect(schedule.weeks.some(b =>
       program.updateTrainingMax({ lift: 'squat', currentTm: 240, block: b, topSet: { weight: 215, reps: 8 }, unit: 'lb' }) !== null
     )).toBe(true);
+  });
+});
+
+describe('getLayout', () => {
+  it('returns the 4-day Juggernaut layout in Home order', () => {
+    expect(getLayout('juggernaut', 4).days.map(d => d.dayId)).toEqual(['squat', 'ohp', 'deadlift', 'bench']);
+  });
+
+  it('gives every day a main lift, with overhead press replacing the upper day', () => {
+    const days = getLayout('juggernaut', 4).days;
+    expect(days.filter(d => d.primary === null)).toEqual([]);
+    expect(days.find(d => d.dayId === 'ohp')?.primary).toBe('ohp');
+    expect(days.some(d => d.dayId === 'upper')).toBe(false);
+    expect(days.find(d => d.dayId === 'bench')?.primary).toBe('bench');
+  });
+
+  it('falls back to the default layout for unsupported or missing days', () => {
+    expect(getLayout('juggernaut', 3).daysPerWeek).toBe(4);
+    expect(getLayout('juggernaut', undefined).daysPerWeek).toBe(4);
+    expect(getLayout('nope' as never, null).daysPerWeek).toBe(4);
   });
 });
 

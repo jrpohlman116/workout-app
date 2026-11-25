@@ -37,7 +37,7 @@ export function calculatePeakingSets(
   const roundTo = getRoundingIncrement(unit);
   const weeksFromMeet = Math.max(1, Math.min(6, totalPeakWeeks - peakWeek + 1));
   const week = PEAKING_WEEKS[weeksFromMeet];
-  const topPct = liftType === 'bench' || liftType === 'upper' ? week.top.bench : week.top.squatDead;
+  const topPct = liftType === 'bench' || liftType === 'upper' || liftType === 'ohp' ? week.top.bench : week.top.squatDead;
 
   const config: JuggernautSetsConfig = {
     numSets: 1,
@@ -68,7 +68,7 @@ export function getPeakingWeekNote(
   liftType: string
 ): string {
   const weeksFromMeet = Math.max(1, Math.min(6, totalPeakWeeks - peakWeek + 1));
-  const isBench = liftType === 'bench' || liftType === 'upper';
+  const isBench = liftType === 'bench' || liftType === 'upper' || liftType === 'ohp';
   if (weeksFromMeet >= 3) {
     return `${weeksFromMeet} weeks out — heavy single plus down sets to hold your strength while fatigue drops.`;
   }

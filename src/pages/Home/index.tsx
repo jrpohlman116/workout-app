@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateJuggernautSets, calculatePeakingSets, getGreeting, RepWave, WavePhase } from '../../lib/calculations';
 import { positionUpdates, indexFromCycleWeek } from '../../lib/programs/position';
+import { trainingMaxFor } from '../../lib/programs/maxes';
 import { useProgramContext } from '../../hooks/useProgramContext';
 import { PHASE_LABELS, PHASE_DESCRIPTIONS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WAVE_LABELS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
 import { ChevronLeft, ChevronRight, Check, Activity, Info } from 'lucide-react';
@@ -80,10 +81,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     const { data } = await query;
 
     if (data) {
-      setCompletedWorkouts(new Set(data.map(w => w.lift_type)));
+      // The overhead press day replaced the old upper day, so an upper session
+      // logged this week still counts as that day done.
+      const dayOf = (liftType: string) => (liftType === 'upper' ? 'ohp' : liftType);
+      setCompletedWorkouts(new Set(data.map(w => dayOf(w.lift_type))));
       const dataMap = new Map();
       data.forEach(w => {
-        dataMap.set(w.lift_type, { calculated_1rm: w.calculated_1rm });
+        dataMap.set(dayOf(w.lift_type), { calculated_1rm: w.calculated_1rm });
       });
       setWorkoutData(dataMap);
     }
@@ -173,7 +177,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
   // Schedule and current/viewed week come from one shared resolver
   // (useProgramContext), so Home and WorkoutDetail can't disagree.
-  const { program, schedule: waveSchedule, currentIndex: currentBlockIndex, currentBlock, viewedBlock } = programCtx;
+  const { program, layout, schedule: waveSchedule, currentIndex: currentBlockIndex, currentBlock, viewedBlock } = programCtx;
 
   // For users without a meet date, compute the cycle/week at the given offset
   const viewedManual = !profile.meet_date ? (() => {
@@ -222,12 +226,20 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const needsWeakPointReview = program.isWaveBoundary(displayPhase, upcomingPhase)
     && profile.weak_points_reviewed_cycle !== upcomingCycle;
 
-  const workouts = [
-    { name: 'Squat', max: profile.squat_max, type: 'squat' },
-    { name: 'Upper', max: 0, type: 'upper' },
-    { name: 'Deadlift', max: profile.deadlift_max, type: 'deadlift' },
-    { name: 'Bench', max: profile.bench_max, type: 'bench' },
-  ];
+  // Days come from the layout. An accessory-only day has no main lift; a day
+  // whose lift has no max yet (overhead press is optional) asks for one.
+  const workouts = layout.days.map(day => {
+    const max = trainingMaxFor(profile, day.primary);
+    return {
+      name: day.label,
+      max,
+      type: day.dayId,
+      accessoryOnly: day.primary === null,
+      needsMax: day.primary !== null && max <= 0,
+    };
+  });
+  const dayCount = layout.days.length;
+  const completedCount = layout.days.filter(d => completedWorkouts.has(d.dayId)).length;
 
   return (
     <div className="min-h-screen pb-24">
@@ -310,7 +322,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               const isCompleted = completedWorkouts.has(workout.type);
               const sessionData = workoutData.get(workout.type);
               const projected1RM = sessionData?.calculated_1rm;
-              const isUpperDayWorkout = workout.type === 'upper';
+              // No main-lift weight to show: accessory-only day, or a lift still missing its max.
+              const isUpperDayWorkout = workout.accessoryOnly || workout.needsMax;
               const unit = profile.unit_preference || 'lb';
               const roundTo = unit === 'kg' ? 2.5 : 5;
               const baseWeight = (!isUpperDayWorkout && effectiveBlock && effectiveBlock.phase !== 'peaking' && effectiveBlock.phase !== 'meet_week')
@@ -359,7 +372,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                         : 'Done'
                       }
                     </p>
-                  ) : isUpperDayWorkout ? (
+                  ) : workout.needsMax ? (
+                    <p className="text-body-md text-gray-500 dark:text-gray-300">Set your max</p>
+                  ) : workout.accessoryOnly ? (
                     <p className="text-body-md text-gray-500 dark:text-gray-300">Accessory work</p>
                   ) : weightLow !== null && weightHigh !== null ? (
                     <p className="text-body-lg-bold font-black tabular-nums leading-tight text-gray-900 dark:text-gray-100">
@@ -380,7 +395,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   ? `Skip ${weekOffset} week${weekOffset !== 1 ? 's' : ''} ahead`
                   : `Go back ${Math.abs(weekOffset)} week${Math.abs(weekOffset) !== 1 ? 's' : ''}`}
             </Button>
-          ) : completedWorkouts.size === 4 ? (
+          ) : completedCount === dayCount ? (
             <Button
               fullWidth
               className="mt-4"
@@ -419,7 +434,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </div>
         ) : (
           <p className="text-body-md text-gray-600 dark:text-gray-300 mb-6">
-            {completedWorkouts.size === 4
+            {completedCount === dayCount
               ? "You've completed all workouts for this week. Ready to move to the next week?"
               : "You haven't completed all workouts yet. Are you sure you want to skip ahead?"}
           </p>

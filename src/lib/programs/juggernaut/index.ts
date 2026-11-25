@@ -3,6 +3,7 @@ import { MEET_WEEK_TM_PCT } from '../../constants';
 import { getRoundingIncrement } from '../shared/rounding';
 import { calculatePeakingSets } from '../shared/peaking';
 import type { Prescription, ProgramDefinition, SetGroup } from '../types';
+import { JUGGERNAUT_4_DAY } from './layouts';
 import {
   buildWaveSchedule,
   calculateJuggernautSets,
@@ -12,18 +13,16 @@ import {
 
 const EMPTY_SCHEDULE = { weeks: [], adjustments: [], skippedWaves: [], totalWeeks: 0, peakWeekIndex: -1 };
 
-// Peaking and the engine's lift checks only distinguish bench-like lifts
-// ('bench' | 'upper') from squat/deadlift. Overhead press arrives with the
-// OHP day (rollout step 3), which is when its peaking percentages get decided.
-function peakingLift(lift: string): string {
-  return lift === 'ohp' ? 'bench' : lift;
-}
-
 export const juggernaut: ProgramDefinition = {
   id: 'juggernaut',
   name: 'Juggernaut',
   summary: 'Four-week waves of 10s, 8s, 5s and 3s, with an AMRAP test set that sets your next training max.',
   supportedDays: [4],
+
+  layout(days) {
+    if (days === 4) return JUGGERNAUT_4_DAY;
+    throw new Error(`Juggernaut does not support ${days} days per week`);
+  },
 
   buildSchedule({ startDate, meetDate }) {
     // Without a meet date the program is the repeating manual cycle, which the
@@ -43,7 +42,7 @@ export const juggernaut: ProgramDefinition = {
     }
 
     const cfg = block.phase === 'peaking'
-      ? calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMax, unit, peakingLift(lift))
+      ? calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMax, unit, lift)
       : calculateJuggernautSets(block.wave as RepWave, block.phase, trainingMax, unit);
 
     const groups: SetGroup[] = [{

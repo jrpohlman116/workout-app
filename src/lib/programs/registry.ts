@@ -1,5 +1,5 @@
 import { juggernaut } from './juggernaut';
-import type { DaysPerWeek, ProgramDefinition, ProgramId } from './types';
+import type { DayLayout, DaysPerWeek, ProgramDefinition, ProgramId } from './types';
 
 export const DEFAULT_PROGRAM_ID: ProgramId = 'juggernaut';
 export const DEFAULT_DAYS_PER_WEEK: DaysPerWeek = 4;
@@ -23,6 +23,17 @@ export function getProgram(id: string | null | undefined): ProgramDefinition {
 /** All programs, for onboarding and Profile pickers. */
 export function listPrograms(): ProgramDefinition[] {
   return Object.values(PROGRAMS);
+}
+
+/**
+ * The day layout for a user's program and days per week. An unsupported or
+ * missing days value falls back to the program's default so the UI always has
+ * days to render.
+ */
+export function getLayout(programId: string | null | undefined, days: number | null | undefined): DayLayout {
+  const program = getProgram(programId);
+  const supported = program.supportedDays.includes(days as DaysPerWeek);
+  return program.layout(supported ? (days as DaysPerWeek) : program.supportedDays.includes(DEFAULT_DAYS_PER_WEEK) ? DEFAULT_DAYS_PER_WEEK : program.supportedDays[0]);
 }
 
 export function isSupported(id: ProgramId, days: DaysPerWeek): boolean {

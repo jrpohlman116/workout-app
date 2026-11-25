@@ -32,6 +32,27 @@ describe('useWeeklyVariationCredit', () => {
     expect(result.current.contributions).toEqual([]);
   });
 
+  it('returns zero credit for the overhead press day too', async () => {
+    const { result } = renderHook(() =>
+      useWeeklyVariationCredit('user-1', 'ohp', 'accumulation', { squat: [], bench: [], deadlift: [] })
+    );
+    expect(result.current.variationSetsPlanned).toBe(0);
+  });
+
+  it('scans only the days it is given', async () => {
+    mockRows = [
+      { lift_type: 'deadlift', exercises_data: [{ name: 'Pin Squats', reps: '5-8', sets: 3, isBodyweight: false }] },
+      { lift_type: 'ohp', exercises_data: [{ name: 'Pause Squats', reps: '5-8', sets: 2, isBodyweight: false }] },
+    ];
+    const { result } = renderHook(() =>
+      useWeeklyVariationCredit('user-1', 'squat', 'intensification', { squat: [], bench: [], deadlift: [] }, undefined, ['squat', 'deadlift'])
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    // The ohp row is outside the supplied layout, so only the deadlift day counts.
+    expect(result.current.variationSetsPlanned).toBe(3);
+    expect(result.current.contributions.map(c => c.dayLiftType)).toEqual(['deadlift']);
+  });
+
   it('returns zero credit for upper day (not a main lift with its own weekly volume)', async () => {
     const { result } = renderHook(() =>
       useWeeklyVariationCredit('user-1', 'upper', 'accumulation', { squat: [], bench: [], deadlift: [] })
@@ -70,7 +91,7 @@ describe('useWeeklyVariationCredit', () => {
   it('sums contributions from multiple other days', async () => {
     mockRows = [
       { lift_type: 'deadlift', exercises_data: [{ name: 'Pin Squats', reps: '5-8', sets: 3, isBodyweight: false }] },
-      { lift_type: 'upper', exercises_data: [{ name: 'Pause Squats', reps: '5-8', sets: 2, isBodyweight: false }] },
+      { lift_type: 'ohp', exercises_data: [{ name: 'Pause Squats', reps: '5-8', sets: 2, isBodyweight: false }] },
     ];
 
     const { result } = renderHook(() =>

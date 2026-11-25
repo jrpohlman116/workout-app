@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useProgramContext } from '../../hooks/useProgramContext';
 import { supabase, WorkoutSession } from '../../lib/supabase';
 import { calculateWilksScore, calculateDOTSScore, calculateIPFGLScore, convertWeightUnit } from '../../lib/calculations';
 import ProgressChart from './components/ProgressChart';
@@ -22,6 +23,7 @@ import SectionLabel from '../../components/ui/SectionLabel';
 
 export default function ProgressPage() {
   const { profile, user } = useAuth();
+  const programCtx = useProgramContext();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [accessoryData, setAccessoryData] = useState<{ [sessionId: string]: AccessoryExercise[] }>({});
   const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
@@ -143,8 +145,10 @@ export default function ProgressPage() {
     return Object.entries(grouped).map(([date, sessions]) => ({
       date,
       sessions: sessions.sort((a, b) => {
-        const order = ['squat', 'upper', 'deadlift', 'bench'];
-        return order.indexOf(a.lift_type) - order.indexOf(b.lift_type);
+        // Layout order; lifts outside the layout (older sessions) sort last.
+        const order: string[] = programCtx?.layout.days.map(d => d.dayId) ?? ['squat', 'upper', 'deadlift', 'bench'];
+        const rank = (lift: string) => { const i = order.indexOf(lift); return i === -1 ? order.length : i; };
+        return rank(a.lift_type) - rank(b.lift_type);
       }),
     }));
   };

@@ -3,6 +3,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { calculateOneRepMax, calculateTrainingMax, calculateJuggernautSets, calculatePeakingSets, calculateBackoffSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG, WarmupFeel } from '../../lib/calculations';
 import { getProgram, DEFAULT_PROGRAM_ID } from '../../lib/programs/registry';
 import { sessionProgramFields } from '../../lib/programs/session';
+import { trainingMaxFor, hasTrainingMax, type MaxEstimate } from '../../lib/programs/maxes';
+import OhpMaxPrompt from '../../components/features/OhpMaxPrompt';
 import { useProgramContext } from '../../hooks/useProgramContext';
 import type { LiftId, Unit } from '../../lib/programs/types';
 import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, WAVE_LABELS, PHASE_LABELS } from '../../lib/constants';
@@ -113,7 +115,14 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const { lastAccessoryData, loading, getLastSetData } = useWorkoutData(user?.id, liftType);
 
-  const isUpperDay = IS_UPPER_DAY(liftType);
+  const [ohpPromptDismissed, setOhpPromptDismissed] = useState(false);
+  const [ohpSaving, setOhpSaving] = useState(false);
+  const [ohpSaveError, setOhpSaveError] = useState<string | null>(null);
+
+  // The overhead press day needs a max before it can prescribe a top set. Until
+  // then it runs like the accessory-only upper day, with a prompt to set one.
+  const ohpMissing = liftType === 'ohp' && !hasTrainingMax(profile ?? {}, 'ohp');
+  const isUpperDay = IS_UPPER_DAY(liftType) || ohpMissing;
   const programCtx = useProgramContext();
   const currentBlock = programCtx?.currentBlock ?? null;
 
@@ -187,7 +196,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     liftType,
     currentBlock?.phase,
     profile?.weak_points,
-    splitStyle
+    splitStyle,
+    programCtx?.layout.days.map(d => d.dayId)
   );
 
   useEffect(() => {
@@ -198,12 +208,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       // (unreduced) count stuck for the rest of the session.
       if (creditPhase && variationSetsPlanned === undefined) return;
 
-      const lift1RM: Record<string, number> = {
-        squat: profile.squat_max,
-        bench: profile.bench_max,
-        deadlift: profile.deadlift_max,
-      };
-      const max = lift1RM[liftType] ?? 0;
+      const max = trainingMaxFor(profile, liftType as LiftId);
       const unit = profile.unit_preference || 'lb';
       const cfg = currentBlock.phase === 'peaking'
         ? calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, max, unit, liftType)
@@ -467,6 +472,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     squat: profile.squat_max,
     bench: profile.bench_max,
     deadlift: profile.deadlift_max,
+    ohp: trainingMaxFor(profile, 'ohp'),
   };
 
   const unit = profile.unit_preference || 'lb';
@@ -873,12 +879,35 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     onNavigateToProgress();
   };
 
+  // Saves an estimated max as a pair (tested max + 90% training max), which is
+  // also how a real OHP max is told apart from the old placeholder value.
+  const handleSaveOhpMax = async (estimate: MaxEstimate) => {
+    if (!user) return;
+    setOhpSaving(true);
+    setOhpSaveError(null);
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({
+        ohp_max: estimate.trainingMax,
+        ohp_tested_max: estimate.estimated1RM,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+    if (error) {
+      setOhpSaveError('Could not save your max. Please try again.');
+    } else {
+      await refreshProfile();
+    }
+    setOhpSaving(false);
+  };
+
   const handleSetAsMax = async () => {
     if (!user || !profile || newTrainingMax == null) return;
     const fieldMap: Record<string, string> = {
       squat: 'squat_max',
       bench: 'bench_max',
       deadlift: 'deadlift_max',
+      ohp: 'ohp_max',
     };
     const field = fieldMap[liftType];
     if (!field) return;
@@ -954,6 +983,15 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
               </div>
             </div>
           </div>
+        )}
+        {ohpMissing && !ohpPromptDismissed && (
+          <OhpMaxPrompt
+            unit={profile.unit_preference || 'lb'}
+            saving={ohpSaving}
+            error={ohpSaveError}
+            onSave={handleSaveOhpMax}
+            onDismiss={() => setOhpPromptDismissed(true)}
+          />
         )}
         <WorkoutSummaryView
           mainConfig={mainConfig}
