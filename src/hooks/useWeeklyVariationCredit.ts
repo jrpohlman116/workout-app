@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import type { WeakPoints } from '../lib/supabase';
 import type { WavePhase, Exercise } from '../lib/types';
 import { getLayout } from '../lib/programs/registry';
+import type { DayDef } from '../lib/programs/types';
 import {
   baseExercises,
   BARBELL_VARIATION_LIFTS,
@@ -14,7 +15,7 @@ import {
 } from '../lib/exercises';
 
 // Days scanned when the caller doesn't pass its own layout.
-const DEFAULT_DAYS: readonly string[] = getLayout(undefined, undefined).days.map(d => d.dayId);
+const DEFAULT_DAYS: readonly DayDef[] = getLayout(undefined, undefined).days;
 const CREDIT_PHASES: WavePhase[] = ['accumulation', 'intensification'];
 
 interface UseWeeklyVariationCreditResult {
@@ -47,20 +48,21 @@ export function useWeeklyVariationCredit(
   phase: WavePhase | undefined,
   weakPoints: WeakPoints | undefined,
   style?: SplitStyle,
-  /** Day ids of the user's layout; defaults to the program's default layout. */
-  dayIds: readonly string[] = DEFAULT_DAYS
+  /** Days of the user's layout; defaults to the program's default layout. */
+  days: readonly Pick<DayDef, 'dayId' | 'variationSlots'>[] = DEFAULT_DAYS
 ): UseWeeklyVariationCreditResult {
   const isMainLift = targetLift === 'squat' || targetLift === 'bench' || targetLift === 'deadlift';
   const eligible = !!userId && isMainLift && !!phase && CREDIT_PHASES.includes(phase);
   const weakPointsKey = JSON.stringify(weakPoints ?? {});
-  const currentKey = `${userId ?? ''}|${targetLift}|${phase ?? ''}|${style ?? ''}|${dayIds.join(',')}|${weakPointsKey}`;
+  const currentKey = `${userId ?? ''}|${targetLift}|${phase ?? ''}|${style ?? ''}|${days.map(d => `${d.dayId}:${(d.variationSlots ?? []).join('+')}`).join(',')}|${weakPointsKey}`;
 
   const [resolved, setResolved] = useState<{ key: string; contributions: VariationContribution[] } | null>(null);
 
   useEffect(() => {
     if (!eligible) return;
     let cancelled = false;
-    const otherDays = dayIds.filter(d => d !== targetLift);
+    const otherDayDefs = days.filter(d => d.dayId !== targetLift);
+    const otherDays = otherDayDefs.map(d => d.dayId);
 
     (async () => {
       const { data, error } = await supabase
@@ -80,11 +82,11 @@ export function useWeeklyVariationCredit(
       }
 
       const found: VariationContribution[] = [];
-      for (const day of otherDays) {
+      for (const { dayId: day, variationSlots } of otherDayDefs) {
         const dayDefaults = baseExercises[day as keyof typeof baseExercises] ?? baseExercises.upper;
-        const [primary] = getWeakPointSources(day, style);
+        const [primary] = getWeakPointSources(day, style, variationSlots);
         const dayWeakPoints = primary ? weakPoints?.[primary.profileLift] : undefined;
-        const dayExercises = resolveDayExercises(day, templateByType.get(day) ?? null, dayWeakPoints, dayDefaults, style, weakPoints);
+        const dayExercises = resolveDayExercises(day, templateByType.get(day) ?? null, dayWeakPoints, dayDefaults, style, weakPoints, variationSlots);
         const { exercises: phaseAdjusted } = applyPhaseToAccessories(dayExercises, phase, day);
 
         phaseAdjusted.forEach(ex => {

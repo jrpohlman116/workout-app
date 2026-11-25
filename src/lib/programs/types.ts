@@ -22,6 +22,13 @@ export interface DayDef {
   label: string;
   /** Lift with a top set and back-offs, or null for an accessory-only day. */
   primary: LiftId | null;
+  /**
+   * Lifts whose weak-point-driven barbell variations this day carries. Set on a
+   * layout that has no day of its own for them: in the 3-day layout the
+   * deadlift day carries squat and bench variations. When unset the day uses
+   * the program's default cross-day assignment.
+   */
+  variationSlots?: LiftId[];
 }
 
 export interface DayLayout {

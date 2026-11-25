@@ -3,7 +3,7 @@ import { MEET_WEEK_TM_PCT } from '../../constants';
 import { getRoundingIncrement } from '../shared/rounding';
 import { calculatePeakingSets } from '../shared/peaking';
 import type { Prescription, ProgramDefinition, SetGroup } from '../types';
-import { JUGGERNAUT_4_DAY } from './layouts';
+import { JUGGERNAUT_3_DAY, JUGGERNAUT_4_DAY } from './layouts';
 import {
   buildWaveSchedule,
   calculateJuggernautSets,
@@ -17,9 +17,10 @@ export const juggernaut: ProgramDefinition = {
   id: 'juggernaut',
   name: 'Juggernaut',
   summary: 'Four-week waves of 10s, 8s, 5s and 3s, with an AMRAP test set that sets your next training max.',
-  supportedDays: [4],
+  supportedDays: [3, 4],
 
   layout(days) {
+    if (days === 3) return JUGGERNAUT_3_DAY;
     if (days === 4) return JUGGERNAUT_4_DAY;
     throw new Error(`Juggernaut does not support ${days} days per week`);
   },

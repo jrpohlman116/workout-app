@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useWeeklyVariationCredit } from '../../hooks/useWeeklyVariationCredit';
+import type { DayDef } from '../../lib/programs/types';
+
+type TestDay = Pick<DayDef, 'dayId' | 'variationSlots'>;
 
 // workout_templates rows keyed by lift_type, settable per test
 let mockRows: { lift_type: string; exercises_data: unknown }[] = [];
@@ -45,7 +48,7 @@ describe('useWeeklyVariationCredit', () => {
       { lift_type: 'ohp', exercises_data: [{ name: 'Pause Squats', reps: '5-8', sets: 2, isBodyweight: false }] },
     ];
     const { result } = renderHook(() =>
-      useWeeklyVariationCredit('user-1', 'squat', 'intensification', { squat: [], bench: [], deadlift: [] }, undefined, ['squat', 'deadlift'])
+      useWeeklyVariationCredit('user-1', 'squat', 'intensification', { squat: [], bench: [], deadlift: [] }, undefined, [{ dayId: 'squat' }, { dayId: 'deadlift' }])
     );
     await waitFor(() => expect(result.current.loading).toBe(false));
     // The ohp row is outside the supplied layout, so only the deadlift day counts.
@@ -133,5 +136,34 @@ describe('useWeeklyVariationCredit', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.variationSetsPlanned).toBe(0);
     expect(result.current.contributions).toEqual([]);
+  });
+
+  it('counts bench variations on the deadlift day toward bench in the 3-day layout', async () => {
+    // Bench weak point "off the chest" selects a bench variation for the deadlift day.
+    mockRows = [];
+    const days: TestDay[] = [
+      { dayId: 'squat' },
+      { dayId: 'bench' },
+      { dayId: 'deadlift', variationSlots: ['squat', 'bench'] },
+    ];
+    const { result } = renderHook(() =>
+      useWeeklyVariationCredit('user-1', 'bench', 'intensification',
+        { squat: [], bench: ['in_the_hole'], deadlift: [] }, undefined, days)
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.contributions.length).toBeGreaterThan(0);
+    expect(result.current.contributions.every(c => c.dayLiftType === 'deadlift')).toBe(true);
+  });
+
+  it('counts nothing for bench from the same weak points in the 4-day layout', async () => {
+    // With a dedicated overhead press day, bench variations live there, not on the deadlift day.
+    mockRows = [];
+    const days: TestDay[] = [{ dayId: 'squat' }, { dayId: 'ohp' }, { dayId: 'deadlift' }];
+    const { result } = renderHook(() =>
+      useWeeklyVariationCredit('user-1', 'bench', 'intensification',
+        { squat: [], bench: ['in_the_hole'], deadlift: [] }, undefined, days)
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.contributions.every(c => c.dayLiftType !== 'deadlift')).toBe(true);
   });
 });

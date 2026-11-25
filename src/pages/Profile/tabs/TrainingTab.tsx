@@ -14,7 +14,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 
 const SPLIT_OPTIONS: { value: SplitStyle; label: string; description: string }[] = [
-  { value: 'upper_lower', label: 'Upper / lower', description: 'Squat variations on deadlift day, deadlift variations on squat day, bench variations on upper day.' },
+  { value: 'upper_lower', label: 'Upper / lower', description: 'Squat variations on deadlift day, deadlift variations on squat day, bench variations on overhead press day.' },
   { value: 'full_body', label: 'Full body', description: 'Every day mixes squat, bench and deadlift variation work for your sticking points, plus general support.' },
 ];
 

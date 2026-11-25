@@ -21,13 +21,17 @@ export function useWorkoutTemplate(
   defaultExercises: Exercise[],
   weakPoints?: StickingPoint[],
   style?: SplitStyle,
-  allWeakPoints?: WeakPoints
+  allWeakPoints?: WeakPoints,
+  variationSlots?: readonly ('squat' | 'bench' | 'deadlift' | 'ohp')[]
 ): UseWorkoutTemplateResult {
   const [template, setTemplate] = useState<WorkoutTemplate | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>(defaultExercises);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Stable value for the effect below: the slots array is rebuilt every render.
+  const slotsKey = variationSlots?.join('+') ?? '';
 
   useEffect(() => {
     if (userId) {
@@ -36,7 +40,7 @@ export function useWorkoutTemplate(
       setExercises(defaultExercises);
       setLoading(false);
     }
-  }, [userId, liftType, programVariation, weakPoints, allWeakPoints, style]);
+  }, [userId, liftType, programVariation, weakPoints, allWeakPoints, style, slotsKey]);
 
   const loadTemplate = async () => {
     if (!userId) return;
@@ -60,7 +64,7 @@ export function useWorkoutTemplate(
         setExercises(data.exercises_data as Exercise[]);
       } else {
         setTemplate(null);
-        setExercises(resolveDayExercises(liftType, null, weakPoints, defaultExercises, style, allWeakPoints));
+        setExercises(resolveDayExercises(liftType, null, weakPoints, defaultExercises, style, allWeakPoints, variationSlots));
       }
     } catch (err) {
       console.error('Error loading workout template:', err);

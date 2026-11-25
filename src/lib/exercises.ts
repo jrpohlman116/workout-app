@@ -572,9 +572,23 @@ const FULL_BODY_GENERAL_SUPPORT: Record<string, string[]> = {
 // would pick the identical first variation for each lift.
 const FULL_BODY_DAY_OFFSET: Record<string, number> = { squat: 0, bench: 1, deadlift: 2, upper: 3, ohp: 3 };
 
-/** Which lifts' weak points a day draws accessories from, in priority order. */
-export function getWeakPointSources(liftType: string, style: SplitStyle = DEFAULT_SPLIT_STYLE): WeakPointSource[] {
+/**
+ * Which lifts' weak points a day draws accessories from, in priority order.
+ * `variationSlots` (from the day layout) overrides the default cross-day table
+ * in upper/lower style: a day with no dedicated partner day carries several
+ * lifts' variations, one source each. Bench variations draw from the bench
+ * weak-point list kept under the `upper` key.
+ */
+export function getWeakPointSources(
+  liftType: string,
+  style: SplitStyle = DEFAULT_SPLIT_STYLE,
+  variationSlots?: readonly ('squat' | 'bench' | 'deadlift' | 'ohp')[]
+): WeakPointSource[] {
   if (style === 'full_body') return FULL_BODY_WEAK_POINT_SOURCES[liftType] ?? [];
+  const slotLifts = (variationSlots ?? []).filter((l): l is 'squat' | 'bench' | 'deadlift' => l !== 'ohp');
+  if (slotLifts.length > 0) {
+    return slotLifts.map(profileLift => ({ profileLift, mapKey: profileLift === 'bench' ? 'upper' : profileLift }));
+  }
   const source = ACCESSORY_WEAK_POINT_SOURCE[liftType];
   return source ? [source] : [];
 }
@@ -593,13 +607,15 @@ export function resolveDayExercises(
   weakPoints: StickingPoint[] | undefined,
   defaultExercises: Exercise[],
   style: SplitStyle = DEFAULT_SPLIT_STYLE,
-  allWeakPoints?: WeakPoints
+  allWeakPoints?: WeakPoints,
+  variationSlots?: readonly ('squat' | 'bench' | 'deadlift' | 'ohp')[]
 ): Exercise[] {
   if (savedTemplate) return savedTemplate;
+  const multiSource = style === 'full_body' || getWeakPointSources(liftType, style, variationSlots).length > 1;
   const hasAny = (weakPoints && weakPoints.length > 0)
-    || (style === 'full_body' && !!allWeakPoints && Object.values(allWeakPoints).some(p => p && p.length > 0));
+    || (multiSource && !!allWeakPoints && Object.values(allWeakPoints).some(p => p && p.length > 0));
   if (hasAny) {
-    const selectedNames = selectMixedAccessories(liftType, weakPoints, [], style, allWeakPoints);
+    const selectedNames = selectMixedAccessories(liftType, weakPoints, [], style, allWeakPoints, variationSlots);
     // Weak-point picks (e.g. "Pause Squats") live in the full accessory
     // pool, not necessarily the 4-item baseExercises set for this day.
     return selectedNames
@@ -648,11 +664,12 @@ export function selectMixedAccessories(
   weakPoints: StickingPoint[] | undefined,
   excludeExercises: string[] = [],
   style: SplitStyle = DEFAULT_SPLIT_STYLE,
-  allWeakPoints?: WeakPoints
+  allWeakPoints?: WeakPoints,
+  variationSlots?: readonly ('squat' | 'bench' | 'deadlift' | 'ohp')[]
 ): string[] {
   // weakPoints are the sticking points of the day's *target* lift (see
   // getWeakPointSources) — callers read them via `profileLift`.
-  const sources = getWeakPointSources(liftType, style);
+  const sources = getWeakPointSources(liftType, style, variationSlots);
   const generalExercises = (style === 'full_body' ? FULL_BODY_GENERAL_SUPPORT[liftType] : undefined)
     ?? generalSupportExercises[liftType];
 
@@ -662,7 +679,10 @@ export function selectMixedAccessories(
   const availableGeneral = generalExercises.filter(e => !excludeExercises.includes(e));
 
   const groups = sources.map((source, i) => {
-    const points = (style === 'full_body' ? allWeakPoints?.[source.profileLift] : undefined)
+    // Several sources (full body, or a layout day carrying more than one lift's
+    // variations) each read their own lift's weak points; a single source uses
+    // the day's own list.
+    const points = ((style === 'full_body' || sources.length > 1) ? allWeakPoints?.[source.profileLift] : undefined)
       ?? (i === 0 ? weakPoints : undefined);
     const map = weakPointExercisesMap[source.mapKey];
     const candidates = new Set<string>();

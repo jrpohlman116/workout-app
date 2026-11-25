@@ -467,3 +467,53 @@ describe('overhead press day', () => {
       .toEqual(resolveDayExercises('upper', null, ['lockout'], baseExercises.upper));
   });
 });
+
+describe('variation slots (3-day deadlift day)', () => {
+  const slots = ['squat', 'bench'] as const;
+
+  it('draws one source per slot, bench from the bench weak-point list', () => {
+    expect(getWeakPointSources('deadlift', 'upper_lower', slots)).toEqual([
+      { profileLift: 'squat', mapKey: 'squat' },
+      { profileLift: 'bench', mapKey: 'upper' },
+    ]);
+  });
+
+  it('leaves the default cross-day sources alone when there are no slots', () => {
+    expect(getWeakPointSources('deadlift')).toEqual([{ profileLift: 'squat', mapKey: 'squat' }]);
+    expect(getWeakPointSources('deadlift', 'upper_lower', [])).toEqual([{ profileLift: 'squat', mapKey: 'squat' }]);
+  });
+
+  it('ignores slots in full body style', () => {
+    expect(getWeakPointSources('deadlift', 'full_body', slots)).toEqual(getWeakPointSources('deadlift', 'full_body'));
+  });
+
+  it('selects both a squat and a bench variation from their own weak points', () => {
+    const selected = selectMixedAccessories('deadlift', ['in_the_hole'], [], 'upper_lower',
+      { squat: ['in_the_hole'], bench: ['lockout'], deadlift: [] }, slots);
+    const lifts = selected.map(n => BARBELL_VARIATION_LIFTS[n]).filter(Boolean);
+    expect(lifts).toContain('squat');
+    expect(lifts).toContain('bench');
+    expect(selected.length).toBeLessThanOrEqual(4);
+  });
+
+  it('never stacks two heavy variations of the same lift', () => {
+    const selected = selectMixedAccessories('deadlift', ['in_the_hole', 'mid_range'], [], 'upper_lower',
+      { squat: ['in_the_hole', 'mid_range'], bench: ['in_the_hole', 'lockout'], deadlift: [] }, slots);
+    const squatBarbells = selected.filter(n => BARBELL_VARIATION_LIFTS[n] === 'squat');
+    const benchBarbells = selected.filter(n => BARBELL_VARIATION_LIFTS[n] === 'bench');
+    expect(squatBarbells.length).toBeLessThanOrEqual(1);
+    expect(benchBarbells.length).toBeLessThanOrEqual(1);
+  });
+
+  it('gives a day with only bench weak points a bench variation', () => {
+    const resolved = resolveDayExercises('deadlift', null, undefined, baseExercises.deadlift, 'upper_lower',
+      { squat: [], bench: ['in_the_hole'], deadlift: [] }, slots);
+    expect(resolved.some(e => BARBELL_VARIATION_LIFTS[e.name] === 'bench' || (weakPointExercisesMap.upper.in_the_hole ?? []).includes(e.name))).toBe(true);
+  });
+
+  it('falls back to the day defaults with no weak points at all', () => {
+    expect(resolveDayExercises('deadlift', null, undefined, baseExercises.deadlift, 'upper_lower',
+      { squat: [], bench: [], deadlift: [] }, slots)).toEqual(baseExercises.deadlift);
+  });
+});
+

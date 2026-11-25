@@ -81,7 +81,7 @@ describe('restartProgram', () => {
   });
 
   it('rejects an unsupported program and days pair before writing anything', async () => {
-    await expect(restartProgram('u1', { daysPerWeek: 3 })).rejects.toThrow(/does not support 3 days/);
+    await expect(restartProgram('u1', { daysPerWeek: 5 as never })).rejects.toThrow(/does not support 5 days/);
     expect(calls).toEqual([]);
   });
 

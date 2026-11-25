@@ -72,7 +72,7 @@ describe.each(listPrograms().map(p => [p.id, p] as const))('program contract: %s
   });
 
   it('throws for an unsupported days-per-week', () => {
-    expect(() => program.layout(3)).toThrow();
+    expect(() => program.layout(5 as never)).toThrow();
   });
 
   it('builds an empty schedule with no meet date', () => {
@@ -104,6 +104,25 @@ describe.each(listPrograms().map(p => [p.id, p] as const))('program contract: %s
   });
 });
 
+describe('3-day layout', () => {
+  const days = getLayout('juggernaut', 3).days;
+
+  it('is the three main lifts in training order', () => {
+    expect(days.map(d => d.dayId)).toEqual(['squat', 'bench', 'deadlift']);
+    expect(days.map(d => d.primary)).toEqual(['squat', 'bench', 'deadlift']);
+  });
+
+  it('puts squat and bench variation slots on the deadlift day only', () => {
+    expect(days.find(d => d.dayId === 'deadlift')?.variationSlots).toEqual(['squat', 'bench']);
+    expect(days.filter(d => d.variationSlots).map(d => d.dayId)).toEqual(['deadlift']);
+  });
+
+  it('is supported, and the 4-day layout has no variation slots', () => {
+    expect(isSupported('juggernaut', 3)).toBe(true);
+    expect(getLayout('juggernaut', 4).days.some(d => d.variationSlots)).toBe(false);
+  });
+});
+
 describe('getLayout', () => {
   it('returns the 4-day Juggernaut layout in Home order', () => {
     expect(getLayout('juggernaut', 4).days.map(d => d.dayId)).toEqual(['squat', 'ohp', 'deadlift', 'bench']);
@@ -118,7 +137,7 @@ describe('getLayout', () => {
   });
 
   it('falls back to the default layout for unsupported or missing days', () => {
-    expect(getLayout('juggernaut', 3).daysPerWeek).toBe(4);
+    expect(getLayout('juggernaut', 5).daysPerWeek).toBe(4);
     expect(getLayout('juggernaut', undefined).daysPerWeek).toBe(4);
     expect(getLayout('nope' as never, null).daysPerWeek).toBe(4);
   });

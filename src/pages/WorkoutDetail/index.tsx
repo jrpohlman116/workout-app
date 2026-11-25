@@ -137,7 +137,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   // Variation work trims at most one main set, so a single 3-set variation
   // elsewhere doesn't cut the main lift straight to the 60% floor.
   const maxVariationCredit = 1;
-  const [primarySource] = getWeakPointSources(liftTypeKey, splitStyle);
+  const daySlots = programCtx?.layout.days.find(d => d.dayId === liftType)?.variationSlots;
+  const [primarySource] = getWeakPointSources(liftTypeKey, splitStyle, daySlots);
   const userWeakPoints = primarySource
     ? (profile?.weak_points?.[primarySource.profileLift] as StickingPoint[] | undefined)
     : undefined;
@@ -156,7 +157,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     defaultExercises,
     userWeakPoints,
     splitStyle,
-    profile?.weak_points
+    profile?.weak_points,
+    daySlots
   );
 
   const allAvailableExercises = useMemo(() => [
@@ -197,7 +199,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     currentBlock?.phase,
     profile?.weak_points,
     splitStyle,
-    programCtx?.layout.days.map(d => d.dayId)
+    programCtx?.layout.days
   );
 
   useEffect(() => {
