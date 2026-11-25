@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { sessionProgramFields } from '../../lib/programs/session';
 import { calculateWarmupSets, WarmupFeel } from '../../lib/calculations';
 import { Activity } from 'lucide-react';
 import Button from '../ui/Button';
@@ -87,6 +88,7 @@ export default function OneRepMaxTest({ onClose, onComplete }: OneRepMaxTestProp
         weight_lifted: planned,
         reps_performed: attemptResult === 'success' ? 1 : 0,
         calculated_1rm: attemptResult === 'success' ? planned : 0,
+        ...sessionProgramFields(profile, selectedLift),
         is_1rm_test: true,
         notes: notes.trim() || null,
         completed_at: new Date().toISOString(),

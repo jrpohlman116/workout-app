@@ -15,6 +15,10 @@ export type Unit = 'lb' | 'kg';
 // changes. Step 2 introduces index/cycleIndex/label (ITD section 1).
 export type { WeekBlock, WaveSchedule as Schedule };
 
+// Opaque to the app shell; each program narrows its own shape. Stored in
+// user_profiles.program_state.
+export type ProgramState = Record<string, unknown>;
+
 export interface ScheduleInput {
   startDate: Date;
   /** Optional. Set: waves fit before the meet, then a peak block and meet week. */
@@ -73,5 +77,7 @@ export interface ProgramDefinition {
   prescribe(input: PrescribeInput): Prescription;
   /** Null outside the week that triggers a training max update. */
   updateTrainingMax(input: TmUpdateInput): TmUpdate | null;
+  /** State a fresh run of the program starts with (written on restart). */
+  initialState(): ProgramState;
   isWaveBoundary(leaving: WavePhase, entering: WavePhase | undefined): boolean;
 }

@@ -69,5 +69,7 @@ export const juggernaut: ProgramDefinition = {
     };
   },
 
+  initialState: () => ({}),
+
   isWaveBoundary: isWaveBoundaryAdvance,
 };

@@ -13,6 +13,8 @@ export type CalculatorTab = '1rm' | 'wilks' | 'plates';
 // ── Interfaces ────────────────────────────────────────────────────────────────
 
 export interface WeekBlock {
+  /** 0-based wave/cycle count within the schedule; peak and meet weeks use the cycle after the last wave. */
+  cycleIndex?: number;
   wave: RepWave;
   phase: WavePhase;
   weekIndex: number;

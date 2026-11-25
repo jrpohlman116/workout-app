@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateJuggernautSets, calculatePeakingSets, getGreeting, MS_PER_WEEK, RepWave, WavePhase } from '../../lib/calculations';
-import { getProgram, DEFAULT_PROGRAM_ID } from '../../lib/programs/registry';
-import { DEFAULT_PROGRAM_WEEKS, PHASE_LABELS, PHASE_DESCRIPTIONS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WAVE_LABELS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
+import { calculateJuggernautSets, calculatePeakingSets, getGreeting, RepWave, WavePhase } from '../../lib/calculations';
+import { positionUpdates, indexFromCycleWeek } from '../../lib/programs/position';
+import { useProgramContext } from '../../hooks/useProgramContext';
+import { PHASE_LABELS, PHASE_DESCRIPTIONS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WAVE_LABELS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
 import { ChevronLeft, ChevronRight, Check, Activity, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { StickingPoint, WeakPoints } from '../../lib/supabase';
@@ -18,6 +19,14 @@ import IconButton from '../../components/ui/IconButton';
 import Tile from '../../components/ui/Tile';
 
 const EMPTY_WEAK_POINTS: WeakPoints = { squat: [], bench: [], deadlift: [] };
+
+// Position columns to write for a new week. Only meet-date programs write
+// current_week_index: for others it's ignored, and writing it would make a
+// later-added meet date start mid-schedule.
+function pointerColumns(index: number, writeIndex: boolean) {
+  const { current_week_index, ...cycleWeek } = positionUpdates(index);
+  return writeIndex ? { current_week_index, ...cycleWeek } : cycleWeek;
+}
 
 interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
@@ -36,6 +45,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [showPhaseInfo, setShowPhaseInfo] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const [jumping, setJumping] = useState(false);
+  const programCtx = useProgramContext(weekOffset);
 
   useEffect(() => {
     if (user && profile) {
@@ -85,32 +95,23 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     setShowSkipWeekModal(false);
     setSkipping(true);
     try {
-      let nextWeek = profile.current_week + 1;
-      let nextCycle = profile.current_cycle;
-
-      if (nextWeek > 4) {
-        nextWeek = 1;
-        nextCycle += 1;
-      }
-
+      // Meet-date programs advance through the schedule; others count up from
+      // cycle/week. Either way position is written through positionUpdates.
+      const weeksCount = waveSchedule.weeks.length;
+      const hasSchedule = !!profile.meet_date && weeksCount > 0 && currentBlockIndex >= 0;
+      const nextIndex = hasSchedule
+        ? Math.min(currentBlockIndex + 1, weeksCount - 1)
+        : indexFromCycleWeek(profile.current_cycle, profile.current_week) + 1;
       const updates: Record<string, unknown> = {
-        current_week: nextWeek,
-        current_cycle: nextCycle,
+        ...pointerColumns(nextIndex, hasSchedule),
         updated_at: new Date().toISOString(),
       };
 
-      // Meet-date programs track position explicitly via current_week_index —
-      // advancing is driven by finishing the week, not by wall-clock date.
-      const weeksCount = waveSchedule.weeks.length;
-      if (profile.meet_date && weeksCount > 0 && currentBlockIndex >= 0) {
-        updates.current_week_index = Math.min(currentBlockIndex + 1, weeksCount - 1);
-      }
-
       // Wave boundary: persist any weak-point edits from the check-in prompt
       // and mark this wave reviewed so it isn't asked again until the next one.
-      if (needsWeakPointReview && upcomingWave != null) {
+      if (needsWeakPointReview && upcomingCycle != null) {
         updates.weak_points = pendingWeakPoints;
-        updates.weak_points_reviewed_wave = upcomingWave;
+        updates.weak_points_reviewed_cycle = upcomingCycle;
       }
 
       await supabase
@@ -140,19 +141,15 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     if (!user || !profile || weekOffset === 0) return;
     setJumping(true);
     try {
-      const base = (profile.current_cycle - 1) * 4 + (profile.current_week - 1);
-      const newTotal = Math.max(0, base + weekOffset);
-
+      const weeksCount = waveSchedule.weeks.length;
+      const hasSchedule = !!profile.meet_date && weeksCount > 0 && currentBlockIndex >= 0;
+      const targetIndex = hasSchedule
+        ? Math.max(0, Math.min(weeksCount - 1, currentBlockIndex + weekOffset))
+        : Math.max(0, indexFromCycleWeek(profile.current_cycle, profile.current_week) + weekOffset);
       const updates: Record<string, unknown> = {
-        current_week: (newTotal % 4) + 1,
-        current_cycle: Math.floor(newTotal / 4) + 1,
+        ...pointerColumns(targetIndex, hasSchedule),
         updated_at: new Date().toISOString(),
       };
-
-      const weeksCount = waveSchedule.weeks.length;
-      if (profile.meet_date && weeksCount > 0 && currentBlockIndex >= 0) {
-        updates.current_week_index = Math.max(0, Math.min(weeksCount - 1, currentBlockIndex + weekOffset));
-      }
 
       await supabase.from('user_profiles').update(updates).eq('id', user.id);
       await refreshProfile();
@@ -164,7 +161,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     }
   };
 
-  if (!profile) return null;
+  if (!profile || !programCtx) return null;
 
   const isMeetDay = (() => {
     if (!profile.meet_date) return false;
@@ -174,45 +171,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     return diffDays >= -1 && diffDays <= 1;
   })();
 
-  // Profile gains program_id in rollout step 2; every user is Juggernaut until then.
-  const program = getProgram(DEFAULT_PROGRAM_ID);
-
-  const scheduleStart = profile.program_start_date
-    ? new Date(profile.program_start_date)
-    : profile.meet_date
-      ? new Date(new Date(profile.meet_date).getTime() - DEFAULT_PROGRAM_WEEKS * MS_PER_WEEK)
-      : new Date();
-
-  const waveSchedule = profile.meet_date
-    ? program.buildSchedule({ startDate: scheduleStart, meetDate: new Date(profile.meet_date) })
-    : { weeks: [], adjustments: [], skippedWaves: [], totalWeeks: 0, peakWeekIndex: -1 };
-
-  // Index of the week that contains today — only used as the initial position
-  // before the user has ever advanced/jumped a week.
-  const rawDateIndex = waveSchedule.weeks.findIndex(
-    w => w.startDate.getTime() <= Date.now() && w.endDate.getTime() >= Date.now()
-  );
-  // If today falls in the pre-program gap (startOffset > 0), use the first upcoming week
-  const dateFallbackIndex = rawDateIndex >= 0
-    ? rawDateIndex
-    : (waveSchedule.weeks.length > 0 && waveSchedule.weeks[0].startDate.getTime() > Date.now())
-      ? 0
-      : -1;
-
-  // Once set, current_week_index is the source of truth: progress moves when
-  // the user finishes/skips a week, not on its own with the calendar.
-  const currentBlockIndex = waveSchedule.weeks.length === 0
-    ? -1
-    : profile.current_week_index != null
-      ? Math.max(0, Math.min(waveSchedule.weeks.length - 1, profile.current_week_index))
-      : dateFallbackIndex;
-  const currentBlock = currentBlockIndex >= 0 ? waveSchedule.weeks[currentBlockIndex] : null;
-
-  // Viewed block — clamped to valid range
-  const viewedBlockIndex = currentBlockIndex >= 0
-    ? Math.max(0, Math.min(waveSchedule.weeks.length - 1, currentBlockIndex + weekOffset))
-    : -1;
-  const viewedBlock = viewedBlockIndex >= 0 ? waveSchedule.weeks[viewedBlockIndex] : null;
+  // Schedule and current/viewed week come from one shared resolver
+  // (useProgramContext), so Home and WorkoutDetail can't disagree.
+  const { program, schedule: waveSchedule, currentIndex: currentBlockIndex, currentBlock, viewedBlock } = programCtx;
 
   // For users without a meet date, compute the cycle/week at the given offset
   const viewedManual = !profile.meet_date ? (() => {
@@ -252,11 +213,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const upcomingWave: RepWave | undefined = profile.meet_date
     ? nextAdvanceBlock?.wave
     : CYCLE_TO_WAVE[profile.current_cycle + 1] ?? 3;
+  const upcomingCycle: number | undefined = profile.meet_date
+    ? nextAdvanceBlock?.cycleIndex
+    : profile.current_cycle;
   const upcomingPhase: WavePhase | undefined = profile.meet_date
     ? nextAdvanceBlock?.phase
     : 'accumulation';
   const needsWeakPointReview = program.isWaveBoundary(displayPhase, upcomingPhase)
-    && profile.weak_points_reviewed_wave !== upcomingWave;
+    && profile.weak_points_reviewed_cycle !== upcomingCycle;
 
   const workouts = [
     { name: 'Squat', max: profile.squat_max, type: 'squat' },

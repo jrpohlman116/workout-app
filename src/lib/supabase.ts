@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { ProgramId, DaysPerWeek } from './programs/types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -54,7 +55,14 @@ export interface UserProfile {
   current_week_index?: number;  // explicit pointer into the wave schedule; null = derive from today's date
   weak_points?: WeakPoints;     // sticking points per lift
   split_style?: 'upper_lower' | 'full_body'; // where squat variation work lives; null = upper_lower
-  weak_points_reviewed_wave?: 10 | 8 | 5 | 3; // last wave the user confirmed/edited weak points for
+  /** @deprecated Replaced by weak_points_reviewed_cycle; kept until the cleanup step. */
+  weak_points_reviewed_wave?: 10 | 8 | 5 | 3;
+  weak_points_reviewed_cycle?: number | null; // program-neutral: last cycle index the user confirmed/edited weak points for
+  program_id?: ProgramId;                     // defaults to 'juggernaut' in the database
+  days_per_week?: DaysPerWeek;                // defaults to 4
+  program_state?: Record<string, unknown>;    // program-specific carried state
+  ohp_max?: number | null;                    // optional overhead press training max
+  ohp_tested_max?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -80,6 +88,8 @@ export interface WorkoutSession {
   // above only capture the top set. Optional: sessions saved before this
   // field existed, and upper-body days (no main lift), have it unset.
   main_sets_data?: { reps: string; weight: string; rpe?: string; vbt?: string }[];
+  program_id?: ProgramId;
+  day_id?: string;
 }
 
 export interface WorkoutTemplate {

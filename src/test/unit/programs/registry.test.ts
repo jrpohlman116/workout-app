@@ -45,6 +45,18 @@ describe.each(listPrograms().map(p => [p.id, p] as const))('program contract: %s
     schedule.weeks.forEach((w, i) => { if (i > 0) expect(w.weekIndex).toBe(schedule.weeks[i - 1].weekIndex + 1); });
   });
 
+  it('has a plain-object initial state', () => {
+    expect(typeof program.initialState()).toBe('object');
+    expect(program.initialState()).not.toBeNull();
+  });
+
+  it('stamps every week with a cycle index that never decreases', () => {
+    schedule.weeks.forEach((w, i) => {
+      expect(w.cycleIndex).toBeTypeOf('number');
+      if (i > 0) expect(w.cycleIndex!).toBeGreaterThanOrEqual(schedule.weeks[i - 1].cycleIndex!);
+    });
+  });
+
   it('builds an empty schedule with no meet date', () => {
     expect(program.buildSchedule({ startDate: start }).weeks).toEqual([]);
   });

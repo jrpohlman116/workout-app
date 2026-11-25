@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateTrainingMax, WeekBlock, calculateJuggernautSets, calculatePeakingSets, calculateBackoffSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG, WarmupFeel } from '../../lib/calculations';
+import { calculateOneRepMax, calculateTrainingMax, calculateJuggernautSets, calculatePeakingSets, calculateBackoffSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG, WarmupFeel } from '../../lib/calculations';
 import { getProgram, DEFAULT_PROGRAM_ID } from '../../lib/programs/registry';
+import { sessionProgramFields } from '../../lib/programs/session';
+import { useProgramContext } from '../../hooks/useProgramContext';
 import type { LiftId, Unit } from '../../lib/programs/types';
-import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, WAVE_LABELS, PHASE_LABELS } from '../../lib/constants';
+import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, WAVE_LABELS, PHASE_LABELS } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
 import { useWeeklyVariationCredit } from '../../hooks/useWeeklyVariationCredit';
@@ -23,36 +25,6 @@ import Card from '../../components/ui/Card';
 import SectionLabel from '../../components/ui/SectionLabel';
 import PageHeader from '../../components/ui/PageHeader';
 import Button from '../../components/ui/Button';
-
-function getCurrentWeekBlock(
-  programStartDate: string | undefined,
-  meetDate: string | undefined,
-  currentWeekIndex: number | undefined
-): WeekBlock | null {
-  if (!meetDate) return null;
-  const meet = new Date(meetDate);
-  const start = programStartDate
-    ? new Date(programStartDate)
-    : new Date(meet.getTime() - DEFAULT_PROGRAM_WEEKS * 7 * 24 * 60 * 60 * 1000);
-  const schedule = getProgram(DEFAULT_PROGRAM_ID).buildSchedule({ startDate: start, meetDate: meet });
-  if (schedule.weeks.length === 0) return null;
-
-  // current_week_index is the source of truth once set — it advances only
-  // when the user finishes/skips a week, not on its own with the calendar.
-  if (currentWeekIndex != null) {
-    const clamped = Math.max(0, Math.min(schedule.weeks.length - 1, currentWeekIndex));
-    return schedule.weeks[clamped];
-  }
-
-  const now = Date.now();
-  const current = schedule.weeks.find(w => w.startDate.getTime() <= now && w.endDate.getTime() >= now);
-  if (current) return current;
-  // Pre-program gap (startOffset > 0): use the first upcoming week
-  if (schedule.weeks[0].startDate.getTime() > now) {
-    return schedule.weeks[0];
-  }
-  return null;
-}
 
 const IS_UPPER_DAY = (liftType: string) => liftType === 'upper';
 
@@ -142,7 +114,8 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const { lastAccessoryData, loading, getLastSetData } = useWorkoutData(user?.id, liftType);
 
   const isUpperDay = IS_UPPER_DAY(liftType);
-  const currentBlock = getCurrentWeekBlock(profile?.program_start_date, profile?.meet_date, profile?.current_week_index);
+  const programCtx = useProgramContext();
+  const currentBlock = programCtx?.currentBlock ?? null;
 
   const defaultExercises = baseExercises[liftType as keyof typeof baseExercises] ?? baseExercises.upper;
 
@@ -798,6 +771,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           weight_lifted: topWeight || 0,
           reps_performed: topReps || 0,
           calculated_1rm: calculated1RM,
+          ...sessionProgramFields(profile, liftType),
         };
 
         if (currentBlock) {

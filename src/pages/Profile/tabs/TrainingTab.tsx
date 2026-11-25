@@ -6,6 +6,7 @@ import { useFormState } from '../../../hooks/useFormState';
 import SaveFeedback from '../../../components/ui/SaveFeedback';
 import type { StickingPoint, WeakPoints } from '../../../lib/supabase';
 import { DEFAULT_SPLIT_STYLE, type SplitStyle } from '../../../lib/exercises';
+import { restartProgram, resetDefaultTemplates } from '../../../lib/programs/restart';
 import WeakPointPicker, { type MainLiftKey } from '../../../components/features/WeakPointPicker';
 import AccessibleModal from '../../../components/accessible/AccessibleModal';
 import Card from '../../../components/ui/Card';
@@ -41,38 +42,31 @@ export default function TrainingTab() {
   const handleSave = (restart = false) => {
     if (!user) return;
     run(async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const updatePayload: Record<string, unknown> = {
-        meet_date: meetDate || null,
-        weak_points: weakPoints,
-        split_style: splitStyle,
-        updated_at: new Date().toISOString(),
-      };
       if (restart) {
-        updatePayload.current_cycle = 1;
-        updatePayload.current_week = 1;
-        // Meet-date programs treat current_week_index as the source of truth,
-        // so it must be rewound too or the user stays on their old week.
-        updatePayload.current_week_index = 0;
-        updatePayload.program_start_date = today;
-        updatePayload.program_restarted_at = new Date().toISOString();
-      } else if (meetDate && !profile?.program_start_date) {
-        updatePayload.program_start_date = today;
-      }
-      const { error } = await supabase
-        .from('user_profiles')
-        .update(updatePayload)
-        .eq('id', user.id);
-      if (error) throw error;
-      // A new split re-lays-out every day, so it replaces any custom
-      // accessory lists rather than being silently masked by them.
-      if (splitStyle !== (profile?.split_style ?? DEFAULT_SPLIT_STYLE)) {
-        const { error: resetError } = await supabase
-          .from('workout_templates')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('program_variation', 'standard');
-        if (resetError) throw resetError;
+        // Rewinds position to week 1 in one place; see restartProgram.
+        await restartProgram(
+          user.id,
+          { meetDate: meetDate || null, weakPoints, splitStyle },
+          { programId: profile?.program_id, daysPerWeek: profile?.days_per_week, splitStyle: profile?.split_style ?? DEFAULT_SPLIT_STYLE }
+        );
+      } else {
+        const updatePayload: Record<string, unknown> = {
+          meet_date: meetDate || null,
+          weak_points: weakPoints,
+          split_style: splitStyle,
+          updated_at: new Date().toISOString(),
+        };
+        if (meetDate && !profile?.program_start_date) {
+          updatePayload.program_start_date = new Date().toISOString().split('T')[0];
+        }
+        const { error } = await supabase
+          .from('user_profiles')
+          .update(updatePayload)
+          .eq('id', user.id);
+        if (error) throw error;
+        if (splitStyle !== (profile?.split_style ?? DEFAULT_SPLIT_STYLE)) {
+          await resetDefaultTemplates(user.id);
+        }
       }
       await refreshProfile();
     }, restart ? 'Failed to restart program. Please try again.' : 'Failed to save training settings. Please try again.');

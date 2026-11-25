@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
+import { sessionProgramFields } from '../../../lib/programs/session';
 import AccessibleModal from '../../../components/accessible/AccessibleModal';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -123,6 +124,7 @@ export default function PastMeetModal({ isOpen, onClose, onSaved, unitPreference
           weight_lifted: stored,
           reps_performed: r.made ? 1 : 0,
           calculated_1rm: r.made ? stored : 0,
+          ...sessionProgramFields(profile, r.lift),
           is_1rm_test: true,
           completed_at: completedAt,
           created_at: new Date().toISOString(),

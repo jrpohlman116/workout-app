@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { sessionProgramFields } from '../../lib/programs/session';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateOneRepMax, calculateTrainingMax } from '../../lib/calculations';
 import { StickingPoint, WeakPoints } from '../../lib/supabase';
@@ -208,6 +209,7 @@ export default function Onboarding() {
           reps_performed: 1,
           calculated_1rm: lift.max,
           completed_at: profile.created_at,
+          ...sessionProgramFields(profile, lift.lift_type),
         }));
 
         const { error: sessionError } = await supabase

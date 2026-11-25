@@ -1,8 +1,9 @@
 import type { RepWave, WavePhase, WeekBlock, WaveSchedule, BackoffSet, JuggernautSetsConfig } from '../../types';
 import { getRoundingIncrement, MS_PER_WEEK } from '../shared/rounding';
 
-// Juggernaut Method engine. Moved verbatim from src/lib/calculations.ts; the
-// golden tests in src/test/unit/programs guard that its output is unchanged.
+// Juggernaut Method engine. Moved from src/lib/calculations.ts; the golden tests
+// in src/test/unit/programs guard that its output is unchanged. The only
+// addition since the move is WeekBlock.cycleIndex.
 
 const STANDARD_PHASES: WavePhase[] = ['accumulation', 'intensification', 'realization', 'deload'];
 const COMPRESSED_PHASES: WavePhase[] = ['accumulation', 'realization', 'deload'];
@@ -225,6 +226,7 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
   // Build training wave blocks
   const weeks: WeekBlock[] = [];
   let weekIndex = startOffset;
+  let cycleIndex = 0;
 
   for (const wave of selectedWaves) {
     const length = waveLengths.get(wave)!;
@@ -233,9 +235,10 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
     for (const phase of phases) {
       const weekStart = new Date(startDate.getTime() + weekIndex * MS_PER_WEEK);
       const weekEnd = new Date(weekStart.getTime() + MS_PER_WEEK - 1);
-      weeks.push({ wave: wave as RepWave, phase, weekIndex, startDate: weekStart, endDate: weekEnd });
+      weeks.push({ wave: wave as RepWave, phase, weekIndex, cycleIndex, startDate: weekStart, endDate: weekEnd });
       weekIndex++;
     }
+    cycleIndex++;
   }
 
   const peakWeekIndex = weeks.length; // peaking block starts right after the training waves
@@ -250,6 +253,7 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
       peakWeek: pk,
       totalPeakWeeks: peakingWeeks,
       weekIndex,
+      cycleIndex,
       startDate: weekStart,
       endDate: weekEnd,
     });
@@ -263,6 +267,7 @@ export function buildWaveSchedule(startDate: Date, meetDate: Date): WaveSchedule
     wave: 3,
     phase: 'meet_week',
     weekIndex,
+    cycleIndex,
     startDate: meetWeekStart,
     endDate: meetWeekEnd,
   });
