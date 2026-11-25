@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateJuggernautSets, calculatePeakingSets, getGreeting, buildWaveSchedule, isWaveBoundaryAdvance, MS_PER_WEEK, RepWave, WavePhase } from '../../lib/calculations';
+import { calculateJuggernautSets, calculatePeakingSets, getGreeting, MS_PER_WEEK, RepWave, WavePhase } from '../../lib/calculations';
+import { getProgram, DEFAULT_PROGRAM_ID } from '../../lib/programs/registry';
 import { DEFAULT_PROGRAM_WEEKS, PHASE_LABELS, PHASE_DESCRIPTIONS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WAVE_LABELS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
 import { ChevronLeft, ChevronRight, Check, Activity, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -173,6 +174,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     return diffDays >= -1 && diffDays <= 1;
   })();
 
+  // Profile gains program_id in rollout step 2; every user is Juggernaut until then.
+  const program = getProgram(DEFAULT_PROGRAM_ID);
+
   const scheduleStart = profile.program_start_date
     ? new Date(profile.program_start_date)
     : profile.meet_date
@@ -180,7 +184,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       : new Date();
 
   const waveSchedule = profile.meet_date
-    ? buildWaveSchedule(scheduleStart, new Date(profile.meet_date))
+    ? program.buildSchedule({ startDate: scheduleStart, meetDate: new Date(profile.meet_date) })
     : { weeks: [], adjustments: [], skippedWaves: [], totalWeeks: 0, peakWeekIndex: -1 };
 
   // Index of the week that contains today — only used as the initial position
@@ -251,7 +255,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const upcomingPhase: WavePhase | undefined = profile.meet_date
     ? nextAdvanceBlock?.phase
     : 'accumulation';
-  const needsWeakPointReview = isWaveBoundaryAdvance(displayPhase, upcomingPhase)
+  const needsWeakPointReview = program.isWaveBoundary(displayPhase, upcomingPhase)
     && profile.weak_points_reviewed_wave !== upcomingWave;
 
   const workouts = [

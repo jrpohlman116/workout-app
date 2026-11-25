@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateNewTrainingMax, calculateTrainingMax, buildWaveSchedule, WeekBlock, calculateJuggernautSets, calculatePeakingSets, calculateBackoffSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG, WarmupFeel } from '../../lib/calculations';
+import { calculateOneRepMax, calculateTrainingMax, WeekBlock, calculateJuggernautSets, calculatePeakingSets, calculateBackoffSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG, WarmupFeel } from '../../lib/calculations';
+import { getProgram, DEFAULT_PROGRAM_ID } from '../../lib/programs/registry';
+import type { LiftId, Unit } from '../../lib/programs/types';
 import { DEFAULT_PROGRAM_WEEKS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, WAVE_LABELS, PHASE_LABELS } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
@@ -32,7 +34,7 @@ function getCurrentWeekBlock(
   const start = programStartDate
     ? new Date(programStartDate)
     : new Date(meet.getTime() - DEFAULT_PROGRAM_WEEKS * 7 * 24 * 60 * 60 * 1000);
-  const schedule = buildWaveSchedule(start, meet);
+  const schedule = getProgram(DEFAULT_PROGRAM_ID).buildSchedule({ startDate: start, meetDate: meet });
   if (schedule.weeks.length === 0) return null;
 
   // current_week_index is the source of truth once set — it advances only
@@ -831,7 +833,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         const newTrainingMax = mainConfig?.isAmap && currentBlock
           ? (badDayDrop > 0
               ? (calculated1RM > 0 ? calculateTrainingMax(calculated1RM) : undefined)
-              : calculateNewTrainingMax(maxes[liftType] ?? 0, currentBlock.wave, topReps || 0, unit, liftType))
+              : getProgram(DEFAULT_PROGRAM_ID).updateTrainingMax({
+                  lift: liftType as LiftId,
+                  currentTm: maxes[liftType] ?? 0,
+                  block: currentBlock,
+                  topSet: { weight: topWeight || 0, reps: topReps || 0 },
+                  unit: unit as Unit,
+                })?.newTm)
           : undefined;
 
         setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage, topReps: topReps || 0, newTrainingMax });
