@@ -5,7 +5,7 @@ import type { WavePhase, WeekBlock, WaveSchedule } from '../types';
 // profile-backed state (step 2) are added later.
 
 // Add a literal here (and a registry entry) to introduce a program.
-export type ProgramId = 'juggernaut';
+export type ProgramId = 'juggernaut' | 'five_three_one';
 
 export type DaysPerWeek = 3 | 4;
 export type LiftId = 'squat' | 'bench' | 'deadlift' | 'ohp';
@@ -76,12 +76,21 @@ export interface Prescription {
   groups: SetGroup[];
 }
 
+/** A logged session's main-lift sets, for rules that look back over a wave. */
+export interface SessionSummary {
+  phase: WavePhase;
+  /** In the order they were performed: top set first, then back-offs. */
+  mainSets: { weight: number; reps: number }[];
+}
+
 export interface TmUpdateInput {
   lift: LiftId;
   currentTm: number;
   /** The block just completed. */
   block: WeekBlock;
   topSet: { weight: number; reps: number };
+  /** This lift's sessions from the wave being closed, oldest first. */
+  history?: SessionSummary[];
   unit: Unit;
 }
 
@@ -100,6 +109,10 @@ export interface ProgramDefinition {
 
   /** Days for a supported days-per-week; throws for an unsupported value. */
   layout(days: DaysPerWeek): DayLayout;
+  /** Title for a week: "10-Rep Accumulation", "Peaking Week 2", "Realization". */
+  weekLabel(block: WeekBlock): string;
+  /** Name of the wave a week belongs to ("10-Rep Wave", "Wave 2"), when it has one. */
+  waveLabel(block: WeekBlock): string | undefined;
   buildSchedule(input: ScheduleInput): WaveSchedule;
   /** Pure: same input, same output. All weights are already rounded. */
   prescribe(input: PrescribeInput): Prescription;

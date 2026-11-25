@@ -1,5 +1,5 @@
 import type { RepWave } from '../../types';
-import { MEET_WEEK_TM_PCT } from '../../constants';
+import { MEET_WEEK_TM_PCT, PHASE_LABELS, WAVE_LABELS } from '../../constants';
 import { getRoundingIncrement } from '../shared/rounding';
 import { calculatePeakingSets } from '../shared/peaking';
 import type { Prescription, ProgramDefinition, SetGroup } from '../types';
@@ -24,6 +24,14 @@ export const juggernaut: ProgramDefinition = {
     if (days === 4) return JUGGERNAUT_4_DAY;
     throw new Error(`Juggernaut does not support ${days} days per week`);
   },
+
+  weekLabel(block) {
+    if (block.phase === 'meet_week') return 'Meet Week';
+    if (block.phase === 'peaking') return `Peaking Week ${block.peakWeek}`;
+    return `${block.wave}-Rep ${PHASE_LABELS[block.phase]}`;
+  },
+
+  waveLabel: block => (block.wave ? WAVE_LABELS[block.wave] : undefined),
 
   buildSchedule({ startDate, meetDate }) {
     // Without a meet date the program is the repeating manual cycle, which the

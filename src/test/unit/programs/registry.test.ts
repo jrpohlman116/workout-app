@@ -75,8 +75,12 @@ describe.each(listPrograms().map(p => [p.id, p] as const))('program contract: %s
     expect(() => program.layout(5 as never)).toThrow();
   });
 
-  it('builds an empty schedule with no meet date', () => {
-    expect(program.buildSchedule({ startDate: start }).weeks).toEqual([]);
+  it('with no meet date is either empty (the page runs a manual cycle) or a repeating schedule with no peak block', () => {
+    const noMeet = program.buildSchedule({ startDate: start });
+    if (noMeet.weeks.length === 0) return;
+    expect(noMeet.repeats).toBe(true);
+    expect(noMeet.peakWeekIndex).toBe(-1);
+    expect(noMeet.weeks.some(w => w.phase === 'peaking' || w.phase === 'meet_week')).toBe(false);
   });
 
   it('prescribes positive, plate-rounded weights for every week and lift', () => {
@@ -86,7 +90,8 @@ describe.each(listPrograms().map(p => [p.id, p] as const))('program contract: %s
         expect(groups.length).toBeGreaterThan(0);
         for (const g of groups) {
           expect(g.weight).toBeGreaterThan(0);
-          expect(g.weight % 5).toBe(0);
+          // Every program rounds to at least a 2.5 lb step (bench-like lifts use the half step).
+          expect(g.weight % 2.5).toBe(0);
           expect(g.sets).toBeGreaterThan(0);
         }
       }

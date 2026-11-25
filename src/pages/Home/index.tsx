@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateJuggernautSets, calculatePeakingSets, getGreeting, RepWave, WavePhase } from '../../lib/calculations';
+import { calculateJuggernautSets, getGreeting, RepWave, WavePhase } from '../../lib/calculations';
+import type { Unit } from '../../lib/programs/types';
 import { positionUpdates, indexFromCycleWeek } from '../../lib/programs/position';
 import { trainingMaxFor } from '../../lib/programs/maxes';
 import { useProgramContext } from '../../hooks/useProgramContext';
@@ -102,7 +103,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       // Meet-date programs advance through the schedule; others count up from
       // cycle/week. Either way position is written through positionUpdates.
       const weeksCount = waveSchedule.weeks.length;
-      const hasSchedule = !!profile.meet_date && weeksCount > 0 && currentBlockIndex >= 0;
+      const hasSchedule = weeksCount > 0 && currentBlockIndex >= 0;
       const nextIndex = hasSchedule
         ? Math.min(currentBlockIndex + 1, weeksCount - 1)
         : indexFromCycleWeek(profile.current_cycle, profile.current_week) + 1;
@@ -146,7 +147,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     setJumping(true);
     try {
       const weeksCount = waveSchedule.weeks.length;
-      const hasSchedule = !!profile.meet_date && weeksCount > 0 && currentBlockIndex >= 0;
+      const hasSchedule = weeksCount > 0 && currentBlockIndex >= 0;
       const targetIndex = hasSchedule
         ? Math.max(0, Math.min(weeksCount - 1, currentBlockIndex + weekOffset))
         : Math.max(0, indexFromCycleWeek(profile.current_cycle, profile.current_week) + weekOffset);
@@ -197,32 +198,33 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const displayWave: RepWave = effectiveBlock?.wave ?? CYCLE_TO_WAVE[viewedManual?.cycle ?? profile.current_cycle] ?? 3;
   const displayPhase: WavePhase = effectiveBlock?.phase ?? WEEK_TO_PHASE[viewedManual?.week ?? profile.current_week] ?? 'deload';
 
+  // Title of the week being shown. A schedule names its own weeks; the manual
+  // (no schedule) Juggernaut path still derives wave and phase from cycle/week.
+  const weekTitle = effectiveBlock ? program.weekLabel(effectiveBlock) : `${displayWave}-Rep ${PHASE_LABELS[displayPhase]}`;
+
   const isDeload = displayPhase === 'deload';
   const isViewing = weekOffset !== 0;
 
   // What "Advance Week" will move you to, for the confirmation button/modal.
-  const nextAdvanceBlock = profile.meet_date && waveSchedule.weeks.length > 0 && currentBlockIndex >= 0
+  const nextAdvanceBlock = waveSchedule.weeks.length > 0 && currentBlockIndex >= 0
     ? waveSchedule.weeks[Math.min(currentBlockIndex + 1, waveSchedule.weeks.length - 1)]
     : null;
   const nextAdvanceLabel = nextAdvanceBlock
-    ? nextAdvanceBlock.phase === 'meet_week'
-      ? 'Meet Week'
-      : nextAdvanceBlock.phase === 'peaking'
-        ? `Peaking Week ${nextAdvanceBlock.peakWeek}`
-        : `${nextAdvanceBlock.wave}-Rep ${PHASE_LABELS[nextAdvanceBlock.phase]}`
+    ? program.weekLabel(nextAdvanceBlock)
     : `Week ${profile.current_week === 4 ? 1 : profile.current_week + 1}`;
 
   // Manual (no meet date) programs have no peaking block — wrapping week 4
   // always lands back on accumulation of the next cycle's wave.
-  const upcomingWave: RepWave | undefined = profile.meet_date
-    ? nextAdvanceBlock?.wave
-    : CYCLE_TO_WAVE[profile.current_cycle + 1] ?? 3;
-  const upcomingCycle: number | undefined = profile.meet_date
-    ? nextAdvanceBlock?.cycleIndex
-    : profile.current_cycle;
-  const upcomingPhase: WavePhase | undefined = profile.meet_date
-    ? nextAdvanceBlock?.phase
-    : 'accumulation';
+  const manualPath = !nextAdvanceBlock && !profile.meet_date;
+  const upcomingWaveLabel: string | undefined = manualPath
+    ? WAVE_LABELS[CYCLE_TO_WAVE[profile.current_cycle + 1] ?? 3]
+    : nextAdvanceBlock ? program.waveLabel(nextAdvanceBlock) : undefined;
+  const upcomingCycle: number | undefined = manualPath
+    ? profile.current_cycle
+    : nextAdvanceBlock?.cycleIndex;
+  const upcomingPhase: WavePhase | undefined = manualPath
+    ? 'accumulation'
+    : nextAdvanceBlock?.phase;
   const needsWeakPointReview = program.isWaveBoundary(displayPhase, upcomingPhase)
     && profile.weak_points_reviewed_cycle !== upcomingCycle;
 
@@ -234,6 +236,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       name: day.label,
       max,
       type: day.dayId,
+      lift: day.primary,
       accessoryOnly: day.primary === null,
       needsMax: day.primary !== null && max <= 0,
     };
@@ -248,14 +251,18 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        <Card className="px-6 py-8">
-          <WaveScheduleChart
-            schedule={waveSchedule}
-            trainingMaxes={{ squat: profile.squat_max, bench: profile.bench_max, deadlift: profile.deadlift_max }}
-            unit={profile.unit_preference || 'lb'}
-            currentWeekIndex={currentBlockIndex}
-          />
-        </Card>
+        {/* A schedule with no meet date just repeats, so there is no road map to chart. */}
+        {!waveSchedule.repeats && (
+          <Card className="px-6 py-8">
+            <WaveScheduleChart
+              schedule={waveSchedule}
+              program={program}
+              trainingMaxes={{ squat: profile.squat_max, bench: profile.bench_max, deadlift: profile.deadlift_max }}
+              unit={profile.unit_preference || 'lb'}
+              currentWeekIndex={currentBlockIndex}
+            />
+          </Card>
+        )}
 
         {isMeetDay && (
           <Tile
@@ -283,7 +290,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </IconButton>
           <div className="text-center">
             <p className="text-body-md-semibold text-gray-900 dark:text-gray-100">
-              {displayWave}-Rep {PHASE_LABELS[displayPhase]}
+              {weekTitle}
             </p>
             <p className="text-body-sm text-gray-400 dark:text-gray-400 mt-0.5">
               {isViewing
@@ -326,13 +333,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               const isUpperDayWorkout = workout.accessoryOnly || workout.needsMax;
               const unit = profile.unit_preference || 'lb';
               const roundTo = unit === 'kg' ? 2.5 : 5;
-              const baseWeight = (!isUpperDayWorkout && effectiveBlock && effectiveBlock.phase !== 'peaking' && effectiveBlock.phase !== 'meet_week')
-                ? calculateJuggernautSets(effectiveBlock.wave, effectiveBlock.phase, workout.max, unit).weight
-                : (!isUpperDayWorkout && effectiveBlock?.phase === 'peaking')
-                  ? calculatePeakingSets(effectiveBlock.peakWeek ?? 1, effectiveBlock.totalPeakWeeks ?? 3, workout.max, unit, workout.type).weight
-                  : (!isUpperDayWorkout && !effectiveBlock && viewedManual && workout.max > 0)
-                    ? calculateJuggernautSets(CYCLE_TO_WAVE[viewedManual.cycle] ?? 3, WEEK_TO_PHASE[viewedManual.week] ?? 'accumulation', workout.max, unit).weight
-                    : null;
+              const baseWeight = (!isUpperDayWorkout && workout.lift && effectiveBlock && effectiveBlock.phase !== 'meet_week')
+                ? program.prescribe({ block: effectiveBlock, lift: workout.lift, trainingMax: workout.max, unit: unit as Unit }).groups[0]?.weight ?? null
+                : (!isUpperDayWorkout && !effectiveBlock && viewedManual && workout.max > 0)
+                  ? calculateJuggernautSets(CYCLE_TO_WAVE[viewedManual.cycle] ?? 3, WEEK_TO_PHASE[viewedManual.week] ?? 'accumulation', workout.max, unit).weight
+                  : null;
               const weightLow = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo : null;
               const weightHigh = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo : null;
 
@@ -424,7 +429,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       <AccessibleModal
         isOpen={showSkipWeekModal}
         onClose={() => setShowSkipWeekModal(false)}
-        title={needsWeakPointReview && upcomingWave != null ? `New wave: ${WAVE_LABELS[upcomingWave]}` : 'Move to Next Week'}
+        title={needsWeakPointReview && upcomingWaveLabel ? `New wave: ${upcomingWaveLabel}` : 'Move to Next Week'}
         description={needsWeakPointReview ? 'Anything changed with your sticking points?' : `Skip to ${nextAdvanceLabel}`}
         size="sm"
       >
@@ -444,7 +449,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             Cancel
           </Button>
           <Button size="md" className="flex-1" disabled={skipping} onClick={handleSkipWeek}>
-            {needsWeakPointReview && upcomingWave != null ? `Start ${WAVE_LABELS[upcomingWave]}` : 'Advance Week'}
+            {needsWeakPointReview && upcomingWaveLabel ? `Start ${upcomingWaveLabel}` : 'Advance Week'}
           </Button>
         </div>
       </AccessibleModal>

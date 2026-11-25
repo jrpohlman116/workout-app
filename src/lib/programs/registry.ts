@@ -1,4 +1,5 @@
 import { juggernaut } from './juggernaut';
+import { fiveThreeOne } from './fiveThreeOne';
 import type { DayLayout, DaysPerWeek, ProgramDefinition, ProgramId } from './types';
 
 export const DEFAULT_PROGRAM_ID: ProgramId = 'juggernaut';
@@ -7,6 +8,7 @@ export const DEFAULT_DAYS_PER_WEEK: DaysPerWeek = 4;
 // To add a program: implement ProgramDefinition, extend ProgramId, add it here.
 const PROGRAMS: Record<ProgramId, ProgramDefinition> = {
   juggernaut,
+  five_three_one: fiveThreeOne,
 };
 
 /**

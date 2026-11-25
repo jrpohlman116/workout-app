@@ -1,11 +1,12 @@
 import { ArrowLeft } from 'lucide-react';
-import { WavePhase, RepWave } from '../../../lib/calculations';
-import { WAVE_LABELS, PHASE_LABELS, PHASE_DESCRIPTIONS } from '../../../lib/constants';
+import { WavePhase } from '../../../lib/calculations';
+import { PHASE_LABELS, PHASE_DESCRIPTIONS } from '../../../lib/constants';
 import IconButton from '../../../components/ui/IconButton';
 
 interface WorkoutHeaderProps {
   liftName: string;
-  wave?: RepWave;
+  /** "10-Rep Wave", "Wave 2"; unset for a week that isn't part of a wave. */
+  waveLabel?: string;
   phase?: WavePhase;
   peakWeek?: number;
   totalPeakWeeks?: number;
@@ -16,13 +17,13 @@ interface WorkoutHeaderProps {
   onBack: () => void;
 }
 
-export default function WorkoutHeader({ liftName, wave, phase, peakWeek, totalPeakWeeks, peakingNote, week, cycle, onBack }: WorkoutHeaderProps) {
+export default function WorkoutHeader({ liftName, waveLabel, phase, peakWeek, totalPeakWeeks, peakingNote, week, cycle, onBack }: WorkoutHeaderProps) {
   const subtitle = phase === 'peaking'
     ? `Peaking Block — Week ${peakWeek ?? 1} of ${totalPeakWeeks ?? 3}`
     : phase === 'meet_week'
       ? 'Meet Week'
-      : wave && phase
-        ? `${WAVE_LABELS[wave]} — ${PHASE_LABELS[phase]}`
+      : phase
+        ? [waveLabel, PHASE_LABELS[phase]].filter(Boolean).join(' — ')
         : week !== undefined && cycle !== undefined
           ? `Week ${week} — Cycle ${cycle}`
           : '';

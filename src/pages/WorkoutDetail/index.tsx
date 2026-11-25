@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateTrainingMax, calculateJuggernautSets, calculatePeakingSets, calculateBackoffSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG, WarmupFeel } from '../../lib/calculations';
-import { getProgram, DEFAULT_PROGRAM_ID } from '../../lib/programs/registry';
+import { calculateOneRepMax, calculateTrainingMax, calculateBackoffSets, applyVariationCredit, getPeakingWeekNote, JuggernautSetsConfig, getRoundingIncrement, DEFAULT_PLATES_LB, DEFAULT_PLATES_KG, WarmupFeel } from '../../lib/calculations';
+import { toSetsConfig } from '../../lib/programs/prescription';
 import { sessionProgramFields } from '../../lib/programs/session';
 import { trainingMaxFor, hasTrainingMax, type MaxEstimate } from '../../lib/programs/maxes';
 import OhpMaxPrompt from '../../components/features/OhpMaxPrompt';
 import { useProgramContext } from '../../hooks/useProgramContext';
-import type { LiftId, Unit } from '../../lib/programs/types';
-import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, WAVE_LABELS, PHASE_LABELS } from '../../lib/constants';
+import type { LiftId, SessionSummary, Unit } from '../../lib/programs/types';
+import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, PHASE_LABELS } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
 import { useWeeklyVariationCredit } from '../../hooks/useWeeklyVariationCredit';
@@ -212,9 +212,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
       const max = trainingMaxFor(profile, liftType as LiftId);
       const unit = profile.unit_preference || 'lb';
-      const cfg = currentBlock.phase === 'peaking'
-        ? calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, max, unit, liftType)
-        : calculateJuggernautSets(currentBlock.wave, currentBlock.phase, max, unit);
+      const cfg = programCtx && toSetsConfig(programCtx.program.prescribe({
+        block: currentBlock, lift: liftType as LiftId, trainingMax: max, unit: unit as Unit,
+      }));
+      if (!cfg) return;
 
       const numSets = creditPhase
         ? applyVariationCredit(cfg.numSets, variationSetsPlanned ?? 0, maxVariationCredit).numSets
@@ -232,7 +233,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       setMainSets(sets);
       setInitialMainSetsSet(true);
     }
-  }, [loading, profile, initialMainSetsSet, liftType, isUpperDay, currentBlock, variationSetsPlanned]);
+  }, [loading, profile, initialMainSetsSet, liftType, isUpperDay, currentBlock, variationSetsPlanned, programCtx]);
 
   useEffect(() => {
     if (!loading && Object.keys(lastAccessoryData).length > 0 && profile) {
@@ -501,10 +502,10 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     };
   };
 
-  const baseMainConfig: JuggernautSetsConfig | null = isUpperDay || !currentBlock ? null : (
-    currentBlock.phase === 'peaking'
-      ? calculatePeakingSets(currentBlock.peakWeek ?? 1, currentBlock.totalPeakWeeks ?? 3, maxes[liftType] ?? 0, unit, liftType)
-      : calculateJuggernautSets(currentBlock.wave, currentBlock.phase, maxes[liftType] ?? 0, unit)
+  const baseMainConfig: JuggernautSetsConfig | null = isUpperDay || !currentBlock || !programCtx ? null : toSetsConfig(
+    programCtx.program.prescribe({
+      block: currentBlock, lift: liftType as LiftId, trainingMax: maxes[liftType] ?? 0, unit: unit as Unit,
+    })
   );
 
   const creditPhase = !!currentBlock && (currentBlock.phase === 'accumulation' || currentBlock.phase === 'intensification');
@@ -521,7 +522,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     : undefined;
 
   const mainReps = currentBlock
-    ? (currentBlock.phase === 'peaking' ? 1 : currentBlock.wave)
+    ? (currentBlock.phase === 'peaking' ? 1 : currentBlock.wave ?? mainConfig?.reps ?? 5)
     : (profile.current_week === 1 ? 5 : profile.current_week === 2 ? 3 : profile.current_week === 3 ? '5-3-1' : 5);
 
   // The realization-week new-training-max value lives in workoutStats — it's
@@ -736,6 +737,32 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     return tonnage;
   };
 
+  // This lift's sessions from the wave being closed (cycle and week count the
+  // wave), for the 5/3/1 rule that looks at back-offs dropping off on set one.
+  const loadWaveHistory = async (): Promise<SessionSummary[]> => {
+    if (!user || !profile) return [];
+    let query = supabase
+      .from('workout_sessions')
+      .select('phase, main_sets_data')
+      .eq('user_id', user.id)
+      .eq('lift_type', liftType)
+      .eq('cycle', profile.current_cycle)
+      .eq('is_1rm_test', false)
+      .order('completed_at', { ascending: true });
+    if (profile.program_restarted_at) query = query.gte('completed_at', profile.program_restarted_at);
+    const { data, error } = await query;
+    if (error || !data) return [];
+    return data
+      .filter(row => row.phase && Array.isArray(row.main_sets_data))
+      .map(row => ({
+        phase: row.phase as SessionSummary['phase'],
+        mainSets: (row.main_sets_data as { reps: string; weight: string }[]).map(s => ({
+          weight: parseFloat(s.weight) || 0,
+          reps: parseInt(s.reps) || 0,
+        })),
+      }));
+  };
+
   const handleComplete = async () => {
     if (!user) return;
 
@@ -812,14 +839,15 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         // Snapshotted now, from the training max as it stood walking into this
         // set — not read live later, or "Set as Max" saving it would shift
         // the base this adds on top of on the very next render.
-        const newTrainingMax = mainConfig?.isAmap && currentBlock
+        const newTrainingMax = mainConfig?.isAmap && currentBlock && programCtx
           ? (badDayDrop > 0
               ? (calculated1RM > 0 ? calculateTrainingMax(calculated1RM) : undefined)
-              : getProgram(DEFAULT_PROGRAM_ID).updateTrainingMax({
+              : programCtx.program.updateTrainingMax({
                   lift: liftType as LiftId,
                   currentTm: maxes[liftType] ?? 0,
                   block: currentBlock,
                   topSet: { weight: topWeight || 0, reps: topReps || 0 },
+                  history: programCtx.program.id === 'five_three_one' ? await loadWaveHistory() : undefined,
                   unit: unit as Unit,
                 })?.newTm)
           : undefined;
@@ -949,7 +977,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
 
   const headerProps = {
     liftName: liftNames[liftType] ?? liftType,
-    wave: currentBlock?.wave,
+    waveLabel: currentBlock && programCtx ? programCtx.program.waveLabel(currentBlock) : undefined,
     phase: currentBlock?.phase,
     peakWeek: currentBlock?.peakWeek,
     totalPeakWeeks: currentBlock?.totalPeakWeeks,
@@ -1003,7 +1031,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           mainSetsNote={mainSetsNote}
           onStartWorkout={handleNext}
           unitPreference={profile.unit_preference || 'lb'}
-          wave={currentBlock?.wave}
+          waveLabel={currentBlock && programCtx ? programCtx.program.waveLabel(currentBlock) : undefined}
           phase={currentBlock?.phase}
           onSaveExercises={saveTemplate}
           onResetExercises={() => resetToDefault(defaultExercises)}
@@ -1143,7 +1171,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           estimated1RM={workoutStats.estimated1RM}
           totalTonnage={workoutStats.totalTonnage}
           completedAccessories={completedAccessories}
-          waveLabel={currentBlock ? `${WAVE_LABELS[currentBlock.wave]} — ${PHASE_LABELS[currentBlock.phase]}` : undefined}
+          waveLabel={currentBlock ? [programCtx?.program.waveLabel(currentBlock), PHASE_LABELS[currentBlock.phase]].filter(Boolean).join(' — ') : undefined}
           unitPreference={profile?.unit_preference || 'lb'}
           onClose={handleSuccessClose}
           onSetAsMax={!isUpperDay && newTrainingMax != null ? handleSetAsMax : undefined}

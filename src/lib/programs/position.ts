@@ -45,8 +45,6 @@ export interface ResolvedPosition {
   currentBlock: WeekBlock | null;
 }
 
-const EMPTY_SCHEDULE: Schedule = { weeks: [], adjustments: [], skippedWaves: [], totalWeeks: 0, peakWeekIndex: -1 };
-
 /**
  * The one place that turns profile fields into "which week is the user in".
  * Home and WorkoutDetail both read it, so they can't disagree.
@@ -59,15 +57,15 @@ export function resolvePosition(input: PositionInput): ResolvedPosition {
   const program = getProgram(input.programId);
   const now = input.now ?? Date.now();
 
-  if (!input.meetDate) {
-    return { program, schedule: EMPTY_SCHEDULE, currentIndex: -1, currentBlock: null };
-  }
-
-  const meetDate = new Date(input.meetDate);
+  const meetDate = input.meetDate ? new Date(input.meetDate) : undefined;
   const startDate = input.programStartDate
     ? new Date(input.programStartDate)
-    : new Date(meetDate.getTime() - DEFAULT_PROGRAM_WEEKS * MS_PER_WEEK);
+    : meetDate
+      ? new Date(meetDate.getTime() - DEFAULT_PROGRAM_WEEKS * MS_PER_WEEK)
+      : new Date(now);
 
+  // With no meet date a program either returns an empty schedule (the page then
+  // runs the manual cycle) or a repeating one with no peak block.
   const schedule = program.buildSchedule({ startDate, meetDate });
   const weeks = schedule.weeks;
   if (weeks.length === 0) {

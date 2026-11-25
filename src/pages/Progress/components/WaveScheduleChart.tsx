@@ -12,9 +12,9 @@ import {
   ReferenceLine,
   Cell,
 } from 'recharts';
-import type { WaveSchedule, RepWave, WavePhase } from '../../../lib/calculations';
-import { calculateJuggernautSets, calculatePeakingSets, getRoundingIncrement } from '../../../lib/calculations';
-import { PHASE_LABELS, PHASE_ABBR, MEET_WEEK_TM_PCT } from '../../../lib/constants';
+import type { WaveSchedule, WavePhase } from '../../../lib/calculations';
+import { PHASE_LABELS, PHASE_ABBR } from '../../../lib/constants';
+import type { LiftId, ProgramDefinition, Unit } from '../../../lib/programs/types';
 
 interface TrainingMaxes {
   squat: number;
@@ -24,6 +24,8 @@ interface TrainingMaxes {
 
 interface WaveScheduleChartProps {
   schedule: WaveSchedule;
+  /** Source of every prescription and label drawn here. */
+  program: ProgramDefinition;
   trainingMaxes: TrainingMaxes;
   unit: string;
   /** Index into schedule.weeks marking "you are here". Falls back to today's date if omitted. */
@@ -51,7 +53,10 @@ const MEET_WEEK_COLOR = '#10b981';    // emerald-500
 
 interface BarDatum {
   label: string;
+  /** Colour key. A program with no rep waves borrows the four wave colours by cycle. */
   wave: number;
+  weekTitle: string;
+  waveTitle: string;
   phase: WavePhase;
   peakWeek?: number;
   totalReps: number;
@@ -68,7 +73,7 @@ interface BarDatum {
   isMeetWeek: boolean;
 }
 
-export default function WaveScheduleChart({ schedule, trainingMaxes, unit, currentWeekIndex }: WaveScheduleChartProps) {
+export default function WaveScheduleChart({ schedule, program, trainingMaxes, unit, currentWeekIndex }: WaveScheduleChartProps) {
   const [showInfo, setShowInfo] = useState(false);
 
   if (!schedule.weeks.length) {
@@ -85,12 +90,12 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
 
   const now = Date.now();
 
-  const getWeightForMax = (tm: number, isPeaking: boolean, isMeetWeek: boolean, block: typeof schedule.weeks[0], liftType: string) => {
-    const roundTo = getRoundingIncrement(unit);
-    if (isPeaking) return calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, tm, unit, liftType).weight;
-    if (isMeetWeek) return Math.round(tm * MEET_WEEK_TM_PCT / roundTo) * roundTo;
-    return calculateJuggernautSets(block.wave as RepWave, block.phase, tm, unit).weight;
-  };
+  // The top set of the week, from the program (peaking and meet week included).
+  const topSetFor = (tm: number, block: typeof schedule.weeks[0], lift: LiftId) =>
+    program.prescribe({ block, lift, trainingMax: tm, unit: unit as Unit }).groups[0];
+  const getWeightForMax = (tm: number, block: typeof schedule.weeks[0], lift: LiftId) => topSetFor(tm, block, lift)?.weight ?? 0;
+  const hasRepWaves = schedule.weeks.some(w => w.wave != null);
+  const FALLBACK_WAVE_KEYS = [10, 8, 5, 3];
 
   const data: BarDatum[] = schedule.weeks.map((block, index) => {
     const isPeaking = block.phase === 'peaking';
@@ -102,30 +107,27 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
       ? index < currentWeekIndex
       : block.endDate.getTime() < now;
 
-    let cfg;
-    if (isPeaking) {
-      cfg = calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMaxes.squat, unit, 'squat');
-    } else if (isMeetWeek) {
-      const roundTo = getRoundingIncrement(unit);
-      cfg = { numSets: 1, reps: 1, weight: Math.round(trainingMaxes.squat * MEET_WEEK_TM_PCT / roundTo) * roundTo, isAmap: false };
-    } else {
-      cfg = calculateJuggernautSets(block.wave as RepWave, block.phase, trainingMaxes.squat, unit);
-    }
+    const top = topSetFor(trainingMaxes.squat, block, 'squat');
+    const cfg = { numSets: top?.sets ?? 0, reps: top?.reps ?? 0, weight: top?.weight ?? 0, isAmap: top?.isAmrap ?? false };
+    const cycleNumber = (block.cycleIndex ?? 0) + 1;
+    const waveKey = block.wave ?? FALLBACK_WAVE_KEYS[(cycleNumber - 1) % FALLBACK_WAVE_KEYS.length];
 
     const totalReps = cfg.numSets * cfg.reps;
     const intensityPct = trainingMaxes.squat > 0 ? Math.round((cfg.weight / trainingMaxes.squat) * 100) : 0;
-    const abbr = isPeaking ? `P${block.peakWeek ?? ''}` : isMeetWeek ? 'M' : `${block.wave}${PHASE_ABBR[block.phase] ?? '?'}`;
+    const abbr = isPeaking ? `P${block.peakWeek ?? ''}` : isMeetWeek ? 'M' : `${block.wave ?? cycleNumber}${PHASE_ABBR[block.phase] ?? '?'}`;
 
     return {
       label: abbr,
-      wave: block.wave,
+      wave: waveKey,
+      weekTitle: program.weekLabel(block),
+      waveTitle: program.waveLabel(block) ?? '',
       phase: block.phase,
       peakWeek: block.peakWeek,
       totalReps,
       intensityPct,
-      squatWeight: getWeightForMax(trainingMaxes.squat, isPeaking, isMeetWeek, block, 'squat'),
-      benchWeight: getWeightForMax(trainingMaxes.bench, isPeaking, isMeetWeek, block, 'bench'),
-      deadliftWeight: getWeightForMax(trainingMaxes.deadlift, isPeaking, isMeetWeek, block, 'deadlift'),
+      squatWeight: getWeightForMax(trainingMaxes.squat, block, 'squat'),
+      benchWeight: getWeightForMax(trainingMaxes.bench, block, 'bench'),
+      deadliftWeight: getWeightForMax(trainingMaxes.deadlift, block, 'deadlift'),
       numSets: cfg.numSets,
       reps: cfg.reps,
       isAmap: cfg.isAmap,
@@ -160,7 +162,7 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
       ? 'Meet Week'
       : d.isPeaking
         ? `Peaking — Week ${d.peakWeek} of 3`
-        : `${d.wave}-Rep Wave`;
+        : d.waveTitle;
     return (
       <div className="bg-gray-900 text-white px-3 py-2.5 rounded-lg shadow-xl text-sm min-w-[168px]">
         <p className="font-bold leading-tight">{title}</p>
@@ -197,11 +199,7 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
         </span>
         {currentDatum && (
           <span className="font-semibold text-gray-900 dark:text-gray-100">
-            {currentDatum.isMeetWeek
-              ? 'Meet Week'
-              : currentDatum.isPeaking
-                ? `Peaking Week ${currentDatum.peakWeek}`
-                : `${currentDatum.wave}-Rep ${PHASE_LABELS[currentDatum.phase]}`}
+            {currentDatum.weekTitle}
           </span>
         )}
         <span className="text-gray-500 dark:text-gray-400">
@@ -298,7 +296,7 @@ export default function WaveScheduleChart({ schedule, trainingMaxes, unit, curre
 
       {/* Legend */}
       <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1 mt-4">
-        {wavesInSchedule.map(wave => (
+        {hasRepWaves && wavesInSchedule.map(wave => (
           <div key={wave} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: WAVE_COLORS[wave] }} />
             <span className="text-body-sm text-gray-500 dark:text-gray-400">{wave}-Rep</span>

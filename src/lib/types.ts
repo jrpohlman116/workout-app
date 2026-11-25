@@ -15,7 +15,8 @@ export type CalculatorTab = '1rm' | 'wilks' | 'plates';
 export interface WeekBlock {
   /** 0-based wave/cycle count within the schedule; peak and meet weeks use the cycle after the last wave. */
   cycleIndex?: number;
-  wave: RepWave;
+  /** Juggernaut rep wave (10/8/5/3). Programs without rep waves leave it unset. */
+  wave?: RepWave;
   phase: WavePhase;
   weekIndex: number;
   startDate: Date;
@@ -30,6 +31,8 @@ export interface WaveSchedule {
   adjustments: string[];
   totalWeeks: number;
   peakWeekIndex: number;
+  /** True for a schedule with no meet date: it just repeats, so there is no end to count down to. */
+  repeats?: boolean;
 }
 
 export interface BackoffSet {

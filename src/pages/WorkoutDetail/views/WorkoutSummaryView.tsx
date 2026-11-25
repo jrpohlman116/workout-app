@@ -26,7 +26,8 @@ interface WorkoutSummaryViewProps {
   mainSetsNote?: string;
   onStartWorkout: () => void;
   unitPreference?: string;
-  wave?: number;
+  /** "10-Rep Wave", "Wave 2"; unset when the week has no wave. */
+  waveLabel?: string;
   phase?: string;
   onSaveExercises?: (exercises: Exercise[]) => Promise<boolean>;
   onResetExercises?: () => Promise<boolean>;
@@ -44,7 +45,7 @@ export default function WorkoutSummaryView({
   mainSetsNote,
   onStartWorkout,
   unitPreference = 'lb',
-  wave,
+  waveLabel,
   phase,
   onSaveExercises,
   onResetExercises,
@@ -175,9 +176,9 @@ export default function WorkoutSummaryView({
         <Card className="p-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">Main Sets</p>
-            {wave && (
+            {waveLabel && (
               <span className="text-xs font-semibold px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full tabular-nums">
-                {wave}-Rep Wave
+                {waveLabel}
               </span>
             )}
           </div>
@@ -191,7 +192,7 @@ export default function WorkoutSummaryView({
               <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">
                 {mainConfig.isAmap
                   ? 'AMRAP Set'
-                  : `${mainConfig.numSets} sets × ${mainConfig.reps}`}
+                  : `${mainConfig.numSets} ${mainConfig.numSets === 1 ? 'set' : 'sets'} × ${mainConfig.reps}`}
               </p>
               {mainConfig.isAmap && (
                 <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">Push for max reps after warm-ups</p>
@@ -215,7 +216,7 @@ export default function WorkoutSummaryView({
           {mainConfig.downSets && (
             <div className="flex justify-between items-center py-3 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl mt-2">
               <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400">
-                Down Sets — {mainConfig.downSets.sets} × {mainConfig.downSets.reps}
+                {phase === 'peaking' ? 'Down Sets' : 'Back-off Sets'} — {mainConfig.downSets.sets} × {mainConfig.downSets.reps}
               </p>
               <p className="text-sm font-bold tabular-nums text-gray-900 dark:text-gray-100">
                 {mainConfig.downSets.weight} <span className="text-xs font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span>
