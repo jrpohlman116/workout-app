@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateJuggernautSets, getGreeting, RepWave, WavePhase } from '../../lib/calculations';
+import { getGreeting, RepWave, WavePhase } from '../../lib/calculations';
 import type { Unit } from '../../lib/programs/types';
 import { positionUpdates, indexFromCycleWeek } from '../../lib/programs/position';
 import { trainingMaxFor } from '../../lib/programs/maxes';
 import { useProgramContext } from '../../hooks/useProgramContext';
-import { PHASE_LABELS, PHASE_DESCRIPTIONS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WAVE_LABELS, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
+import { PHASE_LABELS, PHASE_DESCRIPTIONS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
 import { ChevronLeft, ChevronRight, Check, Activity, Info } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { StickingPoint, WeakPoints } from '../../lib/supabase';
@@ -180,13 +180,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   // (useProgramContext), so Home and WorkoutDetail can't disagree.
   const { program, layout, schedule: waveSchedule, currentIndex: currentBlockIndex, currentBlock, viewedBlock } = programCtx;
 
-  // For users without a meet date, compute the cycle/week at the given offset
-  const viewedManual = !profile.meet_date ? (() => {
-    const base = (profile.current_cycle - 1) * 4 + (profile.current_week - 1);
-    const total = Math.max(0, base + weekOffset);
-    return { week: (total % 4) + 1 as 1 | 2 | 3 | 4, cycle: Math.floor(total / 4) + 1 };
-  })() : null;
-
   const canGoBack = currentBlockIndex >= 0
     ? currentBlockIndex + weekOffset > 0
     : (profile.current_cycle - 1) * 4 + (profile.current_week - 1) + weekOffset > 0;
@@ -195,8 +188,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     : weekOffset < 52;
 
   const effectiveBlock = viewedBlock ?? (weekOffset === 0 ? currentBlock : null);
-  const displayWave: RepWave = effectiveBlock?.wave ?? CYCLE_TO_WAVE[viewedManual?.cycle ?? profile.current_cycle] ?? 3;
-  const displayPhase: WavePhase = effectiveBlock?.phase ?? WEEK_TO_PHASE[viewedManual?.week ?? profile.current_week] ?? 'deload';
+  // Only a meet date too close to fit any waves leaves no schedule; fall back to the cycle counter.
+  const displayWave: RepWave = effectiveBlock?.wave ?? CYCLE_TO_WAVE[profile.current_cycle] ?? 3;
+  const displayPhase: WavePhase = effectiveBlock?.phase ?? WEEK_TO_PHASE[profile.current_week] ?? 'deload';
 
   // Title of the week being shown. A schedule names its own weeks; the manual
   // (no schedule) Juggernaut path still derives wave and phase from cycle/week.
@@ -215,16 +209,9 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
   // Manual (no meet date) programs have no peaking block — wrapping week 4
   // always lands back on accumulation of the next cycle's wave.
-  const manualPath = !nextAdvanceBlock && !profile.meet_date;
-  const upcomingWaveLabel: string | undefined = manualPath
-    ? WAVE_LABELS[CYCLE_TO_WAVE[profile.current_cycle + 1] ?? 3]
-    : nextAdvanceBlock ? program.waveLabel(nextAdvanceBlock) : undefined;
-  const upcomingCycle: number | undefined = manualPath
-    ? profile.current_cycle
-    : nextAdvanceBlock?.cycleIndex;
-  const upcomingPhase: WavePhase | undefined = manualPath
-    ? 'accumulation'
-    : nextAdvanceBlock?.phase;
+  const upcomingWaveLabel: string | undefined = nextAdvanceBlock ? program.waveLabel(nextAdvanceBlock) : undefined;
+  const upcomingCycle: number | undefined = nextAdvanceBlock?.cycleIndex;
+  const upcomingPhase: WavePhase | undefined = nextAdvanceBlock?.phase;
   const needsWeakPointReview = program.isWaveBoundary(displayPhase, upcomingPhase)
     && profile.weak_points_reviewed_cycle !== upcomingCycle;
 
@@ -252,7 +239,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
         {/* A schedule with no meet date just repeats, so there is no road map to chart. */}
-        {!waveSchedule.repeats && (
+        {waveSchedule.repeats ? (
+          <Card className="px-6 py-8">
+            <p className="text-center text-body-sm text-gray-500 dark:text-gray-400">
+              Set a meet date in your profile to see your program schedule.
+            </p>
+          </Card>
+        ) : (
           <Card className="px-6 py-8">
             <WaveScheduleChart
               schedule={waveSchedule}
@@ -335,9 +328,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               const roundTo = unit === 'kg' ? 2.5 : 5;
               const baseWeight = (!isUpperDayWorkout && workout.lift && effectiveBlock && effectiveBlock.phase !== 'meet_week')
                 ? program.prescribe({ block: effectiveBlock, lift: workout.lift, trainingMax: workout.max, unit: unit as Unit }).groups[0]?.weight ?? null
-                : (!isUpperDayWorkout && !effectiveBlock && viewedManual && workout.max > 0)
-                  ? calculateJuggernautSets(CYCLE_TO_WAVE[viewedManual.cycle] ?? 3, WEEK_TO_PHASE[viewedManual.week] ?? 'accumulation', workout.max, unit).weight
-                  : null;
+                : null;
               const weightLow = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo : null;
               const weightHigh = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo : null;
 

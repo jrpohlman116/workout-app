@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   cycleWeekFromIndex, indexFromCycleWeek, positionUpdates, resolvePosition,
 } from '../../../lib/programs/position';
+import { calculateJuggernautSets } from '../../../lib/calculations';
+import { CYCLE_TO_WAVE, WEEK_TO_PHASE } from '../../../lib/constants';
 
 const DAY = 24 * 60 * 60 * 1000;
 const iso = (ms: number) => new Date(ms).toISOString().split('T')[0];
@@ -37,11 +39,62 @@ describe('cycle/week <-> index', () => {
 describe('resolvePosition', () => {
   const programStartDate = iso(start);
 
-  it('has no schedule without a meet date', () => {
-    const r = resolvePosition({ programStartDate });
-    expect(r.schedule.weeks).toEqual([]);
-    expect(r.currentIndex).toBe(-1);
-    expect(r.currentBlock).toBeNull();
+  it('repeats four-week waves with no peak block when there is no meet date', () => {
+    const r = resolvePosition({ programStartDate, currentWeekIndex: 0 });
+    expect(r.schedule.repeats).toBe(true);
+    expect(r.schedule.peakWeekIndex).toBe(-1);
+    expect(r.schedule.weeks.some(w => w.phase === 'peaking' || w.phase === 'meet_week')).toBe(false);
+    expect(r.schedule.weeks.slice(0, 16).map(w => `${w.wave}${w.phase[0]}`)).toEqual([
+      '10a', '10i', '10r', '10d', '8a', '8i', '8r', '8d', '5a', '5i', '5r', '5d', '3a', '3i', '3r', '3d',
+    ]);
+    // After the 3-rep wave it stays on 3s, as the manual cycle always did.
+    expect(r.schedule.weeks[16].wave).toBe(3);
+    expect(r.schedule.weeks[40].wave).toBe(3);
+  });
+
+  it('matches the old manual cycle for every cycle and week', () => {
+    const { schedule } = resolvePosition({ programStartDate, currentWeekIndex: 0 });
+    for (let cycle = 1; cycle <= 26; cycle++) {
+      for (let week = 1; week <= 4; week++) {
+        const block = schedule.weeks[indexFromCycleWeek(cycle, week)];
+        expect(block.wave).toBe(CYCLE_TO_WAVE[cycle] ?? 3);
+        expect(block.phase).toBe(WEEK_TO_PHASE[week]);
+        expect(block.cycleIndex).toBe(cycle - 1);
+      }
+    }
+  });
+
+  it('prescribes what the old manual cycle did for each lift', () => {
+    const { schedule, program } = resolvePosition({ programStartDate, currentWeekIndex: 0 });
+    for (const lift of ['squat', 'bench', 'deadlift'] as const) {
+      for (let cycle = 1; cycle <= 8; cycle++) {
+        for (let week = 1; week <= 4; week++) {
+          const block = schedule.weeks[indexFromCycleWeek(cycle, week)];
+          const got = program.prescribe({ block, lift, trainingMax: 255, unit: 'lb' }).groups[0].weight;
+          const old = calculateJuggernautSets(CYCLE_TO_WAVE[cycle] ?? 3, WEEK_TO_PHASE[week], 255, 'lb').weight;
+          expect(got).toBe(old);
+        }
+      }
+    }
+  });
+
+  it('starts a repeating schedule at the stored cycle and week when no index is stored yet', () => {
+    const r = resolvePosition({ programStartDate, currentCycle: 2, currentWeek: 3 });
+    expect(r.currentIndex).toBe(6);
+    expect(r.currentBlock).toMatchObject({ wave: 8, phase: 'realization' });
+  });
+
+  it('starts at week 1 with no stored index, cycle or week', () => {
+    expect(resolvePosition({ programStartDate }).currentIndex).toBe(0);
+  });
+
+  it('prefers a stored index over cycle and week', () => {
+    expect(resolvePosition({ programStartDate, currentWeekIndex: 9, currentCycle: 1, currentWeek: 1 }).currentIndex).toBe(9);
+  });
+
+  it('clamps a cycle beyond the schedule to its last week', () => {
+    const r = resolvePosition({ programStartDate, currentCycle: 999, currentWeek: 2 });
+    expect(r.currentIndex).toBe(r.schedule.weeks.length - 1);
   });
 
   it('has no schedule when the meet is too close to fit any waves', () => {

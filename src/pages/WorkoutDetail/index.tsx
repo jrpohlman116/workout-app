@@ -431,13 +431,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     return (
       <div className="min-h-screen pb-24">
         <div className="bg-white dark:bg-gray-800">
-          <PageHeader eyebrow="Juggernaut" title={liftNames[liftType] ?? liftType} />
+          <PageHeader eyebrow={programCtx?.program.name ?? ''} title={liftNames[liftType] ?? liftType} />
         </div>
         <div className="max-w-md mx-auto px-4 py-6">
           <Card className="p-6">
             <SectionLabel className="mb-1">Program not set up</SectionLabel>
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-              Add your program start date and meet date in Profile to get your Juggernaut schedule.
+              {programCtx?.schedule.adjustments[0] ?? 'Add your program start date and meet date in Profile to get your schedule.'}
             </p>
             <Button variant="ghost" size="sm" onClick={onBack}>← Go back</Button>
           </Card>

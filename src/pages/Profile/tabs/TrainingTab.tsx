@@ -69,6 +69,13 @@ export default function TrainingTab() {
         if (meetDate && !profile?.program_start_date) {
           updatePayload.program_start_date = new Date().toISOString().split('T')[0];
         }
+        // Adding or clearing a meet date swaps the schedule (a meet-date plan or a
+        // repeating one), so the stored week index no longer points at the same
+        // week. Clear it: a new meet-date plan starts from today, and a repeating
+        // one picks up from the stored cycle and week.
+        if (!!meetDate !== !!profile?.meet_date) {
+          updatePayload.current_week_index = null;
+        }
         const { error } = await supabase
           .from('user_profiles')
           .update(updatePayload)

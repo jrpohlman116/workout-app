@@ -34,6 +34,9 @@ export interface PositionInput {
   programStartDate?: string | null;
   meetDate?: string | null;
   currentWeekIndex?: number | null;
+  /** Used to find the position of a repeating schedule that has no index stored yet. */
+  currentCycle?: number | null;
+  currentWeek?: number | null;
   now?: number;
 }
 
@@ -73,7 +76,11 @@ export function resolvePosition(input: PositionInput): ResolvedPosition {
   }
 
   let currentIndex: number;
-  if (input.currentWeekIndex != null) {
+  if (input.currentWeekIndex == null && schedule.repeats) {
+    // A repeating schedule has no calendar to read a position from. Profiles
+    // that predate current_week_index kept it as cycle and week, so start there.
+    currentIndex = Math.min(weeks.length - 1, indexFromCycleWeek(input.currentCycle ?? 1, input.currentWeek ?? 1));
+  } else if (input.currentWeekIndex != null) {
     currentIndex = Math.max(0, Math.min(weeks.length - 1, input.currentWeekIndex));
   } else {
     const byDate = weeks.findIndex(w => w.startDate.getTime() <= now && w.endDate.getTime() >= now);

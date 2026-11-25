@@ -1,5 +1,7 @@
 import type { RepWave } from '../../types';
-import { MEET_WEEK_TM_PCT, PHASE_LABELS, WAVE_LABELS } from '../../constants';
+import { MEET_WEEK_TM_PCT, PHASE_LABELS, WAVE_LABELS, CYCLE_TO_WAVE } from '../../constants';
+import type { WaveSchedule, WeekBlock, WavePhase } from '../../types';
+import { MS_PER_WEEK } from '../shared/rounding';
 import { getRoundingIncrement } from '../shared/rounding';
 import { calculatePeakingSets } from '../shared/peaking';
 import type { Prescription, ProgramDefinition, SetGroup } from '../types';
@@ -11,7 +13,25 @@ import {
   isWaveBoundaryAdvance,
 } from './engine';
 
-const EMPTY_SCHEDULE = { weeks: [], adjustments: [], skippedWaves: [], totalWeeks: 0, peakWeekIndex: -1 };
+// With no meet date the program is a repeating run of four-week waves, with no
+// peak block: 10s, 8s, 5s, 3s, then 3s again (the same mapping the manual
+// cycle counter has always used). Two years of cycles is far more than the
+// position pointer will reach.
+const REPEATING_CYCLES = 26;
+const WAVE_PHASES: WavePhase[] = ['accumulation', 'intensification', 'realization', 'deload'];
+
+function repeatingSchedule(startDate: Date): WaveSchedule {
+  const weeks: WeekBlock[] = [];
+  for (let cycle = 0; cycle < REPEATING_CYCLES; cycle++) {
+    const wave = CYCLE_TO_WAVE[cycle + 1] ?? 3;
+    WAVE_PHASES.forEach((phase, i) => {
+      const index = cycle * WAVE_PHASES.length + i;
+      const start = new Date(startDate.getTime() + index * MS_PER_WEEK);
+      weeks.push({ wave, phase, weekIndex: index, cycleIndex: cycle, startDate: start, endDate: new Date(start.getTime() + MS_PER_WEEK - 1) });
+    });
+  }
+  return { weeks, adjustments: [], skippedWaves: [], totalWeeks: weeks.length, peakWeekIndex: -1, repeats: true };
+}
 
 export const juggernaut: ProgramDefinition = {
   id: 'juggernaut',
@@ -34,9 +54,7 @@ export const juggernaut: ProgramDefinition = {
   waveLabel: block => (block.wave ? WAVE_LABELS[block.wave] : undefined),
 
   buildSchedule({ startDate, meetDate }) {
-    // Without a meet date the program is the repeating manual cycle, which the
-    // pages still derive themselves until step 2 folds it into the schedule.
-    return meetDate ? buildWaveSchedule(startDate, meetDate) : EMPTY_SCHEDULE;
+    return meetDate ? buildWaveSchedule(startDate, meetDate) : repeatingSchedule(startDate);
   },
 
   prescribe({ block, lift, trainingMax, unit }): Prescription {
