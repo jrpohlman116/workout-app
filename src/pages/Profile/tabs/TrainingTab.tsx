@@ -7,6 +7,9 @@ import SaveFeedback from '../../../components/ui/SaveFeedback';
 import type { StickingPoint, WeakPoints } from '../../../lib/supabase';
 import { DEFAULT_SPLIT_STYLE, type SplitStyle } from '../../../lib/exercises';
 import { restartProgram, resetDefaultTemplates } from '../../../lib/programs/restart';
+import { getProgram, DEFAULT_PROGRAM_ID, DEFAULT_DAYS_PER_WEEK } from '../../../lib/programs/registry';
+import type { DaysPerWeek, ProgramId } from '../../../lib/programs/types';
+import ProgramPicker from '../../../components/features/ProgramPicker';
 import WeakPointPicker, { type MainLiftKey } from '../../../components/features/WeakPointPicker';
 import AccessibleModal from '../../../components/accessible/AccessibleModal';
 import Card from '../../../components/ui/Card';
@@ -25,6 +28,13 @@ export default function TrainingTab() {
     profile?.weak_points || { squat: [], bench: [], deadlift: [] }
   );
   const [splitStyle, setSplitStyle] = useState<SplitStyle>(profile?.split_style ?? DEFAULT_SPLIT_STYLE);
+  const currentProgramId: ProgramId = getProgram(profile?.program_id).id;
+  const currentDays: DaysPerWeek = profile?.days_per_week ?? DEFAULT_DAYS_PER_WEEK;
+  const [programId, setProgramId] = useState<ProgramId>(currentProgramId ?? DEFAULT_PROGRAM_ID);
+  const [daysPerWeek, setDaysPerWeek] = useState<DaysPerWeek>(currentDays);
+  // Switching program or days re-lays-out the whole week, so it only takes
+  // effect through a restart (back to week 1); plain Save leaves it alone.
+  const layoutChanged = programId !== currentProgramId || daysPerWeek !== currentDays;
   const { loading, error, saved, run, markUnsaved } = useFormState();
   const [showRestartModal, setShowRestartModal] = useState(false);
 
@@ -46,8 +56,8 @@ export default function TrainingTab() {
         // Rewinds position to week 1 in one place; see restartProgram.
         await restartProgram(
           user.id,
-          { meetDate: meetDate || null, weakPoints, splitStyle },
-          { programId: profile?.program_id, daysPerWeek: profile?.days_per_week, splitStyle: profile?.split_style ?? DEFAULT_SPLIT_STYLE }
+          { meetDate: meetDate || null, weakPoints, splitStyle, programId, daysPerWeek },
+          { programId: currentProgramId, daysPerWeek: currentDays, splitStyle: profile?.split_style ?? DEFAULT_SPLIT_STYLE }
         );
       } else {
         const updatePayload: Record<string, unknown> = {
@@ -84,6 +94,20 @@ export default function TrainingTab() {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Your program is built around your meet date and tailored to your sticking points.
         </p>
+      </div>
+
+      <div>
+        <ProgramPicker
+          idPrefix="profile"
+          programId={programId}
+          daysPerWeek={daysPerWeek}
+          onChange={next => { setProgramId(next.programId); setDaysPerWeek(next.daysPerWeek); markUnsaved(); }}
+        />
+        {layoutChanged && (
+          <p role="status" className="text-xs font-medium text-amber-700 dark:text-amber-400 mt-3">
+            Changing your program or days per week restarts your program at week 1. Use "Save &amp; restart program" below to switch.
+          </p>
+        )}
       </div>
 
       <div>
@@ -146,7 +170,7 @@ export default function TrainingTab() {
       </div>
 
       <div className="flex gap-3">
-        <Button variant="secondary" className="w-1/3" onClick={() => handleSave()} disabled={loading}>
+        <Button variant="secondary" className="w-1/3" onClick={() => handleSave()} disabled={loading || layoutChanged}>
           {loading ? 'Saving...' : 'Save'}
         </Button>
         <Button onClick={() => setShowRestartModal(true)} disabled={loading} className="w-2/3">
@@ -166,7 +190,10 @@ export default function TrainingTab() {
         size="sm"
       >
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Your training settings will be saved and your program will restart from the beginning. Workouts will show as incomplete until you log them again. Your history is kept.
+          {layoutChanged
+            ? `You're switching to ${getProgram(programId).name}, ${daysPerWeek} days a week. `
+            : ''}
+          Your training settings will be saved and your program will restart from the beginning. Workouts will show as incomplete until you log them again. Your history and training maxes are kept.
         </p>
         <div className="flex gap-3">
           <Button variant="secondary" size="md" disabled={loading} className="flex-1" onClick={() => setShowRestartModal(false)}>

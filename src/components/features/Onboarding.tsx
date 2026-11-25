@@ -7,9 +7,16 @@ import { StickingPoint, WeakPoints } from '../../lib/supabase';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import ProgramPicker from './ProgramPicker';
+import { DEFAULT_PROGRAM_ID, DEFAULT_DAYS_PER_WEEK, getProgram } from '../../lib/programs/registry';
+import { planPeakBlock } from '../../lib/programs/shared/peakBlock';
+import type { DaysPerWeek, ProgramId } from '../../lib/programs/types';
 import { Calculator } from 'lucide-react';
 
 type MainLift = 'squat' | 'bench' | 'deadlift';
+// Lifts with a starting-max box. Overhead press is optional and only asked for
+// when the chosen layout has an overhead press day.
+type MaxLift = MainLift | 'ohp';
 
 interface LiftCalculatorState {
   weight: string;
@@ -17,7 +24,7 @@ interface LiftCalculatorState {
   calculatedMax: number | null;
 }
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 const STICKING_POINTS: StickingPoint[] = ['in_the_hole', 'mid_range', 'lockout'];
 const STICKING_POINT_LABELS: Record<StickingPoint, string> = {
@@ -47,21 +54,27 @@ export default function Onboarding() {
   const [unitPreference, setUnitPreference] = useState<'lb' | 'kg'>('lb');
   const [gender, setGender] = useState('male');
 
-  // Step 2
+  // Step 2: program and days
+  const [programId, setProgramId] = useState<ProgramId>(DEFAULT_PROGRAM_ID);
+  const [daysPerWeek, setDaysPerWeek] = useState<DaysPerWeek>(DEFAULT_DAYS_PER_WEEK);
+
+  // Step 3
   const [squatMax, setSquatMax] = useState('');
   const [benchMax, setBenchMax] = useState('');
   const [deadliftMax, setDeadliftMax] = useState('');
-  const [activeCalculator, setActiveCalculator] = useState<MainLift | null>(null);
-  const [calculators, setCalculators] = useState<Record<MainLift, LiftCalculatorState>>({
+  const [ohpMax, setOhpMax] = useState('');
+  const [activeCalculator, setActiveCalculator] = useState<MaxLift | null>(null);
+  const [calculators, setCalculators] = useState<Record<MaxLift, LiftCalculatorState>>({
     squat: { weight: '', reps: '', calculatedMax: null },
     bench: { weight: '', reps: '', calculatedMax: null },
     deadlift: { weight: '', reps: '', calculatedMax: null },
+    ohp: { weight: '', reps: '', calculatedMax: null },
   });
 
-  // Step 3
+  // Step 4
   const [meetDate, setMeetDate] = useState('');
 
-  // Step 4
+  // Step 5
   const [weakPoints, setWeakPoints] = useState<WeakPoints>(EMPTY_WEAK_POINTS);
 
   const [loading, setLoading] = useState(false);
@@ -78,8 +91,9 @@ export default function Onboarding() {
 
   const getStepTitle = (step: number) => {
     if (step === 1) return 'Basic Information';
-    if (step === 2) return 'Starting Maxes';
-    if (step === 3) return 'Meet or Test Date';
+    if (step === 2) return 'Your Program';
+    if (step === 3) return 'Starting Maxes';
+    if (step === 4) return 'Meet or Test Date';
     return 'Sticking Points';
   };
 
@@ -105,7 +119,7 @@ export default function Onboarding() {
     ? Math.ceil((new Date(meetDate).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000))
     : null;
 
-  const handleCalculate = (lift: MainLift) => {
+  const handleCalculate = (lift: MaxLift) => {
     const calc = calculators[lift];
     const weight = parseFloat(calc.weight);
     const reps = parseInt(calc.reps);
@@ -116,13 +130,14 @@ export default function Onboarding() {
     }
   };
 
-  const handleUseCalculatedValue = (lift: MainLift) => {
+  const handleUseCalculatedValue = (lift: MaxLift) => {
     const calc = calculators[lift];
     if (calc.calculatedMax !== null) {
       const value = calc.calculatedMax.toString();
       if (lift === 'squat') setSquatMax(value);
       else if (lift === 'bench') setBenchMax(value);
       else if (lift === 'deadlift') setDeadliftMax(value);
+      else if (lift === 'ohp') setOhpMax(value);
       setActiveCalculator(null);
       announce(`${lift} max set to ${calc.calculatedMax} ${unitPreference}`);
     }
@@ -137,6 +152,9 @@ export default function Onboarding() {
       return { ...prev, [lift]: next };
     });
   };
+
+  // Whether the chosen layout has an overhead press day (4 days).
+  const hasOhpDay = getProgram(programId).layout(daysPerWeek).days.some(d => d.primary === 'ohp');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,8 +188,18 @@ export default function Onboarding() {
         bench_tested_max: benchMaxNum > 0 ? benchMaxNum : null,
         deadlift_tested_max: deadliftMaxNum > 0 ? deadliftMaxNum : null,
         onboarding_completed: true,
+        program_id: programId,
+        days_per_week: daysPerWeek,
         updated_at: new Date().toISOString(),
       };
+
+      // Overhead press is optional. A max is saved as a pair (tested max and
+      // 90% training max); skipping leaves the profile without one.
+      const ohpMaxNum = parseFloat(ohpMax) || 0;
+      if (hasOhpDay && ohpMaxNum > 0) {
+        updatePayload.ohp_tested_max = ohpMaxNum;
+        updatePayload.ohp_max = calculateTrainingMax(ohpMaxNum);
+      }
 
       if (meetDate) {
         updatePayload.meet_date = meetDate;
@@ -229,10 +257,11 @@ export default function Onboarding() {
     }
   };
 
-  const liftInfo: Record<MainLift, { name: string; placeholder: string; value: string; setter: (v: string) => void }> = {
+  const liftInfo: Partial<Record<MaxLift, { name: string; placeholder: string; value: string; setter: (v: string) => void }>> & Record<MainLift, { name: string; placeholder: string; value: string; setter: (v: string) => void }> = {
     squat: { name: 'Squat', placeholder: '315', value: squatMax, setter: setSquatMax },
     bench: { name: 'Bench Press', placeholder: '225', value: benchMax, setter: setBenchMax },
     deadlift: { name: 'Deadlift', placeholder: '405', value: deadliftMax, setter: setDeadliftMax },
+    ...(hasOhpDay ? { ohp: { name: 'Overhead press (optional)', placeholder: '135', value: ohpMax, setter: setOhpMax } } : {}),
   };
 
   return (
@@ -246,7 +275,7 @@ export default function Onboarding() {
             Build Your Program
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Four steps. Done in under two minutes.
+            Five steps. Done in under two minutes.
           </p>
         </div>
 
@@ -347,8 +376,26 @@ export default function Onboarding() {
             </fieldset>
           )}
 
-          {/* ── Step 2: Starting maxes ── */}
+          {/* ── Step 2: Program and days ── */}
           {currentStep === 2 && (
+            <fieldset>
+              <legend className="text-2xl font-black text-gray-900 dark:text-white mb-2">
+                How do you want to train?
+              </legend>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                Pick a program and how many days a week you can lift. You can change either later in your profile; switching restarts your program at week 1.
+              </p>
+              <ProgramPicker
+                idPrefix="onboarding"
+                programId={programId}
+                daysPerWeek={daysPerWeek}
+                onChange={next => { setProgramId(next.programId); setDaysPerWeek(next.daysPerWeek); }}
+              />
+            </fieldset>
+          )}
+
+          {/* ── Step 3: Starting maxes ── */}
+          {currentStep === 3 && (
             <fieldset>
               <legend className="text-2xl font-black text-gray-900 dark:text-white mb-2">
                 Enter Your Starting Maxes
@@ -358,8 +405,8 @@ export default function Onboarding() {
               </p>
 
               <div className="space-y-6">
-                {(Object.keys(liftInfo) as MainLift[]).map((lift) => {
-                  const info = liftInfo[lift];
+                {(Object.keys(liftInfo) as MaxLift[]).map((lift) => {
+                  const info = liftInfo[lift]!;
                   const calc = calculators[lift];
                   const isCalculatorActive = activeCalculator === lift;
 
@@ -475,8 +522,8 @@ export default function Onboarding() {
             </fieldset>
           )}
 
-          {/* ── Step 3: Meet / test date ── */}
-          {currentStep === 3 && (
+          {/* ── Step 4: Meet / test date ── */}
+          {currentStep === 4 && (
             <fieldset>
               <legend className="text-2xl font-black text-gray-900 dark:text-white mb-2">
                 When's your next meet or 1RM test?
@@ -511,15 +558,22 @@ export default function Onboarding() {
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
                     <p className="text-xs tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Program Structure</p>
                     <p className="text-sm text-gray-700 dark:text-gray-300">
-                      {weeksAway >= 12
-                        ? `Full program: 10-rep → 8-rep → 5-rep → 3-rep waves`
-                        : weeksAway >= 9
-                          ? `10-rep wave skipped; 8-rep → 5-rep → 3-rep waves`
-                          : weeksAway >= 6
-                            ? `5-rep → 3-rep waves only`
-                            : weeksAway >= 3
-                              ? `3-rep wave only (peaking block)`
-                              : 'Not enough time for a full wave — consider a later date'}
+                      {programId === 'five_three_one'
+                        ? (() => {
+                            const plan = planPeakBlock(weeksAway, 4);
+                            return plan.cycles >= 1
+                              ? `${plan.cycles} four-week wave${plan.cycles !== 1 ? 's' : ''}, then a ${plan.peakWeeks}-week peak block`
+                              : 'Not enough time for a full wave — consider a later date';
+                          })()
+                        : weeksAway >= 12
+                          ? `Full program: 10-rep → 8-rep → 5-rep → 3-rep waves`
+                          : weeksAway >= 9
+                            ? `10-rep wave skipped; 8-rep → 5-rep → 3-rep waves`
+                            : weeksAway >= 6
+                              ? `5-rep → 3-rep waves only`
+                              : weeksAway >= 3
+                                ? `3-rep wave only (peaking block)`
+                                : 'Not enough time for a full wave — consider a later date'}
                     </p>
                   </div>
                 )}
@@ -527,8 +581,8 @@ export default function Onboarding() {
             </fieldset>
           )}
 
-          {/* ── Step 4: Weak points ── */}
-          {currentStep === 4 && (
+          {/* ── Step 5: Weak points ── */}
+          {currentStep === 5 && (
             <fieldset>
               <legend className="text-2xl font-black text-gray-900 dark:text-white mb-2">
                 Where do you struggle?
@@ -589,10 +643,10 @@ export default function Onboarding() {
                 onClick={handleNextStep}
                 disabled={
                   (currentStep === 1 && !canProceedFromStep1) ||
-                  (currentStep === 2 && !hasAtLeastOneLift)
+                  (currentStep === 3 && !hasAtLeastOneLift)
                 }
               >
-                {currentStep === 3 || currentStep === 4 ? (meetDate || Object.values(weakPoints).some(a => a.length > 0) ? 'Next' : 'Skip') : 'Next'}
+                {currentStep === 4 || currentStep === 5 ? (meetDate || Object.values(weakPoints).some(a => a.length > 0) ? 'Next' : 'Skip') : 'Next'}
               </Button>
             )}
 
