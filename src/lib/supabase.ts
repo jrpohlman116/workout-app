@@ -55,8 +55,6 @@ export interface UserProfile {
   current_week_index?: number;  // explicit pointer into the wave schedule; null = derive from today's date
   weak_points?: WeakPoints;     // sticking points per lift
   split_style?: 'upper_lower' | 'full_body'; // where squat variation work lives; null = upper_lower
-  /** @deprecated Replaced by weak_points_reviewed_cycle; kept until the cleanup step. */
-  weak_points_reviewed_wave?: 10 | 8 | 5 | 3;
   weak_points_reviewed_cycle?: number | null; // program-neutral: last cycle index the user confirmed/edited weak points for
   program_id?: ProgramId;                     // defaults to 'juggernaut' in the database
   days_per_week?: DaysPerWeek;                // defaults to 4

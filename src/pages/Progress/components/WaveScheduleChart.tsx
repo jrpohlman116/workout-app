@@ -1,6 +1,3 @@
-import { useState } from 'react';
-import { Info } from 'lucide-react';
-import IconButton from '../../../components/ui/IconButton';
 import {
   ComposedChart,
   Bar,
@@ -74,8 +71,6 @@ interface BarDatum {
 }
 
 export default function WaveScheduleChart({ schedule, program, trainingMaxes, unit, currentWeekIndex }: WaveScheduleChartProps) {
-  const [showInfo, setShowInfo] = useState(false);
-
   if (!schedule.weeks.length) {
     return (
       <div className="text-center py-12 space-y-2">
@@ -206,14 +201,6 @@ export default function WaveScheduleChart({ schedule, program, trainingMaxes, un
           <span className="font-bold text-gray-900 dark:text-gray-100">{remainingCount}</span> weeks left
         </span>
       </div>
-      {showInfo && schedule.adjustments.length > 0 && (
-        <div className="space-y-1">
-          {schedule.adjustments.map((msg, i) => (
-            <p key={i} className="text-body-sm text-gray-400 dark:text-gray-400">{msg}</p>
-          ))}
-        </div>
-      )}
-
       {/* Chart — scrollable on narrow screens */}
       <div className="overflow-x-auto mt-4 -mx-1 px-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
         <div style={{ width: chartWidth, minWidth: '100%' }}>

@@ -5,8 +5,8 @@ import type { Unit } from '../../lib/programs/types';
 import { positionUpdates, indexFromCycleWeek } from '../../lib/programs/position';
 import { trainingMaxFor } from '../../lib/programs/maxes';
 import { useProgramContext } from '../../hooks/useProgramContext';
-import { PHASE_LABELS, PHASE_DESCRIPTIONS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
-import { ChevronLeft, ChevronRight, Check, Activity, Info } from 'lucide-react';
+import { PHASE_LABELS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
+import { ChevronLeft, ChevronRight, Check, Activity } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { StickingPoint, WeakPoints } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
@@ -44,7 +44,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [showSkipWeekModal, setShowSkipWeekModal] = useState(false);
   const [pendingWeakPoints, setPendingWeakPoints] = useState<WeakPoints>(EMPTY_WEAK_POINTS);
   const createRipple = useRipple();
-  const [showPhaseInfo, setShowPhaseInfo] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const [jumping, setJumping] = useState(false);
   const programCtx = useProgramContext(weekOffset);
