@@ -51,6 +51,9 @@ export default function TrainingTab() {
       if (restart) {
         updatePayload.current_cycle = 1;
         updatePayload.current_week = 1;
+        // Meet-date programs treat current_week_index as the source of truth,
+        // so it must be rewound too or the user stays on their old week.
+        updatePayload.current_week_index = 0;
         updatePayload.program_start_date = today;
         updatePayload.program_restarted_at = new Date().toISOString();
       } else if (meetDate && !profile?.program_start_date) {
