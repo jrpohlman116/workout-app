@@ -111,11 +111,10 @@ export default function TrainingTab() {
           daysPerWeek={daysPerWeek}
           onChange={next => { setProgramId(next.programId); setDaysPerWeek(next.daysPerWeek); markUnsaved(); }}
         />
-        {layoutChanged && (
-          <p role="status" className="text-xs font-medium text-amber-700 dark:text-amber-400 mt-3">
-            Changing your program or days per week restarts your program at week 1. Use "Save &amp; restart program" below to switch.
-          </p>
-        )}
+        {/* Always mounted so screen readers announce the text when it appears. */}
+        <p role="status" className="text-xs font-medium text-amber-700 dark:text-amber-400 empty:mt-0 [&:not(:empty)]:mt-3">
+          {layoutChanged && 'Changing your program or days per week restarts your program at week 1. Use "Save & restart program" below to switch.'}
+        </p>
       </div>
 
       <div>

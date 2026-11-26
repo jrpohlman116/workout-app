@@ -45,7 +45,7 @@ describe('TrainingTab — program and days', () => {
     expect(within(programGroup()).getByRole('radio', { name: /Juggernaut/ })).toBeChecked();
     expect(within(daysGroup()).getByRole('radio', { name: /4 days/ })).toBeChecked();
     expect(plainSave()).toBeEnabled();
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
 
   it('falls back to Juggernaut, 4 days for a profile with neither set', () => {
@@ -69,7 +69,7 @@ describe('TrainingTab — program and days', () => {
     const user = userEvent.setup();
     render(<TrainingTab />);
     await user.click(within(programGroup()).getByRole('radio', { name: /5\/3\/1/ }));
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/restarts your program/);
     expect(plainSave()).toBeDisabled();
   });
 
@@ -78,7 +78,7 @@ describe('TrainingTab — program and days', () => {
     render(<TrainingTab />);
     await user.click(within(daysGroup()).getByRole('radio', { name: /3 days/ }));
     await user.click(within(daysGroup()).getByRole('radio', { name: /4 days/ }));
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
     expect(plainSave()).toBeEnabled();
   });
 
