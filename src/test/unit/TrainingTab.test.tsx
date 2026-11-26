@@ -169,5 +169,21 @@ describe('TrainingTab — program and days', () => {
     await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1));
     expect('current_week_index' in (updateMock.mock.calls[0] as unknown as [Record<string, unknown>])[0]).toBe(false);
   });
+
+  it('operates the training split as a keyboard radio group', async () => {
+    const user = userEvent.setup();
+    render(<TrainingTab />);
+    const split = screen.getByRole('radiogroup', { name: 'Training split' });
+    const radios = within(split).getAllByRole('radio');
+    expect(radios.filter(r => r.tabIndex === 0)).toHaveLength(1);
+    expect(radios[0]).toBeChecked();
+
+    radios[0].focus();
+    await user.keyboard('{ArrowDown}');
+    expect(radios[1]).toBeChecked();
+    expect(radios[1]).toHaveFocus();
+    expect(radios[1].tabIndex).toBe(0);
+    expect(radios[0].tabIndex).toBe(-1);
+  });
 });
 

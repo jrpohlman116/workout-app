@@ -1,3 +1,4 @@
+import RadioCards from '../ui/RadioCards';
 import { listPrograms, getProgram, DEFAULT_DAYS_PER_WEEK } from '../../lib/programs/registry';
 import type { DaysPerWeek, ProgramId } from '../../lib/programs/types';
 
@@ -8,13 +9,6 @@ interface ProgramPickerProps {
   /** Keeps ids unique when more than one picker is on a page. */
   idPrefix?: string;
 }
-
-const optionClass = (selected: boolean) =>
-  `px-3 py-2 rounded-lg transition-all text-left ${
-    selected
-      ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-  }`;
 
 /**
  * Program and days-per-week choice, shared by onboarding and Profile. Options
@@ -36,53 +30,32 @@ export default function ProgramPicker({ programId, daysPerWeek, onChange, idPref
 
   return (
     <div className="space-y-6">
-      <div role="radiogroup" aria-labelledby={`${idPrefix}-days-label`}>
+      <div>
         <h3 id={`${idPrefix}-days-label`} className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
           Days per week
         </h3>
-        <div className="grid grid-cols-1 gap-2">
-          {current.supportedDays.map(days => {
-            const selected = daysPerWeek === days;
-            const lifts = current.layout(days).days.map(d => d.label.toLowerCase()).join(', ');
-            return (
-              <button
-                key={days}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => onChange({ programId, daysPerWeek: days })}
-                className={optionClass(selected)}
-              >
-                <span className="block text-sm font-medium">{days} days</span>
-                <span className="block text-xs font-normal opacity-70 mt-0.5">{lifts}</span>
-              </button>
-            );
-          })}
-        </div>
+        <RadioCards<DaysPerWeek>
+          labelId={`${idPrefix}-days-label`}
+          value={daysPerWeek}
+          onSelect={days => onChange({ programId, daysPerWeek: days })}
+          options={current.supportedDays.map(days => ({
+            value: days,
+            title: `${days} days`,
+            description: current.layout(days).days.map(d => d.label.toLowerCase()).join(', '),
+          }))}
+        />
       </div>
 
-      <div role="radiogroup" aria-labelledby={`${idPrefix}-program-label`}>
+      <div>
         <h3 id={`${idPrefix}-program-label`} className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
           Program
         </h3>
-        <div className="grid grid-cols-1 gap-2">
-          {programs.map(program => {
-            const selected = program.id === programId;
-            return (
-              <button
-                key={program.id}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => choose(program.id)}
-                className={optionClass(selected)}
-              >
-                <span className="block text-sm font-medium">{program.name}</span>
-                <span className="block text-xs font-normal opacity-70 mt-0.5">{program.summary}</span>
-              </button>
-            );
-          })}
-        </div>
+        <RadioCards<ProgramId>
+          labelId={`${idPrefix}-program-label`}
+          value={programId}
+          onSelect={choose}
+          options={programs.map(program => ({ value: program.id, title: program.name, description: program.summary }))}
+        />
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { restartProgram, resetDefaultTemplates } from '../../../lib/programs/res
 import { getProgram, DEFAULT_PROGRAM_ID, DEFAULT_DAYS_PER_WEEK } from '../../../lib/programs/registry';
 import type { DaysPerWeek, ProgramId } from '../../../lib/programs/types';
 import ProgramPicker from '../../../components/features/ProgramPicker';
+import RadioCards from '../../../components/ui/RadioCards';
 import WeakPointPicker, { type MainLiftKey } from '../../../components/features/WeakPointPicker';
 import AccessibleModal from '../../../components/accessible/AccessibleModal';
 import Card from '../../../components/ui/Card';
@@ -144,28 +145,12 @@ export default function TrainingTab() {
             Select at least one sticking point below first — the split only changes which variations are picked for them.
           </p>
         )}
-        <div role="radiogroup" aria-label="Training split" className="grid grid-cols-1 gap-2">
-          {SPLIT_OPTIONS.map(option => {
-            const selected = splitStyle === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => { setSplitStyle(option.value); markUnsaved(); }}
-                className={`px-3 py-2 rounded-lg transition-all text-left ${
-                  selected
-                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                <span className="block text-sm font-medium">{option.label}</span>
-                <span className="block text-xs font-normal opacity-60 mt-0.5">{option.description}</span>
-              </button>
-            );
-          })}
-        </div>
+        <RadioCards<SplitStyle>
+          ariaLabel="Training split"
+          value={splitStyle}
+          onSelect={value => { setSplitStyle(value); markUnsaved(); }}
+          options={SPLIT_OPTIONS.map(o => ({ value: o.value, title: o.label, description: o.description }))}
+        />
       </div>
 
       <div>
