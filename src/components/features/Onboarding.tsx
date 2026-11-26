@@ -90,11 +90,11 @@ export default function Onboarding() {
   const announce = (message: string) => setAnnounceMessage(message);
 
   const getStepTitle = (step: number) => {
-    if (step === 1) return 'Basic Information';
-    if (step === 2) return 'Your Program';
-    if (step === 3) return 'Starting Maxes';
-    if (step === 4) return 'Meet or Test Date';
-    return 'Sticking Points';
+    if (step === 1) return 'Basic information';
+    if (step === 2) return 'Your program';
+    if (step === 3) return 'Starting maxes';
+    if (step === 4) return 'Meet or test date';
+    return 'Sticking points';
   };
 
   const handleNextStep = () => {
@@ -272,7 +272,7 @@ export default function Onboarding() {
             Strength Training System
           </p>
           <h1 className="text-h1 text-gray-900 dark:text-white mb-2">
-            Build Your Program
+            Build your program
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Five steps. Done in under two minutes.
@@ -312,7 +312,7 @@ export default function Onboarding() {
           {/* ── Step 1: Basic info ── */}
           {currentStep === 1 && (
             <fieldset>
-              <legend className="sr-only">Basic Information</legend>
+              <legend className="sr-only">Basic information</legend>
               <div className="space-y-6">
                 <div>
                   <Input
@@ -398,7 +398,7 @@ export default function Onboarding() {
           {currentStep === 3 && (
             <fieldset>
               <legend className="text-2xl font-black text-gray-900 dark:text-white mb-2">
-                Enter Your Starting Maxes
+                Enter your starting maxes
               </legend>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
                 Enter at least one lift. Use the calculator if you need help estimating your 1RM.

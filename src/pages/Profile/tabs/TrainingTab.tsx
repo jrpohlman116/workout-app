@@ -98,7 +98,7 @@ export default function TrainingTab() {
   return (
     <Card className="p-6 space-y-6 animate-enter">
       <div>
-        <h2 className="text-h4 text-gray-900 dark:text-gray-100 mb-1">Training Settings</h2>
+        <h2 className="text-h4 text-gray-900 dark:text-gray-100 mb-1">Training settings</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Your program is built around your meet date and tailored to your sticking points.
         </p>
@@ -119,7 +119,7 @@ export default function TrainingTab() {
 
       <div>
         <Input
-          label="Meet / 1RM Test Date"
+          label="Meet / 1RM test date"
           type="date"
           value={meetDate}
           onChange={e => { setMeetDate(e.target.value); markUnsaved(); }}
@@ -135,7 +135,7 @@ export default function TrainingTab() {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Training Split</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Training split</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
           Where your accessory variation work goes. Changing this replaces any custom accessory lists you've saved.
         </p>
@@ -153,7 +153,7 @@ export default function TrainingTab() {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Sticking Points</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Sticking points</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
           Select where each lift breaks down. Your accessories will target these zones.
         </p>

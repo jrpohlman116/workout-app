@@ -143,7 +143,7 @@ describe('TrainingTab — program and days', () => {
     // Added: a manual user with a stored position gets a meet-date plan.
     profile = { ...profile, meet_date: null, current_week_index: 7 };
     const added = render(<TrainingTab />);
-    await user.type(screen.getByLabelText(/Meet \/ 1RM Test Date/), '2027-04-14');
+    await user.type(screen.getByLabelText(/Meet \/ 1RM test date/), '2027-04-14');
     await user.click(plainSave());
     await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1));
     expect((updateMock.mock.calls[0] as unknown as [Record<string, unknown>])[0]).toMatchObject({ meet_date: '2027-04-14', current_week_index: null });
@@ -153,7 +153,7 @@ describe('TrainingTab — program and days', () => {
     updateMock.mockClear();
     profile = { ...profile, meet_date: '2027-04-14', current_week_index: 7 };
     const removed = render(<TrainingTab />);
-    await user.clear(screen.getByLabelText(/Meet \/ 1RM Test Date/));
+    await user.clear(screen.getByLabelText(/Meet \/ 1RM test date/));
     await user.click(plainSave());
     await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1));
     expect((updateMock.mock.calls[0] as unknown as [Record<string, unknown>])[0]).toMatchObject({ meet_date: null, current_week_index: null });
@@ -163,8 +163,8 @@ describe('TrainingTab — program and days', () => {
     updateMock.mockClear();
     profile = { ...profile, meet_date: '2027-04-14', current_week_index: 7 };
     render(<TrainingTab />);
-    await user.clear(screen.getByLabelText(/Meet \/ 1RM Test Date/));
-    await user.type(screen.getByLabelText(/Meet \/ 1RM Test Date/), '2027-05-12');
+    await user.clear(screen.getByLabelText(/Meet \/ 1RM test date/));
+    await user.type(screen.getByLabelText(/Meet \/ 1RM test date/), '2027-05-12');
     await user.click(plainSave());
     await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1));
     expect('current_week_index' in (updateMock.mock.calls[0] as unknown as [Record<string, unknown>])[0]).toBe(false);

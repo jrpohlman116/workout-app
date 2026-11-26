@@ -93,7 +93,7 @@ export type RestTimerKind = keyof typeof REST_TIMER_DEFAULTS;
 export const REST_TIMER_VIBRATE_KEY = 'rest_timer_vibrate';
 
 export const PROFILE_TAB_LABELS: Record<ProfileTab, string> = {
-  body:     'Body Stats',
+  body:     'Body stats',
   maxes:    'Maxes',
   training: 'Training',
   security: 'Account',
