@@ -31,7 +31,11 @@ export function ReadinessSheet({ open, onClose, readiness, limits }: {
           <p className="rounded-xl bg-gray-50 dark:bg-gray-900/40 p-3 text-sm text-gray-900 dark:text-gray-100">{inputs.reason}</p>
         )}
         {inputs.note && <p className="text-sm text-gray-600 dark:text-gray-300">{inputs.note}</p>}
-        <p className="text-xs text-gray-500 dark:text-gray-400">Based on your last sessions. Connect Oura or Strava for sleep, HRV and runs.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {readiness.source === 'wearable'
+            ? 'Based on Oura or Strava and your last sessions.'
+            : 'Based on your last sessions. Connect Oura or Strava in More → Integrations for sleep, HRV and runs.'}
+        </p>
         <div>
           <h3 className="text-h4 text-gray-900 dark:text-gray-100 mb-2">What changes today</h3>
           <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-300">

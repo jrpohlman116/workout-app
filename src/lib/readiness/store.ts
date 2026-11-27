@@ -1,7 +1,11 @@
 import { supabase } from '../supabase';
 import { localDate, toReadinessSession, type ReadinessSessionRow } from './fromSessions';
 import { computeReadiness } from './state';
+import { withWearable } from './wearable';
+import { isConnected, loadIntegrations, loadWearableDay, syncNow } from '../integrations';
 import type { CheckIn, Readiness, ReadinessSession, ReadinessSource, ReadinessState } from './types';
+
+const previousDate = (date: string) => new Date(Date.parse(`${date}T00:00:00Z`) - 86400000).toISOString().slice(0, 10);
 
 // Readiness is computed once a day, on first open, and stored in
 // readiness_days (one row per user and date). Overrides and check-ins are
@@ -66,7 +70,27 @@ export async function getTodayReadiness(userId: string, now: Date = new Date()):
   if (existing) return existing as ReadinessDay;
 
   const sessions = await loadReadinessSessions(userId);
-  const day = toReadinessDay(userId, date, computeReadiness({ sessions, today: date }), sessions.length);
+  let reading = computeReadiness({ sessions, today: date });
+
+  // With a wearable connected, HRV, sleep and runs join the training signals.
+  // The first open of the day asks for a sync, so an early open doesn't wait
+  // for the scheduled one.
+  try {
+    if (isConnected(await loadIntegrations(userId))) {
+      await syncNow(date).catch(error => console.warn('Wearable sync failed:', error));
+      const wearable = await loadWearableDay(userId, date);
+      if (wearable) {
+        const { data: yesterday } = await supabase
+          .from('readiness_days').select('state').eq('user_id', userId).eq('date', previousDate(date)).maybeSingle();
+        reading = withWearable({ training: reading, day: wearable, yesterday: yesterday?.state ?? null, trainingScore: reading.score });
+      }
+    }
+  } catch (error) {
+    // Wearable data is extra; training-only readiness still stands.
+    console.warn('Wearable readiness unavailable:', error);
+  }
+
+  const day = toReadinessDay(userId, date, reading, sessions.length);
   const { error: insertError } = await supabase
     .from('readiness_days')
     .upsert(day, { onConflict: 'user_id,date', ignoreDuplicates: true });

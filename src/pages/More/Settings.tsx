@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BAR_WEIGHTS } from '../../lib/calculations';
@@ -7,6 +7,8 @@ import { loadIncrement } from '../../lib/programs/shared/rounding';
 import { REST_TIMER_DEFAULTS } from '../../lib/constants';
 import { readWarmupDisplay, saveWarmupDisplay } from '../../lib/today/prefs';
 import { formatRest } from '../../hooks/useActiveSession';
+import { connect, disconnect, loadIntegrations, type Integration, type Provider } from '../../lib/integrations';
+import { HARD_RUN_AVG_HR, HARD_RUN_MINUTES, HRV_DROP } from '../../lib/readiness/wearable';
 import { useFormState } from '../../hooks/useFormState';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -131,14 +133,87 @@ export function EquipmentSettings() {
   );
 }
 
+const PROVIDER_INFO: Record<Provider, { name: string; detail: string }> = {
+  oura: { name: 'Oura', detail: 'HRV, sleep and readiness' },
+  strava: { name: 'Strava', detail: 'Runs, including your Garmin runs' },
+};
+
+/** Integrations (proposal #13): Oura and Strava, through cloud APIs only. */
 export function IntegrationsSettings() {
+  const { user } = useAuth();
+  const [list, setList] = useState<Integration[] | null>(null);
+  const [busy, setBusy] = useState<Provider | null>(null);
+  const [message, setMessage] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get('connected');
+    if (connected === 'oura' || connected === 'strava') return `${PROVIDER_INFO[connected].name} is connected.`;
+    return params.get('error') ? "Couldn't finish connecting. Try again." : null;
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    loadIntegrations(user.id).then(setList).catch(() => setList([]));
+  }, [user]);
+
+  const statusOf = (p: Provider) => list?.find(i => i.provider === p);
+  const act = async (p: Provider, connected: boolean) => {
+    setBusy(p);
+    setMessage(null);
+    try {
+      if (connected) {
+        await disconnect(p);
+        if (user) setList(await loadIntegrations(user.id));
+        setMessage(`${PROVIDER_INFO[p].name} is disconnected.`);
+      } else {
+        await connect(p); // leaves the page for the provider's consent screen
+      }
+    } catch {
+      setMessage(connected ? "Couldn't disconnect. Try again." : "Couldn't start connecting. Try again in a moment.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
-    <Card className="p-5 space-y-2">
-      <h2 className="text-h4 text-gray-900 dark:text-gray-100">Oura and Strava</h2>
-      <p className="text-sm text-gray-600 dark:text-gray-300">
-        Connecting a wearable adds sleep, HRV and runs to your readiness. It's coming in a later update. Until then, readiness comes from your last sessions.
-      </p>
-    </Card>
+    <div className="space-y-4">
+      <Card className="p-5 space-y-3">
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Readiness starts from your logged sessions. These add sleep, HRV and runs. It never changes your weights.
+        </p>
+        <ul className="space-y-2">
+          {(['oura', 'strava'] as Provider[]).map(p => {
+            const s = statusOf(p);
+            const connected = !!s && s.status !== 'disconnected';
+            const synced = s?.last_synced_at ? new Date(s.last_synced_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
+            return (
+              <li key={p} className="flex items-center gap-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 p-3">
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">{PROVIDER_INFO[p].name}</span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">
+                    {PROVIDER_INFO[p].detail}{connected && synced ? ` · synced ${synced}` : ''}{s?.status === 'error' ? ' · sync failed' : ''}
+                  </span>
+                </span>
+                {connected && <span className="text-xs font-semibold text-green-800 dark:text-green-300">Connected</span>}
+                <Button size="sm" variant={connected ? 'tertiary' : 'primary'} disabled={busy !== null || list === null} onClick={() => act(p, connected)}>
+                  {busy === p ? '…' : connected ? 'Disconnect' : 'Connect'}
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+        {message && <p className="text-sm text-gray-700 dark:text-gray-300" role="status">{message}</p>}
+      </Card>
+
+      <Card className="p-5 space-y-2">
+        <h2 className="text-h4 text-gray-900 dark:text-gray-100">Readiness thresholds</h2>
+        <dl className="space-y-2 text-sm">
+          <div className="flex justify-between gap-3"><dt className="text-gray-600 dark:text-gray-300">Yellow when HRV drops</dt><dd className="font-semibold text-gray-900 dark:text-gray-100">{HRV_DROP * 100}% below baseline</dd></div>
+          <div className="flex justify-between gap-3"><dt className="text-gray-600 dark:text-gray-300">Hard run</dt><dd className="font-semibold text-gray-900 dark:text-gray-100 text-right">Avg HR above {HARD_RUN_AVG_HR} or {HARD_RUN_MINUTES}+ min</dd></div>
+          <div className="flex justify-between gap-3"><dt className="text-gray-600 dark:text-gray-300">Red after</dt><dd className="font-semibold text-gray-900 dark:text-gray-100">2 yellow days in a row</dd></div>
+        </dl>
+        <p className="text-xs text-gray-500 dark:text-gray-400">These are starting points. Ironform logs every time you override readiness so the thresholds can be tuned.</p>
+      </Card>
+    </div>
   );
 }
 

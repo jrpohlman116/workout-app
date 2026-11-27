@@ -24,11 +24,12 @@ export interface ReadinessSession {
   capped: boolean;
 }
 
-export type SignalKind = 'missed_top_set' | 'short_backoffs' | 'early_dropoff';
+export type SignalKind = 'missed_top_set' | 'short_backoffs' | 'early_dropoff' | 'hrv_low' | 'hard_run';
 
 export interface Signal {
   kind: SignalKind;
-  lift: LiftId;
+  /** The lift a training signal is about; wearable signals have none. */
+  lift?: LiftId;
   /** Plain-language reason, for "Why?". */
   text: string;
 }

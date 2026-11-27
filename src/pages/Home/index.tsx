@@ -16,6 +16,7 @@ import { buildTodayPlan } from '../../lib/today/plan';
 import { readLastTime } from '../../lib/today/prefs';
 import { readinessHeadline } from '../../lib/today/copy';
 import { supabase } from '../../lib/supabase';
+import { isConnected, loadIntegrations, type Integration } from '../../lib/integrations';
 import type { StickingPoint, WeakPoints } from '../../lib/supabase';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
@@ -55,6 +56,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [jumping, setJumping] = useState(false);
   const programCtx = useProgramContext(weekOffset);
   const readiness = useTodayReadiness(user?.id);
+  const [integrations, setIntegrations] = useState<Integration[] | null>(null);
+  useEffect(() => {
+    if (user) loadIntegrations(user.id).then(setIntegrations).catch(() => setIntegrations(null));
+  }, [user]);
 
   useEffect(() => {
     if (user && profile) loadCompletedWorkouts();
@@ -362,13 +367,16 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           )}
         </Card>
 
-        {/* Connect: shown while no wearable is connected (all of them, until phase 8). */}
-        <Card className="p-5 flex items-center gap-4">
-          <div className="flex-1">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Want a read on today, not just last week?</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Connecting Oura or Strava to add sleep, HRV and runs is coming soon.</p>
-          </div>
-        </Card>
+        {/* Connect: only while no wearable is connected. */}
+        {integrations && !isConnected(integrations) && (
+          <Card className="p-5 flex items-center gap-4">
+            <div className="flex-1">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Want a read on today, not just last week?</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Connect Oura or Strava to add sleep, HRV and runs.</p>
+            </div>
+            <Button size="sm" variant="tertiary" onClick={() => onNavigate('integrations')}>Connect</Button>
+          </Card>
+        )}
       </div>
 
       {showOneRMTest && (

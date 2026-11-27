@@ -59,6 +59,7 @@ function AppContent() {
   const handleNavigate = (page: string, liftType?: string) => {
     if (page === 'workout' || page === 'today') go(liftType ? { tab: 'today', lift: liftType } : { tab: 'today' });
     else if (page === 'calculator') go({ tab: 'more', sub: '1rm' });
+    else if (page === 'integrations') go({ tab: 'more', sub: 'integrations' });
     else if (page === 'profile') go({ tab: 'more', sub: 'account' });
     else if (page === 'progress' || page === 'more') go({ tab: page });
     else go({ tab: 'home' });
