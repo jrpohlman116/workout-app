@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 import Input from '../ui/Input';
+import AppFooter from '../layout/AppFooter';
 
 const GRID_BG = {
   backgroundImage:
@@ -268,6 +269,7 @@ export default function AuthForm() {
           </>
         )}
       </div>
+      <AppFooter tone="dark" />
     </div>
   );
 }

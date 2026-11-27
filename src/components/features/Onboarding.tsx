@@ -12,6 +12,7 @@ import { DEFAULT_PROGRAM_ID, DEFAULT_DAYS_PER_WEEK, getProgram } from '../../lib
 import { planPeakBlock } from '../../lib/programs/shared/peakBlock';
 import type { DaysPerWeek, ProgramId } from '../../lib/programs/types';
 import { Calculator } from 'lucide-react';
+import AppFooter from '../layout/AppFooter';
 
 type MainLift = 'squat' | 'bench' | 'deadlift';
 // Lifts with a starting-max box. Overhead press is optional and only asked for
@@ -669,6 +670,7 @@ export default function Onboarding() {
             </p>
           )}
         </form>
+        <AppFooter tone="light" />
       </div>
     </div>
   );

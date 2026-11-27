@@ -19,6 +19,8 @@ import CalculatorPage from './pages/Calculator';
 import ProgressPage from './pages/Progress';
 import ProfilePage from './pages/Profile';
 import WorkoutDetailPage from './pages/WorkoutDetail';
+import AppFooter from './components/layout/AppFooter';
+import LegalPage from './pages/Legal';
 
 function AppContent() {
   const { user, profile, loading, passwordRecovery } = useAuth();
@@ -112,6 +114,13 @@ function AppContent() {
     window.history.back();
   };
 
+  // Public legal pages: Oura and Strava link here from their consent screens,
+  // so they open without signing in.
+  const legalPath = window.location.pathname.replace(/\/+$/, '');
+  if (legalPath === '/privacy' || legalPath === '/terms') {
+    return <LegalPage page={legalPath === '/privacy' ? 'privacy' : 'terms'} onBack={() => window.location.assign('/')} />;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-blue-700 dark:bg-blue-900 flex items-center justify-center" role="status" aria-live="polite" style={GRID_BG}>
@@ -157,6 +166,9 @@ function AppContent() {
               onNavigateToProgress={() => handleNavigate('progress')}
             />
           )}
+          <AppFooter />
+          {/* Room for the tab bar so it never covers the footer. */}
+          <div className="h-[4.25rem] pb-[env(safe-area-inset-bottom)]" aria-hidden="true" />
         </main>
 
         {currentPage !== 'workout' && (
