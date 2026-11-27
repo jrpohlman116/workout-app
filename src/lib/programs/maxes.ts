@@ -1,4 +1,5 @@
-import { calculateOneRepMax, getRoundingIncrement, TRAINING_MAX_FACTOR } from '../calculations';
+import { calculateOneRepMax, TRAINING_MAX_FACTOR } from '../calculations';
+import { roundLoad } from './shared/rounding';
 import type { LiftId } from './types';
 
 interface MaxFields {
@@ -33,10 +34,18 @@ export function hasTrainingMax(profile: MaxFields, lift: LiftId | null): boolean
   return trainingMaxFor(profile, lift) > 0;
 }
 
+/**
+ * Training max from a 1RM: 90%, rounded to the lift's plate step (bench and
+ * overhead press to the half step). 265 -> 240, 165 -> 147.5, 285 -> 255 lb.
+ */
+export function trainingMaxFromOneRepMax(oneRepMax: number, lift: LiftId, unit: string): number {
+  return roundLoad(oneRepMax * TRAINING_MAX_FACTOR, lift, unit);
+}
+
 export interface MaxEstimate {
   /** Estimated 1RM (Epley), stored as the tested max. */
   estimated1RM: number;
-  /** Training max: 90% of the estimate, rounded to the plate step. */
+  /** Training max: 90% of the estimate, rounded to the lift's plate step. */
   trainingMax: number;
 }
 
@@ -44,13 +53,12 @@ export interface MaxEstimate {
  * Estimates a max from a recent hard set (for a lift with no max yet).
  * Returns null for input that can't produce a sensible number.
  */
-export function estimateMaxFromPerformance(weight: number, reps: number, unit: string): MaxEstimate | null {
+export function estimateMaxFromPerformance(weight: number, reps: number, unit: string, lift: LiftId = 'squat'): MaxEstimate | null {
   if (!Number.isFinite(weight) || !Number.isFinite(reps) || weight <= 0 || reps < 1) return null;
   // Epley drifts well past ~12 reps; a set that long says little about a max.
   if (reps > 12) return null;
-  const roundTo = getRoundingIncrement(unit);
   const estimated1RM = calculateOneRepMax(weight, reps);
-  const trainingMax = Math.round((estimated1RM * TRAINING_MAX_FACTOR) / roundTo) * roundTo;
+  const trainingMax = trainingMaxFromOneRepMax(estimated1RM, lift, unit);
   if (trainingMax <= 0) return null;
   return { estimated1RM, trainingMax };
 }

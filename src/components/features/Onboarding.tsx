@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { sessionProgramFields } from '../../lib/programs/session';
 import { useAuth } from '../../contexts/AuthContext';
-import { calculateOneRepMax, calculateTrainingMax } from '../../lib/calculations';
+import { calculateOneRepMax } from '../../lib/calculations';
+import { trainingMaxFromOneRepMax } from '../../lib/programs/maxes';
 import { StickingPoint, WeakPoints } from '../../lib/supabase';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
@@ -181,9 +182,9 @@ export default function Onboarding() {
         bodyweight: parseFloat(bodyweight) || 0,
         unit_preference: unitPreference,
         gender,
-        squat_max: calculateTrainingMax(squatMaxNum),
-        bench_max: calculateTrainingMax(benchMaxNum),
-        deadlift_max: calculateTrainingMax(deadliftMaxNum),
+        squat_max: trainingMaxFromOneRepMax(squatMaxNum, 'squat', unitPreference),
+        bench_max: trainingMaxFromOneRepMax(benchMaxNum, 'bench', unitPreference),
+        deadlift_max: trainingMaxFromOneRepMax(deadliftMaxNum, 'deadlift', unitPreference),
         squat_tested_max: squatMaxNum > 0 ? squatMaxNum : null,
         bench_tested_max: benchMaxNum > 0 ? benchMaxNum : null,
         deadlift_tested_max: deadliftMaxNum > 0 ? deadliftMaxNum : null,
@@ -198,7 +199,7 @@ export default function Onboarding() {
       const ohpMaxNum = parseFloat(ohpMax) || 0;
       if (hasOhpDay && ohpMaxNum > 0) {
         updatePayload.ohp_tested_max = ohpMaxNum;
-        updatePayload.ohp_max = calculateTrainingMax(ohpMaxNum);
+        updatePayload.ohp_max = trainingMaxFromOneRepMax(ohpMaxNum, 'ohp', unitPreference);
       }
 
       if (meetDate) {

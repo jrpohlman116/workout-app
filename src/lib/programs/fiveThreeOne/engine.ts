@@ -1,4 +1,5 @@
 import type { WavePhase } from '../../types';
+import { floorLoad, roundLoad } from '../shared/rounding';
 import type { LiftId, SessionSummary, Unit } from '../types';
 
 // 5/3/1 engine, built from the Ironform programming-logic handoff (2026-11-25).
@@ -17,39 +18,25 @@ export interface WaveWeek {
   backoff: { reps: number; pct: number; sets: number };
 }
 
-// Back-off set counts here are fixed. The handoff ends back-offs by rep
-// drop-off (keep going until a set misses, cap of 5); that rule ships later,
-// and until then each wave uses the count below: the realization and deload
-// weeks match the handoff's "1-2 x 3" and "2 x 3" ceilings.
+// Back-offs end by rep drop-off: the lifter repeats sets at the back-off load
+// until one falls short of the target reps, up to `sets` (the cap). The
+// accumulation and intensification cap is 5; realization and deload keep the
+// handoff's ceilings of 2.
+export const BACKOFF_CAP = 5;
+/** Cap for the secondary lift's back-offs (bench on squat day, deadlift on bench day). */
+export const SECONDARY_BACKOFF_CAP = 3;
+
 export const WAVE: Record<'accumulation' | 'intensification' | 'realization' | 'deload', WaveWeek> = {
-  accumulation:    { phase: 'accumulation',    top: { reps: 5, pct: 0.75, isAmrap: false }, backoff: { reps: 5, pct: 0.675, sets: 3 } },
-  intensification: { phase: 'intensification', top: { reps: 3, pct: 0.85, isAmrap: false }, backoff: { reps: 3, pct: 0.775, sets: 3 } },
+  accumulation:    { phase: 'accumulation',    top: { reps: 5, pct: 0.75, isAmrap: false }, backoff: { reps: 5, pct: 0.675, sets: BACKOFF_CAP } },
+  intensification: { phase: 'intensification', top: { reps: 3, pct: 0.85, isAmrap: false }, backoff: { reps: 3, pct: 0.775, sets: BACKOFF_CAP } },
   realization:     { phase: 'realization',     top: { reps: AMRAP_MINIMUM, pct: 0.90, isAmrap: true }, backoff: { reps: 3, pct: 0.75, sets: 2 } },
   deload:          { phase: 'deload',          top: { reps: 3, pct: 0.65, isAmrap: false }, backoff: { reps: 3, pct: 0.60, sets: 2 } },
 };
 
 export const WAVE_ORDER = ['accumulation', 'intensification', 'realization', 'deload'] as const;
 
-/**
- * Plate step a lift's loads and training max are rounded to. Squat and
- * deadlift use the full step, bench and overhead press half of it (the handoff:
- * 5 lb and 2.5 lb). Kilograms use the same split: 2.5 kg and 1.25 kg.
- */
-export function loadIncrement(lift: LiftId, unit: Unit): number {
-  const full = unit === 'kg' ? 2.5 : 5;
-  return lift === 'bench' || lift === 'ohp' ? full / 2 : full;
-}
-
-export function roundLoad(value: number, lift: LiftId, unit: Unit): number {
-  const step = loadIncrement(lift, unit);
-  return Math.round(value / step) * step;
-}
-
-function floorLoad(value: number, lift: LiftId, unit: Unit): number {
-  const step = loadIncrement(lift, unit);
-  // Guard against 267.75 / 5 style float noise right at a boundary.
-  return Math.floor(value / step + 1e-9) * step;
-}
+// Rounding lives in shared/rounding.ts; re-exported for existing callers.
+export { loadIncrement, roundLoad } from '../shared/rounding';
 
 /** Fixed TM increment when the AMRAP minimum is met: +10 lb squat/deadlift, +5 lb bench/OHP (kg: 5 / 2.5). */
 export function fixedIncrement(lift: LiftId, unit: Unit): number {
@@ -63,15 +50,25 @@ export function epley(weight: number, reps: number): number {
 }
 
 /**
- * True when a back-off dropped off on its very first set. The first back-off
- * is the set after the top set; it targets that week's back-off reps.
+ * A session's back-off sets for its primary lift, in order. Sets saved with a
+ * `kind` are read by it; older sessions have none, so everything after the
+ * first set (the top set) counts as a back-off.
  */
-function firstBackoffDroppedOff(session: SessionSummary): boolean {
+export function backoffSetsOf(session: SessionSummary): { weight: number; reps: number }[] {
+  const tagged = session.mainSets.some(s => s.kind);
+  return tagged ? session.mainSets.filter(s => s.kind === 'backoff') : session.mainSets.slice(1);
+}
+
+/**
+ * True when a back-off dropped off on its very first set: the first back-off
+ * fell short of that week's back-off reps.
+ */
+export function firstBackoffDroppedOff(session: SessionSummary): boolean {
   // Deload back-offs are meant to be easy; a short set there says nothing about strength.
   if (session.phase === 'deload') return false;
   const week = WAVE[session.phase as keyof typeof WAVE];
   if (!week) return false;
-  const first = session.mainSets[1];
+  const first = backoffSetsOf(session)[0];
   return !!first && first.reps < week.backoff.reps;
 }
 

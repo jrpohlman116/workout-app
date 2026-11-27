@@ -5,6 +5,7 @@ import { calculatePeakingSets } from '../shared/peaking';
 import { buildPeakWeeks, planPeakBlock } from '../shared/peakBlock';
 import type { Prescription, ProgramDefinition, SetGroup } from '../types';
 import { FIVE_THREE_ONE_3_DAY, FIVE_THREE_ONE_4_DAY } from './layouts';
+import { backoffOffset } from '../backoffs';
 import { AMRAP_MINIMUM, CYCLE_LENGTH, WAVE, WAVE_ORDER, nextTrainingMax, roundLoad } from './engine';
 
 // Without a meet date the program just repeats; a year of weeks is far more
@@ -73,7 +74,7 @@ export const fiveThreeOne: ProgramDefinition = {
     };
   },
 
-  prescribe({ block, lift, trainingMax, unit }): Prescription {
+  prescribe({ block, lift, trainingMax, unit, state }): Prescription {
     if (block.phase === 'meet_week') {
       return {
         groups: [{
@@ -84,7 +85,6 @@ export const fiveThreeOne: ProgramDefinition = {
     }
 
     if (block.phase === 'peaking') {
-      // The shared taper rounds to the full plate step, bench included.
       const cfg = calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMax, unit, lift);
       const groups: SetGroup[] = [{ kind: 'top', sets: cfg.numSets, reps: cfg.reps, weight: cfg.weight, isAmrap: false, stopRule: 'fixed' }];
       if (cfg.downSets) {
@@ -95,6 +95,8 @@ export const fiveThreeOne: ProgramDefinition = {
 
     const week = WAVE[block.phase as keyof typeof WAVE];
     if (!week) return { groups: [] };
+    // Session-to-session back-off adjustment for this wave (see backoffs.ts).
+    const offset = backoffOffset(state, lift, block.cycleIndex);
     return {
       groups: [
         {
@@ -103,7 +105,8 @@ export const fiveThreeOne: ProgramDefinition = {
         },
         {
           kind: 'backoff', sets: week.backoff.sets, reps: week.backoff.reps,
-          weight: roundLoad(trainingMax * week.backoff.pct, lift, unit), isAmrap: false, stopRule: 'fixed',
+          weight: roundLoad(trainingMax * week.backoff.pct * (1 + offset), lift, unit),
+          isAmrap: false, stopRule: 'until-miss',
         },
       ],
     };

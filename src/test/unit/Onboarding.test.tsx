@@ -188,8 +188,8 @@ describe('Onboarding — optional overhead press max', () => {
     await user.click(screen.getByRole('button', { name: 'Start Training' }));
     await waitFor(() => expect(vi.mocked(supabase.from)).toHaveBeenCalledWith('user_profiles'));
 
-    // 135 * 0.9 = 121.5, rounded to 122 by calculateTrainingMax
-    expect(getUserProfilesUpdatePayload()).toMatchObject({ ohp_tested_max: 135, ohp_max: 122 });
+    // 135 * 0.9 = 121.5, rounded to overhead press's 2.5 lb step
+    expect(getUserProfilesUpdatePayload()).toMatchObject({ ohp_tested_max: 135, ohp_max: 122.5 });
   });
 
   it('writes no overhead press fields when it is skipped', async () => {

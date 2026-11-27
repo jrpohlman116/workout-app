@@ -85,9 +85,27 @@ export interface WorkoutSession {
   // Per-set weight/reps/RPE/VBT for the main lift's top sets — the fields
   // above only capture the top set. Optional: sessions saved before this
   // field existed, and upper-body days (no main lift), have it unset.
-  main_sets_data?: { reps: string; weight: string; rpe?: string; vbt?: string }[];
+  main_sets_data?: { reps: string; weight: string; rpe?: string; vbt?: string; kind?: 'top' | 'backoff' | 'secondary'; checked?: boolean }[];
   program_id?: ProgramId;
   day_id?: string;
+}
+
+export type TrainingMaxChangeReason = 'start' | 'increase' | 'hold' | 'decrease' | 'manual' | 'reset';
+
+/** One row of a lift's training max history (table training_max_changes). */
+export interface TrainingMaxChange {
+  id: string;
+  user_id: string;
+  lift: 'squat' | 'bench' | 'deadlift' | 'ohp';
+  old_tm: number | null;
+  new_tm: number;
+  reason: TrainingMaxChangeReason;
+  amrap_weight: number | null;
+  amrap_reps: number | null;
+  e1rm: number | null;
+  explanation: string | null;
+  cycle_index: number | null;
+  created_at: string;
 }
 
 export interface WorkoutTemplate {

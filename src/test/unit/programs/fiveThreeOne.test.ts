@@ -48,10 +48,10 @@ describe('5/3/1 wave 1 loads (handoff table)', () => {
     expect(rx('squat', 'realization')[1].isAmrap).toBe(false);
   });
 
-  it('back-offs are a fixed number of sets for now, with no drop-off stop rule', () => {
+  it('back-offs end at the first miss: cap 5, realization and deload cap 2', () => {
     const counts = Object.fromEntries(Object.keys(WAVE).map(p => [p, rx('squat', p as WeekBlock['phase'])[1].sets]));
-    expect(counts).toEqual({ accumulation: 3, intensification: 3, realization: 2, deload: 2 });
-    expect(rx('squat', 'accumulation')[1].stopRule).toBe('fixed');
+    expect(counts).toEqual({ accumulation: 5, intensification: 5, realization: 2, deload: 2 });
+    for (const p of Object.keys(WAVE)) expect(rx('squat', p as WeekBlock['phase'])[1].stopRule).toBe('until-miss');
   });
 });
 

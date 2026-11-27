@@ -29,6 +29,11 @@ export interface DayDef {
    * the program's default cross-day assignment.
    */
   variationSlots?: LiftId[];
+  /**
+   * Lifts that get back-off sets only on this day, at that week's back-off
+   * load (5/3/1 3-day: bench on squat day, deadlift on bench day).
+   */
+  secondary?: LiftId[];
 }
 
 export interface DayLayout {
@@ -56,10 +61,16 @@ export interface PrescribeInput {
   lift: LiftId;
   trainingMax: number;
   unit: Unit;
+  /** The user's program_state; carries per-lift back-off load offsets. */
+  state?: ProgramState;
 }
 
+export type SetKind = 'top' | 'backoff' | 'secondary';
+
 export interface SetGroup {
-  kind: 'top' | 'backoff';
+  kind: SetKind;
+  /** For kind 'secondary': the lift these back-offs are for. */
+  lift?: LiftId;
   /** Number of sets; for stopRule 'until-miss' this is the cap. */
   sets: number;
   reps: number;
@@ -79,8 +90,14 @@ export interface Prescription {
 /** A logged session's main-lift sets, for rules that look back over a wave. */
 export interface SessionSummary {
   phase: WavePhase;
-  /** In the order they were performed: top set first, then back-offs. */
-  mainSets: { weight: number; reps: number }[];
+  /**
+   * In the order they were performed: top set first, then back-offs. `kind`
+   * is set on sessions saved after it was introduced; without it, the first
+   * set is the top set and the rest are back-offs.
+   */
+  mainSets: { weight: number; reps: number; kind?: SetKind }[];
+  /** True when readiness or time lowered the back-off cap for this session. */
+  backoffsCapped?: boolean;
 }
 
 export interface TmUpdateInput {

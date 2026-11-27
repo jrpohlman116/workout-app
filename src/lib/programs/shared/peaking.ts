@@ -1,5 +1,5 @@
 import type { JuggernautSetsConfig } from '../../types';
-import { getRoundingIncrement } from './rounding';
+import { roundLoad } from './rounding';
 
 // Peaking, counting back from the meet. Percentages are of training max
 // (TM = 90% 1RM, so 1.00 here ≈ 90% of true 1RM). Intensity stays ≥85% 1RM
@@ -27,6 +27,7 @@ const PEAKING_WEEKS: Record<number, {
  * peak at 2 weeks out then drop to an opener-weight technical single, while
  * bench holds its last heavy single 1 week out.
  */
+// Loads round per lift (bench and overhead press to the half step).
 export function calculatePeakingSets(
   peakWeek: number,
   totalPeakWeeks: number,
@@ -34,7 +35,6 @@ export function calculatePeakingSets(
   unit: string = 'lb',
   liftType: string = 'squat'
 ): JuggernautSetsConfig {
-  const roundTo = getRoundingIncrement(unit);
   const weeksFromMeet = Math.max(1, Math.min(6, totalPeakWeeks - peakWeek + 1));
   const week = PEAKING_WEEKS[weeksFromMeet];
   const topPct = liftType === 'bench' || liftType === 'upper' || liftType === 'ohp' ? week.top.bench : week.top.squatDead;
@@ -42,13 +42,13 @@ export function calculatePeakingSets(
   const config: JuggernautSetsConfig = {
     numSets: 1,
     reps: 1,
-    weight: Math.round(trainingMax * topPct / roundTo) * roundTo,
+    weight: roundLoad(trainingMax * topPct, liftType, unit),
     isAmap: false,
   };
 
   if (week.downSets) {
     config.downSets = {
-      weight: Math.round(trainingMax * week.downSets.pct / roundTo) * roundTo,
+      weight: roundLoad(trainingMax * week.downSets.pct, liftType, unit),
       sets: week.downSets.sets,
       reps: week.downSets.reps,
     };
