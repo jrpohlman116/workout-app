@@ -15,10 +15,12 @@ import SkipLink from './components/accessible/SkipLink';
 import InstallPrompt from './components/features/InstallPrompt';
 import UpdateToast from './components/features/UpdateToast';
 import HomePage from './pages/Home';
-import CalculatorPage from './pages/Calculator';
 import ProgressPage from './pages/Progress';
-import ProfilePage from './pages/Profile';
-import WorkoutDetailPage from './pages/WorkoutDetail';
+import TodayPage from './pages/Today';
+import MorePage from './pages/More';
+import ActiveWorkoutBar from './components/layout/ActiveWorkoutBar';
+import { useActiveSession } from './hooks/useActiveSession';
+import { isLegacyPath, parseRoute, routeToPath, type Route } from './lib/routes';
 import { useTodayReadiness } from './hooks/useTodayReadiness';
 
 function AppContent() {
@@ -26,95 +28,54 @@ function AppContent() {
   // Computes and stores today's readiness on the first open of the day; Home
   // and Today read it in later phases.
   useTodayReadiness(user?.id, !!profile?.onboarding_completed);
-  const [currentPage, setCurrentPage] = useState('home');
-  const [selectedLift, setSelectedLift] = useState<string | null>(null);
+  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.pathname, window.location.search));
 
+  // One route parser for first load and back/forward. Old links (/workout,
+  // /calculator, /profile) are rewritten to their new paths in place.
   useEffect(() => {
-    const path = window.location.pathname;
-    const params = new URLSearchParams(window.location.search);
-
-    if (path === '/' || path === '/home') {
-      setCurrentPage('home');
-      setSelectedLift(null);
-    } else if (path === '/calculator') {
-      setCurrentPage('calculator');
-      setSelectedLift(null);
-    } else if (path === '/progress') {
-      setCurrentPage('progress');
-      setSelectedLift(null);
-    } else if (path === '/profile') {
-      setCurrentPage('profile');
-      setSelectedLift(null);
-    } else if (path === '/workout') {
-      const lift = params.get('lift');
-      if (lift) {
-        setCurrentPage('workout');
-        setSelectedLift(lift);
-      } else {
-        setCurrentPage('home');
-        setSelectedLift(null);
-      }
+    if (isLegacyPath(window.location.pathname, window.location.search)) {
+      window.history.replaceState({}, '', routeToPath(route));
     }
-  }, []);
-
-  useEffect(() => {
     const handlePopState = () => {
-      const path = window.location.pathname;
-      const params = new URLSearchParams(window.location.search);
-
-      if (path === '/' || path === '/home') {
-        setCurrentPage('home');
-        setSelectedLift(null);
-      } else if (path === '/calculator') {
-        setCurrentPage('calculator');
-        setSelectedLift(null);
-      } else if (path === '/progress') {
-        setCurrentPage('progress');
-        setSelectedLift(null);
-      } else if (path === '/profile') {
-        setCurrentPage('profile');
-        setSelectedLift(null);
-      } else if (path === '/workout') {
-        const lift = params.get('lift');
-        if (lift) {
-          setCurrentPage('workout');
-          setSelectedLift(lift);
-        } else {
-          setCurrentPage('home');
-          setSelectedLift(null);
-        }
-      }
-
+      setRoute(parseRoute(window.location.pathname, window.location.search));
       window.scrollTo(0, 0);
     };
-
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleNavigate = (page: string, liftType?: string) => {
-    if (page === 'workout' && liftType) {
-      setSelectedLift(liftType);
-      setCurrentPage('workout');
-      window.history.pushState({}, '', `/workout?lift=${liftType}`);
-    } else {
-      setCurrentPage(page);
-      setSelectedLift(null);
-      const path = page === 'home' ? '/' : `/${page}`;
-      window.history.pushState({}, '', path);
-    }
-
+  const go = (next: Route) => {
+    setRoute(next);
+    window.history.pushState({}, '', routeToPath(next));
     window.scrollTo(0, 0);
-
-    setTimeout(() => {
-      const mainContent = document.getElementById('main-content');
-      mainContent?.focus();
-    }, 100);
+    setTimeout(() => document.getElementById('main-content')?.focus(), 100);
   };
 
-  const handleBack = () => {
-    window.history.back();
+  // Pages written before the four tabs still navigate by page name.
+  const handleNavigate = (page: string, liftType?: string) => {
+    if (page === 'workout' || page === 'today') go(liftType ? { tab: 'today', lift: liftType } : { tab: 'today' });
+    else if (page === 'calculator' || page === 'profile') go({ tab: 'more', sub: page });
+    else if (page === 'progress' || page === 'more') go({ tab: page });
+    else go({ tab: 'home' });
   };
+
+  const activeSession = useActiveSession(user?.id, {
+    cycle: profile?.current_cycle,
+    week: profile?.current_week,
+    unit: profile?.unit_preference || 'lb',
+    enabled: !!profile?.onboarding_completed,
+  });
+  const showWorkoutBar = !!activeSession && route.tab !== 'today';
+
+  // A session in progress stays mounted while another tab is open, so coming
+  // back from the workout bar carries on where it was (sets, rest timer)
+  // instead of offering to restore a draft.
+  const [lastToday, setLastToday] = useState<Route | null>(route.tab === 'today' ? route : null);
+  useEffect(() => {
+    if (route.tab === 'today') setLastToday(route);
+  }, [route]);
+  const todayRoute = route.tab === 'today' ? route : activeSession ? lastToday : null;
 
   if (loading) {
     return (
@@ -150,24 +111,30 @@ function AppContent() {
 
       <div className="min-h-screen bg-blue-700 dark:bg-blue-900 transition-colors" style={GRID_BG}>
         <main id="main-content" tabIndex={-1} className="focus:outline-none">
-          {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
-          {currentPage === 'calculator' && <CalculatorPage />}
-          {currentPage === 'progress' && <ProgressPage />}
-          {currentPage === 'profile' && <ProfilePage />}
-          {currentPage === 'workout' && selectedLift && (
-            <WorkoutDetailPage
-              liftType={selectedLift}
-              onBack={handleBack}
-              onNavigateToProgress={() => handleNavigate('progress')}
-            />
+          {route.tab === 'home' && <HomePage onNavigate={handleNavigate} />}
+          {todayRoute && (
+            <div hidden={route.tab !== 'today'}>
+              <TodayPage
+                lift={todayRoute.lift}
+                onOpenLift={lift => go({ tab: 'today', lift })}
+                onNavigateHome={() => go({ tab: 'home' })}
+                onNavigateToProgress={() => go({ tab: 'progress' })}
+              />
+            </div>
           )}
+          {route.tab === 'progress' && <ProgressPage />}
+          {route.tab === 'more' && <MorePage page={route.sub} onOpen={page => go({ tab: 'more', sub: page })} />}
+          {/* Room for the workout bar so it never covers the end of a page. */}
+          {showWorkoutBar && <div className="h-20" aria-hidden="true" />}
         </main>
 
-        {currentPage !== 'workout' && (
-          <div id="navigation">
-            <Navigation currentPage={currentPage} onNavigate={handleNavigate} />
-          </div>
+        {showWorkoutBar && activeSession && (
+          <ActiveWorkoutBar session={activeSession} onOpen={() => go({ tab: 'today', lift: activeSession.lift })} />
         )}
+
+        <div id="navigation">
+          <Navigation currentTab={route.tab} onNavigate={tab => go({ tab })} />
+        </div>
       </div>
     </>
   );

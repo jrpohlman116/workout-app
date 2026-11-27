@@ -1,49 +1,48 @@
-import { Home, Calculator, TrendingUp, User } from 'lucide-react';
+import { Home, CalendarCheck, TrendingUp, LayoutGrid } from 'lucide-react';
+import type { Tab } from '../../lib/routes';
 
 interface NavigationProps {
-  currentPage: string;
-  onNavigate: (page: string) => void;
+  currentTab: Tab;
+  onNavigate: (tab: Tab) => void;
 }
 
-export default function Navigation({ currentPage, onNavigate }: NavigationProps) {
-  const navItems = [
-    { id: 'home', label: 'Home', icon: Home, description: 'View your workouts and progress overview' },
-    { id: 'progress', label: 'Progress', icon: TrendingUp, description: 'Track your strength gains over time' },
-    { id: 'calculator', label: 'Calculator', icon: Calculator, description: 'Calculate your one rep max and Wilks score' },
-    { id: 'profile', label: 'Profile', icon: User, description: 'Manage your account and training settings' },
-  ];
+// Four tabs (proposal #12): Home, Today, Progress, More. Calculator and
+// Profile live inside More.
+const NAV_ITEMS: { id: Tab; label: string; icon: typeof Home; description: string }[] = [
+  { id: 'home', label: 'Home', icon: Home, description: 'Readiness and this week' },
+  { id: 'today', label: 'Today', icon: CalendarCheck, description: "Today's session" },
+  { id: 'progress', label: 'Progress', icon: TrendingUp, description: 'Your program and strength over time' },
+  { id: 'more', label: 'More', icon: LayoutGrid, description: 'Tools and settings' },
+];
 
+export default function Navigation({ currentTab, onNavigate }: NavigationProps) {
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-blue-700 dark:bg-blue-900 border-t border-blue-600/50 dark:border-blue-800 safe-bottom transition-colors"
+      className="fixed bottom-0 left-0 right-0 z-30 bg-blue-700 dark:bg-blue-900 border-t border-blue-600/50 dark:border-blue-800 safe-bottom transition-colors"
       aria-label="Main navigation"
-      role="navigation"
     >
       <div className="flex items-stretch h-16 max-w-md mx-auto">
-        {navItems.map((item) => {
+        {NAV_ITEMS.map(item => {
           const Icon = item.icon;
-          const isActive = currentPage === item.id;
-
+          const isActive = currentTab === item.id;
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => onNavigate(item.id)}
               aria-label={`${item.label} - ${item.description}`}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center flex-1 gap-1 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white/50 ${
-                isActive
-                  ? 'text-white'
-                  : 'text-white/60 hover:text-white/80'
+              className={`relative flex flex-col items-center justify-center flex-1 gap-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/50 ${
+                isActive ? 'text-white' : 'text-white/60 hover:text-white/80'
               }`}
             >
               {isActive && (
-                <span className="absolute top-0 left-6 right-6 h-0.5 bg-white rounded-full" aria-hidden="true" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-[50px] h-0.5 bg-white rounded-full" aria-hidden="true" />
               )}
               <Icon className="w-5 h-5" aria-hidden="true" />
-              <span className="text-[10px] tracking-wide font-semibold" aria-hidden="true">
+              <span className="text-[10px] leading-[13px] font-semibold" aria-hidden="true">
                 {item.label}
               </span>
-              {isActive && <span className="sr-only">(current page)</span>}
             </button>
           );
         })}

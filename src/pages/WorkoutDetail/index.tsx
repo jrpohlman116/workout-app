@@ -83,7 +83,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     set4Feel: null as WarmupFeel | null,
     set5Feel: null as WarmupFeel | null,
     warmupComplete: false,
+    restEndsAt: null as number | null,
   });
+  const topCountRef = useRef(1);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [workoutStats, setWorkoutStats] = useState<{
     estimated1RM: number;
@@ -312,13 +314,18 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   // Continuous draft autosave (debounced): inputs and check-offs survive an
   // accidental refresh or navigation. Only runs after first user interaction
   // (dirtyRef) and is cleared on successful workout save.
-  draftRef.current = { mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, set4Feel, set5Feel, warmupComplete };
+  // restEndsAt and topCount let the active workout bar on other tabs show the
+  // next set and the rest countdown.
+  draftRef.current = {
+    mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, set4Feel, set5Feel, warmupComplete,
+    restEndsAt: restTimer?.endsAt ?? null,
+  };
 
   const flushDraft = () => {
     if (!user || !profile || !dirtyRef.current) return;
     try {
       localStorage.setItem(`jt_draft_${user.id}_${liftType}`, JSON.stringify({
-        liftType, ...draftRef.current,
+        liftType, ...draftRef.current, topCount: topCountRef.current,
         cycle: profile.current_cycle,
         week: profile.current_week,
         savedAt: new Date().toISOString(),
@@ -348,7 +355,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     const timer = setTimeout(flushDraft, 400);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, set4Feel, set5Feel, warmupComplete, user, profile, liftType]);
+  }, [mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, set4Feel, set5Feel, warmupComplete, restTimer, user, profile, liftType]);
 
   // Checking a set off (not un-checking) starts the rest countdown for
   // that set type. Restarting on every check keeps the newest rest active.
@@ -523,6 +530,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const mainConfig: JuggernautSetsConfig | null = baseMainConfig
     ? { ...baseMainConfig, numSets: variationCreditResult.numSets }
     : null;
+  topCountRef.current = mainConfig?.numSets ?? 1;
 
   const mainSetsNote = variationCreditResult.reducedBy > 0
     ? formatVariationCreditNote(variationCreditResult.numSets, variationCreditResult.reducedBy, variationContributions) ?? undefined
