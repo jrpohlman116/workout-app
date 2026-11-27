@@ -26,12 +26,14 @@ interface AccessoriesStepProps {
   /** Why accessories were cut: 'time', 'readiness' or 'both'. */
   cutReason: 'time' | 'readiness' | 'both' | null;
   onFinish: () => void;
+  saving?: boolean;
+  error?: string | null;
 }
 
 type Edit = { index: number; setIndex: number; current: boolean };
 
 /** Accessories (proposals #4 and #9): one card each, double progression, swaps for today. */
-export default function AccessoriesStep({ userId, eyebrow, unit, planned, catalog, session, dispatch, cutReason, onFinish }: AccessoriesStepProps) {
+export default function AccessoriesStep({ userId, eyebrow, unit, planned, catalog, session, dispatch, cutReason, onFinish, saving, error }: AccessoriesStepProps) {
   const [edit, setEdit] = useState<Edit | null>(null);
   const [swapping, setSwapping] = useState<number | null>(null);
   const names = planned.map((a, i) => session.swaps[i] ?? a.name);
@@ -173,7 +175,8 @@ export default function AccessoriesStep({ userId, eyebrow, unit, planned, catalo
           </p>
         )}
 
-        <Button fullWidth size="lg" onClick={onFinish}>Finish session</Button>
+        {error && <p className="rounded-2xl bg-red-50 dark:bg-red-900/30 p-4 text-sm text-red-800 dark:text-red-200" role="alert">{error}</p>}
+        <Button fullWidth size="lg" onClick={onFinish} disabled={saving}>{saving ? 'Saving…' : 'Finish session'}</Button>
       </div>
 
       {editing && edit && (

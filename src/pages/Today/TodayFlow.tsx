@@ -26,6 +26,9 @@ import RestCard from '../../components/today/RestCard';
 import { EditSetSheet, ReadinessSheet, WhyWeightSheet } from '../../components/today/Sheets';
 import WarmupCard from '../../components/today/WarmupCard';
 import AccessoriesStep from './AccessoriesStep';
+import SessionDone from './SessionDone';
+import { buildSessionRows, saveTodaySession, type SaveResult } from '../../lib/today/save';
+import { recordTrainingMaxChange } from '../../lib/programs/tmChanges';
 
 const LAST_TIME_KEY = 'ironform-last-time-available';
 // collapsed | open | off. Set in More -> Training preferences once that page exists.
@@ -64,8 +67,8 @@ type EditTarget = { kind: 'top' } | { kind: 'backoff'; index: number; current: b
  * The new Today session: before session, top set, back-offs. Pages compute
  * nothing: loads come from buildTodayPlan, set rules from sessionReducer.
  */
-export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOpenProgress: () => void }) {
-  const { user, profile } = useAuth();
+export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: string; onOpenProgress: () => void; onDone: () => void }) {
+  const { user, profile, refreshProfile } = useAuth();
   const programCtx = useProgramContext();
   const readiness = useTodayReadiness(user?.id);
   const { accessories } = useDayAccessories(lift);
@@ -76,6 +79,9 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
   const restored = useRef(false);
   const [sheet, setSheet] = useState<'readiness' | 'why' | null>(null);
   const [editing, setEditing] = useState<EditTarget | null>(null);
+  const [saved, setSaved] = useState<SaveResult | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Restore a session in progress for this lift and week.
   useEffect(() => {
@@ -121,7 +127,8 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
 
   // Autosave in the shape the workout bar reads.
   useEffect(() => {
-    if (!draftKey || !profile || !plan || !inSession) return;
+    // Once saved, the session is over: no draft, so the workout bar goes away.
+    if (!draftKey || !profile || !plan || !inSession || saved) return;
     try {
       localStorage.setItem(draftKey, JSON.stringify(toDraft(session, {
         liftType: lift,
@@ -130,7 +137,7 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
         cycle: profile.current_cycle, week: profile.current_week, now: Date.now(),
       })));
     } catch { /* storage unavailable */ }
-  }, [session, draftKey, profile, plan, inSession, lift]);
+  }, [session, draftKey, profile, plan, inSession, lift, saved]);
 
   if (!profile || !programCtx || !block || !day || !plan || !plan.lift) {
     return <div className="max-w-md mx-auto px-4 py-6 text-white" role="status">Loading today's session…</div>;
@@ -237,6 +244,97 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
     );
   }
 
+  // ---------- Saving and the summary ----------
+  const liftForSave = plan.lift;
+  const accessoryNames = plan.accessories.map((a, i) => session.swaps[i] ?? a.name);
+
+  const backoffNextFor = (): { title: string; detail: string } | null => {
+    if (!plan.backoff) return null;
+    const stored = (profile.program_state as { backoff?: Record<string, BackoffLiftState> } | undefined)?.backoff?.[liftForSave];
+    const prior = stored && stored.cycleIndex === block.cycleIndex ? stored : EMPTY_BACKOFF_STATE;
+    const change = nextBackoffState(prior, {
+      phase: block.phase,
+      mainSets: [
+        ...(session.top ? [{ ...session.top, kind: 'top' as const }] : []),
+        ...session.backoffs.map(b => ({ ...b, kind: 'backoff' as const })),
+      ],
+      backoffsCapped: plan.backoffsCapped,
+    }).change;
+    if (change > 0) return { title: 'Back-off load goes up 2.5%', detail: 'Two sessions in a row with every back-off at target.' };
+    if (change < 0) return { title: 'Back-off load drops 5%', detail: 'The first back-off fell short two sessions in a row.' };
+    return { title: 'Back-off load: no adjustment', detail: 'Two sessions in a row with every back-off at target moves it up 2.5%.' };
+  };
+
+  const handleFinish = async () => {
+    if (!user || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const rows = buildSessionRows({
+        userId: user.id, profile, lift: liftForSave, block, plan, session,
+        readiness: readiness ? { state: readiness.state, score: readiness.score } : null,
+        accessoryNames,
+      });
+      const result = await saveTodaySession({
+        existingSessionId: saved?.sessionId ?? null, rows, userId: user.id, profile,
+        program: programCtx.program, lift: liftForSave, block, trainingMax: plan.trainingMax, unit,
+        top: session.top,
+      });
+      setSaved(result);
+      try { if (draftKey) localStorage.removeItem(draftKey); } catch { /* storage unavailable */ }
+      dispatch({ type: 'goTo', stage: 'summary' });
+    } catch (error) {
+      console.error('Failed to save session:', error);
+      const partial = error as { sessionId?: string; tmUpdate?: SaveResult['tmUpdate'] };
+      if (partial.sessionId) setSaved({ sessionId: partial.sessionId, tmUpdate: partial.tmUpdate ?? null });
+      setSaveError(partial.sessionId
+        ? 'Session saved, but accessories didn\'t. Tap Finish session to try again.'
+        : 'Session not saved. Your sets are still here. Tap Finish session when you\'re back online.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (session.stage === 'summary' && saved && !saveError) {
+    const tm = saved.tmUpdate?.applied ? saved.tmUpdate.newTm : plan.trainingMax;
+    const nextBlock = programCtx.schedule.weeks[programCtx.currentIndex + 1];
+    const nextTop = nextBlock
+      ? programCtx.program.prescribe({ block: nextBlock, lift: liftForSave, trainingMax: tm, unit, plates: availablePlates(profile) }).groups.find(g => g.kind === 'top')
+      : undefined;
+    const waveStart = saved.tmUpdate
+      ? programCtx.program.prescribe({ block: { ...block, phase: 'accumulation' }, lift: liftForSave, trainingMax: saved.tmUpdate.newTm, unit, plates: availablePlates(profile) }).groups
+      : null;
+    const fmt = (g?: { weight: number; reps: number }) => (g ? `${g.weight} ${unit} × ${g.reps}` : '');
+    return (
+      <SessionDone
+        userId={user!.id}
+        sessionId={saved.sessionId}
+        lift={liftForSave}
+        liftName={name}
+        eyebrow={eyebrow}
+        unit={unit}
+        session={session}
+        planned={{ top: top ? { weight: top.weight, reps: top.reps } : null, backoffTarget: plan.backoff?.reps ?? 0, backoffWeight: plan.backoff?.weight ?? null }}
+        accessories={plan.accessories.map((a, i) => ({ ...a, shownName: accessoryNames[i] }))}
+        readiness={state}
+        backoffNext={backoffNextFor()}
+        topNext={nextTop && nextTop.pct != null ? {
+          title: `Top set: ${Math.round(nextTop.pct * 1000) / 10}% of ${tm} ${unit}`,
+          detail: saved.tmUpdate?.applied ? 'Your new training max is already in.' : 'Training max only changes after the week 3 AMRAP.',
+        } : null}
+        tmUpdate={saved.tmUpdate}
+        nextWave={waveStart ? { top: fmt(waveStart.find(g => g.kind === 'top')), backoff: fmt(waveStart.find(g => g.kind === 'backoff')) } : null}
+        onRetryTm={async () => {
+          if (!saved.tmUpdate || !session.top) return;
+          await recordTrainingMaxChange({ lift: liftForSave, update: saved.tmUpdate, topSet: session.top, cycleIndex: block.cycleIndex });
+          setSaved({ ...saved, tmUpdate: { ...saved.tmUpdate, applied: true } });
+        }}
+        onOpenHistory={onOpenProgress}
+        onDone={async () => { await refreshProfile(); onDone(); }}
+      />
+    );
+  }
+
   // ---------- Accessories ----------
   if (session.stage === 'accessories' || session.stage === 'summary') {
     const anyCut = plan.accessories.some(a => a.cut);
@@ -251,7 +349,9 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
         session={session}
         dispatch={dispatch}
         cutReason={cutReason}
-        onFinish={() => dispatch({ type: 'goTo', stage: 'summary' })}
+        onFinish={handleFinish}
+        saving={saving}
+        error={saveError}
       />
     );
   }

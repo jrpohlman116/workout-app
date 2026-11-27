@@ -59,19 +59,12 @@ export default function TodayPage({ lift, onOpenLift, onNavigateHome, onNavigate
     return () => { cancelled = true; };
   }, [lift, user, profile]);
 
-  // The new Today steps are switched on per device (?flow=new sets the
-  // ironform-today-v2 setting; see App) until they cover the whole session. 5/3/1
-  // only for now: Juggernaut's multi-set top sets come with the next part.
-  const newFlow = profile?.program_id === 'five_three_one' && (() => {
-    try {
-      return localStorage.getItem('ironform-today-v2') === '1';
-    } catch {
-      return false;
-    }
-  })();
+  // 5/3/1 runs the Today steps. Juggernaut keeps the workout page for now:
+  // its multi-set top sets and feel-based approach set aren't in Today yet.
+  const newFlow = profile?.program_id === 'five_three_one';
 
   if (picked && newFlow) {
-    return <TodayFlow key={picked} lift={picked} onOpenProgress={onNavigateToProgress} />;
+    return <TodayFlow key={picked} lift={picked} onOpenProgress={onNavigateToProgress} onDone={onNavigateHome} />;
   }
 
   if (picked) {

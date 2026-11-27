@@ -33,10 +33,6 @@ function AppContent() {
   // One route parser for first load and back/forward. Old links (/workout,
   // /calculator, /profile) are rewritten to their new paths in place.
   useEffect(() => {
-    // ?flow=new switches this device to the new Today steps (see TodayPage).
-    try {
-      if (new URLSearchParams(window.location.search).get('flow') === 'new') localStorage.setItem('ironform-today-v2', '1');
-    } catch { /* storage unavailable */ }
     if (isLegacyPath(window.location.pathname, window.location.search)) {
       window.history.replaceState({}, '', routeToPath(route));
     }
