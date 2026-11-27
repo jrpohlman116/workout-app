@@ -49,3 +49,34 @@ describe('training max change record', () => {
     });
   });
 });
+
+describe('rounding to the lifter\'s plates', () => {
+  const HANDOFF_PLATES = [45, 35, 25, 10, 5, 2.5];
+  const WITH_CHANGE = [45, 25, 10, 5, 2.5, 1.25];
+
+  it('never rounds finer than two of the smallest plate', () => {
+    expect(loadIncrement('bench', 'lb', HANDOFF_PLATES)).toBe(5);
+    expect(loadIncrement('bench', 'lb', WITH_CHANGE)).toBe(2.5);
+    expect(loadIncrement('squat', 'lb', WITH_CHANGE)).toBe(5);
+    expect(loadIncrement('bench', 'lb', [])).toBe(2.5);
+    expect(loadIncrement('bench', 'kg', [25, 20, 10, 5, 2.5, 1.25])).toBe(2.5);
+    expect(loadIncrement('bench', 'kg', [25, 0.5])).toBe(1.25);
+  });
+
+  it('bench TM 147.5: weeks 1-2 match the handoff, week 3 lands on a loadable 135 without 1.25s', async () => {
+    const { getProgram } = await import('../../../lib/programs/registry');
+    const program = getProgram('five_three_one');
+    const rx = (phase: 'accumulation' | 'intensification' | 'realization', plates: number[]) =>
+      program.prescribe({ block: { phase, weekIndex: 0, cycleIndex: 0, startDate: new Date(0), endDate: new Date(1) }, lift: 'bench', trainingMax: 147.5, unit: 'lb', plates })
+        .groups.map(g => g.weight);
+    expect(rx('accumulation', HANDOFF_PLATES)).toEqual([110, 100]);
+    expect(rx('intensification', HANDOFF_PLATES)).toEqual([125, 115]);
+    expect(rx('realization', HANDOFF_PLATES)).toEqual([135, 110]);
+    expect(rx('realization', WITH_CHANGE)).toEqual([132.5, 110]);
+  });
+
+  it('the peak block rounds to the plates too', () => {
+    expect(calculatePeakingSets(6, 6, 147.5, 'lb', 'bench', [45, 25, 10, 5, 2.5]).weight).toBe(145);
+    expect(calculatePeakingSets(6, 6, 147.5, 'lb', 'bench', [45, 1.25]).weight).toBe(142.5);
+  });
+});

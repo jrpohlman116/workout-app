@@ -33,7 +33,8 @@ export function calculatePeakingSets(
   totalPeakWeeks: number,
   trainingMax: number,
   unit: string = 'lb',
-  liftType: string = 'squat'
+  liftType: string = 'squat',
+  plates?: readonly number[],
 ): JuggernautSetsConfig {
   const weeksFromMeet = Math.max(1, Math.min(6, totalPeakWeeks - peakWeek + 1));
   const week = PEAKING_WEEKS[weeksFromMeet];
@@ -42,13 +43,13 @@ export function calculatePeakingSets(
   const config: JuggernautSetsConfig = {
     numSets: 1,
     reps: 1,
-    weight: roundLoad(trainingMax * topPct, liftType, unit),
+    weight: roundLoad(trainingMax * topPct, liftType, unit, plates),
     isAmap: false,
   };
 
   if (week.downSets) {
     config.downSets = {
-      weight: roundLoad(trainingMax * week.downSets.pct, liftType, unit),
+      weight: roundLoad(trainingMax * week.downSets.pct, liftType, unit, plates),
       sets: week.downSets.sets,
       reps: week.downSets.reps,
     };

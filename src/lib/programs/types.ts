@@ -63,6 +63,8 @@ export interface PrescribeInput {
   unit: Unit;
   /** The user's program_state; carries per-lift back-off load offsets. */
   state?: ProgramState;
+  /** The lifter's plates. Loads round to what they can put on the bar. */
+  plates?: readonly number[];
 }
 
 export type SetKind = 'top' | 'backoff' | 'secondary';
@@ -76,6 +78,8 @@ export interface SetGroup {
   reps: number;
   /** Already rounded to the unit's plate step. */
   weight: number;
+  /** Share of the training max the weight came from, before rounding, when the program knows it. */
+  pct?: number;
   isAmrap: boolean;
   /** AMRAP minimum, for programs that define one. */
   minReps?: number;

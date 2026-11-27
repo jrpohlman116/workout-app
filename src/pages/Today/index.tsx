@@ -5,6 +5,7 @@ import { getLayout } from '../../lib/programs/registry';
 import { nextDayToTrain } from '../../lib/programs/week';
 import { readActiveSession } from '../../hooks/useActiveSession';
 import WorkoutDetailPage from '../WorkoutDetail';
+import TodayFlow from './TodayFlow';
 import PageHeader from '../../components/ui/PageHeader';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -57,6 +58,21 @@ export default function TodayPage({ lift, onOpenLift, onNavigateHome, onNavigate
     })();
     return () => { cancelled = true; };
   }, [lift, user, profile]);
+
+  // The new Today steps are switched on per device (?flow=new sets the
+  // ironform-today-v2 setting; see App) until they cover the whole session. 5/3/1
+  // only for now: Juggernaut's multi-set top sets come with the next part.
+  const newFlow = profile?.program_id === 'five_three_one' && (() => {
+    try {
+      return localStorage.getItem('ironform-today-v2') === '1';
+    } catch {
+      return false;
+    }
+  })();
+
+  if (picked && newFlow) {
+    return <TodayFlow key={picked} lift={picked} onOpenProgress={onNavigateToProgress} />;
+  }
 
   if (picked) {
     return (

@@ -7,6 +7,7 @@ import { trainingMaxFor } from '../../lib/programs/maxes';
 import { useProgramContext } from '../../hooks/useProgramContext';
 import { PHASE_LABELS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
 import { ChevronLeft, ChevronRight, Check, Activity } from 'lucide-react';
+import { availablePlates } from '../../lib/plates';
 import { supabase } from '../../lib/supabase';
 import type { StickingPoint, WeakPoints } from '../../lib/supabase';
 import { useRipple } from '../../hooks/useAnimations';
@@ -326,7 +327,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               const unit = profile.unit_preference || 'lb';
               const roundTo = unit === 'kg' ? 2.5 : 5;
               const baseWeight = (!isUpperDayWorkout && workout.lift && effectiveBlock && effectiveBlock.phase !== 'meet_week')
-                ? program.prescribe({ block: effectiveBlock, lift: workout.lift, trainingMax: workout.max, unit: unit as Unit }).groups[0]?.weight ?? null
+                ? program.prescribe({ block: effectiveBlock, lift: workout.lift, trainingMax: workout.max, unit: unit as Unit, plates: availablePlates(profile) }).groups[0]?.weight ?? null
                 : null;
               const weightLow = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo : null;
               const weightHigh = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo : null;

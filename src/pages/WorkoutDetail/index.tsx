@@ -10,6 +10,7 @@ import OhpMaxPrompt from '../../components/features/OhpMaxPrompt';
 import { useProgramContext } from '../../hooks/useProgramContext';
 import type { LiftId, SessionSummary, TmUpdate, Unit } from '../../lib/programs/types';
 import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, PHASE_LABELS } from '../../lib/constants';
+import { availablePlates as platesOf } from '../../lib/plates';
 import { supabase } from '../../lib/supabase';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
 import { useWeeklyVariationCredit } from '../../hooks/useWeeklyVariationCredit';
@@ -221,7 +222,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       const max = trainingMaxFor(profile, liftType as LiftId);
       const unit = profile.unit_preference || 'lb';
       const cfg = programCtx && toSetsConfig(programCtx.program.prescribe({
-        block: currentBlock, lift: liftType as LiftId, trainingMax: max, unit: unit as Unit, state: profile.program_state,
+        block: currentBlock, lift: liftType as LiftId, trainingMax: max, unit: unit as Unit, state: profile.program_state, plates: platesOf(profile),
       }));
       if (!cfg) return;
 
@@ -519,6 +520,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     programCtx.program.prescribe({
       block: currentBlock, lift: liftType as LiftId, trainingMax: maxes[liftType] ?? 0, unit: unit as Unit,
       state: profile.program_state,
+      plates: platesOf(profile),
     })
   );
 

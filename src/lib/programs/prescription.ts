@@ -38,10 +38,11 @@ export function prescribeDay(args: {
   trainingMaxes: Partial<Record<LiftId, number>>;
   unit: Unit;
   state?: ProgramState;
+  plates?: readonly number[];
 }): Prescription {
-  const { program, day, block, trainingMaxes, unit, state } = args;
+  const { program, day, block, trainingMaxes, unit, state, plates } = args;
   const groups: SetGroup[] = day.primary
-    ? program.prescribe({ block, lift: day.primary, trainingMax: trainingMaxes[day.primary] ?? 0, unit, state }).groups
+    ? program.prescribe({ block, lift: day.primary, trainingMax: trainingMaxes[day.primary] ?? 0, unit, state, plates }).groups
     : [];
 
   if (!WAVE_PHASES.has(block.phase)) return { groups };
@@ -49,7 +50,7 @@ export function prescribeDay(args: {
   for (const lift of day.secondary ?? []) {
     const trainingMax = trainingMaxes[lift] ?? 0;
     if (trainingMax <= 0) continue;
-    const backoff = program.prescribe({ block, lift, trainingMax, unit, state }).groups.find(g => g.kind === 'backoff');
+    const backoff = program.prescribe({ block, lift, trainingMax, unit, state, plates }).groups.find(g => g.kind === 'backoff');
     if (!backoff) continue;
     groups.push({
       ...backoff,

@@ -4,7 +4,7 @@ import type { KeyboardEvent } from 'react';
 export interface RadioCardOption<T> {
   value: T;
   title: string;
-  description: string;
+  description?: string;
 }
 
 interface RadioCardsProps<T> {
@@ -15,7 +15,16 @@ interface RadioCardsProps<T> {
   labelId?: string;
   /** Used when no visible label element exists. */
   ariaLabel?: string;
+  /** 'segmented': one row of equal options, like the Time Picker. */
+  layout?: 'cards' | 'segmented';
 }
+
+const segmentClass = (selected: boolean) =>
+  `flex-1 min-h-[44px] py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+    selected
+      ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+  }`;
 
 const optionClass = (selected: boolean) =>
   `px-3 py-2 rounded-lg transition-all text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
@@ -29,8 +38,9 @@ const optionClass = (selected: boolean) =>
  * selected option), arrow keys move and select, Home and End jump to the ends.
  */
 export default function RadioCards<T extends string | number>({
-  options, value, onSelect, labelId, ariaLabel,
+  options, value, onSelect, labelId, ariaLabel, layout = 'cards',
 }: RadioCardsProps<T>) {
+  const segmented = layout === 'segmented';
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const selectedIndex = Math.max(0, options.findIndex(o => o.value === value));
 
@@ -64,7 +74,7 @@ export default function RadioCards<T extends string | number>({
   };
 
   return (
-    <div role="radiogroup" aria-labelledby={labelId} aria-label={labelId ? undefined : ariaLabel} className="grid grid-cols-1 gap-2">
+    <div role="radiogroup" aria-labelledby={labelId} aria-label={labelId ? undefined : ariaLabel} className={segmented ? 'flex gap-1 p-1 rounded-xl bg-gray-50 dark:bg-gray-900' : 'grid grid-cols-1 gap-2'}>
       {options.map((option, index) => {
         const selected = index === selectedIndex;
         return (
@@ -77,10 +87,14 @@ export default function RadioCards<T extends string | number>({
             tabIndex={selected ? 0 : -1}
             onClick={() => onSelect(option.value)}
             onKeyDown={e => onKeyDown(e, index)}
-            className={optionClass(selected)}
+            className={segmented ? segmentClass(selected) : optionClass(selected)}
           >
-            <span className="block text-sm font-medium">{option.title}</span>
-            <span className="block text-xs font-normal opacity-70 mt-0.5">{option.description}</span>
+            {segmented ? option.title : (
+              <>
+                <span className="block text-sm font-medium">{option.title}</span>
+                {option.description && <span className="block text-xs font-normal opacity-70 mt-0.5">{option.description}</span>}
+              </>
+            )}
           </button>
         );
       })}
