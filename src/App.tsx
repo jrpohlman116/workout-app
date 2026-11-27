@@ -45,9 +45,12 @@ function AppContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const go = (next: Route) => {
+  // keepPlace: a change within a page (picking a lift, opening a sheet) keeps
+  // the scroll position and focus instead of starting the page over.
+  const go = (next: Route, keepPlace = false) => {
     setRoute(next);
     window.history.pushState({}, '', routeToPath(next));
+    if (keepPlace) return;
     window.scrollTo(0, 0);
     setTimeout(() => document.getElementById('main-content')?.focus(), 100);
   };
@@ -119,10 +122,19 @@ function AppContent() {
                 onOpenLift={lift => go({ tab: 'today', lift })}
                 onNavigateHome={() => go({ tab: 'home' })}
                 onNavigateToProgress={() => go({ tab: 'progress' })}
+                onOpenTrainingMax={lift => go({ tab: 'progress', sub: 'program', lift, sheet: 'tm' })}
               />
             </div>
           )}
-          {route.tab === 'progress' && <ProgressPage />}
+          {route.tab === 'progress' && (
+            <ProgressPage
+              tab={route.sub}
+              lift={route.lift}
+              sheet={route.sheet}
+              onRouteChange={next => go({ tab: 'progress', sub: next.tab, lift: next.lift, sheet: next.sheet }, next.tab === (route.sub ?? 'program'))}
+              onEditTrainingMax={() => go({ tab: 'more', sub: 'profile' })}
+            />
+          )}
           {route.tab === 'more' && <MorePage page={route.sub} onOpen={page => go({ tab: 'more', sub: page })} />}
           {/* Room for the workout bar so it never covers the end of a page. */}
           {showWorkoutBar && <div className="h-20" aria-hidden="true" />}

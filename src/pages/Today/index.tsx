@@ -16,6 +16,8 @@ interface TodayPageProps {
   onOpenLift: (lift: string) => void;
   onNavigateHome: () => void;
   onNavigateToProgress: () => void;
+  /** Opens Progress → Program with this lift's training max sheet. */
+  onOpenTrainingMax: (lift: string) => void;
 }
 
 /**
@@ -23,7 +25,7 @@ interface TodayPageProps {
  * else the next day of this week not done yet. The session itself is the
  * existing workout page until the new Today steps replace it.
  */
-export default function TodayPage({ lift, onOpenLift, onNavigateHome, onNavigateToProgress }: TodayPageProps) {
+export default function TodayPage({ lift, onOpenLift, onNavigateHome, onNavigateToProgress, onOpenTrainingMax }: TodayPageProps) {
   const { user, profile } = useAuth();
   const [picked, setPicked] = useState<string | null | undefined>(lift);
 
@@ -64,7 +66,7 @@ export default function TodayPage({ lift, onOpenLift, onNavigateHome, onNavigate
   const newFlow = profile?.program_id === 'five_three_one';
 
   if (picked && newFlow) {
-    return <TodayFlow key={picked} lift={picked} onOpenProgress={onNavigateToProgress} onDone={onNavigateHome} />;
+    return <TodayFlow key={picked} lift={picked} onOpenProgress={() => onOpenTrainingMax(picked)} onDone={onNavigateHome} />;
   }
 
   if (picked) {

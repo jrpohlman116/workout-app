@@ -18,16 +18,30 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { Plus } from 'lucide-react';
 import PageHeader from '../../components/ui/PageHeader';
+import ProgramTab from './ProgramTab';
+import type { LiftId } from '../../lib/programs/types';
+
+const TABS: Tab[] = ['program', 'overview', 'records', 'log', 'meets'];
+
+interface ProgressPageProps {
+  /** From the route: /progress/:tab. Program is the default. */
+  tab?: string;
+  lift?: string;
+  sheet?: 'tm';
+  onRouteChange?: (next: { tab: Tab; lift?: string; sheet?: 'tm' }) => void;
+  onEditTrainingMax?: (lift: LiftId) => void;
+}
 import SectionLabel from '../../components/ui/SectionLabel';
 
 
-export default function ProgressPage() {
+export default function ProgressPage({ tab, lift, sheet, onRouteChange, onEditTrainingMax }: ProgressPageProps = {}) {
   const { profile, user } = useAuth();
   const programCtx = useProgramContext();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [accessoryData, setAccessoryData] = useState<{ [sessionId: string]: AccessoryExercise[] }>({});
   const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const activeTab: Tab = TABS.includes(tab as Tab) ? (tab as Tab) : 'program';
+  const setActiveTab = (next: Tab) => onRouteChange?.({ tab: next });
   const [showPastMeetModal, setShowPastMeetModal] = useState(false);
   // Display-only override for the meets tab — meet weights are always stored
   // in profile.unit_preference, so switching this just converts on the way out.
@@ -214,6 +228,18 @@ export default function ProgressPage() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
+        {activeTab === 'program' && (
+          <div className="animate-enter">
+            <ProgramTab
+              lift={lift}
+              openSheet={sheet === 'tm'}
+              onSelectLift={next => onRouteChange?.({ tab: 'program', lift: next })}
+              onSheetChange={open => onRouteChange?.({ tab: 'program', lift, sheet: open ? 'tm' : undefined })}
+              onEditTrainingMax={l => onEditTrainingMax?.(l)}
+            />
+          </div>
+        )}
+
         {activeTab === 'overview' && (
           <div className="space-y-4 animate-enter">
             <StrengthScoreCarousel

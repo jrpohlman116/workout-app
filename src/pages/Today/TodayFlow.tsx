@@ -506,7 +506,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
           unit={unit}
           liftName={name}
           explanation={explainWeight({ liftName: name, trainingMax: top.trainingMax, pct: top.pct, weight: top.weight, lift: liftLift, unit, weekLabel, readiness: state, topSetOnly: plan.topSetOnly, plates })}
-          onOpenHistory={onOpenProgress}
+          onOpenHistory={() => { setSheet(null); onOpenProgress(); }}
         />
       )}
       <EditSetSheet
