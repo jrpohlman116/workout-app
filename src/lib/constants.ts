@@ -3,8 +3,6 @@ import type { RepWave, WavePhase, ProfileTab } from './types';
 export const DEFAULT_PROGRAM_WEEKS = 16;
 
 // Weight display range shown on the home page workout cards (±4% of base weight)
-export const WEIGHT_DISPLAY_RANGE_LOW = 0.96;
-export const WEIGHT_DISPLAY_RANGE_HIGH = 1.04;
 
 // Meet week uses a conservative 55% of TM — just enough to stay sharp
 export const MEET_WEEK_TM_PCT = 0.55;

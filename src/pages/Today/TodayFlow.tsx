@@ -15,6 +15,7 @@ import { availablePlates } from '../../lib/plates';
 import { REST_TIMER_DEFAULTS } from '../../lib/constants';
 import { additionalExercises, baseExercises, liftNames } from '../../lib/exercises';
 import { sessionLimits } from '../../lib/readiness/effects';
+import { readLastTime, readWarmupDisplay, saveLastTime } from '../../lib/today/prefs';
 import { buildTodayPlan, explainWeight, platesPerSide, type TimeAvailable } from '../../lib/today/plan';
 import { initialSession, sessionReducer, toDraft, type TodaySession } from '../../lib/today/session';
 import Card from '../../components/ui/Card';
@@ -30,36 +31,15 @@ import SessionDone from './SessionDone';
 import { buildSessionRows, saveTodaySession, type SaveResult } from '../../lib/today/save';
 import { recordTrainingMaxChange } from '../../lib/programs/tmChanges';
 
-const LAST_TIME_KEY = 'ironform-last-time-available';
-// collapsed | open | off. Set in More -> Training preferences once that page exists.
-const WARMUP_DISPLAY_KEY = 'ironform-warmup-display';
-
-function warmupDisplay(): 'collapsed' | 'open' | 'off' {
-  try {
-    const v = localStorage.getItem(WARMUP_DISPLAY_KEY);
-    return v === 'open' || v === 'off' ? v : 'collapsed';
-  } catch {
-    return 'collapsed';
-  }
-}
-
-const CATALOG = [
-  ...baseExercises.squat, ...baseExercises.bench, ...baseExercises.deadlift, ...baseExercises.upper, ...additionalExercises,
-].filter((ex, i, all) => i === all.findIndex(e => e.name === ex.name));
 const TIMES: { value: TimeAvailable; title: string }[] = [
   { value: 30, title: '30 min' },
   { value: 45, title: '45 min' },
   { value: 60, title: '60+ min' },
 ];
 
-function lastTime(): TimeAvailable {
-  try {
-    const v = Number(localStorage.getItem(LAST_TIME_KEY));
-    return v === 30 || v === 45 ? v : 60;
-  } catch {
-    return 60;
-  }
-}
+const CATALOG = [
+  ...baseExercises.squat, ...baseExercises.bench, ...baseExercises.deadlift, ...baseExercises.upper, ...additionalExercises,
+].filter((ex, i, all) => i === all.findIndex(e => e.name === ex.name));
 
 type EditTarget = { kind: 'top' } | { kind: 'backoff'; index: number; current: boolean };
 
@@ -75,7 +55,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
   const unit = (profile?.unit_preference || 'lb') as Unit;
   const draftKey = user ? `jt_draft_${user.id}_${lift}` : null;
 
-  const [session, dispatch] = useReducer(sessionReducer, undefined, () => initialSession(lastTime()));
+  const [session, dispatch] = useReducer(sessionReducer, undefined, () => initialSession(readLastTime()));
   const restored = useRef(false);
   const [sheet, setSheet] = useState<'readiness' | 'why' | null>(null);
   const [editing, setEditing] = useState<EditTarget | null>(null);
@@ -115,7 +95,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
   const inSession = session.stage !== 'before';
   useWakeLock(inSession);
 
-  const [display] = useState(warmupDisplay);
+  const [display] = useState(readWarmupDisplay);
   const [warmupOpen, setWarmupOpen] = useState(display === 'open');
   // Ticks while a rest runs, for the warm-up card's inline countdown.
   const [now, setNow] = useState(Date.now());
@@ -233,7 +213,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
           </Card>
 
           <Button fullWidth size="lg" onClick={() => {
-            try { localStorage.setItem(LAST_TIME_KEY, String(session.time)); } catch { /* storage unavailable */ }
+            saveLastTime(session.time);
             dispatch({ type: 'start', now: Date.now() });
           }}>
             Start session

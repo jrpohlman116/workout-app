@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { Check, Play, Plus } from 'lucide-react';
 import { WavePhase, WarmupFeel, calculateWarmupSets, getRoundingIncrement } from '../../../lib/calculations';
-import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, RPE_OPTIONS, RPE_DESCRIPTIONS, RpeValue } from '../../../lib/constants';
+import { RPE_OPTIONS, RPE_DESCRIPTIONS, RpeValue } from '../../../lib/constants';
+
+// Juggernaut's feel-based warm-up: the working weight shows as a ±4% range
+// until the warm-ups lock it. Juggernaut-only; everything else shows exact loads.
+const FEEL_RANGE_LOW = 0.96;
+const FEEL_RANGE_HIGH = 1.04;
 import { SetInput } from '../../../lib/types';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
@@ -107,8 +112,8 @@ export default function MainLiftView({
   // Working weights display as a ±4% range until the warm-up flow locks
   // today's number — warm-ups decide the weight, not the other way around.
   const roundTo = getRoundingIncrement(unitPreference);
-  const rangeLow = Math.round(warmupBase * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo;
-  const rangeHigh = Math.round(warmupBase * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo;
+  const rangeLow = Math.round(warmupBase * FEEL_RANGE_LOW / roundTo) * roundTo;
+  const rangeHigh = Math.round(warmupBase * FEEL_RANGE_HIGH / roundTo) * roundTo;
   const showRange = !!warmup && !warmupComplete && !isDeload;
 
   const baseDescription = isRealization
@@ -190,8 +195,8 @@ export default function MainLiftView({
             // its real recorded weight, never a range.
             const rowWeight = parseFloat(set.weight) || 0;
             const showRowRange = showRange && !setChecks?.[index] && rowWeight > 0;
-            const rowRangeLow = Math.round(rowWeight * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo;
-            const rowRangeHigh = Math.round(rowWeight * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo;
+            const rowRangeLow = Math.round(rowWeight * FEEL_RANGE_LOW / roundTo) * roundTo;
+            const rowRangeHigh = Math.round(rowWeight * FEEL_RANGE_HIGH / roundTo) * roundTo;
             const weightLabel = showRowRange
               ? `${rowRangeLow}–${rowRangeHigh}`
               : (set.weight || '—');

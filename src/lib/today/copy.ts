@@ -18,3 +18,8 @@ export function changesFor(limits: SessionLimits): string[] {
   return lines;
 }
 
+
+/** The readiness card's headline for a state. */
+export function readinessHeadline(state: 'green' | 'yellow' | 'red'): string {
+  return state === 'green' ? 'Train as written' : state === 'yellow' ? 'Lighter day' : 'Recovery day';
+}

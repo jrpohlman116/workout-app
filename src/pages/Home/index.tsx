@@ -1,27 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getGreeting, RepWave, WavePhase } from '../../lib/calculations';
-import type { Unit } from '../../lib/programs/types';
+import { getGreeting } from '../../lib/calculations';
+import type { LiftId, Unit } from '../../lib/programs/types';
 import { positionUpdates, indexFromCycleWeek } from '../../lib/programs/position';
 import { trainingMaxFor } from '../../lib/programs/maxes';
+import { weekRows, nextDayToTrain } from '../../lib/programs/week';
+import { WAVE_ORDER } from '../../lib/programs/fiveThreeOne/engine';
 import { useProgramContext } from '../../hooks/useProgramContext';
-import { PHASE_LABELS, CYCLE_TO_WAVE, WEEK_TO_PHASE, WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH } from '../../lib/constants';
+import { useTodayReadiness } from '../../hooks/useTodayReadiness';
+import { useDayAccessories } from '../../hooks/useDayAccessories';
+import { PHASE_LABELS } from '../../lib/constants';
 import { ChevronLeft, ChevronRight, Check, Activity } from 'lucide-react';
 import { availablePlates } from '../../lib/plates';
+import { buildTodayPlan } from '../../lib/today/plan';
+import { readLastTime } from '../../lib/today/prefs';
+import { readinessHeadline } from '../../lib/today/copy';
 import { supabase } from '../../lib/supabase';
 import type { StickingPoint, WeakPoints } from '../../lib/supabase';
-import { useRipple } from '../../hooks/useAnimations';
 import OneRepMaxTest from '../../components/features/OneRepMaxTest';
 import AccessibleModal from '../../components/accessible/AccessibleModal';
 import WeakPointPicker, { type MainLiftKey } from '../../components/features/WeakPointPicker';
-import WaveScheduleChart from '../Progress/components/WaveScheduleChart';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import PageHeader from '../../components/ui/PageHeader';
 import IconButton from '../../components/ui/IconButton';
-import Tile from '../../components/ui/Tile';
 
 const EMPTY_WEAK_POINTS: WeakPoints = { squat: [], bench: [], deadlift: [] };
+const LIFTS: LiftId[] = ['squat', 'bench', 'deadlift', 'ohp'];
 
 // Position columns to write for a new week. Only meet-date programs write
 // current_week_index: for others it's ignored, and writing it would make a
@@ -35,150 +40,70 @@ interface HomePageProps {
   onNavigate: (page: string, liftType?: string) => void;
 }
 
-
+/**
+ * Home (proposals #3 and #12): today's readiness and session in one card,
+ * then this week with exact loads. Loads come from the same plan Today uses.
+ */
 export default function HomePage({ onNavigate }: HomePageProps) {
   const { profile, user, refreshProfile } = useAuth();
-  const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(new Set());
-  const [workoutData, setWorkoutData] = useState<Map<string, { calculated_1rm: number }>>(new Map());
+  const [done, setDone] = useState<Map<string, string>>(new Map());
   const [skipping, setSkipping] = useState(false);
   const [showOneRMTest, setShowOneRMTest] = useState(false);
   const [showSkipWeekModal, setShowSkipWeekModal] = useState(false);
   const [pendingWeakPoints, setPendingWeakPoints] = useState<WeakPoints>(EMPTY_WEAK_POINTS);
-  const createRipple = useRipple();
   const [weekOffset, setWeekOffset] = useState(0);
   const [jumping, setJumping] = useState(false);
   const programCtx = useProgramContext(weekOffset);
+  const readiness = useTodayReadiness(user?.id);
 
   useEffect(() => {
-    if (user && profile) {
-      loadCompletedWorkouts();
-    }
+    if (user && profile) loadCompletedWorkouts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile?.current_cycle, profile?.current_week, profile?.program_restarted_at, weekOffset]);
 
   const loadCompletedWorkouts = async () => {
     if (!user || !profile) return;
-
-    // Same cycle/week arithmetic as viewedManual/handleJumpToWeek below —
-    // cycle/week is a running counter kept in sync with current_week_index
-    // regardless of program mode, so it doubles as the id for "which week
-    // is being previewed" here.
+    // cycle/week is a running counter kept in sync with current_week_index,
+    // so it identifies the week being previewed too.
     const base = (profile.current_cycle - 1) * 4 + (profile.current_week - 1);
     const total = Math.max(0, base + weekOffset);
-    const viewedWeek = (total % 4) + 1;
-    const viewedCycle = Math.floor(total / 4) + 1;
-
-    // A restart rewinds to cycle 1, week 1, so only sessions logged since
-    // then count as complete — earlier ones stay in history.
     let query = supabase
       .from('workout_sessions')
-      .select('lift_type, calculated_1rm')
+      .select('lift_type, completed_at')
       .eq('user_id', user.id)
-      .eq('cycle', viewedCycle)
-      .eq('week', viewedWeek)
+      .eq('cycle', Math.floor(total / 4) + 1)
+      .eq('week', (total % 4) + 1)
       .eq('is_1rm_test', false);
-    if (profile.program_restarted_at) {
-      query = query.gte('completed_at', profile.program_restarted_at);
-    }
+    // A restart rewinds to week 1, so only sessions since then count.
+    if (profile.program_restarted_at) query = query.gte('completed_at', profile.program_restarted_at);
     const { data } = await query;
-
-    if (data) {
-      // The overhead press day replaced the old upper day, so an upper session
-      // logged this week still counts as that day done.
-      const dayOf = (liftType: string) => (liftType === 'upper' ? 'ohp' : liftType);
-      setCompletedWorkouts(new Set(data.map(w => dayOf(w.lift_type))));
-      const dataMap = new Map();
-      data.forEach(w => {
-        dataMap.set(dayOf(w.lift_type), { calculated_1rm: w.calculated_1rm });
-      });
-      setWorkoutData(dataMap);
-    }
+    // An upper session logged this week still counts as the overhead press day.
+    setDone(new Map((data ?? []).map(w => [w.lift_type === 'upper' ? 'ohp' : w.lift_type, w.completed_at as string])));
   };
 
-  const handleSkipWeek = async () => {
-    if (!user || !profile) return;
+  // Today's day, for the readiness card's session and its accessories.
+  const layout = programCtx?.layout;
+  const todayDayId = layout && weekOffset === 0 ? nextDayToTrain(layout, new Set(done.keys())) : null;
+  const todayDay = layout?.days.find(d => d.dayId === todayDayId) ?? null;
+  const { accessories } = useDayAccessories(todayDayId ?? layout?.days[0]?.dayId ?? 'squat');
 
-    setShowSkipWeekModal(false);
-    setSkipping(true);
-    try {
-      // Meet-date programs advance through the schedule; others count up from
-      // cycle/week. Either way position is written through positionUpdates.
-      const weeksCount = waveSchedule.weeks.length;
-      const hasSchedule = weeksCount > 0 && currentBlockIndex >= 0;
-      const nextIndex = hasSchedule
-        ? Math.min(currentBlockIndex + 1, weeksCount - 1)
-        : indexFromCycleWeek(profile.current_cycle, profile.current_week) + 1;
-      const updates: Record<string, unknown> = {
-        ...pointerColumns(nextIndex, hasSchedule),
-        updated_at: new Date().toISOString(),
-      };
+  const trainingMaxes = useMemo(() => {
+    const out: Partial<Record<LiftId, number>> = {};
+    if (profile) for (const l of LIFTS) out[l] = trainingMaxFor(profile, l);
+    return out;
+  }, [profile]);
 
-      // Wave boundary: persist any weak-point edits from the check-in prompt
-      // and mark this wave reviewed so it isn't asked again until the next one.
-      if (needsWeakPointReview && upcomingCycle != null) {
-        updates.weak_points = pendingWeakPoints;
-        updates.weak_points_reviewed_cycle = upcomingCycle;
-      }
+  if (!profile || !programCtx || !layout) return null;
 
-      await supabase
-        .from('user_profiles')
-        .update(updates)
-        .eq('id', user.id);
-
-      await refreshProfile();
-    } catch (error) {
-      console.error('Error skipping week:', error);
-    } finally {
-      setSkipping(false);
-    }
-  };
-
-  const handleTogglePendingWeakPoint = (lift: MainLiftKey, point: StickingPoint) => {
-    setPendingWeakPoints(prev => {
-      const current = prev[lift];
-      const updated = current.includes(point)
-        ? current.filter(p => p !== point)
-        : [...current, point];
-      return { ...prev, [lift]: updated };
-    });
-  };
-
-  const handleJumpToWeek = async () => {
-    if (!user || !profile || weekOffset === 0) return;
-    setJumping(true);
-    try {
-      const weeksCount = waveSchedule.weeks.length;
-      const hasSchedule = weeksCount > 0 && currentBlockIndex >= 0;
-      const targetIndex = hasSchedule
-        ? Math.max(0, Math.min(weeksCount - 1, currentBlockIndex + weekOffset))
-        : Math.max(0, indexFromCycleWeek(profile.current_cycle, profile.current_week) + weekOffset);
-      const updates: Record<string, unknown> = {
-        ...pointerColumns(targetIndex, hasSchedule),
-        updated_at: new Date().toISOString(),
-      };
-
-      await supabase.from('user_profiles').update(updates).eq('id', user.id);
-      await refreshProfile();
-      setWeekOffset(0);
-    } catch (err) {
-      console.error('Error jumping to week:', err);
-    } finally {
-      setJumping(false);
-    }
-  };
-
-  if (!profile || !programCtx) return null;
+  const { program, schedule: waveSchedule, currentIndex: currentBlockIndex, currentBlock, viewedBlock } = programCtx;
+  const unit = (profile.unit_preference || 'lb') as Unit;
+  const plates = availablePlates(profile);
 
   const isMeetDay = (() => {
     if (!profile.meet_date) return false;
-    const meet = new Date(profile.meet_date);
-    const now = new Date();
-    const diffDays = (meet.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    const diffDays = (new Date(profile.meet_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
     return diffDays >= -1 && diffDays <= 1;
   })();
-
-  // Schedule and current/viewed week come from one shared resolver
-  // (useProgramContext), so Home and WorkoutDetail can't disagree.
-  const { program, layout, schedule: waveSchedule, currentIndex: currentBlockIndex, currentBlock, viewedBlock } = programCtx;
 
   const canGoBack = currentBlockIndex >= 0
     ? currentBlockIndex + weekOffset > 0
@@ -188,240 +113,276 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     : weekOffset < 52;
 
   const effectiveBlock = viewedBlock ?? (weekOffset === 0 ? currentBlock : null);
-  // Only a meet date too close to fit any waves leaves no schedule; fall back to the cycle counter.
-  const displayWave: RepWave = effectiveBlock?.wave ?? CYCLE_TO_WAVE[profile.current_cycle] ?? 3;
-  const displayPhase: WavePhase = effectiveBlock?.phase ?? WEEK_TO_PHASE[profile.current_week] ?? 'deload';
-
-  // Title of the week being shown. A schedule names its own weeks; the manual
-  // (no schedule) Juggernaut path still derives wave and phase from cycle/week.
-  const weekTitle = effectiveBlock ? program.weekLabel(effectiveBlock) : `${displayWave}-Rep ${PHASE_LABELS[displayPhase]}`;
-
-  const isDeload = displayPhase === 'deload';
   const isViewing = weekOffset !== 0;
+  const weekChip = (block: typeof effectiveBlock) => {
+    if (!block) return '';
+    const idx = WAVE_ORDER.indexOf(block.phase as typeof WAVE_ORDER[number]);
+    return program.id === 'five_three_one' && idx >= 0 ? `Week ${idx + 1} · ${PHASE_LABELS[block.phase]}` : program.weekLabel(block);
+  };
 
-  // What "Advance Week" will move you to, for the confirmation button/modal.
+  // What advancing moves you to, and whether it crosses into a new wave.
   const nextAdvanceBlock = waveSchedule.weeks.length > 0 && currentBlockIndex >= 0
     ? waveSchedule.weeks[Math.min(currentBlockIndex + 1, waveSchedule.weeks.length - 1)]
     : null;
-  const nextAdvanceLabel = nextAdvanceBlock
-    ? program.weekLabel(nextAdvanceBlock)
-    : `Week ${profile.current_week === 4 ? 1 : profile.current_week + 1}`;
-
-  // Manual (no meet date) programs have no peaking block — wrapping week 4
-  // always lands back on accumulation of the next cycle's wave.
-  const upcomingWaveLabel: string | undefined = nextAdvanceBlock ? program.waveLabel(nextAdvanceBlock) : undefined;
-  const upcomingCycle: number | undefined = nextAdvanceBlock?.cycleIndex;
-  const upcomingPhase: WavePhase | undefined = nextAdvanceBlock?.phase;
-  const needsWeakPointReview = program.isWaveBoundary(displayPhase, upcomingPhase)
+  const nextAdvanceLabel = nextAdvanceBlock ? program.weekLabel(nextAdvanceBlock) : 'next week';
+  const upcomingWaveLabel = nextAdvanceBlock ? program.waveLabel(nextAdvanceBlock) : undefined;
+  const upcomingCycle = nextAdvanceBlock?.cycleIndex;
+  const needsWeakPointReview = !!currentBlock && program.isWaveBoundary(currentBlock.phase, nextAdvanceBlock?.phase)
     && profile.weak_points_reviewed_cycle !== upcomingCycle;
 
-  // Days come from the layout. An accessory-only day has no main lift; a day
-  // whose lift has no max yet (overhead press is optional) asks for one.
-  const workouts = layout.days.map(day => {
-    const max = trainingMaxFor(profile, day.primary);
-    return {
-      name: day.label,
-      max,
-      type: day.dayId,
-      lift: day.primary,
-      accessoryOnly: day.primary === null,
-      needsMax: day.primary !== null && max <= 0,
-    };
+  const rows = weekRows({
+    layout, program, block: effectiveBlock && effectiveBlock.phase !== 'meet_week' ? effectiveBlock : null,
+    trainingMaxes, unit, plates, state: profile.program_state, done, isCurrentWeek: !isViewing,
   });
-  const dayCount = layout.days.length;
-  const completedCount = layout.days.filter(d => completedWorkouts.has(d.dayId)).length;
+  const allDone = rows.every(r => r.state === 'done');
+
+  const plan = todayDay && currentBlock && !isViewing
+    ? buildTodayPlan({
+        program, day: todayDay, block: currentBlock, trainingMaxes, unit, state: profile.program_state, plates,
+        readiness: readiness?.state ?? 'green', time: readLastTime(),
+        accessories: accessories.map(a => ({ name: a.name, sets: a.sets, reps: a.reps })),
+      })
+    : null;
+  const top = plan?.top;
+  const liftLine = top
+    ? top.pct != null && !plan?.topSetOnly
+      ? `${top.reps}${top.isAmrap ? '+' : 's'} at ${Math.round(top.pct * 1000) / 10}% of your ${top.trainingMax} ${unit} training max`
+      : `${top.sets > 1 ? `${top.sets} × ` : ''}${top.reps} at ${top.weight} ${unit}`
+    : null;
+
+  const handleSkipWeek = async () => {
+    if (!user) return;
+    setShowSkipWeekModal(false);
+    setSkipping(true);
+    try {
+      const hasSchedule = waveSchedule.weeks.length > 0 && currentBlockIndex >= 0;
+      const nextIndex = hasSchedule
+        ? Math.min(currentBlockIndex + 1, waveSchedule.weeks.length - 1)
+        : indexFromCycleWeek(profile.current_cycle, profile.current_week) + 1;
+      const updates: Record<string, unknown> = { ...pointerColumns(nextIndex, hasSchedule), updated_at: new Date().toISOString() };
+      // Wave boundary: save any weak-point edits and mark the wave reviewed.
+      if (needsWeakPointReview && upcomingCycle != null) {
+        updates.weak_points = pendingWeakPoints;
+        updates.weak_points_reviewed_cycle = upcomingCycle;
+      }
+      await supabase.from('user_profiles').update(updates).eq('id', user.id);
+      await refreshProfile();
+    } catch (error) {
+      console.error('Error advancing week:', error);
+    } finally {
+      setSkipping(false);
+    }
+  };
+
+  const handleJumpToWeek = async () => {
+    if (!user || weekOffset === 0) return;
+    setJumping(true);
+    try {
+      const hasSchedule = waveSchedule.weeks.length > 0 && currentBlockIndex >= 0;
+      const targetIndex = hasSchedule
+        ? Math.max(0, Math.min(waveSchedule.weeks.length - 1, currentBlockIndex + weekOffset))
+        : Math.max(0, indexFromCycleWeek(profile.current_cycle, profile.current_week) + weekOffset);
+      await supabase.from('user_profiles').update({ ...pointerColumns(targetIndex, hasSchedule), updated_at: new Date().toISOString() }).eq('id', user.id);
+      await refreshProfile();
+      setWeekOffset(0);
+    } catch (err) {
+      console.error('Error jumping to week:', err);
+    } finally {
+      setJumping(false);
+    }
+  };
+
+  const handleTogglePendingWeakPoint = (lift: MainLiftKey, point: StickingPoint) => {
+    setPendingWeakPoints(prev => {
+      const current = prev[lift];
+      return { ...prev, [lift]: current.includes(point) ? current.filter(p => p !== point) : [...current, point] };
+    });
+  };
+
+  const openAdvance = () => {
+    if (needsWeakPointReview) setPendingWeakPoints(profile.weak_points ?? EMPTY_WEAK_POINTS);
+    setShowSkipWeekModal(true);
+  };
 
   return (
     <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
-        <PageHeader eyebrow="Ironform" title={getGreeting()} titleClassName="font-bold" />
+        <PageHeader eyebrow="Ironform" title={getGreeting()} titleClassName="font-black" />
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        {/* A schedule with no meet date just repeats, so there is no road map to chart. */}
-        {waveSchedule.repeats ? (
-          <Card className="px-6 py-8">
-            <p className="text-center text-body-sm text-gray-500 dark:text-gray-400">
-              Set a meet date in your profile to see your program schedule.
-            </p>
-          </Card>
-        ) : (
-          <Card className="px-6 py-8">
-            <WaveScheduleChart
-              schedule={waveSchedule}
-              program={program}
-              trainingMaxes={{ squat: profile.squat_max, bench: profile.bench_max, deadlift: profile.deadlift_max }}
-              unit={profile.unit_preference || 'lb'}
-              currentWeekIndex={currentBlockIndex}
-            />
-          </Card>
-        )}
-
         {isMeetDay && (
-          <Tile
-            onClick={() => setShowOneRMTest(true)}
-            title="Meet Day — Log Attempts"
-            description="Guided warm-up and attempt logging for your lifts"
-            leading={
-              <div className="bg-blue-50 rounded-full p-3">
-                <Activity className="w-6 h-6 text-blue-700" />
-              </div>
-            }
-            trailing={<ChevronRight className="w-6 h-6 flex-shrink-0" />}
-            className="bg-white text-blue-700 rounded-2xl shadow-sm p-6 hover:bg-blue-50 hover-lift focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 dark:focus:ring-offset-blue-900"
-          />
+          <Card onClick={() => setShowOneRMTest(true)} className="w-full p-5 flex items-center gap-4 text-left hover:bg-blue-50 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+            <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 p-3"><Activity className="h-6 w-6 text-blue-700 dark:text-blue-300" aria-hidden="true" /></span>
+            <span className="flex-1">
+              <span className="block text-h4 text-gray-900 dark:text-gray-100">Meet day: log your attempts</span>
+              <span className="block text-sm text-gray-600 dark:text-gray-300">Guided warm-up and attempt logging for your lifts</span>
+            </span>
+            <ChevronRight className="h-5 w-5 text-gray-400" aria-hidden="true" />
+          </Card>
         )}
 
-        {/* Week navigator */}
-        <Card className="p-5 flex items-center justify-between">
-          <IconButton
-            label="Previous week"
-            onClick={() => setWeekOffset(o => o - 1)}
-            disabled={!canGoBack}
-          >
-            <ChevronLeft className="w-5 h-5" aria-hidden="true" />
-          </IconButton>
-          <div className="text-center">
-            <p className="text-body-md-semibold text-gray-900 dark:text-gray-100">
-              {weekTitle}
-            </p>
-            <p className="text-body-sm text-gray-400 dark:text-gray-400 mt-0.5">
-              {isViewing
-                ? weekOffset > 0
-                  ? `${weekOffset} week${weekOffset !== 1 ? 's' : ''} ahead`
-                  : `${Math.abs(weekOffset)} week${Math.abs(weekOffset) !== 1 ? 's' : ''} back`
-                : 'Current week'}
-            </p>
-          </div>
-          <IconButton
-            label="Next week"
-            onClick={() => setWeekOffset(o => o + 1)}
-            disabled={!canGoForward}
-          >
-            <ChevronRight className="w-5 h-5" aria-hidden="true" />
-          </IconButton>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-h2 text-gray-900 dark:text-gray-100">Workouts</h2>
-            {isViewing && (
-              <span className="text-body-sm-semibold text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-full">
-                Preview
-              </span>
+        {/* Readiness and today's session */}
+        <Card className="p-5 space-y-4">
+          <div>
+            <h2 className="text-h4 text-gray-900 dark:text-gray-100">Readiness</h2>
+            {readiness ? (
+              <>
+                <p className="mt-1">
+                  <span className="text-6xl font-black tabular-nums text-blue-700 dark:text-blue-300">{readiness.score}</span>
+                  <span className="text-xl font-semibold text-gray-400">/100</span>
+                </p>
+                <p className="text-h3 text-gray-900 dark:text-gray-100">{readinessHeadline(readiness.state)}</p>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{readiness.inputs.reason}</p>
+                {readiness.inputs.note && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{readiness.inputs.note}</p>}
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Working out today's readiness…</p>
             )}
           </div>
-          {isDeload && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4 mb-4">
-              <p className="text-body-md-semibold text-gray-900 dark:text-gray-100 mb-1">Deload Week</p>
-              <p className="text-body-sm text-gray-600 dark:text-gray-300">Lighter weights, same movements. Complete the sets and move on.</p>
+
+          {!isViewing && (
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3">
+              {plan && todayDay && top ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-full bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-300">{weekChip(currentBlock)}</span>
+                    <span className="text-xs text-gray-400">~{plan.minutes} min</span>
+                  </div>
+                  <div>
+                    <h3 className="text-h4 text-gray-900 dark:text-gray-100">{todayDay.label}</h3>
+                    {liftLine && <p className="text-xs text-gray-500 dark:text-gray-400">{liftLine}</p>}
+                  </div>
+                  <ul className="grid grid-cols-3 gap-2">
+                    <SessionTile value={`${top.weight}`} label={top.isAmrap ? `Top set · ${top.reps}+` : 'Top set'} />
+                    {plan.backoff
+                      ? <SessionTile value={`up to ${plan.backoff.cap}`} label={`Back-offs × ${plan.backoff.weight}`} />
+                      : <SessionTile value="—" label={plan.topSetOnly ? 'No back-offs today' : 'Back-offs'} />}
+                    <SessionTile value={String(plan.accessories.filter(a => !a.cut).length)} label="Accessories" />
+                  </ul>
+                  <Button fullWidth size="lg" onClick={() => onNavigate('workout', todayDay.dayId)}>
+                    Start {todayDay.label.toLowerCase()}
+                  </Button>
+                </>
+              ) : allDone ? (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Every day this week is done.</p>
+                  <Button fullWidth size="lg" onClick={openAdvance} disabled={skipping}>
+                    {skipping ? 'Moving to next week…' : `Start ${nextAdvanceLabel}`}
+                  </Button>
+                </>
+              ) : todayDay && rows.find(r => r.dayId === todayDay.dayId)?.needsMax ? (
+                <Button fullWidth size="lg" onClick={() => onNavigate('workout', todayDay.dayId)}>
+                  Set your {todayDay.label.toLowerCase()} max
+                </Button>
+              ) : null}
             </div>
           )}
-          <div className="space-y-3">
-            {workouts.map((workout, index) => {
-              const isCompleted = completedWorkouts.has(workout.type);
-              const sessionData = workoutData.get(workout.type);
-              const projected1RM = sessionData?.calculated_1rm;
-              // No main-lift weight to show: accessory-only day, or a lift still missing its max.
-              const isUpperDayWorkout = workout.accessoryOnly || workout.needsMax;
-              const unit = profile.unit_preference || 'lb';
-              const roundTo = unit === 'kg' ? 2.5 : 5;
-              const baseWeight = (!isUpperDayWorkout && workout.lift && effectiveBlock && effectiveBlock.phase !== 'meet_week')
-                ? program.prescribe({ block: effectiveBlock, lift: workout.lift, trainingMax: workout.max, unit: unit as Unit, plates: availablePlates(profile) }).groups[0]?.weight ?? null
-                : null;
-              const weightLow = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_LOW / roundTo) * roundTo : null;
-              const weightHigh = baseWeight !== null ? Math.round(baseWeight * WEIGHT_DISPLAY_RANGE_HIGH / roundTo) * roundTo : null;
+        </Card>
 
-              const trailing = isCompleted
-                ? <Check className="w-5 h-5 text-green-500 dark:text-green-400 flex-shrink-0" />
-                : !isViewing
-                  ? <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-300 flex-shrink-0" />
-                  : null;
+        {/* This week */}
+        <Card className="p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-h2 text-gray-900 dark:text-gray-100">This week</h2>
+              {(isViewing || effectiveBlock) && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {weekChip(effectiveBlock)}
+                  {isViewing && ` · ${weekOffset > 0 ? `${weekOffset} ${weekOffset === 1 ? 'week' : 'weeks'} ahead` : `${-weekOffset} ${weekOffset === -1 ? 'week' : 'weeks'} back`}`}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-1">
+              <IconButton label="Previous week" onClick={() => setWeekOffset(o => o - 1)} disabled={!canGoBack}>
+                <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+              </IconButton>
+              <IconButton label="Next week" onClick={() => setWeekOffset(o => o + 1)} disabled={!canGoForward}>
+                <ChevronRight className="w-5 h-5" aria-hidden="true" />
+              </IconButton>
+            </div>
+          </div>
 
+          {effectiveBlock?.phase === 'deload' && (
+            <p className="rounded-xl bg-blue-50 dark:bg-blue-900/20 p-3 text-sm text-gray-700 dark:text-gray-200">
+              Deload week. Lighter weights, same movements. Complete the sets and move on.
+            </p>
+          )}
+
+          <ol className="space-y-2">
+            {rows.map(row => {
+              const isDone = row.state === 'done';
+              const isToday = row.state === 'today';
+              const detail = isDone ? `Done${row.doneOn ? ` · ${row.doneOn}` : ''}` : row.needsMax ? 'Set your max' : row.lift === null ? 'Accessory work' : null;
+              const content = (
+                <>
+                  <span className={`w-6 text-sm font-semibold tabular-nums ${isDone ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'}`}>{row.number}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className={`block text-xs ${isDone ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {row.label}{isToday ? ' · Today' : ''}
+                    </span>
+                    {detail ? (
+                      <span className={`block text-sm font-semibold ${isDone ? 'text-green-800 dark:text-green-200' : 'text-gray-600 dark:text-gray-300'}`}>{detail}</span>
+                    ) : row.weight != null ? (
+                      <span className="block text-xl font-black tabular-nums text-gray-900 dark:text-gray-100">
+                        {row.weight} <span className="text-sm font-semibold text-gray-400">{unit}</span>
+                      </span>
+                    ) : null}
+                  </span>
+                  {isDone
+                    ? <Check className="h-5 w-5 text-green-600 dark:text-green-400" aria-label="Done" />
+                    : !isViewing && <ChevronRight className="h-5 w-5 text-gray-400" aria-hidden="true" />}
+                </>
+              );
+              const rowClass = `flex w-full items-center gap-3 rounded-xl p-3 text-left ${isDone ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700/50'}`;
               return (
-                <Tile
-                  key={workout.type}
-                  onClick={(e) => {
-                    if (isViewing) return;
-                    createRipple(e);
-                    onNavigate('workout', workout.type);
-                  }}
-                  style={{ animationDelay: `${160 + index * 40}ms` }}
-                  className={`animate-enter ${isCompleted
-                      ? `bg-green-50 dark:bg-green-900/20 ${isViewing ? 'cursor-default' : 'hover:bg-green-100 dark:hover:bg-green-900/30 hover-scale active-press ripple-container'}`
-                      : `bg-gray-50 dark:bg-gray-700 ${isViewing ? 'cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-600 hover-scale active-press ripple-container'}`
-                    }`}
-                  trailing={trailing}
-                >
-                  <p className={`text-eyebrow tracking-wide mb-1 ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'
-                    }`}>
-                    {workout.name}
-                  </p>
-                  {isCompleted ? (
-                    <p className="text-body-lg-bold text-green-700 dark:text-green-300 tabular-nums">
-                      {
-                      projected1RM ? 
-                        <>
-                          {`${Math.round(projected1RM)} ${unit} `}
-                          <span className="text-body-sm-semibold">proj.</span>
-                        </>
-                        : 'Done'
-                      }
-                    </p>
-                  ) : workout.needsMax ? (
-                    <p className="text-body-md text-gray-500 dark:text-gray-300">Set your max</p>
-                  ) : workout.accessoryOnly ? (
-                    <p className="text-body-md text-gray-500 dark:text-gray-300">Accessory work</p>
-                  ) : weightLow !== null && weightHigh !== null ? (
-                    <p className="text-body-lg-bold font-black tabular-nums leading-tight text-gray-900 dark:text-gray-100">
-                      {weightLow}<wbr />–{weightHigh} <span className="text-sm font-medium text-gray-400 dark:text-gray-300">{unit}</span>
-                    </p>
+                <li key={row.dayId}>
+                  {isViewing ? (
+                    <div className={rowClass}>{content}</div>
                   ) : (
-                    <p className="text-body-sm text-gray-500 dark:text-gray-300">—</p>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('workout', row.dayId)}
+                      className={`${rowClass} min-h-[56px] hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500`}
+                      aria-label={`Day ${Number(row.number)}: ${row.label}${isToday ? ', today' : ''}${detail ? `, ${detail}` : row.weight != null ? `, ${row.weight} ${unit}` : ''}`}
+                    >
+                      {content}
+                    </button>
                   )}
-                </Tile>
+                </li>
               );
             })}
+          </ol>
+
+          {isViewing && (
+            <Button fullWidth onClick={handleJumpToWeek} disabled={jumping}>
+              {jumping ? 'Updating program…' : weekOffset > 0
+                ? `Skip ${weekOffset} ${weekOffset === 1 ? 'week' : 'weeks'} ahead`
+                : `Go back ${-weekOffset} ${weekOffset === -1 ? 'week' : 'weeks'}`}
+            </Button>
+          )}
+        </Card>
+
+        {/* Connect: shown while no wearable is connected (all of them, until phase 8). */}
+        <Card className="p-5 flex items-center gap-4">
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Want a read on today, not just last week?</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Connecting Oura or Strava to add sleep, HRV and runs is coming soon.</p>
           </div>
-          {isViewing ? (
-            <Button fullWidth className="mt-4" onClick={handleJumpToWeek} disabled={jumping}>
-              {jumping
-                ? 'Updating program…'
-                : weekOffset > 0
-                  ? `Skip ${weekOffset} week${weekOffset !== 1 ? 's' : ''} ahead`
-                  : `Go back ${Math.abs(weekOffset)} week${Math.abs(weekOffset) !== 1 ? 's' : ''}`}
-            </Button>
-          ) : completedCount === dayCount ? (
-            <Button
-              fullWidth
-              className="mt-4"
-              onClick={() => {
-                if (needsWeakPointReview) setPendingWeakPoints(profile.weak_points ?? EMPTY_WEAK_POINTS);
-                setShowSkipWeekModal(true);
-              }}
-              disabled={skipping}
-            >
-              {skipping ? 'Advancing your program...' : `Start ${nextAdvanceLabel}`}
-            </Button>
-          ) : null}
         </Card>
       </div>
 
       {showOneRMTest && (
         <OneRepMaxTest
           onClose={() => setShowOneRMTest(false)}
-          onComplete={() => {
-            setShowOneRMTest(false);
-            loadCompletedWorkouts();
-          }}
+          onComplete={() => { setShowOneRMTest(false); loadCompletedWorkouts(); }}
         />
       )}
 
       <AccessibleModal
         isOpen={showSkipWeekModal}
         onClose={() => setShowSkipWeekModal(false)}
-        title={needsWeakPointReview && upcomingWaveLabel ? `New wave: ${upcomingWaveLabel}` : 'Move to Next Week'}
-        description={needsWeakPointReview ? 'Anything changed with your sticking points?' : `Skip to ${nextAdvanceLabel}`}
+        title={needsWeakPointReview && upcomingWaveLabel ? `New wave: ${upcomingWaveLabel}` : 'Move to next week'}
+        description={needsWeakPointReview ? 'Anything changed with your sticking points?' : `Move to ${nextAdvanceLabel}`}
         size="sm"
       >
         {needsWeakPointReview ? (
@@ -430,20 +391,27 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </div>
         ) : (
           <p className="text-body-md text-gray-600 dark:text-gray-300 mb-6">
-            {completedCount === dayCount
-              ? "You've completed all workouts for this week. Ready to move to the next week?"
-              : "You haven't completed all workouts yet. Are you sure you want to skip ahead?"}
+            {allDone
+              ? "You've done every day this week. Ready to move on?"
+              : "You haven't done every day yet. Move on anyway?"}
           </p>
         )}
         <div className="flex gap-3">
-          <Button variant="secondary" size="md" className="flex-1" disabled={skipping} onClick={() => setShowSkipWeekModal(false)}>
-            Cancel
-          </Button>
+          <Button variant="secondary" size="md" className="flex-1" disabled={skipping} onClick={() => setShowSkipWeekModal(false)}>Cancel</Button>
           <Button size="md" className="flex-1" disabled={skipping} onClick={handleSkipWeek}>
-            {needsWeakPointReview && upcomingWaveLabel ? `Start ${upcomingWaveLabel}` : 'Advance Week'}
+            {needsWeakPointReview && upcomingWaveLabel ? `Start ${upcomingWaveLabel}` : 'Next week'}
           </Button>
         </div>
       </AccessibleModal>
     </div>
+  );
+}
+
+function SessionTile({ value, label }: { value: string; label: string }) {
+  return (
+    <li className="rounded-xl bg-gray-50 dark:bg-gray-700/50 p-3">
+      <span className="block text-lg font-black tabular-nums text-gray-900 dark:text-gray-100">{value}</span>
+      <span className="block text-xs text-gray-500 dark:text-gray-400">{label}</span>
+    </li>
   );
 }

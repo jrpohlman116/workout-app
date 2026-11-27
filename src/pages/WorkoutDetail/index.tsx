@@ -9,7 +9,7 @@ import { recordTrainingMaxChange } from '../../lib/programs/tmChanges';
 import OhpMaxPrompt from '../../components/features/OhpMaxPrompt';
 import { useProgramContext } from '../../hooks/useProgramContext';
 import type { LiftId, SessionSummary, TmUpdate, Unit } from '../../lib/programs/types';
-import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, PHASE_LABELS } from '../../lib/constants';
+import { REST_TIMER_DEFAULTS, RestTimerKind, PHASE_LABELS } from '../../lib/constants';
 import { availablePlates as platesOf } from '../../lib/plates';
 import { supabase } from '../../lib/supabase';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
@@ -497,7 +497,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     ? (profile.available_plates_kg?.length ? profile.available_plates_kg : DEFAULT_PLATES_KG)
     : (profile.available_plates_lb?.length ? profile.available_plates_lb : DEFAULT_PLATES_LB);
 
-  // Suggested weight range for accessories that are barbell variations of a
+  // Suggested weight for accessories that are barbell variations of a
   // main lift (pause squats, board press, rack pulls, etc.) — the rest of
   // the accessory pool has no %TM basis and gets no suggestion. Scaled down
   // for heavier, lower-rep waves and for deload (see
@@ -510,10 +510,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     const roundTo = getRoundingIncrement(unit);
     const weightMultiplier = getAccessoryWeightMultiplier(currentBlock?.wave, currentBlock?.phase);
     const base = trainingMax * mapping.pct * weightMultiplier;
-    return {
-      low: Math.round((base * WEIGHT_DISPLAY_RANGE_LOW) / roundTo) * roundTo,
-      high: Math.round((base * WEIGHT_DISPLAY_RANGE_HIGH) / roundTo) * roundTo,
-    };
+    // Exact, like every other load (decision 5); low and high stay for the view's shape.
+    const weight = Math.round(base / roundTo) * roundTo;
+    return { low: weight, high: weight };
   };
 
   const baseMainConfig: JuggernautSetsConfig | null = isUpperDay || !currentBlock || !programCtx ? null : toSetsConfig(

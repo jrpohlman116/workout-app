@@ -152,7 +152,7 @@ export default function AccessoryExerciseView({
                       step="0.5"
                       value={set.weight}
                       onChange={(e) => onUpdateSet(index, 'weight', e.target.value)}
-                      placeholder={suggestedWeight ? `${suggestedWeight.low}-${suggestedWeight.high}` : '0'}
+                      placeholder={suggestedWeight ? `${suggestedWeight.low}` : '0'}
                       className="px-4 py-3 border border-gray-200 dark:border-gray-400 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-shadow"
                       aria-label={`Set ${setNumber}: Weight in ${unitPreference}`}
                       min="0"
