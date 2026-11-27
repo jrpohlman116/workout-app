@@ -58,7 +58,8 @@ function AppContent() {
   // Pages written before the four tabs still navigate by page name.
   const handleNavigate = (page: string, liftType?: string) => {
     if (page === 'workout' || page === 'today') go(liftType ? { tab: 'today', lift: liftType } : { tab: 'today' });
-    else if (page === 'calculator' || page === 'profile') go({ tab: 'more', sub: page });
+    else if (page === 'calculator') go({ tab: 'more', sub: '1rm' });
+    else if (page === 'profile') go({ tab: 'more', sub: 'account' });
     else if (page === 'progress' || page === 'more') go({ tab: page });
     else go({ tab: 'home' });
   };
@@ -132,10 +133,10 @@ function AppContent() {
               lift={route.lift}
               sheet={route.sheet}
               onRouteChange={next => go({ tab: 'progress', sub: next.tab, lift: next.lift, sheet: next.sheet }, next.tab === (route.sub ?? 'program'))}
-              onEditTrainingMax={() => go({ tab: 'more', sub: 'profile' })}
+              onEditTrainingMax={() => go({ tab: 'more', sub: 'program' })}
             />
           )}
-          {route.tab === 'more' && <MorePage page={route.sub} onOpen={page => go({ tab: 'more', sub: page })} />}
+          {route.tab === 'more' && <MorePage page={route.sub} onOpen={page => go({ tab: 'more', sub: page })} onBack={() => go({ tab: 'more' })} />}
           {/* Room for the workout bar so it never covers the end of a page. */}
           {showWorkoutBar && <div className="h-20" aria-hidden="true" />}
         </main>

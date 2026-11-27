@@ -18,21 +18,22 @@ describe('parseRoute', () => {
     expect(parseRoute('/progress')).toEqual({ tab: 'progress' });
     expect(parseRoute('/progress/records')).toEqual({ tab: 'progress', sub: 'records' });
     expect(parseRoute('/more')).toEqual({ tab: 'more' });
-    expect(parseRoute('/more/profile/')).toEqual({ tab: 'more', sub: 'profile' });
+    expect(parseRoute('/more/program/')).toEqual({ tab: 'more', sub: 'program' });
+    expect(parseRoute('/more/profile')).toEqual({ tab: 'more', sub: 'account' });
   });
 
   it('keeps old links working', () => {
     expect(parseRoute('/workout', '?lift=squat')).toEqual({ tab: 'today', lift: 'squat' });
     expect(parseRoute('/workout')).toEqual({ tab: 'today' });
-    expect(parseRoute('/calculator')).toEqual({ tab: 'more', sub: 'calculator' });
-    expect(parseRoute('/profile')).toEqual({ tab: 'more', sub: 'profile' });
+    expect(parseRoute('/calculator')).toEqual({ tab: 'more', sub: '1rm' });
+    expect(parseRoute('/profile')).toEqual({ tab: 'more', sub: 'account' });
     expect(parseRoute('/home')).toEqual({ tab: 'home' });
     expect(parseRoute('/nope')).toEqual({ tab: 'home' });
   });
 
   it('writes canonical paths and spots old ones', () => {
     expect(routeToPath({ tab: 'today', lift: 'bench' })).toBe('/today?lift=bench');
-    expect(routeToPath({ tab: 'more', sub: 'calculator' })).toBe('/more/calculator');
+    expect(routeToPath({ tab: 'more', sub: 'plates' })).toBe('/more/plates');
     expect(routeToPath({ tab: 'home' })).toBe('/');
     expect(isLegacyPath('/workout', '?lift=squat')).toBe(true);
     expect(isLegacyPath('/profile')).toBe(true);

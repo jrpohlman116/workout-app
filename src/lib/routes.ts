@@ -6,10 +6,10 @@
 //   /progress/:tab    Progress on a tab (?lift= picks a lift, &sheet=tm opens
 //                     its training max sheet)
 //   /more             More
-//   /more/:page       A page inside More (profile, calculator, ...)
+//   /more/:page       A tool or settings page inside More (program, plates, ...)
 //
 // Old links keep working: /workout?lift=x goes to /today?lift=x, /calculator
-// and /profile go to their pages inside More, /home goes to /.
+// to More → 1RM estimator, /profile to More → Account, /home to /.
 
 export type Tab = 'home' | 'today' | 'progress' | 'more';
 
@@ -22,6 +22,9 @@ export interface Route {
   /** Progress only: a sheet to open on arrival. */
   sheet?: 'tm';
 }
+
+// Pages that moved inside More.
+const LEGACY_MORE: Record<string, string> = { calculator: '1rm', profile: 'account' };
 
 const clean = (segment: string | undefined) => (segment ? decodeURIComponent(segment).trim() || undefined : undefined);
 
@@ -45,11 +48,13 @@ export function parseRoute(pathname: string, search = ''): Route {
       if (params.get('sheet') === 'tm') route.sheet = 'tm';
       return route;
     }
-    case 'more':
-      return second ? { tab: 'more', sub: clean(second) } : { tab: 'more' };
+    case 'more': {
+      const sub = clean(second);
+      return sub ? { tab: 'more', sub: LEGACY_MORE[sub] ?? sub } : { tab: 'more' };
+    }
     case 'calculator':
     case 'profile':
-      return { tab: 'more', sub: first };
+      return { tab: 'more', sub: LEGACY_MORE[first] };
     default:
       return { tab: 'home' };
   }

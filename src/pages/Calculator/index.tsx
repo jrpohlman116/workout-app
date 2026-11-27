@@ -12,8 +12,9 @@ import SectionLabel from '../../components/ui/SectionLabel';
 import Select from '../../components/ui/Select';
 import type { CalculatorTab as Tab } from '../../lib/types';
 
-export default function CalculatorPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('1rm');
+/** Tools from More: the 1RM estimator (with Wilks; DOTS is on Progress → Overview) and the plate calculator. */
+export default function CalculatorPage({ initialTab = '1rm' }: { initialTab?: Tab } = {}) {
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const createRipple = useRipple();
   const { profile } = useAuth();
 
@@ -129,15 +130,15 @@ export default function CalculatorPage() {
   };
 
   const tabs = [
-    { id: '1rm' as Tab, label: '1 RM' },
-    { id: 'wilks' as Tab, label: 'Wilks Score' },
-    { id: 'plates' as Tab, label: 'Plate Calculator' },
+    { id: '1rm' as Tab, label: '1RM' },
+    { id: 'wilks' as Tab, label: 'Wilks' },
+    { id: 'plates' as Tab, label: 'Plates' },
   ];
 
   return (
     <div className="min-h-screen pb-24">
       <div className="bg-white dark:bg-gray-800">
-        <PageHeader eyebrow="Tools" title="Calculator" />
+        <PageHeader eyebrow="Tools" title={initialTab === 'plates' ? 'Plate calculator' : '1RM estimator'} />
         <TabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} onRipple={createRipple} />
       </div>
 
@@ -145,7 +146,7 @@ export default function CalculatorPage() {
         {activeTab === '1rm' && (
           <div className="space-y-4 animate-enter">
             <Card className="p-6">
-              <h3 className="text-h3 text-gray-900 dark:text-gray-100 mb-2">1 Rep Max</h3>
+              <h3 className="text-h3 text-gray-900 dark:text-gray-100 mb-2">One rep max</h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
                 Calculate your one-rep max using the weight you lifted and the number of repetitions completed.
                 This 1 rep max is calculated using the Epley formula: Weight x (1 + (Reps / 30))
@@ -200,7 +201,7 @@ export default function CalculatorPage() {
         {activeTab === 'wilks' && (
           <div className="space-y-4 animate-enter">
             <Card className="p-6">
-              <h3 className="text-h3 text-gray-900 dark:text-gray-100 mb-2">Wilks Score</h3>
+              <h3 className="text-h3 text-gray-900 dark:text-gray-100 mb-2">Wilks score</h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
                 Compare powerlifting strength across bodyweights. Wilks score is typically used in competitions.
               </p>
@@ -254,7 +255,7 @@ export default function CalculatorPage() {
         {activeTab === 'plates' && (
           <div className="space-y-4 animate-enter">
             <Card className="p-6">
-              <h3 className="text-h3 text-gray-900 dark:text-gray-100 mb-2">Plate Calculator</h3>
+              <h3 className="text-h3 text-gray-900 dark:text-gray-100 mb-2">Plate calculator</h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
                 Calculate which plates to load on each side of the bar to reach your target weight.
               </p>

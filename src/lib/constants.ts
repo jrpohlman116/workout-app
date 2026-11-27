@@ -1,4 +1,4 @@
-import type { RepWave, WavePhase, ProfileTab } from './types';
+import type { RepWave, WavePhase } from './types';
 
 export const DEFAULT_PROGRAM_WEEKS = 16;
 
@@ -90,9 +90,3 @@ export type RestTimerKind = keyof typeof REST_TIMER_DEFAULTS;
 // localStorage key for the timer's vibrate-on-finish preference (off by default)
 export const REST_TIMER_VIBRATE_KEY = 'rest_timer_vibrate';
 
-export const PROFILE_TAB_LABELS: Record<ProfileTab, string> = {
-  body:     'Body stats',
-  maxes:    'Maxes',
-  training: 'Training',
-  security: 'Account',
-};

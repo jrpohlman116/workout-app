@@ -27,3 +27,7 @@ export function readWarmupDisplay(): 'collapsed' | 'open' | 'off' {
     return 'collapsed';
   }
 }
+
+export function saveWarmupDisplay(value: 'collapsed' | 'open' | 'off') {
+  try { localStorage.setItem(WARMUP_DISPLAY_KEY, value); } catch { /* storage unavailable */ }
+}
