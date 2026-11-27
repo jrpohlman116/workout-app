@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BAR_WEIGHTS } from '../../lib/calculations';
-import { availablePlates } from '../../lib/plates';
+import { availablePlates, PLATE_OPTIONS } from '../../lib/plates';
 import { loadIncrement } from '../../lib/programs/shared/rounding';
 import { REST_TIMER_DEFAULTS } from '../../lib/constants';
 import { readWarmupDisplay, saveWarmupDisplay } from '../../lib/today/prefs';
@@ -31,7 +31,8 @@ type WarmupDisplay = 'collapsed' | 'open' | 'off';
 
 /** Training preferences (proposal #13): warm-up display, rest timers, sticking points. */
 export function TrainingPreferences({ onEditStickingPoints }: { onEditStickingPoints: () => void }) {
-  const [warmups, setWarmups] = useState<WarmupDisplay>(readWarmupDisplay);
+  const { user, profile } = useAuth();
+  const [warmups, setWarmups] = useState<WarmupDisplay>(() => readWarmupDisplay(profile));
   const rests = [
     { label: 'Warm-up sets', seconds: REST_TIMER_DEFAULTS.warmup },
     { label: 'Top set and back-offs', seconds: REST_TIMER_DEFAULTS.main },
@@ -45,7 +46,7 @@ export function TrainingPreferences({ onEditStickingPoints }: { onEditStickingPo
         <RadioCards<WarmupDisplay>
           labelId="warmup-pref"
           value={warmups}
-          onSelect={v => { setWarmups(v); saveWarmupDisplay(v); }}
+          onSelect={v => { setWarmups(v); saveWarmupDisplay(v, user?.id); }}
           options={[
             { value: 'collapsed', title: 'Collapsed above the top set', description: 'Default. One tap opens the sets.' },
             { value: 'open', title: 'Open above the top set', description: 'Sets are listed and ready to log.' },
@@ -80,7 +81,6 @@ export function TrainingPreferences({ onEditStickingPoints }: { onEditStickingPo
   );
 }
 
-const PLATE_OPTIONS = { lb: [55, 45, 35, 25, 15, 10, 5, 2.5, 1.25], kg: [25, 20, 15, 10, 5, 2.5, 1.25, 0.5] } as const;
 
 /** Equipment: the plates you have, which decide how loads round. */
 export function EquipmentSettings() {

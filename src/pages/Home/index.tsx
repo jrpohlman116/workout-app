@@ -139,7 +139,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const plan = todayDay && currentBlock && !isViewing
     ? buildTodayPlan({
         program, day: todayDay, block: currentBlock, trainingMaxes, unit, state: profile.program_state, plates,
-        readiness: readiness?.state ?? 'green', time: readLastTime(),
+        readiness: readiness?.state ?? 'green', time: readLastTime(profile),
         accessories: accessories.map(a => ({ name: a.name, sets: a.sets, reps: a.reps })),
       })
     : null;

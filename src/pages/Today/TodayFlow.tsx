@@ -55,7 +55,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
   const unit = (profile?.unit_preference || 'lb') as Unit;
   const draftKey = user ? `jt_draft_${user.id}_${lift}` : null;
 
-  const [session, dispatch] = useReducer(sessionReducer, undefined, () => initialSession(readLastTime()));
+  const [session, dispatch] = useReducer(sessionReducer, undefined, () => initialSession(readLastTime(profile)));
   const restored = useRef(false);
   const [sheet, setSheet] = useState<'readiness' | 'why' | null>(null);
   const [editing, setEditing] = useState<EditTarget | null>(null);
@@ -95,7 +95,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
   const inSession = session.stage !== 'before';
   useWakeLock(inSession);
 
-  const [display] = useState(readWarmupDisplay);
+  const [display] = useState(() => readWarmupDisplay(profile));
   const [warmupOpen, setWarmupOpen] = useState(display === 'open');
   // Ticks while a rest runs, for the warm-up card's inline countdown.
   const [now, setNow] = useState(Date.now());
@@ -213,7 +213,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
           </Card>
 
           <Button fullWidth size="lg" onClick={() => {
-            saveLastTime(session.time);
+            saveLastTime(session.time, user?.id);
             dispatch({ type: 'start', now: Date.now() });
           }}>
             Start session

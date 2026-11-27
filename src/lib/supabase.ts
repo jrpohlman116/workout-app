@@ -61,6 +61,12 @@ export interface UserProfile {
   program_state?: Record<string, unknown>;    // program-specific carried state
   ohp_max?: number | null;                    // optional overhead press training max
   ohp_tested_max?: number | null;
+  // Onboarding answers and Today preferences (UX overhaul, phases 3 and 7)
+  training_goal?: 'compete' | 'stronger' | 'lift_and_run' | null;
+  running_days_per_week?: '0' | '1-2' | '3+' | null;
+  last_time_available?: 30 | 45 | 60 | null;
+  warmup_display?: 'collapsed' | 'open' | 'off';
+  rest_seconds?: { warmup: number; main: number; accessory: number };
   created_at: string;
   updated_at: string;
 }
