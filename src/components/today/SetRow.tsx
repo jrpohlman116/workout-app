@@ -42,7 +42,7 @@ export default function SetRow({
   const numbers = (
     <span className="flex flex-col min-w-0">
       <span className="text-base font-semibold leading-6 text-gray-900 dark:text-gray-100 tabular-nums">
-        {weight} {unit} × {reps}
+        {weight > 0 ? `${weight} ${unit} × ${reps}` : `${reps} reps`}
       </span>
       {plates && <span className="text-xs leading-4 text-gray-500 dark:text-gray-400">{plates}</span>}
     </span>
@@ -57,7 +57,7 @@ export default function SetRow({
         <button
           type="button"
           onClick={onEdit}
-          aria-label={`${name}: ${weight} ${unit} × ${reps}. Edit`}
+          aria-label={`${name}: ${weight > 0 ? `${weight} ${unit} × ` : ''}${reps} reps. Edit`}
           className="flex-1 min-w-0 min-h-[44px] text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           {numbers}
@@ -79,7 +79,7 @@ export default function SetRow({
         <button
           type="button"
           onClick={onLog}
-          aria-label={`${logLabel}: ${name}, ${weight} ${unit} × ${reps}`}
+          aria-label={`${logLabel}: ${name}, ${weight > 0 ? `${weight} ${unit} × ` : ''}${reps} reps`}
           className={`shrink-0 min-h-[44px] min-w-[56px] rounded-xl px-4 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
             state === 'current'
               ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'

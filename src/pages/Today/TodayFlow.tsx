@@ -10,10 +10,10 @@ import { loadIncrement } from '../../lib/programs/shared/rounding';
 import { WAVE_ORDER } from '../../lib/programs/fiveThreeOne/engine';
 import { EMPTY_BACKOFF_STATE, nextBackoffState, type BackoffLiftState } from '../../lib/programs/backoffs';
 import type { LiftId, Unit } from '../../lib/programs/types';
-import { BAR_WEIGHTS } from '../../lib/calculations';
+import { BAR_WEIGHTS, calculateWarmupSets } from '../../lib/calculations';
 import { availablePlates } from '../../lib/plates';
 import { REST_TIMER_DEFAULTS } from '../../lib/constants';
-import { liftNames } from '../../lib/exercises';
+import { additionalExercises, baseExercises, liftNames } from '../../lib/exercises';
 import { sessionLimits } from '../../lib/readiness/effects';
 import { buildTodayPlan, explainWeight, platesPerSide, type TimeAvailable } from '../../lib/today/plan';
 import { initialSession, sessionReducer, toDraft, type TodaySession } from '../../lib/today/session';
@@ -24,8 +24,25 @@ import ReadinessChip from '../../components/today/ReadinessChip';
 import SetRow from '../../components/today/SetRow';
 import RestCard from '../../components/today/RestCard';
 import { EditSetSheet, ReadinessSheet, WhyWeightSheet } from '../../components/today/Sheets';
+import WarmupCard from '../../components/today/WarmupCard';
+import AccessoriesStep from './AccessoriesStep';
 
 const LAST_TIME_KEY = 'ironform-last-time-available';
+// collapsed | open | off. Set in More -> Training preferences once that page exists.
+const WARMUP_DISPLAY_KEY = 'ironform-warmup-display';
+
+function warmupDisplay(): 'collapsed' | 'open' | 'off' {
+  try {
+    const v = localStorage.getItem(WARMUP_DISPLAY_KEY);
+    return v === 'open' || v === 'off' ? v : 'collapsed';
+  } catch {
+    return 'collapsed';
+  }
+}
+
+const CATALOG = [
+  ...baseExercises.squat, ...baseExercises.bench, ...baseExercises.deadlift, ...baseExercises.upper, ...additionalExercises,
+].filter((ex, i, all) => i === all.findIndex(e => e.name === ex.name));
 const TIMES: { value: TimeAvailable; title: string }[] = [
   { value: 30, title: '30 min' },
   { value: 45, title: '45 min' },
@@ -91,6 +108,16 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
 
   const inSession = session.stage !== 'before';
   useWakeLock(inSession);
+
+  const [display] = useState(warmupDisplay);
+  const [warmupOpen, setWarmupOpen] = useState(display === 'open');
+  // Ticks while a rest runs, for the warm-up card's inline countdown.
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (session.restEndsAt == null) return;
+    const timer = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(timer);
+  }, [session.restEndsAt]);
 
   // Autosave in the shape the workout bar reads.
   useEffect(() => {
@@ -210,12 +237,37 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
     );
   }
 
+  // ---------- Accessories ----------
+  if (session.stage === 'accessories' || session.stage === 'summary') {
+    const anyCut = plan.accessories.some(a => a.cut);
+    const cutReason = !anyCut ? null : state !== 'green' && session.time < 60 ? 'both' : state !== 'green' ? 'readiness' : 'time';
+    return (
+      <AccessoriesStep
+        userId={user!.id}
+        eyebrow={session.time < 60 ? `${eyebrow} · ${session.time} min` : eyebrow}
+        unit={unit}
+        planned={plan.accessories}
+        catalog={CATALOG}
+        session={session}
+        dispatch={dispatch}
+        cutReason={cutReason}
+        onFinish={() => dispatch({ type: 'goTo', stage: 'summary' })}
+      />
+    );
+  }
+
   // ---------- Top set and back-offs ----------
   const target = backoff?.reps ?? 0;
   const cap = backoff?.cap ?? 0;
   const restRunning = session.restEndsAt != null;
   const showBackoffs = !!backoff && session.top != null;
   const topDone = session.top != null;
+  const warmups = top && display !== 'off'
+    ? calculateWarmupSets(top.weight, unit, liftLift).fixedSets.map(w => ({ weight: w.weight, reps: w.reps, plates: platesFor(w.weight) }))
+    : [];
+  const warmupsFinished = session.warmupsSkipped || session.warmupsDone >= warmups.length;
+  // The top set is next unless warm-ups are open and under way.
+  const warmingUp = warmups.length > 0 && warmupOpen && !warmupsFinished && !topDone;
 
   // What happens to the back-off load next time, from this session.
   const backoffState: BackoffLiftState = (() => {
@@ -244,6 +296,19 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
     <div className="min-h-screen pb-24">
       {header}
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
+        {warmups.length > 0 && !topDone && !session.warmupsSkipped && (
+          <WarmupCard
+            sets={warmups}
+            unit={unit}
+            done={session.warmupsDone}
+            open={warmupOpen}
+            onToggle={() => setWarmupOpen(o => !o)}
+            onLog={() => dispatch({ type: 'logWarmup', total: warmups.length, now: Date.now(), restSeconds: REST_TIMER_DEFAULTS.warmup })}
+            onSkip={() => { dispatch({ type: 'skipWarmups' }); setWarmupOpen(false); }}
+            restLeft={session.restEndsAt != null && !topDone ? Math.max(0, Math.ceil((session.restEndsAt - now) / 1000)) : null}
+          />
+        )}
+
         {top && (
           <Card className="p-5 space-y-3">
             <div className="flex items-center justify-between">
@@ -267,7 +332,7 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
               reps={session.top?.reps ?? top.reps}
               unit={unit}
               plates={platesFor(session.top?.weight ?? top.weight)}
-              state={topDone ? 'done' : 'current'}
+              state={topDone ? 'done' : warmingUp ? 'upcoming' : 'current'}
               logLabel={top.isAmrap ? 'Enter reps' : 'Log'}
               onLog={() => (top.isAmrap
                 ? setEditing({ kind: 'top' })
@@ -284,7 +349,7 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
           </Card>
         )}
 
-        {restRunning && !session.backoffsEnded && (
+        {restRunning && topDone && !session.backoffsEnded && (
           <RestCard
             endsAt={session.restEndsAt!}
             totalSeconds={session.restTotal}
@@ -351,11 +416,6 @@ export default function TodayFlow({ lift, onOpenProgress }: { lift: string; onOp
           </Button>
         )}
 
-        {session.stage === 'accessories' && (
-          <Card className="p-5">
-            <p className="text-sm text-gray-600 dark:text-gray-300">Accessories and the session summary come in the next part of this update.</p>
-          </Card>
-        )}
       </div>
 
       {top && (

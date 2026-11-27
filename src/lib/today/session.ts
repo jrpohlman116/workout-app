@@ -22,6 +22,15 @@ export interface TodaySession {
   restEndsAt: number | null;
   restTotal: number;
   startedAt: string | null;
+  /** Warm-up sets logged. Kept in the draft only, never in main_sets_data. */
+  warmupsDone: number;
+  warmupsSkipped: boolean;
+  /** Logged accessory sets by accessory position. */
+  accessories: Record<number, LoggedSet[]>;
+  /** Today-only swaps: position -> exercise name. */
+  swaps: Record<number, string>;
+  /** Cut accessories brought back with "Do it anyway". */
+  restored: number[];
 }
 
 export type SessionAction =
@@ -33,10 +42,19 @@ export type SessionAction =
   | { type: 'extendRest'; seconds: number }
   | { type: 'skipRest' }
   | { type: 'goTo'; stage: Stage }
-  | { type: 'restore'; session: TodaySession };
+  | { type: 'restore'; session: TodaySession }
+  | { type: 'logWarmup'; total: number; now: number; restSeconds: number }
+  | { type: 'skipWarmups' }
+  | { type: 'logAccessory'; index: number; set: LoggedSet; now: number; restSeconds: number }
+  | { type: 'editAccessory'; index: number; setIndex: number; set: LoggedSet }
+  | { type: 'swap'; index: number; name: string }
+  | { type: 'doAnyway'; index: number };
 
 export function initialSession(time: TimeAvailable): TodaySession {
-  return { stage: 'before', time, top: null, backoffs: [], backoffsEnded: false, restEndsAt: null, restTotal: 0, startedAt: null };
+  return {
+    stage: 'before', time, top: null, backoffs: [], backoffsEnded: false, restEndsAt: null, restTotal: 0, startedAt: null,
+    warmupsDone: 0, warmupsSkipped: false, accessories: {}, swaps: {}, restored: [],
+  };
 }
 
 /** Back-offs end at the first set below target reps, or at the cap. */
@@ -85,7 +103,42 @@ export function sessionReducer(state: TodaySession, action: SessionAction): Toda
     case 'goTo':
       return { ...state, stage: action.stage };
     case 'restore':
-      return { ...action.session };
+      // Drafts from before a field existed get its default.
+      return { ...initialSession(action.session.time), ...action.session };
+    case 'logWarmup': {
+      const warmupsDone = state.warmupsDone + 1;
+      const last = warmupsDone >= action.total;
+      return {
+        ...state,
+        warmupsDone,
+        restEndsAt: last ? state.restEndsAt : action.now + action.restSeconds * 1000,
+        restTotal: last ? state.restTotal : action.restSeconds,
+      };
+    }
+    case 'skipWarmups':
+      return { ...state, warmupsSkipped: true, restEndsAt: null, restTotal: 0 };
+    case 'logAccessory': {
+      const sets = [...(state.accessories[action.index] ?? []), action.set];
+      return {
+        ...state,
+        stage: 'accessories',
+        accessories: { ...state.accessories, [action.index]: sets },
+        restEndsAt: action.now + action.restSeconds * 1000,
+        restTotal: action.restSeconds,
+      };
+    }
+    case 'editAccessory': {
+      const sets = (state.accessories[action.index] ?? []).map((s, i) => (i === action.setIndex ? action.set : s));
+      return { ...state, accessories: { ...state.accessories, [action.index]: sets } };
+    }
+    case 'swap': {
+      // A swapped exercise starts fresh: its sets belong to the old one.
+      const accessories = { ...state.accessories };
+      delete accessories[action.index];
+      return { ...state, swaps: { ...state.swaps, [action.index]: action.name }, accessories };
+    }
+    case 'doAnyway':
+      return state.restored.includes(action.index) ? state : { ...state, restored: [...state.restored, action.index] };
   }
 }
 
