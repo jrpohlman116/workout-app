@@ -19,9 +19,13 @@ import CalculatorPage from './pages/Calculator';
 import ProgressPage from './pages/Progress';
 import ProfilePage from './pages/Profile';
 import WorkoutDetailPage from './pages/WorkoutDetail';
+import { useTodayReadiness } from './hooks/useTodayReadiness';
 
 function AppContent() {
   const { user, profile, loading, passwordRecovery } = useAuth();
+  // Computes and stores today's readiness on the first open of the day; Home
+  // and Today read it in later phases.
+  useTodayReadiness(user?.id, !!profile?.onboarding_completed);
   const [currentPage, setCurrentPage] = useState('home');
   const [selectedLift, setSelectedLift] = useState<string | null>(null);
 

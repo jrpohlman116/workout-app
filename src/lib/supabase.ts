@@ -88,6 +88,13 @@ export interface WorkoutSession {
   main_sets_data?: { reps: string; weight: string; rpe?: string; vbt?: string; kind?: 'top' | 'backoff' | 'secondary'; checked?: boolean }[];
   program_id?: ProgramId;
   day_id?: string;
+  // Readiness and time limits the session ran under (phase 2 of the UX overhaul).
+  readiness_state?: 'green' | 'yellow' | 'red' | null;
+  readiness_score?: number | null;
+  time_available_min?: 30 | 45 | 60 | null;
+  /** True when readiness or time lowered the back-off cap; such sessions skip the back-off rules. */
+  backoffs_capped?: boolean;
+  backoff_cap?: number | null;
 }
 
 export type TrainingMaxChangeReason = 'start' | 'increase' | 'hold' | 'decrease' | 'manual' | 'reset';
