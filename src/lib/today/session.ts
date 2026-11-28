@@ -31,6 +31,12 @@ export interface TodaySession {
   swaps: Record<number, string>;
   /** Cut accessories brought back with "Do it anyway". */
   restored: number[];
+  /**
+   * True once the lifter chose "One more set" past a cap that readiness or
+   * time lowered: back-offs then run to the program's own cap, and the
+   * session counts as uncapped.
+   */
+  backoffCapRaised: boolean;
 }
 
 export type SessionAction =
@@ -48,12 +54,13 @@ export type SessionAction =
   | { type: 'logAccessory'; index: number; set: LoggedSet; now: number; restSeconds: number }
   | { type: 'editAccessory'; index: number; setIndex: number; set: LoggedSet }
   | { type: 'swap'; index: number; name: string }
-  | { type: 'doAnyway'; index: number };
+  | { type: 'doAnyway'; index: number }
+  | { type: 'raiseBackoffCap' };
 
 export function initialSession(time: TimeAvailable): TodaySession {
   return {
     stage: 'before', time, top: null, backoffs: [], backoffsEnded: false, restEndsAt: null, restTotal: 0, startedAt: null,
-    warmupsDone: 0, warmupsSkipped: false, accessories: {}, swaps: {}, restored: [],
+    warmupsDone: 0, warmupsSkipped: false, accessories: {}, swaps: {}, restored: [], backoffCapRaised: false,
   };
 }
 
@@ -137,6 +144,11 @@ export function sessionReducer(state: TodaySession, action: SessionAction): Toda
       delete accessories[action.index];
       return { ...state, swaps: { ...state.swaps, [action.index]: action.name }, accessories };
     }
+    case 'raiseBackoffCap':
+      // Only after back-offs stopped at the cap with every set on target;
+      // a miss still ends them.
+      if (state.backoffCapRaised || state.backoffs.length === 0) return state;
+      return { ...state, backoffCapRaised: true, backoffsEnded: false };
     case 'doAnyway':
       return state.restored.includes(action.index) ? state : { ...state, restored: [...state.restored, action.index] };
   }

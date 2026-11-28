@@ -7,12 +7,12 @@ const STYLES: Record<ReadinessState, { label: string; chip: string; dot: string 
 };
 
 /** Today's readiness state (proposal #3). The dot is decoration; the words carry the state. */
-export default function ReadinessChip({ state }: { state: ReadinessState }) {
+export default function ReadinessChip({ state, overridden = false }: { state: ReadinessState; overridden?: boolean }) {
   const style = STYLES[state];
   return (
     <span className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold leading-5 ${style.chip}`}>
       <span className={`h-2 w-2 rounded-full ${style.dot}`} aria-hidden="true" />
-      {style.label}
+      {overridden ? `${style.label.split(' · ')[0]} · Your call` : style.label}
     </span>
   );
 }

@@ -108,8 +108,11 @@ export async function saveCheckIn(userId: string, checkIn: CheckIn, now: Date = 
   return day;
 }
 
-/** Logs that the lifter trained at a different state than the one suggested. */
-export async function saveOverride(userId: string, overriddenTo: ReadinessState, now: Date = new Date()): Promise<void> {
+/**
+ * Records the state the lifter chose to train at today, or null to go back to
+ * the suggestion. Logged so the thresholds can be tuned.
+ */
+export async function saveOverride(userId: string, overriddenTo: ReadinessState | null, now: Date = new Date()): Promise<void> {
   const { error } = await supabase
     .from('readiness_days')
     .update({ overridden_to: overriddenTo })
