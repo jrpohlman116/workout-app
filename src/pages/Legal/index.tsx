@@ -7,7 +7,7 @@ import AppFooter from '../../components/layout/AppFooter';
 const EFFECTIVE = 'November 27, 2026';
 
 /** Where people can reach whoever runs Ironform. Shown on both pages when set. */
-const LEGAL_CONTACT = '';
+const LEGAL_CONTACT = 'martinuzzijordan@gmail.com';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

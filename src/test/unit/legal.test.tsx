@@ -27,4 +27,11 @@ describe('legal pages', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Terms of service' })).toBeInTheDocument();
     expect(document.body.textContent).toContain("isn't medical advice");
   });
+  it('both pages list the contact email', () => {
+    for (const page of ['privacy', 'terms'] as const) {
+      const { unmount } = render(<LegalPage page={page} onBack={() => {}} />);
+      expect(screen.getByRole('link', { name: 'martinuzzijordan@gmail.com' })).toHaveAttribute('href', 'mailto:martinuzzijordan@gmail.com');
+      unmount();
+    }
+  });
 });
