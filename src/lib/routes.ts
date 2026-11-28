@@ -7,11 +7,12 @@
 //                     its training max sheet)
 //   /more             More
 //   /more/:page       A tool or settings page inside More (program, plates, ...)
+//   /privacy, /terms  Public legal pages, readable without signing in
 //
 // Old links keep working: /workout?lift=x goes to /today?lift=x, /calculator
 // to More → 1RM estimator, /profile to More → Account, /home to /.
 
-export type Tab = 'home' | 'today' | 'progress' | 'more';
+export type Tab = 'home' | 'today' | 'progress' | 'more' | 'privacy' | 'terms';
 
 export interface Route {
   tab: Tab;
@@ -52,6 +53,9 @@ export function parseRoute(pathname: string, search = ''): Route {
       const sub = clean(second);
       return sub ? { tab: 'more', sub: LEGACY_MORE[sub] ?? sub } : { tab: 'more' };
     }
+    case 'privacy':
+    case 'terms':
+      return { tab: first };
     case 'calculator':
     case 'profile':
       return { tab: 'more', sub: LEGACY_MORE[first] };
@@ -76,6 +80,9 @@ export function routeToPath(route: Route): string {
     }
     case 'more':
       return route.sub ? `/${route.tab}/${encodeURIComponent(route.sub)}` : `/${route.tab}`;
+    case 'privacy':
+    case 'terms':
+      return `/${route.tab}`;
   }
 }
 

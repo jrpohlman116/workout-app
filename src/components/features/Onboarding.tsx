@@ -12,6 +12,7 @@ import type { DaysPerWeek, LiftId } from '../../lib/programs/types';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import RadioCards from '../ui/RadioCards';
+import AppFooter from '../layout/AppFooter';
 
 // Onboarding (UX handoff, phase 7): goal, meet date, schedule, maxes,
 // equipment, how Ironform trains, your first wave. New lifters start on 5/3/1
@@ -375,6 +376,7 @@ export default function Onboarding() {
             <Button type="button" variant="ghost" fullWidth onClick={() => go(3)}>Skip for now</Button>
           )}
         </div>
+        <AppFooter tone="light" />
       </div>
     </div>
   );

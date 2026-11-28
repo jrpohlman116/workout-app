@@ -19,6 +19,8 @@ import ProgressPage from './pages/Progress';
 import TodayPage from './pages/Today';
 import MorePage from './pages/More';
 import ActiveWorkoutBar from './components/layout/ActiveWorkoutBar';
+import AppFooter from './components/layout/AppFooter';
+import LegalPage from './pages/Legal';
 import { useActiveSession } from './hooks/useActiveSession';
 import { isLegacyPath, parseRoute, routeToPath, type Route } from './lib/routes';
 import { useTodayReadiness } from './hooks/useTodayReadiness';
@@ -82,6 +84,11 @@ function AppContent() {
   }, [route]);
   const todayRoute = route.tab === 'today' ? route : activeSession ? lastToday : null;
 
+  // Public: Oura and Strava link here from their consent screens.
+  if (route.tab === 'privacy' || route.tab === 'terms') {
+    return <LegalPage page={route.tab} onBack={() => go({ tab: 'home' })} />;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-blue-700 dark:bg-blue-900 flex items-center justify-center" role="status" aria-live="polite" style={GRID_BG}>
@@ -138,8 +145,10 @@ function AppContent() {
             />
           )}
           {route.tab === 'more' && <MorePage page={route.sub} onOpen={page => go({ tab: 'more', sub: page })} onBack={() => go({ tab: 'more' })} />}
-          {/* Room for the workout bar so it never covers the end of a page. */}
+          <AppFooter onNavigate={page => go({ tab: page })} />
+          {/* Room for the workout bar and the tab bar so they never cover the footer. */}
           {showWorkoutBar && <div className="h-20" aria-hidden="true" />}
+          <div className="h-[4.25rem] pb-[env(safe-area-inset-bottom)]" aria-hidden="true" />
         </main>
 
         {showWorkoutBar && activeSession && (

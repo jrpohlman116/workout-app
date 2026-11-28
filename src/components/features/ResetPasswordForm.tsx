@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 import Input from '../ui/Input';
+import AppFooter from '../layout/AppFooter';
 
 const GRID_BG = {
   backgroundImage:
@@ -129,6 +130,7 @@ export default function ResetPasswordForm() {
           </div>
         </form>
       </div>
+      <AppFooter tone="dark" />
     </div>
   );
 }
