@@ -1,10 +1,8 @@
-import type { RepWave, WavePhase, ProfileTab } from './types';
+import type { RepWave, WavePhase } from './types';
 
 export const DEFAULT_PROGRAM_WEEKS = 16;
 
 // Weight display range shown on the home page workout cards (±4% of base weight)
-export const WEIGHT_DISPLAY_RANGE_LOW = 0.96;
-export const WEIGHT_DISPLAY_RANGE_HIGH = 1.04;
 
 // Meet week uses a conservative 55% of TM — just enough to stay sharp
 export const MEET_WEEK_TM_PCT = 0.55;
@@ -92,9 +90,3 @@ export type RestTimerKind = keyof typeof REST_TIMER_DEFAULTS;
 // localStorage key for the timer's vibrate-on-finish preference (off by default)
 export const REST_TIMER_VIBRATE_KEY = 'rest_timer_vibrate';
 
-export const PROFILE_TAB_LABELS: Record<ProfileTab, string> = {
-  body:     'Body stats',
-  maxes:    'Maxes',
-  training: 'Training',
-  security: 'Account',
-};

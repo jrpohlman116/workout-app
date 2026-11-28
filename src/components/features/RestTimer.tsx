@@ -64,7 +64,7 @@ export default function RestTimer({ endsAt, totalSeconds, onExtend, onDismiss }:
   const progressPct = done ? 0 : Math.min(100, (remaining / totalSeconds) * 100);
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-40" role="timer" aria-label="Rest timer">
+    <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 right-4 z-40" role="timer" aria-label="Rest timer">
       <div className="max-w-md mx-auto bg-gray-900 dark:bg-gray-700 text-white rounded-2xl shadow-lg overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2.5">
           {done ? (

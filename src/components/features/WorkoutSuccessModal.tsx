@@ -25,6 +25,8 @@ interface WorkoutSuccessModalProps {
   onClose: () => void;
   onSetAsMax?: () => Promise<void>;
   newTrainingMax?: number;
+  /** A training max update the program already applied (5/3/1 after the AMRAP). */
+  appliedTrainingMax?: { newTm: number; explanation: string };
 }
 
 type ShareState = 'idle' | 'preparing' | 'error';
@@ -41,6 +43,7 @@ export default function WorkoutSuccessModal({
   onClose,
   onSetAsMax,
   newTrainingMax,
+  appliedTrainingMax,
 }: WorkoutSuccessModalProps) {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -194,6 +197,20 @@ export default function WorkoutSuccessModal({
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {!isAccessoryOnly && appliedTrainingMax && (
+              <div
+                className="mb-8 border-t border-gray-100 pt-4 animate-enter dark:border-gray-700"
+                style={{ animationDelay: '290ms' }}
+              >
+                <h2 className="text-body-sm-semibold text-gray-500 dark:text-gray-400 mb-1">New training max</h2>
+                <p className="text-3xl font-bold tabular-nums text-gray-700 dark:text-gray-300">
+                  {appliedTrainingMax.newTm}
+                  <span className="ml-2 text-base font-medium text-gray-400 dark:text-gray-400">{unitPreference}</span>
+                </p>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{appliedTrainingMax.explanation}</p>
               </div>
             )}
 

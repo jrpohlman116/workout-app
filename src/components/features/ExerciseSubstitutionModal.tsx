@@ -14,6 +14,8 @@ interface ExerciseSubstitutionModalProps {
   currentExercise: string;
   onSubstitute: (newExercise: string) => void;
   availableExercises?: Exercise[];
+  /** Today's swap sheet: a bottom sheet titled "Swap <exercise>", for today only. */
+  variant?: 'modal' | 'swap';
 }
 
 // A row saying "X substitutes for Y" is also good evidence Y substitutes
@@ -36,7 +38,9 @@ export default function ExerciseSubstitutionModal({
   currentExercise,
   onSubstitute,
   availableExercises = [],
+  variant = 'modal',
 }: ExerciseSubstitutionModalProps) {
+  const swap = variant === 'swap';
   const [substitutions, setSubstitutions] = useState<ExerciseSubstitution[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubstitution, setSelectedSubstitution] = useState<string>('');
@@ -186,9 +190,10 @@ export default function ExerciseSubstitutionModal({
     <AccessibleModal
       isOpen={isOpen}
       onClose={handleCancel}
-      title="Substitute Exercise"
+      title={swap ? `Swap ${currentExercise}` : 'Substitute Exercise'}
       description={`Choose a substitute exercise for ${currentExercise}`}
-      size="lg"
+      size={swap ? 'md' : 'lg'}
+      sheet={swap}
     >
       <div className="space-y-4">
         <div className="relative">
@@ -395,6 +400,11 @@ export default function ExerciseSubstitutionModal({
         )}
         </div>
 
+        {swap && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Swaps last for today only. To change it for every session, edit the day's accessories.
+          </p>
+        )}
         <div className="flex gap-3 pt-2 border-t border-gray-200 dark:border-gray-400">
           <Button
             type="button"
@@ -412,7 +422,7 @@ export default function ExerciseSubstitutionModal({
             onClick={handleConfirm}
             disabled={!selectedSubstitution}
           >
-            Confirm Substitution
+            {swap ? 'Swap for today' : 'Confirm Substitution'}
           </Button>
         </div>
       </div>

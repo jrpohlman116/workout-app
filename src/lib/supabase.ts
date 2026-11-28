@@ -61,6 +61,12 @@ export interface UserProfile {
   program_state?: Record<string, unknown>;    // program-specific carried state
   ohp_max?: number | null;                    // optional overhead press training max
   ohp_tested_max?: number | null;
+  // Onboarding answers and Today preferences (UX overhaul, phases 3 and 7)
+  training_goal?: 'compete' | 'stronger' | 'lift_and_run' | null;
+  running_days_per_week?: '0' | '1-2' | '3+' | null;
+  last_time_available?: 30 | 45 | 60 | null;
+  warmup_display?: 'collapsed' | 'open' | 'off';
+  rest_seconds?: { warmup: number; main: number; accessory: number };
   created_at: string;
   updated_at: string;
 }
@@ -85,9 +91,34 @@ export interface WorkoutSession {
   // Per-set weight/reps/RPE/VBT for the main lift's top sets — the fields
   // above only capture the top set. Optional: sessions saved before this
   // field existed, and upper-body days (no main lift), have it unset.
-  main_sets_data?: { reps: string; weight: string; rpe?: string; vbt?: string }[];
+  main_sets_data?: { reps: string; weight: string; rpe?: string; vbt?: string; kind?: 'top' | 'backoff' | 'secondary'; checked?: boolean }[];
   program_id?: ProgramId;
   day_id?: string;
+  // Readiness and time limits the session ran under (phase 2 of the UX overhaul).
+  readiness_state?: 'green' | 'yellow' | 'red' | null;
+  readiness_score?: number | null;
+  time_available_min?: 30 | 45 | 60 | null;
+  /** True when readiness or time lowered the back-off cap; such sessions skip the back-off rules. */
+  backoffs_capped?: boolean;
+  backoff_cap?: number | null;
+}
+
+export type TrainingMaxChangeReason = 'start' | 'increase' | 'hold' | 'decrease' | 'manual' | 'reset';
+
+/** One row of a lift's training max history (table training_max_changes). */
+export interface TrainingMaxChange {
+  id: string;
+  user_id: string;
+  lift: 'squat' | 'bench' | 'deadlift' | 'ohp';
+  old_tm: number | null;
+  new_tm: number;
+  reason: TrainingMaxChangeReason;
+  amrap_weight: number | null;
+  amrap_reps: number | null;
+  e1rm: number | null;
+  explanation: string | null;
+  cycle_index: number | null;
+  created_at: string;
 }
 
 export interface WorkoutTemplate {

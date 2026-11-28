@@ -1,10 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { isLegacyPath, parseRoute, routeToPath } from '../../lib/routes';
 import AppFooter from '../../components/layout/AppFooter';
 import LegalPage from '../../pages/Legal';
 
 describe('legal pages', () => {
+  it('have their own public routes', () => {
+    expect(parseRoute('/privacy')).toEqual({ tab: 'privacy' });
+    expect(parseRoute('/terms/')).toEqual({ tab: 'terms' });
+    expect(routeToPath({ tab: 'privacy' })).toBe('/privacy');
+    expect(isLegacyPath('/terms')).toBe(false);
+  });
+
   it('the footer links to both, as real links', async () => {
     const onNavigate = vi.fn();
     render(<AppFooter onNavigate={onNavigate} />);

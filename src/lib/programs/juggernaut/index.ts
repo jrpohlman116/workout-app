@@ -57,7 +57,7 @@ export const juggernaut: ProgramDefinition = {
     return meetDate ? buildWaveSchedule(startDate, meetDate) : repeatingSchedule(startDate);
   },
 
-  prescribe({ block, lift, trainingMax, unit }): Prescription {
+  prescribe({ block, lift, trainingMax, unit, plates }): Prescription {
     if (block.phase === 'meet_week') {
       const roundTo = getRoundingIncrement(unit);
       return {
@@ -69,7 +69,7 @@ export const juggernaut: ProgramDefinition = {
     }
 
     const cfg = block.phase === 'peaking'
-      ? calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMax, unit, lift)
+      ? calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMax, unit, lift, plates)
       : calculateJuggernautSets(block.wave as RepWave, block.phase, trainingMax, unit);
 
     const groups: SetGroup[] = [{

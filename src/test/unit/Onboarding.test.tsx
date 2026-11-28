@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Onboarding from '../../components/features/Onboarding';
+import { firstWave, programStructure } from '../../lib/onboarding';
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'user-1' }, refreshProfile: vi.fn() }),
@@ -16,7 +17,7 @@ vi.mock('../../lib/supabase', () => ({
             eq: vi.fn(() => ({
               select: vi.fn(() => ({
                 single: vi.fn(() => Promise.resolve({
-                  data: { id: 'user-1', created_at: '2026-01-01T00:00:00Z' },
+                  data: { id: 'user-1', created_at: '2026-01-01T00:00:00Z', program_id: 'five_three_one', days_per_week: 3 },
                   error: null,
                 })),
               })),
@@ -24,9 +25,7 @@ vi.mock('../../lib/supabase', () => ({
           })),
         };
       }
-      if (table === 'workout_sessions') {
-        return { insert: vi.fn(() => Promise.resolve({ error: null })) };
-      }
+      if (table === 'workout_sessions') return { insert: vi.fn(() => Promise.resolve({ error: null })) };
       throw new Error(`unexpected table: ${table}`);
     }),
   },
@@ -34,10 +33,9 @@ vi.mock('../../lib/supabase', () => ({
 
 import { supabase } from '../../lib/supabase';
 
-// Each test reads the profile update it triggered, not an earlier test's.
 beforeEach(() => { vi.mocked(supabase.from).mockClear(); });
 
-function getUserProfilesUpdatePayload(): Record<string, unknown> {
+function profilePayload(): Record<string, unknown> {
   const fromMock = vi.mocked(supabase.from);
   const idx = fromMock.mock.calls.findIndex(c => c[0] === 'user_profiles');
   const result = fromMock.mock.results[idx].value as { update: ReturnType<typeof vi.fn> };
@@ -45,173 +43,140 @@ function getUserProfilesUpdatePayload(): Record<string, unknown> {
 }
 
 type User = ReturnType<typeof userEvent.setup>;
+const next = (user: User) => user.click(screen.getByRole('button', { name: 'Next' }));
 
-// Steps: 1 basics, 2 program and days, 3 maxes, 4 meet date, 5 sticking points.
-async function throughBasics(user: User) {
-  await user.type(screen.getByLabelText(/Your bodyweight/i), '180');
-  await user.click(screen.getByRole('button', { name: 'Next' }));
+/** Steps 1-3 with defaults, optionally 4 days. */
+async function toMaxes(user: User, days: 3 | 4 = 3) {
+  await next(user); // goal
+  await user.click(screen.getByRole('button', { name: 'Skip for now' })); // meet date
+  if (days === 4) await user.click(screen.getByRole('radio', { name: /4 days/ }));
+  await next(user); // schedule
 }
 
-const daysGroup = () => screen.getByRole('radiogroup', { name: 'Days per week' });
-const programGroup = () => screen.getByRole('radiogroup', { name: 'Program' });
+async function finish(user: User) {
+  await next(user); // maxes
+  await next(user); // equipment
+  await next(user); // how Ironform trains
+  await user.click(screen.getByRole('button', { name: 'Start week 1' }));
+  await waitFor(() => expect(vi.mocked(supabase.from)).toHaveBeenCalledWith('user_profiles'));
+}
 
-describe('Onboarding — starting max mapping', () => {
-  it('derives the training max from the entered 1RM rather than storing it directly, and records the tested max separately', async () => {
-    const user = userEvent.setup();
+describe('Onboarding', () => {
+  it('shows only the step count and bar, seven steps', () => {
     render(<Onboarding />);
-
-    await throughBasics(user);
-    // Program and days: keep the defaults.
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-
-    // Maxes: the form asks for a 1RM, not a training max.
-    await user.type(screen.getByLabelText('Squat one rep max in lb'), '405');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-
-    // Meet date: skip. Then sticking points: submit.
-    await user.click(screen.getByRole('button', { name: 'Skip' }));
-    await user.click(screen.getByRole('button', { name: 'Start Training' }));
-
-    await waitFor(() => expect(vi.mocked(supabase.from)).toHaveBeenCalledWith('user_profiles'));
-
-    const payload = getUserProfilesUpdatePayload();
-    // 405 * 0.9 = 364.5, rounded to 365 — NOT 405 stored directly as the TM.
-    expect(payload.squat_max).toBe(365);
-    expect(payload.squat_tested_max).toBe(405);
-    // Lifts left blank stay at the schema's existing conventions: 0 for the
-    // not-nullable TM column, null (not 0) for the nullable tested-max column.
-    expect(payload.bench_max).toBe(0);
-    expect(payload.bench_tested_max).toBeNull();
-    expect(payload.deadlift_max).toBe(0);
-    expect(payload.deadlift_tested_max).toBeNull();
+    expect(screen.getByText('Step 1 of 7')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '7');
   });
 
-  it('logs the initial workout_sessions row at the entered 1RM, not the derived training max', async () => {
+  it('starts new lifters on 5/3/1 with no program picker, and saves goal, schedule and plates', async () => {
     const user = userEvent.setup();
     render(<Onboarding />);
+    await user.click(screen.getByRole('radio', { name: /Lift and run/ }));
+    await next(user);
+    await user.click(screen.getByRole('button', { name: 'Skip for now' }));
+    expect(screen.queryByRole('radiogroup', { name: 'Program' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: '1–2 days' }));
+    await next(user);
+    await user.type(screen.getByLabelText('Squat 1RM (lb)'), '265');
+    await finish(user);
 
-    await throughBasics(user);
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.type(screen.getByLabelText('Squat one rep max in lb'), '405');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Skip' }));
-    await user.click(screen.getByRole('button', { name: 'Start Training' }));
+    expect(profilePayload()).toMatchObject({
+      program_id: 'five_three_one', days_per_week: 3, training_goal: 'lift_and_run', running_days_per_week: '1-2',
+      unit_preference: 'lb', available_plates_lb: [45, 35, 25, 10, 5, 2.5], onboarding_completed: true,
+    });
+  });
 
+  it('stores the entered 1RM as the tested max and 90% as the training max', async () => {
+    const user = userEvent.setup();
+    render(<Onboarding />);
+    await toMaxes(user);
+    await user.type(screen.getByLabelText('Squat 1RM (lb)'), '265');
+    await user.type(screen.getByLabelText('Bench Press 1RM (lb)'), '165');
+    await finish(user);
+    expect(profilePayload()).toMatchObject({
+      squat_max: 240, squat_tested_max: 265, bench_max: 147.5, bench_tested_max: 165,
+      deadlift_max: 0, deadlift_tested_max: null,
+    });
+  });
+
+  it('logs each entered 1RM as a one-rep session', async () => {
+    const user = userEvent.setup();
+    render(<Onboarding />);
+    await toMaxes(user);
+    await user.type(screen.getByLabelText('Squat 1RM (lb)'), '405');
+    await finish(user);
     await waitFor(() => expect(vi.mocked(supabase.from)).toHaveBeenCalledWith('workout_sessions'));
-
     const fromMock = vi.mocked(supabase.from);
     const idx = fromMock.mock.calls.findIndex(c => c[0] === 'workout_sessions');
     const result = fromMock.mock.results[idx].value as { insert: ReturnType<typeof vi.fn> };
-    const [sessionInserts] = vi.mocked(result.insert).mock.calls[0] as [Array<Record<string, unknown>>];
-
-    expect(sessionInserts).toHaveLength(1);
-    expect(sessionInserts[0]).toMatchObject({ lift_type: 'squat', weight_lifted: 405, calculated_1rm: 405 });
+    expect(vi.mocked(result.insert).mock.calls[0][0]).toEqual([
+      expect.objectContaining({ lift_type: 'squat', weight_lifted: 405, calculated_1rm: 405, reps_performed: 1 }),
+    ]);
   });
-});
 
-describe('Onboarding — program and days', () => {
-  it('defaults to Juggernaut, 4 days, and saves them', async () => {
+  it('needs at least one main lift to continue', async () => {
     const user = userEvent.setup();
     render(<Onboarding />);
-    await throughBasics(user);
-
-    expect(within(daysGroup()).getByRole('radio', { name: /4 days/ })).toBeChecked();
-    expect(within(programGroup()).getByRole('radio', { name: /Juggernaut/ })).toBeChecked();
-
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.type(screen.getByLabelText('Squat one rep max in lb'), '405');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Skip' }));
-    await user.click(screen.getByRole('button', { name: 'Start Training' }));
-    await waitFor(() => expect(vi.mocked(supabase.from)).toHaveBeenCalledWith('user_profiles'));
-
-    expect(getUserProfilesUpdatePayload()).toMatchObject({ program_id: 'juggernaut', days_per_week: 4 });
+    await toMaxes(user);
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    await user.type(screen.getByLabelText('Deadlift 1RM (lb)'), '285');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled();
   });
 
-  it('saves the chosen program and days', async () => {
+  it('estimates a max from a set', async () => {
     const user = userEvent.setup();
     render(<Onboarding />);
-    await throughBasics(user);
-
-    await user.click(within(daysGroup()).getByRole('radio', { name: /3 days/ }));
-    await user.click(within(programGroup()).getByRole('radio', { name: /5\/3\/1/ }));
-    expect(within(programGroup()).getByRole('radio', { name: /5\/3\/1/ })).toBeChecked();
-    expect(within(daysGroup()).getByRole('radio', { name: /3 days/ })).toBeChecked();
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-
-    await user.type(screen.getByLabelText('Squat one rep max in lb'), '405');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Skip' }));
-    await user.click(screen.getByRole('button', { name: 'Start Training' }));
-    await waitFor(() => expect(vi.mocked(supabase.from)).toHaveBeenCalledWith('user_profiles'));
-
-    expect(getUserProfilesUpdatePayload()).toMatchObject({ program_id: 'five_three_one', days_per_week: 3 });
+    await toMaxes(user);
+    const [estimate] = screen.getAllByRole('button', { name: 'Estimate from a set' });
+    await user.click(estimate);
+    const group = screen.getByRole('group', { name: /Estimate your Squat 1RM/ });
+    await user.type(within(group).getByLabelText('Weight (lb)'), '225');
+    await user.type(within(group).getByLabelText('Reps'), '5');
+    await user.click(within(group).getByRole('button', { name: /^Use \d+ lb$/ }));
+    expect(screen.getByLabelText('Squat 1RM (lb)')).not.toHaveValue(null);
   });
 
-  it('describes each day count by its lifts', async () => {
+  it('asks for an optional overhead press max on 4 days only, saved as a pair', async () => {
     const user = userEvent.setup();
-    render(<Onboarding />);
-    await throughBasics(user);
-    expect(within(daysGroup()).getByRole('radio', { name: /3 days/ })).toHaveTextContent('squat, bench, deadlift');
-    expect(within(daysGroup()).getByRole('radio', { name: /4 days/ })).toHaveTextContent('overhead press');
-  });
-});
-
-describe('Onboarding — optional overhead press max', () => {
-  async function toMaxes(user: User, days: '3' | '4') {
-    await throughBasics(user);
-    await user.click(within(daysGroup()).getByRole('radio', { name: new RegExp(`${days} days`) }));
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-  }
-
-  it('is asked for on the 4-day layout and not on the 3-day layout', async () => {
-    const four = userEvent.setup();
     const { unmount } = render(<Onboarding />);
-    await toMaxes(four, '4');
-    expect(screen.getByLabelText('Overhead press (optional) one rep max in lb')).toBeInTheDocument();
+    await toMaxes(user, 3);
+    expect(screen.queryByLabelText(/Overhead press/)).not.toBeInTheDocument();
     unmount();
 
-    const three = userEvent.setup();
     render(<Onboarding />);
-    await toMaxes(three, '3');
-    expect(screen.queryByLabelText(/Overhead press/)).not.toBeInTheDocument();
+    await toMaxes(user, 4);
+    await user.type(screen.getByLabelText('Squat 1RM (lb)'), '265');
+    await user.type(screen.getByLabelText('Overhead press (optional) 1RM (lb)'), '135');
+    await finish(user);
+    expect(profilePayload()).toMatchObject({ days_per_week: 4, ohp_tested_max: 135, ohp_max: 122.5 });
   });
 
-  it('saves a max as a pair: tested max and a 90% training max', async () => {
+  it('shows the first wave from the engine, with loads rounded to the plates', async () => {
     const user = userEvent.setup();
     render(<Onboarding />);
-    await toMaxes(user, '4');
-    await user.type(screen.getByLabelText('Squat one rep max in lb'), '405');
-    await user.type(screen.getByLabelText('Overhead press (optional) one rep max in lb'), '135');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Skip' }));
-    await user.click(screen.getByRole('button', { name: 'Start Training' }));
-    await waitFor(() => expect(vi.mocked(supabase.from)).toHaveBeenCalledWith('user_profiles'));
+    await toMaxes(user);
+    await user.type(screen.getByLabelText('Squat 1RM (lb)'), '265');
+    await next(user);
+    await next(user);
+    await next(user);
+    expect(screen.getByText('Training max 240 lb')).toBeInTheDocument();
+    expect(screen.getByText('180 lb × 5')).toBeInTheDocument();
+    expect(screen.getByText('160 lb × 5')).toBeInTheDocument();
+  });
+});
 
-    // 135 * 0.9 = 121.5, rounded to 122 by calculateTrainingMax
-    expect(getUserProfilesUpdatePayload()).toMatchObject({ ohp_tested_max: 135, ohp_max: 122 });
+describe('first wave and program structure', () => {
+  it('matches the handoff fixture: 265 / 165 / 285', () => {
+    const wave = firstWave({ days: 3, oneRepMaxes: { squat: 265, bench: 165, deadlift: 285 }, unit: 'lb', plates: [45, 35, 25, 10, 5, 2.5] });
+    expect(wave.map(w => [w.lift, w.trainingMax, w.top.weight, w.backoff?.weight])).toEqual([
+      ['squat', 240, 180, 160], ['bench', 147.5, 110, 100], ['deadlift', 255, 190, 170],
+    ]);
   });
 
-  it('writes no overhead press fields when it is skipped', async () => {
-    const user = userEvent.setup();
-    render(<Onboarding />);
-    await toMaxes(user, '4');
-    await user.type(screen.getByLabelText('Squat one rep max in lb'), '405');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Skip' }));
-    await user.click(screen.getByRole('button', { name: 'Start Training' }));
-    await waitFor(() => expect(vi.mocked(supabase.from)).toHaveBeenCalledWith('user_profiles'));
-
-    const payload = getUserProfilesUpdatePayload();
-    expect('ohp_max' in payload).toBe(false);
-    expect('ohp_tested_max' in payload).toBe(false);
-  });
-
-  it('does not count as one of the lifts needed to continue', async () => {
-    const user = userEvent.setup();
-    render(<Onboarding />);
-    await toMaxes(user, '4');
-    await user.type(screen.getByLabelText('Overhead press (optional) one rep max in lb'), '135');
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+  it('describes the plan for a meet date', () => {
+    // The engine counts the meet week too: 16 weeks fit three waves and a 3-week peak.
+    expect(programStructure(16)).toBe('Three 4-week waves, then a 3-week peak and meet week.');
+    expect(programStructure(15)).toBe('Two 4-week waves, then a 6-week peak and meet week.');
+    expect(programStructure(2)).toMatch(/Not enough time/);
   });
 });

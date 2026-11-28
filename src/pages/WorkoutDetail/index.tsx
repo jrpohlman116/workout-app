@@ -4,10 +4,13 @@ import { calculateOneRepMax, calculateTrainingMax, calculateBackoffSets, applyVa
 import { toSetsConfig } from '../../lib/programs/prescription';
 import { sessionProgramFields } from '../../lib/programs/session';
 import { trainingMaxFor, hasTrainingMax, type MaxEstimate } from '../../lib/programs/maxes';
+import { backoffStateFromHistory, withBackoffState } from '../../lib/programs/backoffs';
+import { recordTrainingMaxChange } from '../../lib/programs/tmChanges';
 import OhpMaxPrompt from '../../components/features/OhpMaxPrompt';
 import { useProgramContext } from '../../hooks/useProgramContext';
-import type { LiftId, SessionSummary, Unit } from '../../lib/programs/types';
-import { WEIGHT_DISPLAY_RANGE_LOW, WEIGHT_DISPLAY_RANGE_HIGH, REST_TIMER_DEFAULTS, RestTimerKind, PHASE_LABELS } from '../../lib/constants';
+import type { LiftId, SessionSummary, TmUpdate, Unit } from '../../lib/programs/types';
+import { REST_TIMER_DEFAULTS, RestTimerKind, PHASE_LABELS } from '../../lib/constants';
+import { availablePlates as platesOf } from '../../lib/plates';
 import { supabase } from '../../lib/supabase';
 import { useWorkoutTemplate } from '../../hooks/useWorkoutTemplate';
 import { useWeeklyVariationCredit } from '../../hooks/useWeeklyVariationCredit';
@@ -81,7 +84,9 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     set4Feel: null as WarmupFeel | null,
     set5Feel: null as WarmupFeel | null,
     warmupComplete: false,
+    restEndsAt: null as number | null,
   });
+  const topCountRef = useRef(1);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [workoutStats, setWorkoutStats] = useState<{
     estimated1RM: number;
@@ -91,7 +96,11 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         profile would shift the moment "Set as Max" saves and refreshes it,
         since the new max becomes the base for a value that adds on top of it. */
     newTrainingMax: number | undefined;
+    /** 5/3/1: the training max update already applied after the AMRAP. */
+    appliedTrainingMax?: { newTm: number; explanation: string };
   }>({ estimated1RM: 0, totalTonnage: 0, topReps: 0, newTrainingMax: undefined });
+  // 5/3/1 AMRAP update kept for a retry when applying it automatically failed.
+  const pendingTmUpdateRef = useRef<{ update: TmUpdate; topSet: { weight: number; reps: number } } | null>(null);
   const [completedAccessories, setCompletedAccessories] = useState<{ name: string; setsCompleted: number; reps: string }[]>([]);
   const savedSessionIdRef = useRef<string | null>(null);
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
@@ -213,7 +222,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
       const max = trainingMaxFor(profile, liftType as LiftId);
       const unit = profile.unit_preference || 'lb';
       const cfg = programCtx && toSetsConfig(programCtx.program.prescribe({
-        block: currentBlock, lift: liftType as LiftId, trainingMax: max, unit: unit as Unit,
+        block: currentBlock, lift: liftType as LiftId, trainingMax: max, unit: unit as Unit, state: profile.program_state, plates: platesOf(profile),
       }));
       if (!cfg) return;
 
@@ -306,13 +315,18 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   // Continuous draft autosave (debounced): inputs and check-offs survive an
   // accidental refresh or navigation. Only runs after first user interaction
   // (dirtyRef) and is cleared on successful workout save.
-  draftRef.current = { mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, set4Feel, set5Feel, warmupComplete };
+  // restEndsAt and topCount let the active workout bar on other tabs show the
+  // next set and the rest countdown.
+  draftRef.current = {
+    mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, set4Feel, set5Feel, warmupComplete,
+    restEndsAt: restTimer?.endsAt ?? null,
+  };
 
   const flushDraft = () => {
     if (!user || !profile || !dirtyRef.current) return;
     try {
       localStorage.setItem(`jt_draft_${user.id}_${liftType}`, JSON.stringify({
-        liftType, ...draftRef.current,
+        liftType, ...draftRef.current, topCount: topCountRef.current,
         cycle: profile.current_cycle,
         week: profile.current_week,
         savedAt: new Date().toISOString(),
@@ -342,7 +356,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     const timer = setTimeout(flushDraft, 400);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, set4Feel, set5Feel, warmupComplete, user, profile, liftType]);
+  }, [mainSets, accessoryData, setChecks, badDayDrop, exerciseOverrides, set4Feel, set5Feel, warmupComplete, restTimer, user, profile, liftType]);
 
   // Checking a set off (not un-checking) starts the rest countdown for
   // that set type. Restarting on every check keeps the newest rest active.
@@ -483,7 +497,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     ? (profile.available_plates_kg?.length ? profile.available_plates_kg : DEFAULT_PLATES_KG)
     : (profile.available_plates_lb?.length ? profile.available_plates_lb : DEFAULT_PLATES_LB);
 
-  // Suggested weight range for accessories that are barbell variations of a
+  // Suggested weight for accessories that are barbell variations of a
   // main lift (pause squats, board press, rack pulls, etc.) — the rest of
   // the accessory pool has no %TM basis and gets no suggestion. Scaled down
   // for heavier, lower-rep waves and for deload (see
@@ -496,15 +510,16 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     const roundTo = getRoundingIncrement(unit);
     const weightMultiplier = getAccessoryWeightMultiplier(currentBlock?.wave, currentBlock?.phase);
     const base = trainingMax * mapping.pct * weightMultiplier;
-    return {
-      low: Math.round((base * WEIGHT_DISPLAY_RANGE_LOW) / roundTo) * roundTo,
-      high: Math.round((base * WEIGHT_DISPLAY_RANGE_HIGH) / roundTo) * roundTo,
-    };
+    // Exact, like every other load (decision 5); low and high stay for the view's shape.
+    const weight = Math.round(base / roundTo) * roundTo;
+    return { low: weight, high: weight };
   };
 
   const baseMainConfig: JuggernautSetsConfig | null = isUpperDay || !currentBlock || !programCtx ? null : toSetsConfig(
     programCtx.program.prescribe({
       block: currentBlock, lift: liftType as LiftId, trainingMax: maxes[liftType] ?? 0, unit: unit as Unit,
+      state: profile.program_state,
+      plates: platesOf(profile),
     })
   );
 
@@ -516,6 +531,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
   const mainConfig: JuggernautSetsConfig | null = baseMainConfig
     ? { ...baseMainConfig, numSets: variationCreditResult.numSets }
     : null;
+  topCountRef.current = mainConfig?.numSets ?? 1;
 
   const mainSetsNote = variationCreditResult.reducedBy > 0
     ? formatVariationCreditNote(variationCreditResult.numSets, variationCreditResult.reducedBy, variationContributions) ?? undefined
@@ -752,14 +768,15 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     if (profile.program_restarted_at) query = query.gte('completed_at', profile.program_restarted_at);
     const { data, error } = await query;
     if (error || !data) return [];
+    type SavedSet = { reps: string; weight: string; kind?: SessionSummary['mainSets'][number]['kind']; checked?: boolean };
     return data
       .filter(row => row.phase && Array.isArray(row.main_sets_data))
       .map(row => ({
         phase: row.phase as SessionSummary['phase'],
-        mainSets: (row.main_sets_data as { reps: string; weight: string }[]).map(s => ({
-          weight: parseFloat(s.weight) || 0,
-          reps: parseInt(s.reps) || 0,
-        })),
+        // Sets saved unchecked were prescribed but not done (older rows have no flag).
+        mainSets: (row.main_sets_data as SavedSet[])
+          .filter(s => s.checked !== false)
+          .map(s => ({ weight: parseFloat(s.weight) || 0, reps: parseInt(s.reps) || 0, kind: s.kind })),
       }));
   };
 
@@ -821,8 +838,15 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         // optional per-set RPE/VBT survive past the localStorage draft.
         // Upper days never touch the 'main' step, so mainSets stays at its
         // untouched default there — skip saving it.
+        // Each set is tagged top or back-off, and whether it was checked off,
+        // so the back-off rules know which set was the first back-off.
         if (!isUpperDay && mainSets.some(set => set.reps || set.weight)) {
-          sessionPayload.main_sets_data = mainSets;
+          const topCount = mainConfig?.numSets ?? 1;
+          sessionPayload.main_sets_data = mainSets.map((set, i) => ({
+            ...set,
+            kind: i < topCount ? 'top' : 'backoff',
+            checked: !!setChecks.main[i],
+          }));
         }
 
         const { data: sessionData, error: sessionError } = await supabase
@@ -839,20 +863,54 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
         // Snapshotted now, from the training max as it stood walking into this
         // set — not read live later, or "Set as Max" saving it would shift
         // the base this adds on top of on the very next render.
-        const newTrainingMax = mainConfig?.isAmap && currentBlock && programCtx
-          ? (badDayDrop > 0
-              ? (calculated1RM > 0 ? calculateTrainingMax(calculated1RM) : undefined)
-              : programCtx.program.updateTrainingMax({
-                  lift: liftType as LiftId,
-                  currentTm: maxes[liftType] ?? 0,
-                  block: currentBlock,
-                  topSet: { weight: topWeight || 0, reps: topReps || 0 },
-                  history: programCtx.program.id === 'five_three_one' ? await loadWaveHistory() : undefined,
-                  unit: unit as Unit,
-                })?.newTm)
-          : undefined;
+        const isFiveThreeOne = programCtx?.program.id === 'five_three_one';
+        // This lift's sessions this wave, including the one just saved.
+        const waveHistory = isFiveThreeOne ? await loadWaveHistory() : undefined;
 
-        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage, topReps: topReps || 0, newTrainingMax });
+        // 5/3/1 back-off load offsets, rebuilt from this wave's sessions.
+        if (isFiveThreeOne && currentBlock && waveHistory) {
+          const next = backoffStateFromHistory(waveHistory, currentBlock.cycleIndex);
+          const { error: stateError } = await supabase
+            .from('user_profiles')
+            .update({ program_state: withBackoffState(profile.program_state, liftType as LiftId, next) })
+            .eq('id', user.id);
+          // Not worth failing the save over: the next session rebuilds it.
+          if (stateError) console.warn('Failed to save back-off state:', stateError);
+        }
+
+        let newTrainingMax: number | undefined;
+        let appliedTrainingMax: { newTm: number; explanation: string } | undefined;
+        if (mainConfig?.isAmap && currentBlock && programCtx) {
+          const amrap = { weight: topWeight || 0, reps: topReps || 0 };
+          if (badDayDrop > 0) {
+            newTrainingMax = calculated1RM > 0 ? calculateTrainingMax(calculated1RM) : undefined;
+          } else {
+            const update = programCtx.program.updateTrainingMax({
+              lift: liftType as LiftId,
+              currentTm: maxes[liftType] ?? 0,
+              block: currentBlock,
+              topSet: amrap,
+              history: waveHistory,
+              unit: unit as Unit,
+            });
+            if (update && isFiveThreeOne) {
+              // 5/3/1 applies the update itself and records it. "Set as max"
+              // only comes back, as a retry, when that fails.
+              pendingTmUpdateRef.current = { update, topSet: amrap };
+              try {
+                await recordTrainingMaxChange({ lift: liftType as LiftId, update, topSet: amrap, cycleIndex: currentBlock.cycleIndex });
+                appliedTrainingMax = { newTm: update.newTm, explanation: update.explanation };
+              } catch (tmError) {
+                console.error('Failed to apply training max update:', tmError);
+                newTrainingMax = update.newTm;
+              }
+            } else {
+              newTrainingMax = update?.newTm;
+            }
+          }
+        }
+
+        setWorkoutStats({ estimated1RM: calculated1RM, totalTonnage, topReps: topReps || 0, newTrainingMax, appliedTrainingMax });
       }
 
       const completedAccessoryEntries = Object.entries(accessoryData)
@@ -941,6 +999,13 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
     };
     const field = fieldMap[liftType];
     if (!field) return;
+    // 5/3/1: retry the automatic update, which also records the change.
+    const pending = pendingTmUpdateRef.current;
+    if (programCtx?.program.id === 'five_three_one' && pending) {
+      await recordTrainingMaxChange({ lift: liftType as LiftId, update: pending.update, topSet: pending.topSet, cycleIndex: currentBlock?.cycleIndex });
+      await refreshProfile();
+      return;
+    }
     const newMax = newTrainingMax;
     await supabase
       .from('user_profiles')
@@ -1176,6 +1241,7 @@ export default function WorkoutDetailPage({ liftType, onBack, onNavigateToProgre
           onClose={handleSuccessClose}
           onSetAsMax={!isUpperDay && newTrainingMax != null ? handleSetAsMax : undefined}
           newTrainingMax={newTrainingMax}
+          appliedTrainingMax={workoutStats.appliedTrainingMax}
         />
       )}
       {showSubstitutionModal && substitutionTarget && (

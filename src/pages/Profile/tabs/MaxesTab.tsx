@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
-import { TRAINING_MAX_FACTOR, getRoundingIncrement } from '../../../lib/calculations';
-import { hasTrainingMax } from '../../../lib/programs/maxes';
+import { TRAINING_MAX_FACTOR } from '../../../lib/calculations';
+import { hasTrainingMax, trainingMaxFromOneRepMax } from '../../../lib/programs/maxes';
+import type { LiftId } from '../../../lib/programs/types';
 import { useFormState } from '../../../hooks/useFormState';
 import Card from '../../../components/ui/Card';
 import SaveFeedback from '../../../components/ui/SaveFeedback';
@@ -12,7 +13,6 @@ import Input from '../../../components/ui/Input';
 export default function MaxesTab() {
   const { profile, user, refreshProfile } = useAuth();
   const unit = profile?.unit_preference || 'lb';
-  const roundTo = getRoundingIncrement(unit);
 
   const [squatMax, setSquatMax] = useState(profile?.squat_max?.toString() || '');
   const [benchMax, setBenchMax] = useState(profile?.bench_max?.toString() || '');
@@ -33,7 +33,7 @@ export default function MaxesTab() {
     const tested = parseFloat(ohpTestedMax);
     const tm = parseFloat(ohpMax);
     if (tested > 0 && tm > 0) return { ohp_max: tm, ohp_tested_max: tested };
-    if (tested > 0) return { ohp_max: Math.round((tested * TRAINING_MAX_FACTOR) / roundTo) * roundTo, ohp_tested_max: tested };
+    if (tested > 0) return { ohp_max: trainingMaxFromOneRepMax(tested, 'ohp', unit), ohp_tested_max: tested };
     if (tm > 0) return { ohp_max: tm, ohp_tested_max: Math.round((tm / TRAINING_MAX_FACTOR) * 10) / 10 };
     return { ohp_max: null, ohp_tested_max: null };
   };
@@ -61,19 +61,19 @@ export default function MaxesTab() {
     }, 'Failed to save maxes. Please try again.');
   };
 
-  const recalcTm = (testedVal: string, setTm: (v: string) => void) => {
+  const recalcTm = (lift: LiftId, testedVal: string, setTm: (v: string) => void) => {
     const tested = parseFloat(testedVal);
     if (!tested || tested <= 0) return;
-    const tm = Math.round((tested * TRAINING_MAX_FACTOR) / roundTo) * roundTo;
+    const tm = trainingMaxFromOneRepMax(tested, lift, unit);
     setTm(String(tm));
     markUnsaved();
   };
 
   const liftRows = [
-    { label: 'Squat',       testedVal: squatTestedMax,    setTested: setSquatTestedMax,    tmVal: squatMax,    setTm: setSquatMax },
-    { label: 'Bench Press', testedVal: benchTestedMax,    setTested: setBenchTestedMax,    tmVal: benchMax,    setTm: setBenchMax },
-    { label: 'Deadlift',    testedVal: deadliftTestedMax, setTested: setDeadliftTestedMax, tmVal: deadliftMax, setTm: setDeadliftMax },
-    { label: 'Overhead press (optional)', testedVal: ohpTestedMax, setTested: setOhpTestedMax, tmVal: ohpMax, setTm: setOhpMax },
+    { lift: 'squat' as LiftId,    label: 'Squat',       testedVal: squatTestedMax,    setTested: setSquatTestedMax,    tmVal: squatMax,    setTm: setSquatMax },
+    { lift: 'bench' as LiftId,    label: 'Bench Press', testedVal: benchTestedMax,    setTested: setBenchTestedMax,    tmVal: benchMax,    setTm: setBenchMax },
+    { lift: 'deadlift' as LiftId, label: 'Deadlift',    testedVal: deadliftTestedMax, setTested: setDeadliftTestedMax, tmVal: deadliftMax, setTm: setDeadliftMax },
+    { lift: 'ohp' as LiftId,      label: 'Overhead press (optional)', testedVal: ohpTestedMax, setTested: setOhpTestedMax, tmVal: ohpMax, setTm: setOhpMax },
   ];
 
   return (
@@ -85,7 +85,7 @@ export default function MaxesTab() {
         </p>
       </Card>
 
-      {liftRows.map(({ label, testedVal, setTested, tmVal, setTm }) => {
+      {liftRows.map(({ lift, label, testedVal, setTested, tmVal, setTm }) => {
         const tm = parseFloat(tmVal);
         const impliedOneRM = tm > 0 ? Math.round((tm / TRAINING_MAX_FACTOR) * 10) / 10 : null;
         return (
@@ -107,7 +107,7 @@ export default function MaxesTab() {
                   type="button"
                   variant="ghost"
                   size="md"
-                  onClick={() => recalcTm(testedVal, setTm)}
+                  onClick={() => recalcTm(lift, testedVal, setTm)}
                   disabled={!testedVal || parseFloat(testedVal) <= 0}
                   title="Set training max to 90% of tested max"
                 >

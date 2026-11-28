@@ -4918,7 +4918,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/2/2/deadlift": {
@@ -4945,7 +4945,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/3/1/bench": {
@@ -4954,12 +4954,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 2,
         "sets": 2,
-        "weight": 92.5,
+        "weight": 93.75,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/3/1/deadlift": {
@@ -4996,12 +4996,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 2,
         "sets": 2,
-        "weight": 92.5,
+        "weight": 93.75,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/3/2/bench": {
@@ -5046,7 +5046,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/3/3/deadlift": {
@@ -5073,7 +5073,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/4/1/bench": {
@@ -5138,12 +5138,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 2,
         "sets": 2,
-        "weight": 92.5,
+        "weight": 93.75,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/4/2/deadlift": {
@@ -5180,12 +5180,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 2,
         "sets": 2,
-        "weight": 92.5,
+        "weight": 93.75,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/4/3/bench": {
@@ -5230,7 +5230,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/4/4/deadlift": {
@@ -5257,7 +5257,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/5/1/bench": {
@@ -5378,12 +5378,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 2,
         "sets": 2,
-        "weight": 92.5,
+        "weight": 93.75,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/5/3/deadlift": {
@@ -5420,12 +5420,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 2,
         "sets": 2,
-        "weight": 92.5,
+        "weight": 93.75,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/5/4/bench": {
@@ -5470,7 +5470,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/5/5/deadlift": {
@@ -5497,7 +5497,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/6/1/bench": {
@@ -5511,7 +5511,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 92.5,
+      "weight": 93.75,
     },
   },
   "kg/6/1/deadlift": {
@@ -5553,7 +5553,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 92.5,
+      "weight": 93.75,
     },
   },
   "kg/6/2/bench": {
@@ -5674,12 +5674,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 2,
         "sets": 2,
-        "weight": 92.5,
+        "weight": 93.75,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/6/4/deadlift": {
@@ -5716,12 +5716,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 2,
         "sets": 2,
-        "weight": 92.5,
+        "weight": 93.75,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/6/5/bench": {
@@ -5766,7 +5766,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "kg/6/6/deadlift": {
@@ -5793,7 +5793,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 107.5,
+      "weight": 106.25,
     },
   },
   "lb/2/1/bench": {
@@ -5838,7 +5838,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/2/2/deadlift": {
@@ -5865,7 +5865,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/3/1/bench": {
@@ -5879,7 +5879,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/3/1/deadlift": {
@@ -5921,7 +5921,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/3/2/bench": {
@@ -5966,7 +5966,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/3/3/deadlift": {
@@ -5993,7 +5993,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/4/1/bench": {
@@ -6002,12 +6002,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 2,
-        "weight": 200,
+        "weight": 202.5,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 225,
+      "weight": 222.5,
     },
   },
   "lb/4/1/deadlift": {
@@ -6044,12 +6044,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 2,
-        "weight": 200,
+        "weight": 202.5,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 225,
+      "weight": 222.5,
     },
   },
   "lb/4/2/bench": {
@@ -6063,7 +6063,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/4/2/deadlift": {
@@ -6105,7 +6105,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/4/3/bench": {
@@ -6150,7 +6150,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/4/4/deadlift": {
@@ -6177,7 +6177,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/5/1/bench": {
@@ -6186,12 +6186,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 3,
-        "weight": 195,
+        "weight": 197.5,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 215,
+      "weight": 212.5,
     },
   },
   "lb/5/1/deadlift": {
@@ -6228,12 +6228,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 3,
-        "weight": 195,
+        "weight": 197.5,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 215,
+      "weight": 212.5,
     },
   },
   "lb/5/2/bench": {
@@ -6242,12 +6242,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 2,
-        "weight": 200,
+        "weight": 202.5,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 225,
+      "weight": 222.5,
     },
   },
   "lb/5/2/deadlift": {
@@ -6284,12 +6284,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 2,
-        "weight": 200,
+        "weight": 202.5,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 225,
+      "weight": 222.5,
     },
   },
   "lb/5/3/bench": {
@@ -6303,7 +6303,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/5/3/deadlift": {
@@ -6345,7 +6345,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/5/4/bench": {
@@ -6390,7 +6390,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/5/5/deadlift": {
@@ -6417,7 +6417,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/6/1/bench": {
@@ -6426,7 +6426,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 3,
-        "weight": 190,
+        "weight": 192.5,
       },
       "isAmap": false,
       "numSets": 1,
@@ -6468,7 +6468,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 3,
-        "weight": 190,
+        "weight": 192.5,
       },
       "isAmap": false,
       "numSets": 1,
@@ -6482,12 +6482,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 3,
-        "weight": 195,
+        "weight": 197.5,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 215,
+      "weight": 212.5,
     },
   },
   "lb/6/2/deadlift": {
@@ -6524,12 +6524,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 3,
-        "weight": 195,
+        "weight": 197.5,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 215,
+      "weight": 212.5,
     },
   },
   "lb/6/3/bench": {
@@ -6538,12 +6538,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 2,
-        "weight": 200,
+        "weight": 202.5,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 225,
+      "weight": 222.5,
     },
   },
   "lb/6/3/deadlift": {
@@ -6580,12 +6580,12 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "downSets": {
         "reps": 3,
         "sets": 2,
-        "weight": 200,
+        "weight": 202.5,
       },
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 225,
+      "weight": 222.5,
     },
   },
   "lb/6/4/bench": {
@@ -6599,7 +6599,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/6/4/deadlift": {
@@ -6641,7 +6641,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/6/5/bench": {
@@ -6686,7 +6686,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
   "lb/6/6/deadlift": {
@@ -6713,7 +6713,7 @@ exports[`Juggernaut golden: calculatePeakingSets and notes > matches for every p
       "isAmap": false,
       "numSets": 1,
       "reps": 1,
-      "weight": 235,
+      "weight": 232.5,
     },
   },
 }

@@ -6,8 +6,7 @@ export type RepWave = 10 | 8 | 5 | 3;
 export type WavePhase = 'accumulation' | 'intensification' | 'realization' | 'deload' | 'peaking' | 'meet_week';
 export type WarmupFeel = 'easy' | 'good' | 'bad';
 export type WorkoutStep = 'summary' | 'main' | number;
-export type ProgressTab = 'overview' | 'records' | 'log' | 'meets';
-export type ProfileTab = 'body' | 'maxes' | 'training' | 'security';
+export type ProgressTab = 'program' | 'overview' | 'records' | 'log' | 'meets';
 export type CalculatorTab = '1rm' | 'wilks' | 'plates';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────

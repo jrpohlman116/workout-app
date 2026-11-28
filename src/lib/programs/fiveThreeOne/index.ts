@@ -5,6 +5,7 @@ import { calculatePeakingSets } from '../shared/peaking';
 import { buildPeakWeeks, planPeakBlock } from '../shared/peakBlock';
 import type { Prescription, ProgramDefinition, SetGroup } from '../types';
 import { FIVE_THREE_ONE_3_DAY, FIVE_THREE_ONE_4_DAY } from './layouts';
+import { backoffOffset } from '../backoffs';
 import { AMRAP_MINIMUM, CYCLE_LENGTH, WAVE, WAVE_ORDER, nextTrainingMax, roundLoad } from './engine';
 
 // Without a meet date the program just repeats; a year of weeks is far more
@@ -73,19 +74,18 @@ export const fiveThreeOne: ProgramDefinition = {
     };
   },
 
-  prescribe({ block, lift, trainingMax, unit }): Prescription {
+  prescribe({ block, lift, trainingMax, unit, state, plates }): Prescription {
     if (block.phase === 'meet_week') {
       return {
         groups: [{
           kind: 'top', sets: 1, reps: 1, isAmrap: false, stopRule: 'fixed',
-          weight: roundLoad(trainingMax * MEET_WEEK_TM_PCT, lift, unit),
+          weight: roundLoad(trainingMax * MEET_WEEK_TM_PCT, lift, unit, plates),
         }],
       };
     }
 
     if (block.phase === 'peaking') {
-      // The shared taper rounds to the full plate step, bench included.
-      const cfg = calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMax, unit, lift);
+      const cfg = calculatePeakingSets(block.peakWeek ?? 1, block.totalPeakWeeks ?? 3, trainingMax, unit, lift, plates);
       const groups: SetGroup[] = [{ kind: 'top', sets: cfg.numSets, reps: cfg.reps, weight: cfg.weight, isAmrap: false, stopRule: 'fixed' }];
       if (cfg.downSets) {
         groups.push({ kind: 'backoff', sets: cfg.downSets.sets, reps: cfg.downSets.reps, weight: cfg.downSets.weight, isAmrap: false, stopRule: 'fixed' });
@@ -95,15 +95,19 @@ export const fiveThreeOne: ProgramDefinition = {
 
     const week = WAVE[block.phase as keyof typeof WAVE];
     if (!week) return { groups: [] };
+    // Session-to-session back-off adjustment for this wave (see backoffs.ts).
+    const offset = backoffOffset(state, lift, block.cycleIndex);
     return {
       groups: [
         {
-          kind: 'top', sets: 1, reps: week.top.reps, weight: roundLoad(trainingMax * week.top.pct, lift, unit),
+          kind: 'top', sets: 1, reps: week.top.reps, weight: roundLoad(trainingMax * week.top.pct, lift, unit, plates), pct: week.top.pct,
           isAmrap: week.top.isAmrap, minReps: week.top.isAmrap ? AMRAP_MINIMUM : undefined, stopRule: 'fixed',
         },
         {
           kind: 'backoff', sets: week.backoff.sets, reps: week.backoff.reps,
-          weight: roundLoad(trainingMax * week.backoff.pct, lift, unit), isAmrap: false, stopRule: 'fixed',
+          weight: roundLoad(trainingMax * week.backoff.pct * (1 + offset), lift, unit, plates),
+          pct: week.backoff.pct * (1 + offset),
+          isAmrap: false, stopRule: 'until-miss',
         },
       ],
     };

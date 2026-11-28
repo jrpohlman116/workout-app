@@ -14,6 +14,8 @@ interface AccessibleModalProps {
   /** Full-bleed below the sm breakpoint (phone-first flows); centered card
       with backdrop from sm up. Default keeps the centered card everywhere. */
   fullScreen?: boolean;
+  /** Bottom sheet on phones (rounded top, anchored to the bottom); centered card from sm up. */
+  sheet?: boolean;
 }
 
 export default function AccessibleModal({
@@ -25,6 +27,7 @@ export default function AccessibleModal({
   size = 'md',
   preventClose = false,
   fullScreen = false,
+  sheet = false,
 }: AccessibleModalProps) {
   useEffect(() => {
     if (isOpen) {
@@ -61,13 +64,15 @@ export default function AccessibleModal({
   // slide-in animation wrappers) would otherwise become the containing
   // block for this fixed dialog, sizing it to the page instead of the
   // viewport.
-  const panelClasses = fullScreen
+  const panelClasses = sheet
+    ? `relative bg-white dark:bg-gray-800 w-full rounded-t-3xl sm:rounded-2xl sm:shadow-lg ${fullScreenSizeClasses[size]} max-h-[90vh] overflow-y-auto transition-colors animate-modal-in`
+    : fullScreen
     ? `relative bg-white dark:bg-gray-800 w-full h-full max-h-full rounded-none sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:shadow-lg ${fullScreenSizeClasses[size]} overflow-y-auto transition-colors animate-modal-in`
     : `relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg ${sizeClasses[size]} max-h-[90vh] overflow-y-auto transition-colors animate-modal-in`;
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center ${fullScreen ? 'p-0 sm:p-4' : 'p-4'}`}
+      className={`fixed inset-0 z-50 flex justify-center ${sheet ? 'items-end sm:items-center p-0 sm:p-4' : fullScreen ? 'items-center p-0 sm:p-4' : 'items-center p-4'}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -82,10 +87,11 @@ export default function AccessibleModal({
       <FocusTrap
         active={isOpen}
         onEscape={preventClose ? undefined : onClose}
-        className={fullScreen ? 'w-full h-full sm:w-auto sm:h-auto' : undefined}
+        className={fullScreen ? 'w-full h-full sm:w-auto sm:h-auto' : sheet ? 'w-full sm:w-auto' : undefined}
       >
         <div className={panelClasses}>
-          <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-400 px-6 py-4 flex items-center justify-between transition-colors">
+          {sheet && <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-gray-200 dark:bg-gray-600 sm:hidden" aria-hidden="true" />}
+          <div className={`sticky top-0 bg-white dark:bg-gray-800 px-6 py-4 flex items-center justify-between transition-colors ${sheet ? '' : 'border-b border-gray-200 dark:border-gray-400'}`}>
             <h3 id={titleId} className="text-h3 text-gray-900 dark:text-gray-100">
               {title}
             </h3>
@@ -106,7 +112,7 @@ export default function AccessibleModal({
             </p>
           )}
 
-          <div className="px-6 py-4">
+          <div className={sheet ? 'px-6 pb-6 pt-1' : 'px-6 py-4'}>
             {children}
           </div>
         </div>

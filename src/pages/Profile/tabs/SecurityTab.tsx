@@ -10,7 +10,13 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import IconButton from '../../../components/ui/IconButton';
 
-export default function SecurityTab() {
+/**
+ * App appearance and account security. More shows them on two pages:
+ * 'app' (theme, animations) and 'account' (password, sign out, delete).
+ */
+export default function SecurityTab({ sections = 'all' }: { sections?: 'all' | 'app' | 'account' } = {}) {
+  const showApp = sections !== 'account';
+  const showAccount = sections !== 'app';
   const { profile, user } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
 
@@ -90,6 +96,7 @@ export default function SecurityTab() {
 
   return (
     <div className="space-y-4 animate-enter">
+      {showApp && (<>
       <Card className="p-6">
         <h2 className="text-h4 text-gray-900 dark:text-gray-100 mb-4">Appearance</h2>
         <Button
@@ -106,7 +113,7 @@ export default function SecurityTab() {
               : <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             }
             <span className="text-gray-900 dark:text-gray-100 font-medium">
-              {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+              {isDarkMode ? 'Dark mode' : 'Light mode'}
             </span>
           </div>
           <span className="text-sm text-gray-500 dark:text-gray-300">
@@ -118,9 +125,11 @@ export default function SecurityTab() {
       <AnimationControls
         onToggle={enabled => localStorage.setItem('animations-enabled', String(enabled))}
       />
+      </>)}
 
+      {showAccount && (<>
       <Card className="p-6">
-        <h2 className="text-h4 text-gray-900 dark:text-gray-100 mb-4">Change Password</h2>
+        <h2 className="text-h4 text-gray-900 dark:text-gray-100 mb-4">Change password</h2>
         <form onSubmit={handleChangePassword} className="space-y-4">
           {([
             ['Password', password, setPassword, showPassword, setShowPassword],
@@ -146,7 +155,7 @@ export default function SecurityTab() {
             </div>
           ))}
           <Button type="submit" fullWidth disabled={securityLoading || !password || !confirmPassword}>
-            Update Password
+            Update password
           </Button>
           {passwordError && <p className="text-sm text-red-600 mt-2">{passwordError}</p>}
           {passwordSuccess && (
@@ -164,7 +173,7 @@ export default function SecurityTab() {
         icon={<LogOut className="w-5 h-5" />}
         onClick={() => setShowSignOutModal(true)}
       >
-        Sign Out
+        Sign out
       </Button>
 
       <Button
@@ -174,15 +183,16 @@ export default function SecurityTab() {
         icon={<Trash2 className="w-5 h-5" />}
         onClick={() => setShowDeleteModal(true)}
       >
-        Delete Account
+        Delete account
       </Button>
 
       <p className="text-center text-sm text-white/40">Last updated: {lastUpdated}</p>
+      </>)}
 
       <AccessibleModal
         isOpen={showSignOutModal}
         onClose={() => setShowSignOutModal(false)}
-        title="Sign Out"
+        title="Sign out"
         description="Are you sure you want to sign out?"
         size="sm"
       >
@@ -194,7 +204,7 @@ export default function SecurityTab() {
             Cancel
           </Button>
           <Button variant="danger" size="md" className="flex-1" onClick={handleSignOut}>
-            Sign Out
+            Sign out
           </Button>
         </div>
       </AccessibleModal>
@@ -202,7 +212,7 @@ export default function SecurityTab() {
       <AccessibleModal
         isOpen={showDeleteModal}
         onClose={() => { setShowDeleteModal(false); setDeleteConfirmText(''); setDeleteError(''); }}
-        title="Delete Account"
+        title="Delete account"
         description="This action cannot be undone"
         size="sm"
         preventClose={deleteLoading}
@@ -250,7 +260,7 @@ export default function SecurityTab() {
               Cancel
             </Button>
             <Button variant="danger" size="md" className="flex-1" disabled={deleteLoading || deleteConfirmText.trim().toUpperCase() !== 'DELETE'} onClick={handleDeleteAccount}>
-              {deleteLoading ? 'Deleting...' : 'Delete Forever'}
+              {deleteLoading ? 'Deleting...' : 'Delete forever'}
             </Button>
           </div>
         </div>

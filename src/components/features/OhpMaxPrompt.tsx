@@ -23,7 +23,7 @@ export default function OhpMaxPrompt({ unit, saving = false, error, onSave, onDi
 
   const w = parseFloat(weight);
   const r = parseInt(reps, 10);
-  const estimate = estimateMaxFromPerformance(w, r, unit);
+  const estimate = estimateMaxFromPerformance(w, r, unit, 'ohp');
   const tooManyReps = r > 12;
 
   return (
