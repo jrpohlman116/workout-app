@@ -15,6 +15,10 @@ import { availablePlates } from '../../lib/plates';
 import { REST_TIMER_DEFAULTS } from '../../lib/constants';
 import { additionalExercises, baseExercises, liftNames } from '../../lib/exercises';
 import { sessionLimits } from '../../lib/readiness/effects';
+import { effectiveState, overrideFor } from '../../lib/readiness/override';
+import { saveOverride } from '../../lib/readiness/store';
+import type { ReadinessState } from '../../lib/readiness/types';
+import AccessibleModal from '../../components/accessible/AccessibleModal';
 import { readLastTime, readWarmupDisplay, saveLastTime } from '../../lib/today/prefs';
 import { buildTodayPlan, explainWeight, platesPerSide, type TimeAvailable } from '../../lib/today/plan';
 import { initialSession, sessionReducer, toDraft, type TodaySession } from '../../lib/today/session';
@@ -62,6 +66,9 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
   const [saved, setSaved] = useState<SaveResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // undefined: no choice made here yet, so use the stored day.
+  const [overrideChoice, setOverrideChoice] = useState<ReadinessState | null | undefined>(undefined);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   // Restore a session in progress for this lift and week.
   useEffect(() => {
@@ -77,7 +84,24 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
 
   const block = programCtx?.currentBlock ?? null;
   const day = programCtx?.layout.days.find(d => d.dayId === lift) ?? null;
-  const state = readiness?.state ?? 'green';
+  // The state today's session runs at: the lifter's choice, else the suggestion.
+  const suggested = readiness?.state ?? 'green';
+  const state: ReadinessState = overrideChoice !== undefined ? overrideChoice ?? suggested : effectiveState(readiness);
+  const overridden = !!readiness && state !== suggested;
+  const chooseState = (chosen: ReadinessState) => {
+    if (!readiness || !user) return;
+    const next = overrideFor(readiness, chosen);
+    setOverrideChoice(next);
+    saveOverride(user.id, next).catch(error => console.warn('Failed to save readiness override:', error));
+  };
+
+  // Cancelling throws away the sets logged so far; nothing was saved yet.
+  const cancelSession = () => {
+    try { if (draftKey) localStorage.removeItem(draftKey); } catch { /* storage unavailable */ }
+    dispatch({ type: 'restore', session: initialSession(session.time) });
+    setConfirmCancel(false);
+    onDone();
+  };
   const trainingMaxes = useMemo(() => {
     const out: Partial<Record<LiftId, number>> = {};
     if (profile) for (const l of ['squat', 'bench', 'deadlift', 'ohp'] as LiftId[]) out[l] = trainingMaxFor(profile, l);
@@ -158,7 +182,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
           <Card className="p-5 space-y-4">
             <h2 className="text-h4 text-gray-900 dark:text-gray-100">Before you start</h2>
             <div className="flex items-center justify-between gap-3">
-              <ReadinessChip state={state} />
+              <ReadinessChip state={state} overridden={overridden} />
               {readiness && (
                 <button type="button" onClick={() => setSheet('readiness')} className="inline-flex items-center gap-0.5 min-h-[44px] text-sm font-semibold text-blue-600 dark:text-blue-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                   Why? <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -219,7 +243,16 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
             Start session
           </Button>
         </div>
-        {readiness && <ReadinessSheet open={sheet === 'readiness'} onClose={() => setSheet(null)} readiness={readiness} limits={sessionLimits(state, 60)} />}
+        {readiness && (
+          <ReadinessSheet
+            open={sheet === 'readiness'}
+            onClose={() => setSheet(null)}
+            readiness={readiness}
+            chosen={state}
+            onChoose={chooseState}
+            limits={sessionLimits(state, 60)}
+          />
+        )}
       </div>
     );
   }
@@ -238,7 +271,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
         ...(session.top ? [{ ...session.top, kind: 'top' as const }] : []),
         ...session.backoffs.map(b => ({ ...b, kind: 'backoff' as const })),
       ],
-      backoffsCapped: plan.backoffsCapped,
+      backoffsCapped: plan.backoffsCapped && !session.backoffCapRaised,
     }).change;
     if (change > 0) return { title: 'Back-off load goes up 2.5%', detail: 'Two sessions in a row with every back-off at target.' };
     if (change < 0) return { title: 'Back-off load drops 5%', detail: 'The first back-off fell short two sessions in a row.' };
@@ -252,7 +285,8 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
     try {
       const rows = buildSessionRows({
         userId: user.id, profile, lift: liftForSave, block, plan, session,
-        readiness: readiness ? { state: readiness.state, score: readiness.score } : null,
+        // The state the session actually ran at; the suggestion stays on readiness_days.
+        readiness: readiness ? { state, score: readiness.score } : null,
         accessoryNames,
       });
       const result = await saveTodaySession({
@@ -320,6 +354,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
     const anyCut = plan.accessories.some(a => a.cut);
     const cutReason = !anyCut ? null : state !== 'green' && session.time < 60 ? 'both' : state !== 'green' ? 'readiness' : 'time';
     return (
+      <>
       <AccessoriesStep
         userId={user!.id}
         eyebrow={session.time < 60 ? `${eyebrow} · ${session.time} min` : eyebrow}
@@ -330,15 +365,19 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
         dispatch={dispatch}
         cutReason={cutReason}
         onFinish={handleFinish}
+        onCancel={() => setConfirmCancel(true)}
         saving={saving}
         error={saveError}
       />
+      <CancelSessionDialog open={confirmCancel} onKeep={() => setConfirmCancel(false)} onCancel={cancelSession} />
+      </>
     );
   }
 
   // ---------- Top set and back-offs ----------
   const target = backoff?.reps ?? 0;
-  const cap = backoff?.cap ?? 0;
+  // "One more set" past a lowered cap runs back-offs to the program's own cap.
+  const cap = backoff ? (session.backoffCapRaised ? backoff.programCap : backoff.cap) : 0;
   const restRunning = session.restEndsAt != null;
   const showBackoffs = !!backoff && session.top != null;
   const topDone = session.top != null;
@@ -361,7 +400,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
           ...(session.top ? [{ ...session.top, kind: 'top' as const }] : []),
           ...session.backoffs.map(b => ({ ...b, kind: 'backoff' as const })),
         ],
-        backoffsCapped: plan.backoffsCapped,
+        backoffsCapped: plan.backoffsCapped && !session.backoffCapRaised,
       }).change
     : 0;
   const fullSets = session.backoffs.filter(b => b.reps >= target).length;
@@ -487,6 +526,20 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
               {missIndex >= 0 ? `Drop-off at set ${missIndex + 1}. ` : `All ${fullSets} at target. `}
               Next {name.toLowerCase()} session: back-off load {nextChange > 0 ? 'goes up 2.5%' : nextChange < 0 ? 'drops 5%' : 'stays the same'}.
             </p>
+            {backoff && missIndex === -1 && !session.backoffCapRaised && backoff.cap < backoff.programCap && (
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'raiseBackoffCap' })}
+                className="mt-2 min-h-[44px] text-sm font-semibold text-blue-700 dark:text-blue-300 underline-offset-2 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                One more set
+              </button>
+            )}
+            {backoff && !session.backoffCapRaised && backoff.cap < backoff.programCap && missIndex === -1 && (
+              <p className="text-xs text-blue-800 dark:text-blue-200">
+                Today's cap was {backoff.cap}. Feeling good? Keep going until you miss a rep, up to {backoff.programCap}.
+              </p>
+            )}
           </div>
         )}
 
@@ -495,6 +548,8 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
             {plan.accessories.find(a => !a.cut) ? `Next: ${plan.accessories.find(a => !a.cut)!.name}` : 'Finish session'}
           </Button>
         )}
+
+        <Button fullWidth variant="tertiary" onClick={() => setConfirmCancel(true)}>Cancel session</Button>
 
       </div>
 
@@ -509,6 +564,7 @@ export default function TodayFlow({ lift, onOpenProgress, onDone }: { lift: stri
           onOpenHistory={() => { setSheet(null); onOpenProgress(); }}
         />
       )}
+      <CancelSessionDialog open={confirmCancel} onKeep={() => setConfirmCancel(false)} onCancel={cancelSession} />
       <EditSetSheet
         open={!!editing}
         onClose={() => setEditing(null)}
@@ -546,3 +602,18 @@ function PlanRow({ title, detail, chip, cut }: { title: string; detail: string; 
   );
 }
 
+
+/** "Cancel this session?" The logged sets are thrown away; nothing was saved yet. */
+function CancelSessionDialog({ open, onKeep, onCancel }: { open: boolean; onKeep: () => void; onCancel: () => void }) {
+  return (
+    <AccessibleModal isOpen={open} onClose={onKeep} title="Cancel this session?" sheet>
+      <div className="space-y-4">
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          The sets you've logged today won't be saved, and nothing in your history changes. You can start this day again later.
+        </p>
+        <Button fullWidth variant="danger" onClick={onCancel}>Cancel session</Button>
+        <Button fullWidth variant="tertiary" onClick={onKeep}>Keep training</Button>
+      </div>
+    </AccessibleModal>
+  );
+}

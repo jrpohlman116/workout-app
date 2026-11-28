@@ -15,6 +15,7 @@ import { availablePlates } from '../../lib/plates';
 import { buildTodayPlan } from '../../lib/today/plan';
 import { readLastTime } from '../../lib/today/prefs';
 import { readinessHeadline } from '../../lib/today/copy';
+import { effectiveState, isOverridden } from '../../lib/readiness/override';
 import { supabase } from '../../lib/supabase';
 import { isConnected, loadIntegrations, type Integration } from '../../lib/integrations';
 import type { StickingPoint, WeakPoints } from '../../lib/supabase';
@@ -144,7 +145,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const plan = todayDay && currentBlock && !isViewing
     ? buildTodayPlan({
         program, day: todayDay, block: currentBlock, trainingMaxes, unit, state: profile.program_state, plates,
-        readiness: readiness?.state ?? 'green', time: readLastTime(profile),
+        // Today's session follows the lifter's choice when they overrode the suggestion.
+        readiness: effectiveState(readiness), time: readLastTime(profile),
         accessories: accessories.map(a => ({ name: a.name, sets: a.sets, reps: a.reps })),
       })
     : null;
@@ -240,6 +242,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 <p className="text-h3 text-gray-900 dark:text-gray-100">{readinessHeadline(readiness.state)}</p>
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{readiness.inputs.reason}</p>
                 {readiness.inputs.note && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{readiness.inputs.note}</p>}
+                {isOverridden(readiness) && (
+                  <p className="mt-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 px-3 py-2 text-sm text-gray-700 dark:text-gray-200">
+                    You're training as {{ green: 'Green', yellow: 'Yellow', red: 'Red' }[effectiveState(readiness)]} today, your call. Change it from Today's "Why?".
+                  </p>
+                )}
               </>
             ) : (
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Working out today's readiness…</p>

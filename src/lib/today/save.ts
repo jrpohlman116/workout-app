@@ -51,8 +51,10 @@ export function buildSessionRows(args: {
       readiness_state: readiness?.state ?? null,
       readiness_score: readiness?.score ?? null,
       time_available_min: session.time,
-      backoffs_capped: plan.backoffsCapped,
-      backoff_cap: plan.backoff?.cap ?? 0,
+      // Going past a lowered cap counts the session as uncapped, so it feeds
+      // the back-off streaks and the readiness normal like any other.
+      backoffs_capped: plan.backoffsCapped && !session.backoffCapRaised,
+      backoff_cap: (session.backoffCapRaised ? plan.backoff?.programCap : plan.backoff?.cap) ?? 0,
     },
     accessories: accessoryNames
       .map((name, i) => ({

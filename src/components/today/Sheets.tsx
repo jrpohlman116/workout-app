@@ -4,15 +4,27 @@ import AccessibleModal from '../accessible/AccessibleModal';
 import Button from '../ui/Button';
 import type { ReadinessDay } from '../../lib/readiness/store';
 import type { SessionLimits } from '../../lib/readiness/effects';
+import type { ReadinessState } from '../../lib/readiness/types';
+import RadioCards from '../ui/RadioCards';
 import { changesFor } from '../../lib/today/copy';
 import type { WeightExplanation } from '../../lib/today/plan';
 
 const STATE_WORD = { green: 'green', yellow: 'yellow', red: 'red' } as const;
 
-export function ReadinessSheet({ open, onClose, readiness, limits }: {
+const CHOICES: { value: ReadinessState; title: string }[] = [
+  { value: 'green', title: 'Green · Train as written' },
+  { value: 'yellow', title: 'Yellow · Lighter day' },
+  { value: 'red', title: 'Red · Recovery day' },
+];
+
+export function ReadinessSheet({ open, onClose, readiness, chosen, onChoose, limits }: {
   open: boolean;
   onClose: () => void;
   readiness: ReadinessDay;
+  /** The state today runs at: the lifter's choice or the suggestion. */
+  chosen: ReadinessState;
+  onChoose: (state: ReadinessState) => void;
+  /** Limits for the chosen state. */
   limits: SessionLimits;
 }) {
   const { inputs } = readiness;
@@ -36,6 +48,18 @@ export function ReadinessSheet({ open, onClose, readiness, limits }: {
             ? 'Based on Oura or Strava and your last sessions.'
             : 'Based on your last sessions. Connect Oura or Strava in More → Integrations for sleep, HRV and runs.'}
         </p>
+        <div>
+          <h3 id="readiness-choice" className="text-h4 text-gray-900 dark:text-gray-100 mb-1">How do you want to train today?</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            You know your day best. Your choice changes volume, never weight, and Ironform logs it to tune readiness.
+          </p>
+          <RadioCards<ReadinessState>
+            labelId="readiness-choice"
+            value={chosen}
+            onSelect={onChoose}
+            options={CHOICES.map(c => ({ ...c, description: c.value === readiness.state ? 'Suggested' : undefined }))}
+          />
+        </div>
         <div>
           <h3 className="text-h4 text-gray-900 dark:text-gray-100 mb-2">What changes today</h3>
           <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-300">
